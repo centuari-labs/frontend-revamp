@@ -1,9 +1,12 @@
+"use client";
+
 import { CentuariAlert } from "@/components/centuari-alert";
 import { CentuariChart } from "@/components/centuari-chart";
 import HealthFactor from "@/components/centuari-health-factor";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
 import CentuariNavbar from "@/components/centuari-navbar";
+import { CentuariTable } from "@/components/centuari-table";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { IcDollarCentuari } from "@/components/icons/ic-dollar-centuari";
 import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
@@ -219,6 +222,9 @@ export default function Home() {
           <IcDollarCentuari color="white" size={30} />
           <IcMailCentuari color="white" size={30} />
         </div>
+      </div>
+      <div className="w-full mt-5">
+        <CentuariTable />
       </div>
     </main>
   );

@@ -13,9 +13,10 @@ export default function CentuariNavbar() {
 
   const mobileMenuRef = useRef(null);
   const mobileSearchRef = useRef(null);
-  const navItemsRef = useRef([]);
-  const desktopNavRef = useRef<React.RefObject<HTMLDivElement>[]>([]);
+  const navItemsRef = useRef<any[]>([]);
+  const desktopNavRef = useRef<any>([]);
   const indicatorRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const navItems = [
     { name: "Earn & Borrow", href: "#earn" },
@@ -23,7 +24,6 @@ export default function CentuariNavbar() {
     { name: "Points", href: "#points" },
   ];
 
-  // GSAP Animation for active indicator
   useEffect(() => {
     const activeIndex = navItems.findIndex((item) => item.name === activeItem);
     const activeElement = desktopNavRef.current[activeIndex];
@@ -72,7 +72,6 @@ export default function CentuariNavbar() {
     }
   }, [isMenuOpen]);
 
-  // GSAP Animation for mobile search
   useEffect(() => {
     if (mobileSearchRef.current) {
       if (isSearchOpen) {
@@ -104,10 +103,30 @@ export default function CentuariNavbar() {
     setIsMenuOpen(false);
   };
 
+  useEffect(() => {
+    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+      const hotkey =
+        (isMac ? event.metaKey : event.ctrlKey) && event.key === "k";
+
+      if (hotkey && inputRef.current) {
+        event.preventDefault();
+        inputRef.current.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress as any);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress as any);
+    };
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto w-full">
       <nav className="sticky top-0 z-50 backdrop-blur-sm">
-        <div className="px-4 sm:px-6 lg:px-8">
+        {/* <div className="px-4 sm:px-6 lg:px-8"> */}
+        <div>
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-8">
@@ -182,6 +201,7 @@ export default function CentuariNavbar() {
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-blue-400" />
                 <Input
+                  ref={inputRef}
                   type="text"
                   placeholder="Search assets"
                   className="pl-10 pr-20 w-64 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-slate-600 focus-visible:border-blue-500 transition-all duration-200"
