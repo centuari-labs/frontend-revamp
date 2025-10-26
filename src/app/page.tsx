@@ -1,4 +1,5 @@
 import { CentuariAlert } from "@/components/centuari-alert";
+import { CentuariChart } from "@/components/centuari-chart";
 import HealthFactor from "@/components/centuari-health-factor";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
@@ -207,6 +208,9 @@ export default function Home() {
         <div>
           <HealthFactor />
         </div>
+      </div>
+      <div className="w-full mt-10">
+        <CentuariChart />
       </div>
     </main>
   );
