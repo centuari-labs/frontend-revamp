@@ -5,8 +5,10 @@ import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
 import CentuariNavbar from "@/components/centuari-navbar";
 import { CentuariTypography } from "@/components/centuari-typography";
+import { IcDollarCentuari } from "@/components/icons/ic-dollar-centuari";
+import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
 import { Button } from "@/components/ui/button";
-import { DollarSign, InfoIcon, Search, X } from "lucide-react";
+import { InfoIcon, Search, X } from "lucide-react";
 
 export default function Home() {
   return (
@@ -39,7 +41,7 @@ export default function Home() {
             label="Search Large"
             size="large"
             placeholder="Search something"
-            leftIcon={<Search size={16} />}
+            leftIcon={<IcMailCentuari color="white" size={20} />}
             rightIcon={<X size={16} />}
             helperText="This is a helper text."
           />
@@ -49,7 +51,7 @@ export default function Home() {
             label="Label"
             size="small"
             placeholder="Placeholder"
-            leftIcon={<DollarSign size={16} />}
+            leftIcon={<IcDollarCentuari size={16} />}
             rightIcon={<X size={16} />}
             helperText="This is a helper text."
             balanceText="$1000"
@@ -59,7 +61,7 @@ export default function Home() {
             label="Label"
             size="medium"
             placeholder="Placeholder"
-            leftIcon={<DollarSign size={16} />}
+            leftIcon={<IcDollarCentuari size={16} />}
             rightIcon={
               <Button variant={"link"} className="px-0">
                 Max
@@ -73,7 +75,7 @@ export default function Home() {
             label="Label"
             size="large"
             placeholder="Placeholder"
-            leftIcon={<DollarSign size={16} />}
+            leftIcon={<IcDollarCentuari size={16} />}
             rightIcon={
               <Button variant={"link"} className="px-0">
                 Max
