@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { cva } from "class-variance-authority";
+import { CentuariTooltip } from "./centuari-tooltip";
+import { InfoIcon } from "lucide-react";
 
 interface CentuariInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
@@ -13,7 +15,7 @@ interface CentuariInputProps
   size: "small" | "medium" | "large";
   leftIcon?: React.ReactNode | string;
   rightIcon?: React.ReactNode | string;
-  balanceText?: string;
+  balanceText?: React.ReactNode;
   helperText?: string;
   containerClassName?: string;
   label?: string;
@@ -62,9 +64,17 @@ export function CentuariInput({
       <div className={"mb-3 flex items-center justify-between"}>
         {label && <Label htmlFor={id}>{label}</Label>}
         {balanceText && (
-          <span className="text-xs text-muted-foreground mt-1">
-            {balanceText}
-          </span>
+          <div
+            className={cn(
+              "flex text-xs text-muted-foreground mt-1",
+              balanceText && "items-center gap-1"
+            )}
+          >
+            Available <span className="text-white">{balanceText}</span>{" "}
+            <CentuariTooltip message="Coming Soon">
+              <InfoIcon size={12} />
+            </CentuariTooltip>
+          </div>
         )}
       </div>
       <div className="relative">
