@@ -31,10 +31,38 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-800/95 border border-slate-700 rounded-lg px-3 py-2 shadow-xl">
-        <p className="text-slate-400 text-xs mb-1">{payload[0].payload.date}</p>
-        <p className="text-white text-lg font-semibold">{payload[0].value}%</p>
+      <div className="relative">
+        {/* Tooltip card */}
+        <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl px-6 py-4 shadow-2xl">
+          <p className="text-slate-400 text-sm mb-1 font-light">
+            {payload[0].payload.date}
+          </p>
+          <p className="text-white text-4xl font-light">{payload[0].value}%</p>
+        </div>
       </div>
+    );
+  }
+  return null;
+};
+
+const CustomDot = (props: {
+  cx?: number;
+  cy?: number;
+  payload?: any;
+  dataKey?: string;
+}) => {
+  const { cx, cy, payload } = props;
+
+  if (props.dataKey === "value") {
+    return (
+      <g>
+        {/* Outer glow circle */}
+        <circle cx={cx} cy={cy} r={20} fill="#10b981" opacity={0.2} />
+        {/* Middle circle */}
+        <circle cx={cx} cy={cy} r={12} fill="#10b981" opacity={0.4} />
+        {/* Inner white circle */}
+        <circle cx={cx} cy={cy} r={6} fill="#ffffff" />
+      </g>
     );
   }
   return null;
@@ -42,8 +70,8 @@ const CustomTooltip = ({
 
 export function CentuariChart() {
   return (
-    <div className="flex items-center justify-center p-8">
-      <Card className="w-full max-w-full p-6 bg-transparent border-transparent">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
+      <Card className="w-full max-w-4xl bg-slate-900/50 border-slate-800 p-6">
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -85,26 +113,28 @@ export function CentuariChart() {
                 content={<CustomTooltip />}
                 cursor={{
                   stroke: "#10b981",
-                  strokeWidth: 1,
+                  strokeWidth: 2,
                   strokeDasharray: "5 5",
                 }}
+                position={{ y: 0 }}
               />
 
               <Area
                 type="monotone"
                 dataKey="value"
                 stroke="#10b981"
-                strokeWidth={2}
+                strokeWidth={3}
                 fill="url(#colorValue)"
-                activeDot={{
-                  r: 6,
-                  fill: "#10b981",
-                  stroke: "#fff",
-                  strokeWidth: 2,
-                }}
+                dot={false}
+                activeDot={<CustomDot />}
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Info text */}
+        <div className="mt-6 text-center text-slate-500 text-sm">
+          Hover over the chart to see the tooltip
         </div>
       </Card>
     </div>
