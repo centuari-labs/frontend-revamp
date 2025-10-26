@@ -16,6 +16,7 @@ export default function Home() {
             leftIcon={<Search size={16} />}
             rightIcon={<X size={16} />}
             helperText="This is a helper text."
+            disabled={true}
           />
           <CentuariInput
             id="search"

@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { cva, VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 
 interface CentuariInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
@@ -17,6 +17,8 @@ interface CentuariInputProps
   helperText?: string;
   containerClassName?: string;
   label?: string;
+  readonly?: boolean;
+  disabled?: boolean;
 }
 
 const inputVariants = cva("", {
@@ -51,6 +53,8 @@ export function CentuariInput({
   variant,
   className,
   label,
+  readOnly,
+  disabled,
   ...props
 }: CentuariInputProps) {
   return (
@@ -72,7 +76,10 @@ export function CentuariInput({
         <Input
           id={id}
           placeholder={placeholder}
+          readOnly={readOnly}
+          disabled={disabled}
           className={cn(
+            (readOnly || disabled) && "cursor-not-allowed opacity-50",
             inputVariants({ variant, size }),
             leftIcon && "pl-10",
             rightIcon && "pr-10",
