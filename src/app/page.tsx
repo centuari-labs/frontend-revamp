@@ -1,4 +1,5 @@
 import { CentuariAlert } from "@/components/centuari-alert";
+import HealthFactor from "@/components/centuari-health-factor";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
 import { CentuariTypography } from "@/components/centuari-typography";
@@ -204,7 +205,7 @@ export default function Home() {
           </CentuariTypography>
         </div>
         <div>
-
+          <HealthFactor />
         </div>
       </div>
     </main>
