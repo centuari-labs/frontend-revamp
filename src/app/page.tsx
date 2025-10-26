@@ -213,8 +213,12 @@ export default function Home() {
           <HealthFactor />
         </div>
       </div>
-      <div className="w-full mt-10">
+      <div className="w-full mt-10 grid-cols-2 gap-2 grid">
         <CentuariChart />
+        <div className="flex justify-center items-center gap-4">
+          <IcDollarCentuari color="white" size={30} />
+          <IcMailCentuari color="white" size={30} />
+        </div>
       </div>
     </main>
   );
