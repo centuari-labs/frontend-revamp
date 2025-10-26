@@ -32,7 +32,6 @@ const CustomTooltip = ({
   if (active && payload && payload.length) {
     return (
       <div className="relative">
-        {/* Tooltip card */}
         <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl px-6 py-4 shadow-2xl">
           <p className="text-slate-400 text-sm mb-1 font-light">
             {payload[0].payload.date}
@@ -56,11 +55,8 @@ const CustomDot = (props: {
   if (props.dataKey === "value") {
     return (
       <g>
-        {/* Outer glow circle */}
         <circle cx={cx} cy={cy} r={20} fill="#10b981" opacity={0.2} />
-        {/* Middle circle */}
         <circle cx={cx} cy={cy} r={12} fill="#10b981" opacity={0.4} />
-        {/* Inner white circle */}
         <circle cx={cx} cy={cy} r={6} fill="#ffffff" />
       </g>
     );
@@ -70,8 +66,8 @@ const CustomDot = (props: {
 
 export function CentuariChart() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
-      <Card className="w-full max-w-4xl bg-slate-900/50 border-slate-800 p-6">
+    <div className="flex items-center justify-center p-8">
+      <Card className="w-full max-w-4xl bg-transparent border-transparent p-6">
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -130,11 +126,6 @@ export function CentuariChart() {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Info text */}
-        <div className="mt-6 text-center text-slate-500 text-sm">
-          Hover over the chart to see the tooltip
         </div>
       </Card>
     </div>
