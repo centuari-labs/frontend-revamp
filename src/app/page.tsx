@@ -3,6 +3,7 @@ import { CentuariChart } from "@/components/centuari-chart";
 import HealthFactor from "@/components/centuari-health-factor";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
+import CentuariNavbar from "@/components/centuari-navbar";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { Button } from "@/components/ui/button";
 import { DollarSign, InfoIcon, Search, X } from "lucide-react";
@@ -10,7 +11,8 @@ import { DollarSign, InfoIcon, Search, X } from "lucide-react";
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <CentuariNavbar />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-10">
         <CentuariInputExample />
         <div className="grid grid-cols-3 gap-2">
           <CentuariInput
