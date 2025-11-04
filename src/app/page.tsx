@@ -14,6 +14,7 @@ import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InfoIcon, Search, X } from "lucide-react";
 
 const tokenList = [
@@ -276,6 +277,70 @@ export default function Home() {
           variant="default"
           maxCount={2}
         />
+      </div>
+      <div className="mt-10">
+        <Tabs defaultValue="satu" className="w-full">
+          <TabsList>
+            <TabsTrigger value="satu">Label Satu</TabsTrigger>
+            <TabsTrigger value="dua">Label Dua</TabsTrigger>
+            <TabsTrigger value="tiga">Label Tiga</TabsTrigger>
+            <TabsTrigger value="empat">Label Empat</TabsTrigger>
+            <TabsTrigger value="lima">Label Lima</TabsTrigger>
+            <TabsTrigger value="enam">Label Enam</TabsTrigger>
+          </TabsList>
+          <TabsContent value="satu">Content Satu</TabsContent>
+          <TabsContent value="dua">Content Dua</TabsContent>
+          <TabsContent value="tiga">Content Tiga</TabsContent>
+          <TabsContent value="empat">Content Empat</TabsContent>
+          <TabsContent value="lima">Content Lima</TabsContent>
+          <TabsContent value="enam">Content Enam</TabsContent>
+        </Tabs>
+        <Tabs defaultValue="satu" className="w-full">
+          <TabsList className="bg-background rounded-none border-b p-0">
+            <TabsTrigger
+              value="satu"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Satu
+            </TabsTrigger>
+            <TabsTrigger
+              value="dua"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Dua
+            </TabsTrigger>
+            <TabsTrigger
+              value="tiga"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Tiga
+            </TabsTrigger>
+            <TabsTrigger
+              value="empat"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Empat
+            </TabsTrigger>
+            <TabsTrigger
+              value="lima"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Lima
+            </TabsTrigger>
+            <TabsTrigger
+              value="enam"
+              className="bg-background data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:text-foreground text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-muted-foreground/30 h-full rounded-none border-0 border-b-2 border-transparent data-[state=active]:shadow-none"
+            >
+              Label Enam
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="satu">Content Satu</TabsContent>
+          <TabsContent value="dua">Content Dua</TabsContent>
+          <TabsContent value="tiga">Content Tiga</TabsContent>
+          <TabsContent value="empat">Content Empat</TabsContent>
+          <TabsContent value="lima">Content Lima</TabsContent>
+          <TabsContent value="enam">Content Enam</TabsContent>
+        </Tabs>
       </div>
     </main>
   );
