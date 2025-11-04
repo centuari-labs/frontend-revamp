@@ -783,7 +783,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               }}
             >
               {selectedValues.length > 0 ? (
-                <div className="flex justify-between items-center w-full">
+                <div className="flex justify-between items-center w-full border-0">
                   <div
                     className={cn(
                       "flex items-center gap-1",
@@ -822,7 +822,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             width={20}
                             height={20}
                             className={cn(
-                              "h-5 w-5 rounded-full border border-foreground/10 bg-card",
+                              "h-5 w-5 rounded-full bg-card",
                               responsiveSettings.compactMode && "h-6 w-6",
                               screenSize === "mobile" && "h-10 w-10",
                               "inline-block",

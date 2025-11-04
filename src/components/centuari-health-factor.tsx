@@ -1,17 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
 import gsap from "gsap";
 import Image from "next/image";
 
 export default function HealthFactor() {
   const [targetValue, setTargetValue] = useState(55);
   const [displayValue, setDisplayValue] = useState(55);
-  const [inputValue, setInputValue] = useState("55");
   const progressRef = useRef(null);
   const markerRef = useRef(null);
   const textRef = useRef(null);
+  const glowRef = useRef(null);
   const animationRef = useRef({ value: 55 });
 
   const segments = [
@@ -21,6 +20,7 @@ export default function HealthFactor() {
       color: "bg-green-500",
       hex: "#22c55e",
       label: "Excellent",
+      glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
     },
     {
       start: 60,
@@ -28,6 +28,7 @@ export default function HealthFactor() {
       color: "bg-yellow-500",
       hex: "#eab308",
       label: "Good",
+      glow: "shadow-[0_0_20px_rgba(234,179,8,0.6)]",
     },
     {
       start: 75,
@@ -35,6 +36,7 @@ export default function HealthFactor() {
       color: "bg-orange-500",
       hex: "#f97316",
       label: "Warning",
+      glow: "shadow-[0_0_20px_rgba(249,115,22,0.6)]",
     },
     {
       start: 90,
@@ -42,6 +44,7 @@ export default function HealthFactor() {
       color: "bg-red-500",
       hex: "#ef4444",
       label: "Critical",
+      glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
     },
   ];
 
@@ -53,7 +56,7 @@ export default function HealthFactor() {
   };
 
   useEffect(() => {
-    const duration = (Math.abs(targetValue - displayValue) / 100) * 2; // Dynamic duration based on distance
+    const duration = (Math.abs(targetValue - displayValue) / 100) * 2;
 
     gsap.to(animationRef.current, {
       value: targetValue,
@@ -88,36 +91,17 @@ export default function HealthFactor() {
         { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
       );
     }
-  }, [targetValue]);
-
-  const handleInputSubmit = () => {
-    const num = parseInt(inputValue);
-    if (!isNaN(num) && num >= 0 && num <= 100) {
-      animationRef.current.value = displayValue;
-      setTargetValue(num);
-    }
-  };
-
-  const handleQuickSet = (val: number) => {
-    animationRef.current.value = displayValue;
-    setTargetValue(val);
-    setInputValue(val.toString());
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleInputSubmit();
-    }
-  };
+  }, [targetValue, displayValue]);
 
   const activeSegment = getActiveSegment(displayValue);
 
   return (
-    <div className="flex items-center justify-center p-8">
+    <div className="w-full">
       <div className="space-y-8">
         <div className="relative">
-          <div className="relative h-2 rounded-full overflow-hidden">
-            <div className="absolute space-x-1 inset-0 flex">
+          <div className="relative h-1 w-full rounded-full overflow-visible">
+            {/* Background segments */}
+            <div className="absolute inset-0 flex space-x-1">
               {segments.map((segment, idx) => (
                 <div
                   key={idx}
@@ -126,94 +110,51 @@ export default function HealthFactor() {
                 />
               ))}
             </div>
+
+            {/* Active progress with glow */}
             <div className="absolute inset-0">
               <div
                 ref={progressRef}
-                className={`h-full ${activeSegment.color}`}
-                style={{ width: `${displayValue}%` }}
+                className={`h-full ${activeSegment.color} rounded-full transition-all duration-300`}
+                style={{
+                  width: `${displayValue}%`,
+                  boxShadow: `0 0 20px ${activeSegment.hex}80, 0 0 40px ${activeSegment.hex}40`,
+                }}
+              />
+            </div>
+
+            {/* Glow overlay behind progress */}
+            <div
+              ref={glowRef}
+              className="absolute inset-0 -z-10 blur-xl opacity-60 transition-all duration-300"
+              style={{
+                width: `${displayValue}%`,
+                background: `linear-gradient(90deg, transparent, ${activeSegment.hex})`,
+              }}
+            />
+          </div>
+
+          {/* Marker with glow */}
+          <div
+            ref={markerRef}
+            className="absolute -top-2 -translate-x-1/2 -translate-y-1 pointer-events-none transition-all duration-300"
+            style={{ left: `${displayValue}%` }}
+          >
+            <div
+              className="relative"
+              style={{
+                filter: `drop-shadow(0 0 8px ${activeSegment.hex}) drop-shadow(0 0 12px ${activeSegment.hex}80)`,
+              }}
+            >
+              <Image
+                className="w-2 rounded-xs"
+                src="/icons/marker.svg"
+                alt="Progress Marker"
+                width={10}
+                height={10}
               />
             </div>
           </div>
-          <Image
-            ref={markerRef}
-            className="absolute -top-3.5 -translate-x-1/2 -translate-y-1 w-4 ounded-xs shadow-lg pointer-events-none"
-            src="/icons/marker.svg"
-            alt="Progress Marker"
-            width={16}
-            height={16}
-            style={{ left: `${displayValue}%` }}
-          />
-        </div>
-
-        <div className="text-center space-y-4 pt-6">
-          <div ref={textRef} className="text-5xl font-bold text-white">
-            {displayValue}%
-          </div>
-          <div
-            className={`text-sm font-medium transition-colors duration-300 ${
-              displayValue < 60
-                ? "text-green-400"
-                : displayValue < 75
-                ? "text-yellow-400"
-                : displayValue < 90
-                ? "text-orange-400"
-                : "text-red-400"
-            }`}
-          >
-            {activeSegment.label}
-          </div>
-        </div>
-
-        {/* Quick Set Buttons */}
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Button
-            onClick={() => handleQuickSet(0)}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            0%
-          </Button>
-          <Button
-            onClick={() => handleQuickSet(25)}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            25%
-          </Button>
-          <Button
-            onClick={() => handleQuickSet(50)}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            50%
-          </Button>
-          <Button
-            onClick={() => handleQuickSet(75)}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            75%
-          </Button>
-          <Button
-            onClick={() => handleQuickSet(100)}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            100%
-          </Button>
-          <Button
-            onClick={() => handleQuickSet(Math.floor(Math.random() * 101))}
-            variant="outline"
-            size="sm"
-            className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
-          >
-            Random
-          </Button>
         </div>
       </div>
     </div>
