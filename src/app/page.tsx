@@ -1,6 +1,7 @@
 "use client";
 
 import { CentuariAlert } from "@/components/centuari-alert";
+import { CentuariCalender } from "@/components/centuari-calender";
 import { CentuariChart } from "@/components/centuari-chart";
 import { CentuariDialog } from "@/components/centuari-dialog";
 import HealthFactor from "@/components/centuari-health-factor";
@@ -345,6 +346,9 @@ export default function Home() {
         </div>
       </div>
       <CentuariDialog />
+      <div className="mt-10">
+        <CentuariCalender />
+      </div>
     </main>
   );
 }
