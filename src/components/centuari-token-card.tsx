@@ -13,8 +13,8 @@ import { CentuariTypography } from "./centuari-typography";
 
 export const CentuariTokenCard = () => {
   return (
-    <Card className="w-full min-w-[23.625rem] p-4 relative group overflow-hidden transition-all duration-300">
-      <CardHeader>
+    <Card className="w-full min-w-[23.625rem] p-4 gap-2 relative group overflow-hidden transition-all duration-300">
+      <CardHeader className="gap-0 pb-0">
         <div className="flex flex-col items-center gap-4">
           <CardTitle>
             <Image
@@ -53,10 +53,10 @@ export const CentuariTokenCard = () => {
       </CardContent>
       <CardFooter className="flex flex-col px-0">
         <div className="flex gap-2 w-full">
-          <Button type="submit" className="flex-1">
+          <Button variant="secondary" type="submit" className="flex-1">
             Borrow
           </Button>
-          <Button variant="outline" className="flex-1">
+          <Button variant="primary-dark" className="flex-1">
             Start Earning
           </Button>
         </div>

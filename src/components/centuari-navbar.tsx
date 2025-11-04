@@ -129,31 +129,13 @@ export default function CentuariNavbar() {
         <div>
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-8">
-              <a href="#home" className="flex-shrink-0 group">
-                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
-                  <svg
-                    className="w-5 h-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
-                </div>
-              </a>
+            <div className="flex items-center gap-5 md:bg-white/5 px-4 py-1.5 rounded-xl md:border border-white/5">
+              <img src="/centuari-logo.png" alt="Logo" className="w-8 h-8" />
 
-              {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-1 relative">
-                {/* Animated indicator background */}
                 <div
                   ref={indicatorRef}
-                  className="absolute h-10 bg-slate-800 rounded-lg transition-colors"
+                  className="absolute h-10 bg-white/5 rounded-lg transition-colors"
                   style={{ left: 0, top: "50%", transform: "translateY(-50%)" }}
                 />
 
@@ -167,13 +149,13 @@ export default function CentuariNavbar() {
                     onClick={() => setActiveItem(item.name)}
                     className={`relative z-10 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       activeItem === item.name
-                        ? "text-white"
-                        : "text-slate-400 hover:text-white"
+                        ? "text-white font-semibold"
+                        : "text-white hover:text-white"
                     }`}
                     onMouseEnter={(e) => {
                       if (activeItem !== item.name) {
                         gsap.to(e.currentTarget, {
-                          y: -2,
+                          y: 0,
                           duration: 0.2,
                           ease: "power2.out",
                         });
@@ -205,10 +187,10 @@ export default function CentuariNavbar() {
                   className="pl-10 pr-20 w-64 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus-visible:ring-slate-600 focus-visible:border-blue-500 transition-all duration-200"
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-400 transition-colors group-focus-within:border-blue-500">
+                  <kbd className="px-1.5 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-400 transition-colors group-focus-within:border-primary-blue-20">
                     ⌘
                   </kbd>
-                  <kbd className="px-1.5 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-400 transition-colors group-focus-within:border-blue-500">
+                  <kbd className="px-1.5 py-0.5 text-xs bg-slate-800 border border-slate-700 rounded text-slate-400 transition-colors group-focus-within:border-primary-blue-20">
                     K
                   </kbd>
                 </div>
@@ -280,7 +262,7 @@ export default function CentuariNavbar() {
               ))}
               <div className="pt-2">
                 <a href="#login" className="block">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200">
+                  <Button variant={"primary"} className="w-full">
                     Login to Centuari
                   </Button>
                 </a>
