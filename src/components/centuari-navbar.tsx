@@ -195,9 +195,7 @@ export default function CentuariNavbar() {
               </div>
             </div>
 
-            {/* Right Side - Desktop */}
             <div className="hidden md:flex items-center gap-3">
-              {/* Search Bar */}
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-blue-400" />
                 <Input
@@ -217,11 +215,7 @@ export default function CentuariNavbar() {
               </div>
 
               {/* Login Button */}
-              <a href="#login">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/20">
-                  Login to Centuari
-                </Button>
-              </a>
+              <Button variant={"primary"}>Login to Centuari</Button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -263,7 +257,6 @@ export default function CentuariNavbar() {
           )}
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div
             ref={mobileMenuRef}

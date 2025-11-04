@@ -7,9 +7,11 @@ import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
 import CentuariNavbar from "@/components/centuari-navbar";
 import { CentuariTable } from "@/components/centuari-table";
+import { CentuariTokenCard } from "@/components/centuari-token-card";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { IcDollarCentuari } from "@/components/icons/ic-dollar-centuari";
 import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, Search, X } from "lucide-react";
 
@@ -226,6 +228,30 @@ export default function Home() {
       <div className="w-full mt-5">
         <CentuariTable />
       </div>
+      <div className="w-full mt-10 grid grid-cols-3 gap-4">
+        <CentuariTokenCard />
+        <CentuariTokenCard />
+        <CentuariTokenCard />
+        <CentuariTokenCard />
+        <div>
+          <div className="space-x-2 space-y-2">
+            <Button variant={"primary-dark"} disabled>
+              Login To Centuari
+            </Button>
+            <Button variant={"primary"}>Login To Centuari</Button>
+            <Button variant={"secondary"}>Login To Centuari</Button>
+          </div>
+          <div className="mt-2">
+            <Badge
+              variant="outline"
+              className="border-primary-blue-70 bg-primary-blue-base/20 text-primary-blue-50"
+            >
+              Label Text
+            </Badge>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
+``;
