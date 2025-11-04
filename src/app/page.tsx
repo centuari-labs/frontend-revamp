@@ -13,7 +13,23 @@ import { IcDollarCentuari } from "@/components/icons/ic-dollar-centuari";
 import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { InfoIcon, Search, X } from "lucide-react";
+
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/centuari-eth.png", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
+  { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
+  {
+    logo: "/tokens/centuari-centuari.png",
+    value: "centuari",
+    label: "Centuari",
+  },
+];
 
 export default function Home() {
   return (
@@ -241,17 +257,26 @@ export default function Home() {
             <Button variant={"primary"}>Login To Centuari</Button>
             <Button variant={"secondary"}>Login To Centuari</Button>
           </div>
-          <div className="mt-2">
-            <Badge
-              variant="outline"
-              className="border-primary-blue-70 bg-primary-blue-base/20 text-primary-blue-50"
-            >
-              Label Text
-            </Badge>
+          <div className="mt-2 flex gap-2">
+            <Badge variant="primary">Label Text</Badge>
+            <Badge variant="success">Label Text</Badge>
+            <Badge variant="warning">Label Text</Badge>
+            <Badge variant="error">Label Text</Badge>
+            <Badge variant="danger">Label Text</Badge>
+            <Badge variant="secondary">Label Text</Badge>
+            <Badge variant="gray">Label Text</Badge>
           </div>
         </div>
+      </div>
+      <div className="w-full mt-10">
+        <MultiSelect
+          options={tokenList}
+          onValueChange={(values) => console.log(values)}
+          placeholder="Select Coins"
+          variant="default"
+          maxCount={2}
+        />
       </div>
     </main>
   );
 }
-``;
