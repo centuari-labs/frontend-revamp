@@ -1,11 +1,11 @@
+'use client';
+
 import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,7 +26,9 @@ export function CentuariDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Sticky Footer Dialog</Button>
+        <Button variant="primary-dark" className="flex-1">
+          Start Earning
+        </Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
         <DialogHeader className="contents space-y-0 text-left">

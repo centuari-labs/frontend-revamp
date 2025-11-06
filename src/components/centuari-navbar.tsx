@@ -6,108 +6,134 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import gsap from "gsap";
 
-export default function CentuariNavbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState("Earn & Borrow");
+interface NavItem {
+  name: string;
+  href: string;
+}
 
-  const mobileMenuRef = useRef(null);
-  const mobileSearchRef = useRef(null);
-  const navItemsRef = useRef<any[]>([]);
-  const desktopNavRef = useRef<any>([]);
-  const indicatorRef = useRef(null);
+const NAV_ITEMS: readonly NavItem[] = [
+  { name: "Earn & Borrow", href: "#earn" },
+  { name: "Portfolio", href: "#portfolio" },
+  { name: "Points", href: "#points" },
+] as const;
+
+export default function CentuariNavbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [activeItem, setActiveItem] = useState<string>("Earn & Borrow");
+
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const navItemsRef = useRef<(HTMLAnchorElement | null)[]>([]);
+  const desktopNavRef = useRef<(HTMLAnchorElement | null)[]>([]);
+  const indicatorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const navItems = [
-    { name: "Earn & Borrow", href: "#earn" },
-    { name: "Portfolio", href: "#portfolio" },
-    { name: "Points", href: "#points" },
-  ];
-
   useEffect(() => {
-    const activeIndex = navItems.findIndex((item) => item.name === activeItem);
-    const activeElement = desktopNavRef.current[activeIndex];
+    const updateIndicator = () => {
+      const activeIndex = NAV_ITEMS.findIndex(
+        (item) => item.name === activeItem
+      );
+      const activeElement = desktopNavRef.current[activeIndex];
 
-    if (activeElement && indicatorRef.current) {
-      const { offsetLeft, offsetWidth } = activeElement;
+      if (activeElement && indicatorRef.current) {
+        const { offsetLeft, offsetWidth } = activeElement;
 
-      gsap.to(indicatorRef.current, {
-        x: offsetLeft,
-        width: offsetWidth,
-        duration: 0.4,
-        ease: "power2.out",
-      });
-    }
+        gsap.to(indicatorRef.current, {
+          x: offsetLeft,
+          width: offsetWidth,
+          duration: 0.4,
+          ease: "power2.out",
+        });
+      } else if (indicatorRef.current) {
+        gsap.to(indicatorRef.current, {
+          x: 0,
+          width: 0,
+          duration: 0.2,
+          ease: "power2.in",
+        });
+      }
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
   }, [activeItem]);
 
   // GSAP Animation for mobile menu
   useEffect(() => {
-    if (mobileMenuRef.current) {
-      if (isMenuOpen) {
-        gsap.fromTo(
-          mobileMenuRef.current,
-          { height: 0, opacity: 0 },
-          { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out" }
-        );
-        gsap.fromTo(
-          navItemsRef.current,
-          { x: -20, opacity: 0 },
-          {
-            x: 0,
-            opacity: 1,
-            duration: 0.3,
-            stagger: 0.1,
-            ease: "power2.out",
-            delay: 0.1,
-          }
-        );
-      } else {
-        gsap.to(mobileMenuRef.current, {
-          height: 0,
-          opacity: 0,
-          duration: 0.2,
-          ease: "power2.in",
-        });
-      }
+    if (!mobileMenuRef.current) return;
+
+    if (isMenuOpen) {
+      gsap.fromTo(
+        mobileMenuRef.current,
+        { height: 0, opacity: 0 },
+        { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out" }
+      );
+      const items = navItemsRef.current.filter(
+        (item): item is HTMLAnchorElement => item !== null
+      );
+      gsap.fromTo(
+        items,
+        { x: -20, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.3,
+          stagger: 0.1,
+          ease: "power2.out",
+          delay: 0.1,
+        }
+      );
+    } else {
+      gsap.to(mobileMenuRef.current, {
+        height: 0,
+        opacity: 0,
+        duration: 0.2,
+        ease: "power2.in",
+      });
     }
   }, [isMenuOpen]);
 
   useEffect(() => {
-    if (mobileSearchRef.current) {
-      if (isSearchOpen) {
-        gsap.fromTo(
-          mobileSearchRef.current,
-          { height: 0, opacity: 0, y: -10 },
-          {
-            height: "auto",
-            opacity: 1,
-            y: 0,
-            duration: 0.3,
-            ease: "power2.out",
-          }
-        );
-      } else {
-        gsap.to(mobileSearchRef.current, {
-          height: 0,
-          opacity: 0,
-          y: -10,
-          duration: 0.2,
-          ease: "power2.in",
-        });
-      }
+    if (!mobileSearchRef.current) return;
+
+    if (isSearchOpen) {
+      gsap.fromTo(
+        mobileSearchRef.current,
+        { height: 0, opacity: 0, y: -10 },
+        {
+          height: "auto",
+          opacity: 1,
+          y: 0,
+          duration: 0.3,
+          ease: "power2.out",
+        }
+      );
+    } else {
+      gsap.to(mobileSearchRef.current, {
+        height: 0,
+        opacity: 0,
+        y: -10,
+        duration: 0.2,
+        ease: "power2.in",
+      });
     }
   }, [isSearchOpen]);
 
-  const handleNavClick = (itemName: string) => {
+  const handleNavClick = (itemName: string): void => {
     setActiveItem(itemName);
     setIsMenuOpen(false);
   };
 
+  const toggleMenu = (): void => setIsMenuOpen((prev) => !prev);
+  const toggleSearch = (): void => setIsSearchOpen((prev) => !prev);
+
   useEffect(() => {
-    const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
-      const hotkey =
-        (isMac ? event.metaKey : event.ctrlKey) && event.key === "k";
+      const key = event.key.toLowerCase();
+      const hotkey = (isMac ? event.metaKey : event.ctrlKey) && key === "k";
 
       if (hotkey && inputRef.current) {
         event.preventDefault();
@@ -115,31 +141,34 @@ export default function CentuariNavbar() {
       }
     };
 
-    document.addEventListener("keydown", handleKeyPress as any);
-
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyPress as any);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
-      <nav className="sticky top-0 z-50 backdrop-blur-sm">
-        {/* <div className="px-4 sm:px-6 lg:px-8"> */}
-        <div>
+    <nav className="fixed top-0 left-0 right-0 z-50">
+      <div className="max-w-[1440px] mx-auto w-full">
+        <div className="px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-5 md:bg-white/5 px-4 py-1.5 rounded-xl md:border border-white/5">
+            <div className="flex items-center gap-5 md:bg-white/5 px-4 py-1.5 rounded-xl border border-white/5">
               <img src="/centuari-logo.png" alt="Logo" className="w-8 h-8" />
 
               <div className="hidden md:flex items-center space-x-1 relative">
                 <div
                   ref={indicatorRef}
-                  className="absolute h-10 bg-white/5 rounded-lg transition-colors"
-                  style={{ left: 0, top: "50%", transform: "translateY(-50%)" }}
+                  className="absolute h-10 bg-white/5 rounded-lg transition-colors pointer-events-none"
+                  style={{
+                    left: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 0,
+                  }}
                 />
 
-                {navItems.map((item, index) => (
+                {NAV_ITEMS.map((item, index) => (
                   <a
                     key={item.name}
                     href={item.href}
@@ -155,8 +184,8 @@ export default function CentuariNavbar() {
                     onMouseEnter={(e) => {
                       if (activeItem !== item.name) {
                         gsap.to(e.currentTarget, {
-                          y: 0,
-                          duration: 0.2,
+                          y: -2,
+                          duration: 0.18,
                           ease: "power2.out",
                         });
                       }
@@ -165,7 +194,7 @@ export default function CentuariNavbar() {
                       if (activeItem !== item.name) {
                         gsap.to(e.currentTarget, {
                           y: 0,
-                          duration: 0.2,
+                          duration: 0.18,
                           ease: "power2.out",
                         });
                       }
@@ -203,14 +232,18 @@ export default function CentuariNavbar() {
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
               <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                onClick={toggleSearch}
                 className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
+                aria-label="Toggle search"
+                aria-expanded={isSearchOpen}
               >
                 <Search className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={toggleMenu}
                 className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
+                aria-label="Toggle menu"
+                aria-expanded={isMenuOpen}
               >
                 {isMenuOpen ? (
                   <X className="w-5 h-5" />
@@ -245,7 +278,7 @@ export default function CentuariNavbar() {
             className="md:hidden border-t border-slate-800 overflow-hidden"
           >
             <div className="px-4 pt-2 pb-3 space-y-1">
-              {navItems.map((item, index) => (
+              {NAV_ITEMS.map((item, index) => (
                 <a
                   key={item.name}
                   href={item.href}
@@ -270,7 +303,7 @@ export default function CentuariNavbar() {
             </div>
           </div>
         )}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }

@@ -10,6 +10,7 @@ import Image from "next/image";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { ArrowRight, InfoIcon } from "lucide-react";
 import { CentuariTypography } from "./centuari-typography";
+import { CentuariDialog } from "./centuari-dialog";
 
 export const CentuariTokenCard = () => {
   return (
@@ -56,9 +57,7 @@ export const CentuariTokenCard = () => {
           <Button variant="secondary" type="submit" className="flex-1">
             Borrow
           </Button>
-          <Button variant="primary-dark" className="flex-1">
-            Start Earning
-          </Button>
+          <CentuariDialog />
         </div>
         <Button
           variant="ghost"
