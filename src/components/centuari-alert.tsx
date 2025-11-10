@@ -1,5 +1,3 @@
-import { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from "lucide-react";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "./ui/button";
 
@@ -8,22 +6,29 @@ export function CentuariAlert({
   description,
   variant,
   icon,
+  className,
+  action,
 }: {
+  variant: "destructive" | "default";
   text: string;
-  description?: string;
-  variant?: "default" | "success" | "destructive" | "warning";
+  description: string;
   icon?: React.ReactNode;
+  className?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <Alert variant={variant} className="w-full max-w-md">
-      {icon}
-      <div className="flex items-center justify-between">
+    <Alert
+      variant={variant || "default"}
+      className={`flex items-center justify-between [&>svg]:translate-y-0 ${className}`}
+    >
+      <div className="flex items-center gap-2">
+        {icon}
         <div>
-          <AlertTitle>{text}</AlertTitle>
-          <AlertDescription>{description}</AlertDescription>
+          <AlertTitle className="font-semibold">{text}</AlertTitle>
+          <AlertDescription className="text-xs">{description}</AlertDescription>
         </div>
-        <Button>Deposit</Button>
       </div>
+      {action && <div>{action}</div>}
     </Alert>
   );
 }

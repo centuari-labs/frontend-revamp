@@ -27,7 +27,7 @@ export default function Page() {
                 </CentuariTypography>
                 <CentuariTypography className="text-2xl font-semibold mt-1">
                   {(() => {
-                    const totalBalance = 8910.11; // nanti ganti dari API
+                    const totalBalance = 8910.11; // nanti ganti dari API`
                     const formatted = new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: "USD",

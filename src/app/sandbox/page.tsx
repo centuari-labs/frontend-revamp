@@ -3,7 +3,7 @@
 import { CentuariAlert } from "@/components/centuari-alert";
 import { CentuariCalender } from "@/components/centuari-calender";
 import { CentuariChart } from "@/components/centuari-chart";
-import { CentuariDialog } from "@/components/centuari-dialog";
+import { CentuariBorrowDialog } from "@/components/centuari-borrow-dialog";
 import HealthFactor from "@/components/centuari-health-factor";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariInputExample } from "@/components/centuari-input-example";
@@ -345,7 +345,7 @@ export default function Sandbox() {
           </Tabs>
         </div>
       </div>
-      <CentuariDialog />
+      <CentuariBorrowDialog />
       <div className="mt-10">
         <CentuariCalender />
       </div>

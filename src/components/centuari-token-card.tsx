@@ -10,7 +10,9 @@ import Image from "next/image";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { ArrowRight, InfoIcon } from "lucide-react";
 import { CentuariTypography } from "./centuari-typography";
-import { CentuariDialog } from "./centuari-dialog";
+import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
+import { CentuariLendDialog } from "./centuari-lend-dialog";
+import { CentuariTxDialog } from "./centuari-tx-dialog";
 
 export const CentuariTokenCard = () => {
   return (
@@ -52,12 +54,10 @@ export const CentuariTokenCard = () => {
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col px-0">
+      <CardFooter className="flex flex-col px-0 z-50">
         <div className="flex gap-2 w-full">
-          <Button variant="secondary" type="submit" className="flex-1">
-            Borrow
-          </Button>
-          <CentuariDialog />
+          <CentuariBorrowDialog />
+          <CentuariLendDialog />
         </div>
         <Button
           variant="ghost"
@@ -65,6 +65,16 @@ export const CentuariTokenCard = () => {
         >
           View Market for Details <ArrowRight size={12} />
         </Button>
+        {/* <CentuariTxDialog
+          type="success"
+          title="Borrow Successful"
+          description="Your transaction has been processed successfully. You can view the details in your wallet."
+        />
+        <CentuariTxDialog
+          type="failed"
+          title="Borrow Failed"
+          description="Something went wrong while processing your borrow. Please try again or check your wallet for details."
+        /> */}
       </CardFooter>
       <div className="pointer-events-none absolute w-[568px] h-[450px] top-[96px] left-[-90px] bg-[#1D7656]/10 blur-[264px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       <div className="pointer-events-none absolute w-[448px] h-[216px] top-[350px] left-[-35px] bg-[#37B48B]/50 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
