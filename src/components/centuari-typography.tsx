@@ -21,6 +21,25 @@ const CentuariVariant = [
   "c2",
   "l1",
   "l2",
+
+  "heading-xl",
+  "heading-lg",
+  "heading-md",
+  "heading-sm",
+  "title-xl",
+  "title-lg",
+  "title-md",
+  "title-sm",
+  "body-xl",
+  "body-lg",
+  "body-md",
+  "body-sm",
+  "subheading-lg",
+  "subheading-md",
+  "subheading-sm",
+  "label-lg",
+  "label-md",
+  "label-sm",
 ] as const;
 
 const CentuariColor = [
@@ -82,6 +101,70 @@ export const CentuariTypography: CentuariComponent = React.forwardRef<
             variant === "b3" && ["text-sm font-normal"],
             variant === "c1" && ["text-xs"],
             variant === "c2" && ["text-[11px] leading-[14px]"],
+
+            // Heading styles
+            variant === "heading-xl" && [
+              "text-[40px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "heading-lg" && [
+              "text-[32px] font-semibold leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "heading-md" && [
+              "text-[24px] font-semibold leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "heading-sm" && [
+              "text-[18px] font-semibold leading-[1.2] tracking-[-0.01em]",
+            ],
+
+            // Title styles
+            variant === "title-xl" && [
+              "text-[18px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "title-lg" && [
+              "text-[16px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "title-md" && [
+              "text-[14px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "title-sm" && [
+              "text-[12px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+
+            // Body styles
+            variant === "body-xl" && [
+              "text-[18px] font-normal leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "body-lg" && [
+              "text-[16px] font-normal leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "body-md" && [
+              "text-[14px] font-normal leading-[140%] tracking-[-0.01em]",
+            ],
+            variant === "body-sm" && [
+              "text-[12px] font-normal leading-[1.2] tracking-[-0.01em]",
+            ],
+
+            // Sub-heading styles
+            variant === "subheading-lg" && [
+              "text-[12px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "subheading-md" && [
+              "text-[11px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "subheading-sm" && [
+              "text-[10px] font-medium leading-[140%] tracking-[-0.01em]",
+            ],
+
+            // Label styles
+            variant === "label-lg" && [
+              "text-[16px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "label-md" && [
+              "text-[14px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
+            variant === "label-sm" && [
+              "text-[12px] font-medium leading-[1.2] tracking-[-0.01em]",
+            ],
           ],
           [
             color === "primary" && ["text-white"],

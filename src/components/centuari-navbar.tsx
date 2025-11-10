@@ -5,6 +5,8 @@ import { Search, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import gsap from "gsap";
+import { CentuariButton } from "./centuari-button";
+import { CentuariConnectWallet } from "./centuari-connect-wallet";
 
 interface NavItem {
   name: string;
@@ -225,8 +227,7 @@ export default function CentuariNavbar() {
                 </div>
               </div>
 
-              {/* Login Button */}
-              <Button variant={"primary"}>Login to Centuari</Button>
+              <CentuariConnectWallet />
             </div>
 
             {/* Mobile Menu Button */}
@@ -295,9 +296,13 @@ export default function CentuariNavbar() {
               ))}
               <div className="pt-2">
                 <a href="#login" className="block">
-                  <Button variant={"primary"} className="w-full">
+                  {/* <Button variant={"primary"} className="w-full relative">
+                    <div className="absolute inset-x-0 h-px w-1/2 mx-auto top-0 shadow-2xl bg-gradient-to-r from-transparent via-white/50 to-transparent" />
                     Login to Centuari
-                  </Button>
+                  </Button> */}
+                  <CentuariButton variant="primary" className="w-full">
+                    Login to Centuari
+                  </CentuariButton>
                 </a>
               </div>
             </div>

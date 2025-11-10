@@ -23,9 +23,7 @@ import { Label } from "./ui/label";
 import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
-
-// If you actually use this later, remove this unused import or wire it up
-// import { SelectSingleToken } from "./select-single-token";
+import { CentuariButton } from "./centuari-button";
 
 type ViewMode = "lend" | "add-collateral";
 
@@ -327,11 +325,11 @@ export function CentuariLendDialog() {
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-4">
           <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <CentuariButton variant="secondary">Cancel</CentuariButton>
           </DialogClose>
-          <Button type="button" variant={"primary"} className="flex-1">
+          <CentuariButton type="button" variant={"primary"} className="flex-1">
             {viewMode === "lend" ? "Confirm Lend" : "Confirm Add Collateral"}
-          </Button>
+          </CentuariButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
