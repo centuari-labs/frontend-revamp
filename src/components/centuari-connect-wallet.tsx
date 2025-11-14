@@ -28,7 +28,7 @@ export function CentuariConnectWallet() {
             <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
           </div>
           <div className="mt-6 flex flex-col gap-4 mb-8">
-            <CentuariTypography className="text-3xl font-semibold">
+            <CentuariTypography variant="heading-md">
               Connect Centuari With Your Wallet
             </CentuariTypography>
           </div>
