@@ -34,7 +34,7 @@ const inputVariants = cva("", {
     size: {
       small: "h-8 text-sm",
       medium: "h-9 text-base",
-      large: "h-10 text-lg",
+      large: "h-9 text-lg",
     },
   },
   defaultVariants: {
@@ -61,7 +61,7 @@ export function CentuariInput({
 }: CentuariInputProps) {
   return (
     <div className={containerClassName}>
-      <div className={"mb-3 flex items-center justify-between"}>
+      <div className={"mb-1.5 flex items-center justify-between"}>
         {label && <Label htmlFor={id}>{label}</Label>}
         {balanceText && (
           <div

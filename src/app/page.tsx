@@ -6,7 +6,7 @@ import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centua
 export default function Page() {
   return (
     <div className="relative w-full flex justify-center mt-24">
-      <div>
+      <div className="max-w-7xl w-full px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-0">
           <div>
             <CentuariTypography className="text-transparent text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">

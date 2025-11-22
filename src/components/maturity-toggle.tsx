@@ -1,8 +1,10 @@
+"use client";
 import * as React from "react";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
-export function MaturityToggle() {
+export function MaturityToggle({ className }: { className?: string }) {
   const [value, setValue] = React.useState("7 Day");
 
   return (
@@ -11,7 +13,7 @@ export function MaturityToggle() {
       variant="outline"
       spacing={2}
       size={"lg"}
-      className="w-full"
+      className={cn("w-full", className)}
       value={value}
       onValueChange={(newValue) => {
         if (newValue) setValue(newValue);
@@ -22,7 +24,7 @@ export function MaturityToggle() {
           key={item}
           value={item}
           aria-label={`Toggle ${item}`}
-          className="data-[state=on]:bg-primary-blue-base/20 data-[state=on]:border-primary-blue-base flex-1"
+          className="data-[state=on]:bg-primary-blue-base/20 h-9 data-[state=on]:border-primary-blue-base flex-1"
         >
           {item}
         </ToggleGroupItem>

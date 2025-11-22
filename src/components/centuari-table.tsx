@@ -13,7 +13,13 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  MoreHorizontal,
+  Pencil,
+  Trash,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,83 +31,197 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Image from "next/image";
+import { CentuariBadge } from "./centuari-badge";
+import { AmendDialog } from "./amend-dialog";
 
-const data: Payment[] = [
+const data: PositionProps[] = [
   {
-    id: "m5gr84i9",
-    amount: 316,
-    status: "success",
-    email: "ken99@example.com",
+    id: "a1b2c3d4",
+    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenSymbol: "USDT",
+    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenSymbol: "USDC",
+    amount: 500,
+    apr: 0.05,
+    healthFactor: "0.0 ~ Safe",
+    maturity: "22 Sep 2024",
+    createdAt: "22 Jun 2024",
+    status: "pending",
   },
   {
     id: "3u1reuv4",
-    amount: 242,
-    status: "success",
-    email: "Abe45@example.com",
+    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenSymbol: "USDT",
+    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenSymbol: "USDC",
+    amount: 500,
+    apr: 0.05,
+    maturity: "22 Sep 2024",
+    createdAt: "22 Jun 2024",
+    healthFactor: "0.0 ~ Safe",
+    status: "pending",
   },
   {
     id: "derv1ws0",
-    amount: 837,
-    status: "processing",
-    email: "Monserrat44@example.com",
+    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenSymbol: "USDT",
+    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenSymbol: "USDC",
+    amount: 500,
+    apr: 0.05,
+    maturity: "22 Sep 2024",
+    createdAt: "22 Jun 2024",
+    healthFactor: "0.0 ~ Safe",
+    status: "pending",
   },
   {
     id: "5kma53ae",
-    amount: 874,
-    status: "success",
-    email: "Silas22@example.com",
+    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenSymbol: "USDT",
+    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenSymbol: "USDC",
+    amount: 500,
+    apr: 0.05,
+    maturity: "22 Sep 2024",
+    healthFactor: "0.0 ~ Safe",
+    createdAt: "22 Jun 2024",
+    status: "pending",
   },
   {
     id: "bhqecj4p",
-    amount: 721,
-    status: "failed",
-    email: "carmella@example.com",
+    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenSymbol: "USDT",
+    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenSymbol: "USDC",
+    amount: 500,
+    apr: 0.05,
+    maturity: "22 Sep 2024",
+    healthFactor: "0.0 ~ Safe",
+    createdAt: "22 Jun 2024",
+    status: "pending",
   },
 ];
 
-export type Payment = {
+export type PositionProps = {
   id: string;
+  collateralTokenImg?: string;
+  collateralTokenSymbol?: string;
+  loanTokenImg?: string;
+  loanTokenSymbol?: string;
   amount: number;
+  apr?: number;
+  maturity?: string;
+  createdAt?: string;
+  healthFactor?: string;
   status: "pending" | "processing" | "success" | "failed";
-  email: string;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+const ActionCell: React.FC<{ row: PositionProps }> = ({ row }) => {
+  return (
+    <div className="flex gap-1 items-center">
+      <AmendDialog />
+      <Button variant="secondary" size="icon">
+        <Trash size={14} />
+      </Button>
+    </div>
+  );
+};
+
+export const columns: ColumnDef<PositionProps>[] = [
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "email",
-    header: ({ column }) => {
+    accessorKey: "collateralTokenSymbol",
+    header: "Collateral Token",
+    cell: ({ row }) => {
+      const collateralTokenImg = row.original.collateralTokenImg;
+      const collateralTokenSymbol = row.original.collateralTokenSymbol;
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Email
-          <ArrowUpDown />
-        </Button>
+        <div className="flex items-center gap-2">
+          {collateralTokenImg && (
+            <Image
+              src={collateralTokenImg}
+              alt={collateralTokenSymbol || ""}
+              width={24}
+              height={24}
+            />
+          )}
+          <span>{collateralTokenSymbol}</span>
+        </div>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+  },
+  {
+    accessorKey: "loanTokenSymbol",
+    header: "Loan Token",
+    cell: ({ row }) => {
+      const loanTokenImg = row.original.loanTokenImg;
+      const loanTokenSymbol = row.original.loanTokenSymbol;
+      return (
+        <div className="flex items-center gap-2">
+          {loanTokenImg && (
+            <Image
+              src={loanTokenImg}
+              alt={loanTokenSymbol || ""}
+              width={24}
+              height={24}
+            />
+          )}
+          <span>{loanTokenSymbol}</span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    header: "Amount Borrowed",
+    cell: ({ row }) => `$${row.original.amount.toFixed(2)}`,
+  },
+  {
+    accessorKey: "apr",
+    header: "Target APR %",
+    cell: ({ row }) => `${(row.original.apr! * 100).toFixed(2)}%`,
+  },
+  {
+    accessorKey: "maturity",
+    header: "Maturity",
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created At",
+  },
+  {
+    accessorKey: "healthFactor",
+    header: "Health Factor",
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-
-      return <div className="text-right font-medium">{formatted}</div>;
+      const healthFactor = row.original.healthFactor;
+      return (
+        <CentuariBadge variant={"secondary"} className="uppercase text-white">
+          {healthFactor}
+        </CentuariBadge>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.status;
+      return (
+        <CentuariBadge
+          variant={"secondary"}
+          isDot={true}
+          className="uppercase text-white"
+        >
+          {status}
+        </CentuariBadge>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return <ActionCell row={row.original} />;
     },
   },
 ];
@@ -136,16 +256,6 @@ export function CentuariTable() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-      </div>
       <div className="overflow-hidden rounded-md">
         <Table>
           <TableHeader>
@@ -153,7 +263,19 @@ export function CentuariTable() {
               <TableRow key={headerGroup.id} className="bg-white/5">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className={`text-sm text-muted-foreground font-normal ${
+                        headerGroup.headers[0].id === header.id
+                          ? "rounded-l-sm"
+                          : ""
+                      } ${
+                        headerGroup.headers[headerGroup.headers.length - 1]
+                          .id === header.id
+                          ? "rounded-r-sm"
+                          : ""
+                      }`}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -176,7 +298,7 @@ export function CentuariTable() {
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="border border-transparent"
+                      className="border border-transparent py-1"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -199,7 +321,7 @@ export function CentuariTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      {/* <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -222,7 +344,7 @@ export function CentuariTable() {
             Next
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

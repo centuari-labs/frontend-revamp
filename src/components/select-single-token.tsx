@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import {
   Select,
@@ -20,7 +22,7 @@ export function SelectSingleToken() {
   const [selectedToken, setSelectedToken] = React.useState("usdt");
 
   return (
-    <div className="w-full space-y-2 mt-5">
+    <div className="w-full space-y-2 mt-3.5">
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>Collateral Asset</Label>
         <div>
@@ -37,11 +39,11 @@ export function SelectSingleToken() {
           id={id}
           type="text"
           placeholder="Enter Collateral Amount"
-          className="peer h-11 pr-20 pl-28 text-base bg-[#1a1d24] border-[#2a2e38] focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none"
+          className="peer h-9 pr-20 pl-28 text-base bg-[#1a1d24] border-[#2a2e38] focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none"
         />
         <div className="absolute inset-y-0 left-1 flex items-center">
           <Select value={selectedToken} onValueChange={setSelectedToken}>
-            <SelectTrigger className="h-auto w-auto border-0 bg-transparent px-2 py-0 focus:ring-0 focus:ring-offset-0 gap-1">
+            <SelectTrigger className="!h-7 w-auto border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1">
               <SelectValue placeholder="Select Token" />
             </SelectTrigger>
             <SelectContent className="bg-white/5 backdrop-blur-[140px]">
