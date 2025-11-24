@@ -2,7 +2,7 @@
 FROM node:22-alpine AS builder
 
 # Install pnpm
-RUN corepack enable pnpm && corepack prepare pnpm@10.23.0 --activate
+RUN corepack enable pnpm && corepack use pnpm@10.23.0
 
 WORKDIR /app
 
@@ -17,6 +17,7 @@ COPY . .
 # Disable Next.js linting & type-check inside Docker
 ENV NEXT_DISABLE_ESLINT=1
 ENV NEXT_DISABLE_TYPECHECK=1
+ENV NEXT_PRIVATE_TURBOPACK=false
 
 # Build the Next.js app
 RUN pnpm build
@@ -25,7 +26,7 @@ RUN pnpm build
 FROM node:22-alpine AS runner
 
 # Install pnpm (optional, only needed if using `pnpm` directly at runtime)
-RUN corepack enable pnpm && corepack prepare pnpm@10.23.0 --activate
+RUN corepack enable pnpm && corepack use pnpm@10.23.0
 
 WORKDIR /app
 
