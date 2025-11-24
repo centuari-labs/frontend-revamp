@@ -1,10 +1,12 @@
 "use client";
 
+import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
 import { Menu, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useConnection, useDisconnect } from "wagmi";
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
 
@@ -42,6 +44,9 @@ export default function CentuariNavbar() {
 	const desktopNavRef = useRef<(HTMLAnchorElement | null)[]>([]);
 	const indicatorRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+
+	const { authenticated, logout } = usePrivy();
+	const { disconnect } = useDisconnect();
 
 	useEffect(() => {
 		const updateIndicator = () => {
@@ -244,7 +249,14 @@ export default function CentuariNavbar() {
 								</div>
 							</div>
 
-							<CentuariConnectWallet />
+							{authenticated ? (
+                <CentuariButton variant="primary" onClick={() => {
+                  logout()
+                  disconnect()
+                }}>Logout</CentuariButton>
+              ) : (
+                <CentuariConnectWallet />
+              )}
 						</div>
 
 						{/* Mobile Menu Button */}

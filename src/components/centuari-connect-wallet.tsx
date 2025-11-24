@@ -1,9 +1,22 @@
 /** biome-ignore-all lint/performance/noImgElement: <explanation> */
 "use client";
 
+import {
+	type BaseConnectedWalletType,
+	useActiveWallet,
+	useLoginWithSiwe,
+	usePrivy,
+	useWallets,
+} from "@privy-io/react-auth";
 import { Search, X } from "lucide-react";
-import { useId } from "react";
-import { type Connector, useChainId, useConnect, useConnectors } from "wagmi";
+import { useEffect, useId } from "react";
+import {
+	type Connector,
+	useChainId,
+	useConnect,
+	useConnection,
+	useConnectors,
+} from "wagmi";
 import {
 	Dialog,
 	DialogContent,
@@ -17,33 +30,61 @@ import { ScrollArea } from "./ui/scroll-area";
 
 export function CentuariConnectWallet() {
 	const id = useId();
-	const { connect } = useConnect();
+	const { connectAsync } = useConnect();
 	const chainId = useChainId();
-	// const { generateSiweMessage, loginWithSiwe } = useLoginWithSiwe();
-	// const { wallets } = useWallets();
-	// const { connectWallet } = useConnectWallet();
-
-	// const chainId = useChainId();
-	// const { connectors, connect } = useConnect();
+	const { setActiveWallet } = useActiveWallet();
+	const { address: wagmiAddress, isConnected } = useConnection();
+	const { wallets } = useWallets();
+	const { authenticated } = usePrivy();
+	const { generateSiweMessage, loginWithSiwe } = useLoginWithSiwe();
 
 	const connectors = useConnectors();
 
 	const handleLogin = async (connector: Connector) => {
-		connect({ connector, chainId });
-		// connectWallet('injected')
-		// console.log('mengapa')
-		// console.log("activeWallet", wallets);
-		// if (!wallets?.length) return;
-		// const activeWallet = wallets[0];
-		// const message = await generateSiweMessage({
-		// 	address: activeWallet.address,
-		// 	chainId: "eip155:1",
-		// });
-		// const signature = await activeWallet.sign(message);
-		// await loginWithSiwe({ signature, message });
+		connectAsync({ connector, chainId }).then(async (result) => {
+			const activeWallet = result.accounts[0];
+
+			const walletInPrivy = wallets.find(
+				(wallet) => wallet.address === activeWallet,
+			);
+
+			await setActiveWallet(walletInPrivy as BaseConnectedWalletType);
+
+			const message = await generateSiweMessage({
+				address: walletInPrivy?.address as string,
+				chainId: `eip155:${chainId}`,
+			});
+
+			const signature = (await walletInPrivy?.sign(message)) as string;
+			await loginWithSiwe({ signature, message });
+		});
 	};
 
-	console.log({ connectors });
+	const connectPrivy = async () => {
+		const walletInPrivy = wallets.find(
+			(wallet) => wallet.address === wagmiAddress,
+		);
+
+		if (!walletInPrivy) {
+			console.error("Wallet not found in Privy wallets");
+			return;
+		}
+
+		const message = await generateSiweMessage({
+			address: walletInPrivy?.address as string,
+			chainId: `eip155:${chainId}`,
+		});
+
+		const signature = (await walletInPrivy?.sign(message)) as string;
+		await loginWithSiwe({ signature, message });
+	};
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	useEffect(() => {
+		if (!authenticated && wagmiAddress && isConnected) {
+			connectPrivy();
+		}
+	}, [wagmiAddress, authenticated, isConnected]);
 
 	return (
 		<Dialog>
@@ -97,7 +138,6 @@ export function CentuariConnectWallet() {
 							{connectors
 								.filter((connector) => connector.id !== "injected")
 								.map((connector) => {
-									console.log(connector.icon);
 									return (
 										<button
 											type="button"
@@ -106,10 +146,7 @@ export function CentuariConnectWallet() {
 											className="px-3 py-1.5 hover:bg-white/10 cursor-pointer flex items-center gap-4"
 										>
 											<div className=" rounded-lg h-8 w-8 flex items-center justify-center">
-												<img
-													src={connector.icon || ""}
-													alt={connector.name}
-												/>
+												<img src={connector.icon || ""} alt={connector.name} />
 											</div>
 											<CentuariTypography className="text-white">
 												{connector.name}
