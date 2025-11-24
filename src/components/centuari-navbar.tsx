@@ -283,7 +283,7 @@ export default function CentuariNavbar() {
                 <a
                   key={item.name}
                   href={item.href}
-                  ref={(el) => (navItemsRef.current[index] = el)}
+                  ref={(el) => {navItemsRef.current[index] = el}}
                   onClick={() => handleNavClick(item.name)}
                   className={`block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeItem === item.name
