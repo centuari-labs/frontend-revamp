@@ -14,7 +14,7 @@ export function CentuariCalender() {
   });
 
   return (
-    <div className="bg-neutral-80/10 rounded-lg ">
+    <div className="bg-white/5 rounded-lg border">
       <Calendar
         mode="range"
         defaultMonth={dateRange?.from}
@@ -23,14 +23,30 @@ export function CentuariCalender() {
         numberOfMonths={2}
         className="shadow-sm bg-transparent"
         classNames={{
+          months:
+            "relative grid grid-cols-[1fr_0_1fr] " +
+            "after:absolute after:top-0 after:bottom-0 " +
+            "after:left-1/2 after:-translate-x-1/2 " +
+            "after:w-px after:bg-white/10",
+          month: "px-4 [&:first-child]:col-start-1 [&:last-child]:col-start-3",
           range_start: "bg-primary-blue-base/20 rounded-l-full",
           range_end: "bg-primary-blue-base/20 rounded-r-full",
           day_button:
-            "data-[range-end=true]:rounded-full! data-[range-start=true]:rounded-full! data-[range-start=true]:bg-primary-blue-base! data-[range-start=true]:text-white! data-[range-start=true]:dark:bg-primary-blue-base! data-[range-start=true]:group-data-[focused=true]/day:ring-primary-blue-base/20 data-[range-start=true]:dark:group-data-[focused=true]/day:ring-primary-blue-base/40 data-[range-end=true]:bg-primary-blue-base! data-[range-end=true]:text-white! data-[range-end=true]:dark:bg-primary-blue-base! data-[range-end=true]:group-data-[focused=true]/day:ring-primary-blue-base/20 data-[range-end=true]:dark:group-data-[focused=true]/day:ring-primary-blue-base/40 data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-primary-blue-base/20 data-[range-middle=true]:dark:bg-primary-blue-base/10 hover:rounded-full",
+            "data-[range-end=true]:rounded-full! " +
+            "data-[range-start=true]:rounded-full! " +
+            "data-[range-start=true]:bg-primary-blue-base! " +
+            "data-[range-start=true]:text-white! " +
+            "data-[range-end=true]:bg-primary-blue-base! " +
+            "data-[range-end=true]:text-white! " +
+            "data-[range-middle=true]:rounded-none " +
+            "data-[range-middle=true]:bg-primary-blue-base/20 " +
+            "hover:rounded-full",
           today:
-            "data-[selected=true]:rounded-l-none! rounded-full bg-accent! data-[selected=true]:bg-primary-blue-base/20! dark:data-[selected=true]:bg-primary-blue-base/10! [&_button[data-range-middle=true]]:bg-transparent!",
+            "data-[selected=true]:rounded-l-none! rounded-full bg-accent! " +
+            "data-[selected=true]:bg-primary-blue-base/20!",
         }}
       />
+
       <div className="flex items-center justify-end px-4 py-3 border-t border-white/5">
         <Button variant={"secondary"}>Cancel</Button>
         <Button variant={"primary"} className="ml-2">
