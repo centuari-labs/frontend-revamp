@@ -1,14 +1,18 @@
+'use client'
+
 import { CentuariTypography } from "@/components/centuari-typography";
 import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-centuari";
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export function MarketHeader() {
+  const router = useRouter()
   return (
     <div className="flex justify-between items-center w-full md:flex-items-start md:items-center gap-6 md:gap-0">
       <div className="flex items-center gap-4 cursor-pointer">
-        <ArrowLeft size={20} />
+        <ArrowLeft size={20} onClick={() => router.push('/')} />
         <div className="inline-flex items-center gap-2">
           <Image
             src={"/tokens/usdc-icon.svg"}

@@ -80,12 +80,12 @@ export default function Page() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <CentuariTokenCard />
-          <CentuariTokenCard />
-          <CentuariTokenCard />
-          <CentuariTokenCard />
-          <CentuariTokenCard />
-          <CentuariTokenCard />
+          <CentuariTokenCard token_image="/tokens/centuari-usdt.png" token_name="Tether" token_symbol="USDT" />
+          <CentuariTokenCard token_image="/tokens/usdc-icon.svg" token_name="USD Coin" token_symbol="USDC" />
+          <CentuariTokenCard token_image="/tokens/sol-icon.svg" token_name="Solana" token_symbol="SOL" />
+          <CentuariTokenCard token_image="/tokens/btc-icon.svg" token_name="Bitcoin" token_symbol="BTC" />
+          <CentuariTokenCard token_image="/tokens/eth-icon.svg" token_name="Ethereum" token_symbol="ETH" />
+          <CentuariTokenCard token_image="/tokens/chainlink-icon.svg" token_name="Chainlink" token_symbol="LINK" />
         </div>
       </div>
     </div>

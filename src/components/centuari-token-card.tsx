@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,22 +14,23 @@ import { ArrowRight, InfoIcon } from "lucide-react";
 import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
-import { CentuariTxDialog } from "./centuari-tx-dialog";
+import { useRouter } from "next/navigation";
 
-export const CentuariTokenCard = () => {
+export const CentuariTokenCard = ({token_image, token_name, token_symbol}: {token_image: string, token_name: string, token_symbol: string}) => {
+  const router = useRouter()
   return (
     <Card className="w-full min-w-[23.625rem] p-4 gap-2 bg-white/5 relative group overflow-hidden transition-all duration-300">
       <CardHeader className="gap-0 pb-0">
         <div className="flex flex-col items-center gap-4">
           <CardTitle>
             <Image
-              src={"/tokens/centuari-usdt.png"}
-              alt="token"
+              src={token_image}
+              alt={token_name}
               width={68}
               height={68}
             />
           </CardTitle>
-          <CentuariTypography variant="b1">USDT</CentuariTypography>
+          <CentuariTypography variant="b1">{token_symbol}</CentuariTypography>
         </div>
       </CardHeader>
       <CardContent className="px-0">
@@ -62,19 +65,10 @@ export const CentuariTokenCard = () => {
         <Button
           variant="ghost"
           className="w-full flex items-center justify-center mt-4 gap-2"
+          onClick={() => router.push("/market")}
         >
           View Market for Details <ArrowRight size={12} />
         </Button>
-        {/* <CentuariTxDialog
-          type="success"
-          title="Borrow Successful"
-          description="Your transaction has been processed successfully. You can view the details in your wallet."
-        />
-        <CentuariTxDialog
-          type="failed"
-          title="Borrow Failed"
-          description="Something went wrong while processing your borrow. Please try again or check your wallet for details."
-        /> */}
       </CardFooter>
       <div className="pointer-events-none absolute w-[568px] h-[450px] top-[96px] left-[-90px] bg-[#1D7656]/10 blur-[264px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       <div className="pointer-events-none absolute w-[448px] h-[216px] top-[350px] left-[-35px] bg-[#37B48B]/50 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
