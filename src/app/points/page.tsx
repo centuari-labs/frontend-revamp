@@ -174,7 +174,7 @@ export default function PointsPage() {
               </div>
               <Button
                 variant="primary"
-                className="mt-6 sm:mt-8 lg:mt-10 w-full 2xl:h-11 2xl:text-base"
+                className="mt-6 sm:mt-6 w-full 2xl:h-11 2xl:text-base"
               >
                 Create a Referral Link
               </Button>
