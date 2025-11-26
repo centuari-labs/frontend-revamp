@@ -169,7 +169,7 @@ export default function PortfolioPage() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  <Select defaultValue="all_status">
+                  <Select>
                     <SelectTrigger>
                       <Flag color="#fff" />
                       <SelectValue
