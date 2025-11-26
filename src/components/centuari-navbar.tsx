@@ -1,8 +1,10 @@
 "use client";
 
+import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
 import { Menu, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useDisconnect } from "wagmi";
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
 import { CentuariConnectWallet } from "./centuari-connect-wallet";
@@ -22,6 +24,9 @@ export default function CentuariNavbar() {
 	const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [activeItem, setActiveItem] = useState<string>("Earn & Borrow");
+
+	const { authenticated, logout } = usePrivy();
+	const { disconnect } = useDisconnect();
 
 	const mobileMenuRef = useRef<HTMLDivElement>(null);
 	const mobileSearchRef = useRef<HTMLDivElement>(null);
@@ -226,7 +231,19 @@ export default function CentuariNavbar() {
 								</div>
 							</div>
 
-							<CentuariConnectWallet />
+							{authenticated ? (
+										<CentuariButton
+											variant="primary"
+											onClick={() => {
+												logout();
+												disconnect();
+											}}
+										>
+											Logout
+										</CentuariButton>
+									) : (
+										<CentuariConnectWallet />
+									)}
 						</div>
 
 						{/* Mobile Menu Button */}
@@ -299,13 +316,19 @@ export default function CentuariNavbar() {
 							))}
 							<div className="pt-2">
 								<a href="#login" className="block">
-									{/* <Button variant={"primary"} className="w-full relative">
-                    <div className="absolute inset-x-0 h-px w-1/2 mx-auto top-0 shadow-2xl bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-                    Login to Centuari
-                  </Button> */}
-									<CentuariButton variant="primary" className="w-full">
-										Login to Centuari
-									</CentuariButton>
+									{authenticated ? (
+										<CentuariButton
+											variant="primary"
+											onClick={() => {
+												logout();
+												disconnect();
+											}}
+										>
+											Logout
+										</CentuariButton>
+									) : (
+										<CentuariConnectWallet />
+									)}
 								</a>
 							</div>
 						</div>
