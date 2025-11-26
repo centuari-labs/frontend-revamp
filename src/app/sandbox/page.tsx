@@ -1,7 +1,6 @@
 "use client";
 
-import { CentuariAlert } from "@/components/centuari-alert";
-import { CentuariCalender } from "@/components/centuari-calender";
+import { InfoIcon, Search, X } from "lucide-react";
 import { CentuariChart } from "@/components/centuari-chart";
 import { CentuariBorrowDialog } from "@/components/centuari-borrow-dialog";
 import HealthFactor from "@/components/centuari-health-factor";
@@ -13,12 +12,12 @@ import { CentuariTokenCard } from "@/components/centuari-token-card";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { IcDollarCentuari } from "@/components/icons/ic-dollar-centuari";
 import { IcMailCentuari } from "@/components/icons/ic-mail-centuari";
-import { SelectSingleToken } from "@/components/select-single-token";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InfoIcon, Search, X } from "lucide-react";
+import { CentuariAlert } from "@/components/centuari-alert";
+import { CentuariCalender } from "@/components/centuari-calender";
 
 const tokenList = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
@@ -157,13 +156,15 @@ export default function Sandbox() {
           <CentuariAlert
             text="Success!"
             description="Your changes have been saved."
-            variant="success"
+            variant="default"
+            // variant="success"
             icon={<InfoIcon />}
           />
           <CentuariAlert
             text="Warning!"
             description="Your changes have not been saved."
-            variant="warning"
+            // variant="warning"
+            variant="default"
             icon={<InfoIcon />}
           />
           <CentuariAlert

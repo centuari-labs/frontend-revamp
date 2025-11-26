@@ -1,26 +1,11 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
 import { Menu, Search, X } from "lucide-react";
-import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { useConnection, useDisconnect } from "wagmi";
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
-
-// import { CentuariConnectWallet } from "./centuari-connect-wallet";
-
-const CentuariConnectWallet = dynamic(
-	() =>
-		import("../components/centuari-connect-wallet").then(
-			(mod) => mod.CentuariConnectWallet,
-		),
-	{
-		ssr: false,
-	},
-);
+import { CentuariConnectWallet } from "./centuari-connect-wallet";
 
 interface NavItem {
 	name: string;
@@ -44,9 +29,6 @@ export default function CentuariNavbar() {
 	const desktopNavRef = useRef<(HTMLAnchorElement | null)[]>([]);
 	const indicatorRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
-
-	const { authenticated, logout } = usePrivy();
-	const { disconnect } = useDisconnect();
 
 	useEffect(() => {
 		const updateIndicator = () => {
@@ -173,12 +155,7 @@ export default function CentuariNavbar() {
 					<div className="flex items-center justify-between h-16">
 						{/* Logo */}
 						<div className="flex items-center gap-5 md:bg-white/5 px-4 py-1.5 rounded-xl border border-white/5">
-							<Image
-								src="/centuari-logo.png"
-								alt="Logo"
-								width={32}
-								height={32}
-							/>
+							<img src="/centuari-logo.png" alt="Logo" className="w-8 h-8" />
 
 							<div className="hidden md:flex items-center space-x-1 relative">
 								<div
@@ -249,14 +226,7 @@ export default function CentuariNavbar() {
 								</div>
 							</div>
 
-							{authenticated ? (
-                <CentuariButton variant="primary" onClick={() => {
-                  logout()
-                  disconnect()
-                }}>Logout</CentuariButton>
-              ) : (
-                <CentuariConnectWallet />
-              )}
+							<CentuariConnectWallet />
 						</div>
 
 						{/* Mobile Menu Button */}
