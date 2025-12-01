@@ -89,7 +89,7 @@ export function CentuariBorrowDialog() {
       <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
         <DialogHeader className="contents space-y-0 text-left">
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
-            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-[#1D7656]/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
             <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
           </div>
           <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">

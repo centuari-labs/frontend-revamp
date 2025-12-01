@@ -31,18 +31,26 @@ export const CentuariTokenCard = ({
   return (
     <Card
       id={`tour-token-card-${id}`}
-      className="w-full min-w-[23.625rem] p-4 gap-2 bg-white/5 relative group overflow-hidden transition-all duration-300"
+      className="w-full p-3 md:p-4 gap-2 bg-white/5 relative group overflow-hidden transition-all duration-300"
     >
       <CardHeader className="gap-0 pb-0">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3 md:gap-4">
           <CardTitle>
-            <Image src={token_image} alt={token_name} width={68} height={68} />
+            <Image
+              src={token_image}
+              alt={token_name}
+              width={68}
+              height={68}
+              className="w-12 h-12 md:w-[68px] md:h-[68px]"
+            />
           </CardTitle>
-          <CentuariTypography variant="b1">{token_symbol}</CentuariTypography>
+          <CentuariTypography variant="b1" className="text-sm md:text-base">
+            {token_symbol}
+          </CentuariTypography>
         </div>
       </CardHeader>
       <CardContent id={`tour-token-card-${id}-content`} className="px-0">
-        <div className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
+        <div className="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5 flex flex-col gap-3 md:gap-4">
           {[
             { label: "Borrow Rate", value: "7,2%" },
             { label: "Net APR", value: "7,2%" },
@@ -54,9 +62,9 @@ export const CentuariTokenCard = ({
                 i < 2 ? "border-b border-dashed pb-2" : ""
               }`}
             >
-              <p>{label}</p>
+              <p className="text-xs md:text-sm">{label}</p>
               <div className="flex items-center gap-1">
-                <p>{value}</p>
+                <p className="text-xs md:text-sm">{value}</p>
                 <CentuariTooltip message="Coming Soon">
                   <InfoIcon size={12} />
                 </CentuariTooltip>
@@ -72,17 +80,20 @@ export const CentuariTokenCard = ({
         </div>
         <Button
           variant="ghost"
-          className="w-full flex items-center justify-center mt-4 gap-2"
+          className="w-full flex items-center justify-center mt-3 md:mt-4 gap-2 text-xs md:text-sm"
           onClick={() => router.push("/market")}
         >
-          <span className="flex items-center gap-2" id={`tour-token-card-${id}-btn-view`}>
+          <span
+            className="flex items-center gap-2"
+            id={`tour-token-card-${id}-btn-view`}
+          >
             View Market for Details
             <ArrowRight size={12} />
           </span>
         </Button>
       </CardFooter>
       <div className="pointer-events-none absolute w-[568px] h-[450px] top-[96px] left-[-90px] bg-[#1D7656]/10 blur-[264px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="pointer-events-none absolute w-[448px] h-[216px] top-[350px] left-[-35px] bg-[#37B48B]/50 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="pointer-events-none absolute w-[448px] h-[216px] top-[350px] left-[-35px] bg-primary-blue-base/50 blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     </Card>
   );
 };

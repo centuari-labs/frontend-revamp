@@ -184,9 +184,13 @@ export default function CentuariNavbar() {
     >
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
         <div className="px-4 md:px-6">
-          <div className="flex items-center justify-between md:h-20">
-            <div className="flex items-center gap-6 bg-black/5 px-5 py-1 rounded-xl border border-white/10 backdrop-blur-sm">
-              <img src="/centuari-logo.png" alt="Logo" className="w-8 h-8" />
+          <div className="flex items-center justify-between h-16 md:h-20">
+            <div className="flex items-center gap-6 bg-black/5 px-3 md:px-5 py-1 rounded-lg md:rounded-xl border border-white/10 backdrop-blur-sm">
+              <img
+                src="/centuari-logo.png"
+                alt="Logo"
+                className="w-6 h-6 md:w-8 md:h-8"
+              />
 
               <div className="hidden md:flex items-center space-x-2 relative">
                 <div
@@ -284,7 +288,7 @@ export default function CentuariNavbar() {
               <button
                 type="button"
                 onClick={toggleSearch}
-                className="p-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
+                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
                 aria-label="Toggle search"
                 aria-expanded={isSearchOpen}
               >
@@ -293,7 +297,7 @@ export default function CentuariNavbar() {
               <button
                 type="button"
                 onClick={toggleMenu}
-                className="p-2.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
+                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200"
                 aria-label="Toggle menu"
                 aria-expanded={isMenuOpen}
               >

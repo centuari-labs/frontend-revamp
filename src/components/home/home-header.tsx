@@ -4,6 +4,7 @@ import { CentuariTypography } from "@/components/centuari-typography";
 import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-centuari";
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { formatCurrency } from "@/lib/utils";
+import Image from "next/image";
 
 export function HomeHeader() {
   const totalBalance = 8910.11;
@@ -23,38 +24,61 @@ export function HomeHeader() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-0">
-      <div>
-        <CentuariTypography className="text-transparent text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+    <div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
+      {/* Desktop dot-world background - hidden on mobile */}
+      <div className="hidden md:block absolute top-0 right-0 w-[621px] h-[240px] overflow-hidden">
+        <Image
+          src="/assets/dot-world.png"
+          alt="dot-world"
+          fill
+          className="object-cover z-50 object-right"
+        />
+      </div>
+
+      {/* Header Text - centered on mobile, left-aligned on desktop */}
+      <div className="text-center md:text-left w-full">
+        <CentuariTypography className="text-transparent text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
           Hi Centuari!, Let's
         </CentuariTypography>
-        <CentuariTypography className="text-4xl font-semibold mt-2">
+        <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
           Earning and Borrowing
         </CentuariTypography>
       </div>
-      <div id="tour-home-header" className="flex flex-col md:flex-row gap-6 md:gap-12 mt-6 md:mt-0">
-        <div id="tour-total-balance" className="mt-6 flex items-center gap-4">
-          <div className="p-3 bg-white/10 rounded-lg border border-white/5">
-            <IcWalletColorCentuari />
+
+      {/* Balance Cards - 2 column grid on mobile, horizontal on desktop */}
+      <div
+        id="tour-home-header"
+        className="grid grid-cols-2 md:flex md:flex-row gap-4 md:gap-12 w-full md:w-auto"
+      >
+        <div
+          id="tour-total-balance"
+          className="flex flex-col items-center md:flex-row md:items-center gap-3 md:gap-4"
+        >
+          <div className="p-4 md:p-0 bg-white/10 md:bg-transparent rounded-2xl md:rounded-none border border-white/5 md:border-0">
+            <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
           </div>
-          <div>
-            <CentuariTypography className="text-sm text-muted-foreground">
-              Total Balance
+          <div className="text-center md:text-left">
+            <CentuariTypography className="text-xs md:text-sm text-muted-foreground">
+              Total Deposits
             </CentuariTypography>
-            <CentuariTypography className="text-2xl font-semibold mt-1">
+            <CentuariTypography className="text-lg md:text-2xl font-semibold mt-1">
               {renderCurrency(totalBalance)}
             </CentuariTypography>
           </div>
         </div>
-        <div id="tour-active-loans" className="mt-6 flex items-center gap-4">
-          <div className="p-3 bg-white/10 rounded-lg border border-white/5">
-            <IcPieChartColorCentuari />
+
+        <div
+          id="tour-active-loans"
+          className="flex flex-col items-center md:flex-row md:items-center gap-3 md:gap-4"
+        >
+          <div className="p-4 md:p-0 bg-white/10 md:bg-transparent rounded-2xl md:rounded-none border border-white/5 md:border-0">
+            <IcPieChartColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
           </div>
-          <div>
-            <CentuariTypography className="text-sm text-muted-foreground">
+          <div className="text-center md:text-left">
+            <CentuariTypography className="text-xs md:text-sm text-muted-foreground">
               Active Loans
             </CentuariTypography>
-            <CentuariTypography className="text-2xl font-semibold mt-1">
+            <CentuariTypography className="text-lg md:text-2xl font-semibold mt-1">
               {renderCurrency(activeLoans)}
             </CentuariTypography>
           </div>
