@@ -156,8 +156,14 @@ export function LeaderboardTable() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const highlightedUser = data.find((user) => user.id === HIGHLIGHTED_USER_ID);
-  const otherUsers = data.filter((user) => user.id !== HIGHLIGHTED_USER_ID);
+  const highlightedUser = React.useMemo(
+    () => data.find((user) => user.id === HIGHLIGHTED_USER_ID),
+    []
+  );
+  const otherUsers = React.useMemo(
+    () => data.filter((user) => user.id !== HIGHLIGHTED_USER_ID),
+    []
+  );
 
   const table = useReactTable({
     data: otherUsers,
