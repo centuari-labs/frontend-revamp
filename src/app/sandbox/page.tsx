@@ -249,46 +249,6 @@ export default function Sandbox() {
       <div className="w-full mt-5">
         <CentuariTable />
       </div>
-      <div className="w-full mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <CentuariTokenCard 
-          token_image="/tokens/eth-icon.svg"
-          token_name="Ethereum"
-          token_symbol="ETH"
-        />
-        <CentuariTokenCard 
-            token_image="/tokens/usdc-icon.svg"
-            token_name="USDC"
-            token_symbol="USDC"
-          />
-        <CentuariTokenCard 
-            token_image="/tokens/usdt-icon.svg"
-            token_name="USDT"
-            token_symbol="USDT"
-          />
-        <CentuariTokenCard 
-            token_image="/tokens/btc-icon.svg"
-            token_name="Bitcoin"
-            token_symbol="BTC"
-          />
-        <div>
-          <div className="space-x-2 space-y-2">
-            <Button variant={"primary-dark"} disabled>
-              Login To Centuari
-            </Button>
-            <Button variant={"primary"}>Login To Centuari</Button>
-            <Button variant={"secondary"}>Login To Centuari</Button>
-          </div>
-          <div className="mt-2 flex gap-2">
-            <Badge variant="primary">Label Text</Badge>
-            <Badge variant="success">Label Text</Badge>
-            <Badge variant="warning">Label Text</Badge>
-            <Badge variant="error">Label Text</Badge>
-            <Badge variant="danger">Label Text</Badge>
-            <Badge variant="secondary">Label Text</Badge>
-            <Badge variant="gray">Label Text</Badge>
-          </div>
-        </div>
-      </div>
       <div className="mt-10 grid grid-cols-2 items-center gap-4 w-full">
         <MultiSelect
           options={tokenList}
