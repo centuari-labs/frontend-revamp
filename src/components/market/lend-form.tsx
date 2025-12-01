@@ -74,7 +74,6 @@ export function LendForm({ tokenList }: LendFormProps) {
                 placeholder="Select Coins"
                 variant="destructive"
                 maxCount={2}
-                popoverClassName="!bg-red-900"
               />
             </div>
             <div>

@@ -10,7 +10,7 @@ import { MobileLendBorrowButtons } from "@/components/market/mobile-lend-borrow-
 const tokenList = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
   { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
-  { logo: "/tokens/centuari-eth.png", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
   { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },

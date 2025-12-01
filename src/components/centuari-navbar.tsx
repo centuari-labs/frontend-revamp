@@ -12,6 +12,7 @@ import { CentuariButton } from "./centuari-button";
 import { CentuariConnectWallet } from "./centuari-connect-wallet";
 import { CentuariWithdrawDialog } from "./centuari-withdraw-dialog";
 import { CentuariDepositDialog } from "./centuari-deposit-dialog";
+import { CentuariLoginDialog } from "./centuari-login-dialog";
 
 interface NavItem {
   name: string;
@@ -19,7 +20,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { name: "Earn & Borrow", href: "/market" },
+  { name: "Earn & Borrow", href: "/" },
   { name: "Portfolio", href: "/portfolio" },
   { name: "Points", href: "/points" },
 ] as const;
@@ -53,7 +54,7 @@ export default function CentuariNavbar() {
   // Helper function to check if a nav item is active
   const isNavItemActive = (item: NavItem): boolean => {
     // "Earn & Borrow" should be active on both /market and /
-    if (item.href === "/market") {
+    if (item.href === "/") {
       return pathname === "/market" || pathname === "/";
     }
     return pathname === item.href;
@@ -176,9 +177,9 @@ export default function CentuariNavbar() {
   return (
     <nav
       id="tour-home-nav"
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
         isScrolled
-          ? "bg-background/80 backdrop-blur-xl border-b border-white/10"
+          ? "bg-primary-blue-90/20 backdrop-blur-xl md:border-b md:border-white/10"
           : ""
       }`}
     >
@@ -280,7 +281,7 @@ export default function CentuariNavbar() {
                   Logout
                 </CentuariButton>
               ) : (
-                <CentuariConnectWallet />
+                <CentuariLoginDialog />
               )}
             </div>
 
@@ -330,7 +331,7 @@ export default function CentuariNavbar() {
         {isMenuOpen && (
           <div
             ref={mobileMenuRef}
-            className="md:hidden border-t border-white/10 overflow-hidden bg-background/95 backdrop-blur-xl"
+            className="md:hidden z-50 rounded-b-2xl border-white/10 overflow-hidden bg-primary-blue-100 border"
           >
             <div className="px-4 pt-3 pb-4 space-y-2">
               {NAV_ITEMS.map((item, index) => (
@@ -363,7 +364,7 @@ export default function CentuariNavbar() {
                       Logout
                     </CentuariButton>
                   ) : (
-                    <CentuariConnectWallet />
+                    <CentuariLoginDialog />
                   )}
                 </a>
               </div>

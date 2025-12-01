@@ -79,12 +79,11 @@ export const CentuariTokenCard = ({
           <CentuariLendDialog />
         </div>
         <Button
-          variant="ghost"
-          className="w-full flex items-center justify-center mt-3 md:mt-4 gap-2 text-xs md:text-sm"
+          className="w-full flex items-center justify-center mt-3 md:mt-4 gap-2 text-xs md:text-sm bg-transparent hover:bg-transparent text-white"
           onClick={() => router.push("/market")}
         >
           <span
-            className="flex items-center gap-2"
+            className="relative flex items-center gap-2 group hover:after:w-full after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-white after:w-0 after:transition-all after:duration-300"
             id={`tour-token-card-${id}-btn-view`}
           >
             View Market for Details
