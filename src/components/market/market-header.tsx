@@ -37,8 +37,11 @@ export function MarketHeader() {
 
       {/* Desktop Header - Full layout with stats */}
       <div className="hidden md:flex justify-between items-center w-full">
-        <div className="flex items-center gap-4 cursor-pointer">
-          <ArrowLeft size={20} onClick={() => router.push("/")} />
+        <div
+          className="flex items-center gap-4 cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          <ArrowLeft size={20} />
           <div className="inline-flex items-center gap-2">
             <Image
               src={"/tokens/usdc-icon.svg"}
