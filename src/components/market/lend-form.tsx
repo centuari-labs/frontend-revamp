@@ -26,8 +26,11 @@ interface LendFormProps {
 
 export function LendForm({ tokenList }: LendFormProps) {
   return (
-    <Tabs defaultValue="market" className="w-full p-2 sm:p-3 md:p-3.5">
-      <TabsList className="bg-white/5 w-full rounded-lg">
+    <Tabs
+      defaultValue="market"
+      className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+    >
+      <TabsList className="bg-white/5 w-full rounded-lg md:shrink-0">
         <TabsTrigger
           value="limit"
           className="data-[state=active]:!border-none data-[state=active]:bg-transparent data-[state=active]:text-white text-white/40 rounded-md flex-1 text-xs sm:text-sm"
@@ -42,14 +45,17 @@ export function LendForm({ tokenList }: LendFormProps) {
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="limit">
-        <form action="">
-          <ScrollArea className="h-[300px] sm:h-[320px] md:h-[340px]">
+      <TabsContent
+        value="limit"
+        className="md:flex-1 md:min-h-0 md:flex md:flex-col"
+      >
+        <form action="" className="md:h-full md:flex md:flex-col">
+          <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
             <CentuariInput
               id="amount"
               label="Supply"
               size="large"
-              placeholder="Placeholder"
+              placeholder="Amount"
               leftIcon={<IcDollarCentuari size={16} />}
               rightIcon={
                 <Button variant={"link"} className="px-0" type="button">
@@ -76,20 +82,27 @@ export function LendForm({ tokenList }: LendFormProps) {
             </div>
             <TransactionSummary />
           </ScrollArea>
-          <Button type="button" variant="primary" className="w-full mt-3.5">
+          <Button
+            type="button"
+            variant="primary"
+            className="w-full mt-3.5 md:shrink-0"
+          >
             Borrow
           </Button>
         </form>
       </TabsContent>
 
-      <TabsContent value="market">
-        <form action="">
-          <ScrollArea className="h-[300px] sm:h-[320px] md:h-[340px]">
+      <TabsContent
+        value="market"
+        className="md:flex-1 md:min-h-0 md:flex md:flex-col"
+      >
+        <form action="" className="md:h-full md:flex md:flex-col">
+          <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
             <CentuariInput
               id="amount"
               label="Supply"
               size="large"
-              placeholder="Placeholder"
+              placeholder="Amount"
               leftIcon={<IcDollarCentuari size={16} />}
               rightIcon={
                 <Button variant={"link"} className="px-0" type="button">
@@ -129,7 +142,11 @@ export function LendForm({ tokenList }: LendFormProps) {
             </div>
             <TransactionSummary />
           </ScrollArea>
-          <Button type="button" variant="primary" className="w-full mt-3.5">
+          <Button
+            type="button"
+            variant="primary"
+            className="w-full mt-3.5 md:shrink-0"
+          >
             Place Order
           </Button>
         </form>

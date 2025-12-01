@@ -32,8 +32,8 @@ export function HomeHeader() {
           Earning and Borrowing
         </CentuariTypography>
       </div>
-      <div className="flex flex-col md:flex-row gap-6 md:gap-12 mt-6 md:mt-0">
-        <div className="mt-6 flex items-center gap-4">
+      <div id="tour-home-header" className="flex flex-col md:flex-row gap-6 md:gap-12 mt-6 md:mt-0">
+        <div id="tour-total-balance" className="mt-6 flex items-center gap-4">
           <div className="p-3 bg-white/10 rounded-lg border border-white/5">
             <IcWalletColorCentuari />
           </div>
@@ -46,7 +46,7 @@ export function HomeHeader() {
             </CentuariTypography>
           </div>
         </div>
-        <div className="mt-6 flex items-center gap-4">
+        <div id="tour-active-loans" className="mt-6 flex items-center gap-4">
           <div className="p-3 bg-white/10 rounded-lg border border-white/5">
             <IcPieChartColorCentuari />
           </div>

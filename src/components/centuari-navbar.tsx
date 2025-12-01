@@ -2,7 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, Search, SeparatorVertical, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +10,8 @@ import { useDisconnect } from "wagmi";
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
 import { CentuariConnectWallet } from "./centuari-connect-wallet";
+import { CentuariWithdrawDialog } from "./centuari-withdraw-dialog";
+import { CentuariDepositDialog } from "./centuari-deposit-dialog";
 
 interface NavItem {
   name: string;
@@ -17,7 +19,6 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { name: "Home", href: "/" },
   { name: "Earn & Borrow", href: "/market" },
   { name: "Portfolio", href: "/portfolio" },
   { name: "Points", href: "/points" },
@@ -49,9 +50,18 @@ export default function CentuariNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Helper function to check if a nav item is active
+  const isNavItemActive = (item: NavItem): boolean => {
+    // "Earn & Borrow" should be active on both /market and /
+    if (item.href === "/market") {
+      return pathname === "/market" || pathname === "/";
+    }
+    return pathname === item.href;
+  };
+
   useEffect(() => {
     const updateIndicator = () => {
-      const activeIndex = NAV_ITEMS.findIndex((item) => item.href === pathname);
+      const activeIndex = NAV_ITEMS.findIndex((item) => isNavItemActive(item));
       const activeElement = desktopNavRef.current[activeIndex];
 
       if (activeElement && indicatorRef.current) {
@@ -165,8 +175,11 @@ export default function CentuariNavbar() {
 
   return (
     <nav
-      className={`fixed flex items-center top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white/5 h-16 backdrop-blur-xl" : ""
+      id="tour-home-nav"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-background/80 backdrop-blur-xl border-b border-white/10"
+          : ""
       }`}
     >
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
@@ -195,12 +208,12 @@ export default function CentuariNavbar() {
                       desktopNavRef.current[index] = el;
                     }}
                     className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      pathname === item.href
+                      isNavItemActive(item)
                         ? "text-white font-semibold"
                         : "text-white/70 hover:text-white"
                     }`}
                     onMouseEnter={(e) => {
-                      if (pathname !== item.href) {
+                      if (!isNavItemActive(item)) {
                         gsap.to(e.currentTarget, {
                           y: -2,
                           duration: 0.18,
@@ -209,7 +222,7 @@ export default function CentuariNavbar() {
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (pathname !== item.href) {
+                      if (!isNavItemActive(item)) {
                         gsap.to(e.currentTarget, {
                           y: 0,
                           duration: 0.18,
@@ -231,7 +244,7 @@ export default function CentuariNavbar() {
                   ref={inputRef}
                   type="text"
                   placeholder="Search assets"
-                  className="pl-11 pr-20 w-72 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all duration-200 backdrop-blur-sm"
+                  className="pl-11 pr-20 w-72 h-11 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all duration-200"
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
                   <kbd className="px-2 py-1 text-xs bg-white/5 border border-white/10 rounded text-white/60 transition-colors group-focus-within:border-primary/30">
@@ -242,9 +255,18 @@ export default function CentuariNavbar() {
                   </kbd>
                 </div>
               </div>
+              {authenticated && (
+                <div className="border border-white/10 h-4 border-r-[0.5px]"></div>
+              )}
+              {authenticated ? <CentuariDepositDialog /> : null}
+              {authenticated && <CentuariWithdrawDialog />}
+              {authenticated && (
+                <div className="border border-white/10 h-4 border-r-[0.5px]"></div>
+              )}
 
               {authenticated ? (
                 <CentuariButton
+                  size={"lg"}
                   variant="primary"
                   onClick={() => {
                     logout();
@@ -316,7 +338,7 @@ export default function CentuariNavbar() {
                   }}
                   onClick={handleNavClick}
                   className={`block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    pathname === item.href
+                    isNavItemActive(item)
                       ? "text-white bg-white/10"
                       : "text-white/70 hover:text-white hover:bg-white/5"
                   }`}

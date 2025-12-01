@@ -13,7 +13,7 @@ export function MaturityToggle({ className }: { className?: string }) {
       variant="outline"
       spacing={2}
       size={"lg"}
-      className={cn("w-full", className)}
+      className={cn("w-full grid sm:grid-cols-2 xl:grid-cols-4", className)}
       value={value}
       onValueChange={(newValue) => {
         if (newValue) setValue(newValue);

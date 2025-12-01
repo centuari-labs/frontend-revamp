@@ -13,9 +13,13 @@ const TOKENS = [
 
 export function TokenGrid() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-      {TOKENS.map((token) => (
+    <div
+      id="tour-token-grid"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"
+    >
+      {TOKENS.map((token, index) => (
         <CentuariTokenCard
+          id={index + 1}
           key={token.symbol}
           token_image={token.image}
           token_name={token.name}

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,24 +16,32 @@ import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
 
-export const CentuariTokenCard = ({token_image, token_name, token_symbol}: {token_image: string, token_name: string, token_symbol: string}) => {
-  const router = useRouter()
+export const CentuariTokenCard = ({
+  token_image,
+  token_name,
+  token_symbol,
+  id,
+}: {
+  token_image: string;
+  token_name: string;
+  token_symbol: string;
+  id: number;
+}) => {
+  const router = useRouter();
   return (
-    <Card className="w-full min-w-[23.625rem] p-4 gap-2 bg-white/5 relative group overflow-hidden transition-all duration-300">
+    <Card
+      id={`tour-token-card-${id}`}
+      className="w-full min-w-[23.625rem] p-4 gap-2 bg-white/5 relative group overflow-hidden transition-all duration-300"
+    >
       <CardHeader className="gap-0 pb-0">
         <div className="flex flex-col items-center gap-4">
           <CardTitle>
-            <Image
-              src={token_image}
-              alt={token_name}
-              width={68}
-              height={68}
-            />
+            <Image src={token_image} alt={token_name} width={68} height={68} />
           </CardTitle>
           <CentuariTypography variant="b1">{token_symbol}</CentuariTypography>
         </div>
       </CardHeader>
-      <CardContent className="px-0">
+      <CardContent id={`tour-token-card-${id}-content`} className="px-0">
         <div className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
           {[
             { label: "Borrow Rate", value: "7,2%" },
@@ -58,7 +66,7 @@ export const CentuariTokenCard = ({token_image, token_name, token_symbol}: {toke
         </div>
       </CardContent>
       <CardFooter className="flex flex-col px-0 z-50">
-        <div className="flex gap-2 w-full">
+        <div id={`tour-token-card-${id}-btn`} className="flex gap-2 w-full">
           <CentuariBorrowDialog />
           <CentuariLendDialog />
         </div>
@@ -67,7 +75,10 @@ export const CentuariTokenCard = ({token_image, token_name, token_symbol}: {toke
           className="w-full flex items-center justify-center mt-4 gap-2"
           onClick={() => router.push("/market")}
         >
-          View Market for Details <ArrowRight size={12} />
+          <span className="flex items-center gap-2" id={`tour-token-card-${id}-btn-view`}>
+            View Market for Details
+            <ArrowRight size={12} />
+          </span>
         </Button>
       </CardFooter>
       <div className="pointer-events-none absolute w-[568px] h-[450px] top-[96px] left-[-90px] bg-[#1D7656]/10 blur-[264px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

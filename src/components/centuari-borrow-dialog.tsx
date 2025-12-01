@@ -24,15 +24,16 @@ import { SelectSingleToken } from "./select-single-token";
 import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
+import { SelectToken } from "./select-token";
 
-type ViewMode = "borrow" | "add-collateral";
+type ViewMode = "borrow" | "deposit-collateral";
 
 export function CentuariBorrowDialog() {
   const [viewMode, setViewMode] = useState<ViewMode>("borrow");
   const borrowViewRef = useRef<HTMLDivElement>(null);
   const collateralViewRef = useRef<HTMLDivElement>(null);
 
-  const handleAddCollateralClick = () => setViewMode("add-collateral");
+  const handleAddCollateralClick = () => setViewMode("deposit-collateral");
   const handleBackToBorrow = () => setViewMode("borrow");
 
   const handleDialogChange = (open: boolean) => {
@@ -60,7 +61,7 @@ export function CentuariBorrowDialog() {
         "-=0.15"
       );
     } else if (
-      viewMode === "add-collateral" &&
+      viewMode === "deposit-collateral" &&
       borrowViewRef.current &&
       collateralViewRef.current
     ) {
@@ -265,7 +266,7 @@ export function CentuariBorrowDialog() {
               </div>
 
               {/* Add-Collateral View */}
-              <div
+              {/* <div
                 ref={collateralViewRef}
                 className={
                   viewMode === "add-collateral"
@@ -314,6 +315,57 @@ export function CentuariBorrowDialog() {
                       </div>
                     </div>
                   </div>
+                </form>
+              </div> */}
+
+              {/* Deposit */}
+              <div
+                ref={collateralViewRef}
+                className={
+                  viewMode === "deposit-collateral"
+                    ? "relative mt-6 px-6"
+                    : "absolute inset-0 pointer-events-none mt-6 px-6"
+                }
+                style={{ opacity: viewMode === "deposit-collateral" ? 1 : 0 }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackToBorrow}
+                  className="mb-4 -ml-2"
+                  type="button"
+                >
+                  <ArrowLeft size={16} />
+                </Button>
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Image
+                    src={"/centuari-logo.png"}
+                    width={48}
+                    height={48}
+                    alt="centuari-logo"
+                  />
+                  <CentuariTypography variant="h1" className="mt-8">
+                    Deposit to Your Vault
+                  </CentuariTypography>
+                  <CentuariTypography
+                    variant="b3"
+                    className="mb-1 text-muted-foreground mt-3"
+                  >
+                    Select the asset and amount you want to add, and power up
+                    your Centuari balance.
+                  </CentuariTypography>
+                </div>
+                <form>
+                  <SelectToken />
+                  <CentuariInput
+                    id="amount"
+                    label="Deposit Amount"
+                    size="large"
+                    placeholder="Amount"
+                    leftIcon={<IcDollarCentuari size={16} />}
+                    className="mt-0"
+                    containerClassName="mt-3.5"
+                  />
                 </form>
               </div>
             </div>
