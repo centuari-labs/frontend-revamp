@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/performance/noImgElement: <explanation> */
 "use client";
 
+import * as React from "react";
 import {
   type BaseConnectedWalletType,
   useActiveWallet,
@@ -103,7 +104,7 @@ export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
         <CentuariTypography className="text-sm text-muted-foreground mt-4">
           Available Wallets
         </CentuariTypography>
-        <ScrollArea className="bg-white/5 h-72 border rounded-md border-white/5 mt-2">
+        <ScrollArea className="bg-white/5 h-48 md:h-72 border rounded-md border-white/5 mt-2">
           <div className="flex flex-col py-1.5 gap-2">
             {/* <button
 								type="button"

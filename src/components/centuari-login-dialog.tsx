@@ -46,7 +46,13 @@ const emailFormSchema = z.object({
 
 type EmailFormValues = z.infer<typeof emailFormSchema>;
 
-export function CentuariLoginDialog() {
+export function CentuariLoginDialog({
+  open,
+  onOpenChange,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const id = useId();
   const { connectAsync } = useConnect();
   const chainId = useChainId();
@@ -148,23 +154,23 @@ export function CentuariLoginDialog() {
   };
 
   // Reset view when dialog closes or opens
-  const onOpenChange = (open: boolean) => {
-    if (!open) {
-      setTimeout(() => {
-        setView("login");
-        form.reset();
-      }, 300); // Reset after animation
-    }
-  };
+  // const onOpenChange = (open: boolean) => {
+  //   if (!open) {
+  //     setTimeout(() => {
+  //       setView("login");
+  //       form.reset();
+  //     }, 300); // Reset after animation
+  //   }
+  // };
 
   return (
-    <Dialog onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <CentuariButton variant="primary" className="flex-1">
+        <CentuariButton variant="primary" className="flex-1 w-full" size={"lg"}>
           Connect Wallet
         </CentuariButton>
       </DialogTrigger>
-      <DialogContent className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+      <DialogContent className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 z-[200]">
         <DialogHeader className="contents space-y-0 text-left">
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
             <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
@@ -238,30 +244,48 @@ export function CentuariLoginDialog() {
                 <div className="h-px flex-1 border-t border-dashed border-white/10" />
               </div>
 
-              <div className="flex gap-4 mb-6">
+              <div className="flex h-8 gap-1 items-center justify-center mb-4">
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={loading}
-                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Chrome size={20} className="text-white" />
+                  <Image
+                    src="/icons/google.svg"
+                    alt="Google"
+                    width={16}
+                    height={16}
+                    className="bg-white h-4 w-4 rounded-full p-0.5"
+                  />
                 </button>
                 <button
                   type="button"
                   onClick={handleInstagramLogin}
                   disabled={loading}
-                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Instagram size={20} className="text-white" />
+                  <Image
+                    src="/icons/ig.svg"
+                    alt="Instagram"
+                    width={16}
+                    height={16}
+                    className="bg-white h-4 w-4 rounded-full p-0.5"
+                  />
                 </button>
                 <button
                   type="button"
                   onClick={handleAppleLogin}
                   disabled={loading}
-                  className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Apple size={20} className="text-white" />
+                  <Image
+                    src="/icons/apple.svg"
+                    alt="Apple"
+                    width={16}
+                    height={16}
+                    className="bg-white h-4 w-4 rounded-full p-0.5"
+                  />
                 </button>
               </div>
 

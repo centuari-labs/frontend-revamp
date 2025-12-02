@@ -29,6 +29,7 @@ export default function CentuariNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
 
   const pathname = usePathname();
 
@@ -150,6 +151,12 @@ export default function CentuariNavbar() {
   }, [isSearchOpen]);
 
   const handleNavClick = (): void => {
+    setIsMenuOpen(false);
+  };
+
+  const handleConnectWalletClick = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    e.preventDefault();
     setIsMenuOpen(false);
   };
 
@@ -281,7 +288,10 @@ export default function CentuariNavbar() {
                   Logout
                 </CentuariButton>
               ) : (
-                <CentuariLoginDialog />
+                <CentuariLoginDialog
+                  open={isLoginDialogOpen}
+                  onOpenChange={setIsLoginDialogOpen}
+                />
               )}
             </div>
 
@@ -364,7 +374,16 @@ export default function CentuariNavbar() {
                       Logout
                     </CentuariButton>
                   ) : (
-                    <CentuariLoginDialog />
+                    <CentuariButton
+                      variant="primary"
+                      className="w-full"
+                      onClick={(e) => {
+                        handleConnectWalletClick(e);
+                        setIsLoginDialogOpen(true);
+                      }}
+                    >
+                      Connect Wallet
+                    </CentuariButton>
                   )}
                 </a>
               </div>
