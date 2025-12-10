@@ -28,7 +28,6 @@ export default function Page() {
       <div className="w-full max-w-full sm:max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-2 sm:px-4 2xl:min-h-[calc(100vh-6rem)]">
         <MarketHeader />
 
-        {/* Main Grid - Responsive Layout: 4 cols on lg+, 2 cols on md, 1 col on sm */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
           <RateHistoryCard />
 
@@ -42,7 +41,6 @@ export default function Page() {
         <PositionSection />
       </div>
 
-      {/* Mobile Fixed Bottom Buttons */}
       <MobileLendBorrowButtons tokenList={tokenList} />
     </div>
   );
