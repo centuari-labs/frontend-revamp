@@ -41,10 +41,10 @@ export function PortfolioChart() {
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center justify-center w-full max-w-[280px] mx-auto">
       <ChartContainer
         config={chartConfig}
-        className="mx-auto aspect-square max-h-[250px]"
+        className="aspect-square w-full max-h-[220px]"
         style={{
           filter:
             "drop-shadow(0 0 40px rgba(98, 149, 255, 0.3)) drop-shadow(0 0 80px rgba(42, 74, 194, 0.2))",
@@ -59,7 +59,7 @@ export function PortfolioChart() {
             data={chartData}
             dataKey="visitors"
             nameKey="browser"
-            innerRadius={80}
+            innerRadius="65%"
             strokeWidth={5}
             legendType="circle"
             paddingAngle={-10}
@@ -78,14 +78,14 @@ export function PortfolioChart() {
                       <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-foreground text-2xl font-bold"
+                        className="fill-foreground text-xl font-bold"
                       >
                         $40,000.00
                       </tspan>
                       <tspan
                         x={viewBox.cx}
                         y={(viewBox.cy || 0) + 24}
-                        className="fill-muted-foreground"
+                        className="fill-muted-foreground text-xs"
                       >
                         Total Value
                       </tspan>
