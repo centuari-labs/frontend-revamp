@@ -175,7 +175,7 @@ export default function PortfolioPage() {
                     </p>
                   </div>
                 ))}
-                <Link href="/transaction-history">
+                <Link href="/portfolio/transaction-history">
                   <Button
                     variant="secondary"
                     size={"sm"}

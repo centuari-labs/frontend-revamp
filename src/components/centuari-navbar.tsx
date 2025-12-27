@@ -52,13 +52,14 @@ export default function CentuariNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Helper function to check if a nav item is active
   const isNavItemActive = (item: NavItem): boolean => {
-    // "Earn & Borrow" should be active on both /market and /
     if (item.href === "/") {
       return pathname === "/market" || pathname === "/";
     } else if (item.href === "/portfolio") {
-      return pathname === "/portfolio" || pathname === "/transaction-history";
+      return (
+        pathname === "/portfolio" ||
+        pathname === "/portfolio/transaction-history"
+      );
     }
     return pathname === item.href;
   };
