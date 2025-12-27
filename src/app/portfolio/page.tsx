@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { DataTableAssets } from "@/components/portfolio/tables/data-table-assets";
 import { DataTableAllPosition } from "@/components/portfolio/tables/data-table-all-position";
+import Link from "next/link";
 
 export default function PortfolioPage() {
   return (
@@ -174,9 +175,15 @@ export default function PortfolioPage() {
                     </p>
                   </div>
                 ))}
-                <Button variant="secondary" size={"sm"} className="w-full mt-4">
-                  See All Transaction
-                </Button>
+                <Link href="/transaction-history">
+                  <Button
+                    variant="secondary"
+                    size={"sm"}
+                    className="w-full mt-4"
+                  >
+                    See All Transaction
+                  </Button>
+                </Link>
               </div>
               {/* Chart Section */}
               <div className="flex-shrink-0 w-full sm:w-[220px] flex justify-center">

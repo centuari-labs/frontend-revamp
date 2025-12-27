@@ -57,6 +57,8 @@ export default function CentuariNavbar() {
     // "Earn & Borrow" should be active on both /market and /
     if (item.href === "/") {
       return pathname === "/market" || pathname === "/";
+    } else if (item.href === "/portfolio") {
+      return pathname === "/portfolio" || pathname === "/transaction-history";
     }
     return pathname === item.href;
   };

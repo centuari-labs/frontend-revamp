@@ -355,11 +355,11 @@ export function DataTableAllPosition() {
           </TabsList>
         </div>
 
-        <TabsContent value="borrow" className="mt-0 !gap-0">
+        <TabsContent value="borrow" className="mt-0">
           <PositionTable />
         </TabsContent>
 
-        <TabsContent value="lend" className="mt-0 !gap-0">
+        <TabsContent value="lend" className="mt-0">
           <PositionTable />
         </TabsContent>
       </Tabs>
