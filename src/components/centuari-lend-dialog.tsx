@@ -27,6 +27,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
+import Link from "next/link";
 
 type ViewMode = "lend" | "deposit-lend";
 
@@ -136,6 +137,20 @@ export function CentuariLendDialog() {
                         className="flex items-center gap-1 text-muted-foreground"
                         variant="b3"
                       >
+                        Maturity{" "}
+                        <CentuariTooltip message="The date when the loan will be repaid.">
+                          <Info size={16} />
+                        </CentuariTooltip>
+                      </CentuariTypography>
+                      <CentuariTypography variant="h5" className="text-center">
+                        1 Feb 2026
+                      </CentuariTypography>
+                    </div>
+                    <div>
+                      <CentuariTypography
+                        className="flex items-center gap-1 text-muted-foreground"
+                        variant="b3"
+                      >
                         Vault Total{" "}
                         <CentuariTooltip message="The total amount of USDT in the vault.">
                           <Info size={16} />
@@ -161,8 +176,14 @@ export function CentuariLendDialog() {
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-6 px-6">
+                <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+                  Go to{" "}
+                  <Link href="/market" className="font-medium !underline">
+                    Market View
+                  </Link>{" "}
+                  to select other maturities.
+                </div>
+                <div className="mt-4 px-6">
                   <CentuariInput
                     id={`amount-${reactId}`}
                     label="Amount to Lend"
@@ -181,7 +202,7 @@ export function CentuariLendDialog() {
                     variant="destructive"
                     text="Insufficient balance"
                     description="Deposit now to continue your order"
-                    className="mt-4"
+                    className="mt-1.5"
                     action={
                       <Button
                         variant="destructive"
@@ -194,7 +215,7 @@ export function CentuariLendDialog() {
                     }
                   />
 
-                  <div>
+                  {/* <div>
                     <Label className="mb-2 mt-4">
                       Maturity{" "}
                       <CentuariTooltip message="Select the maturity period for your borrowed USDT.">
@@ -202,7 +223,7 @@ export function CentuariLendDialog() {
                       </CentuariTooltip>
                     </Label>
                     <MaturityToggle />
-                    {/* <CentuariTypography
+                    <CentuariTypography
 											variant="s4"
 											className="mt-2 text-muted-foreground flex items-center gap-1"
 										>
@@ -210,8 +231,8 @@ export function CentuariLendDialog() {
 											<CentuariTypography variant="s4">
 												21 Oct 2026
 											</CentuariTypography>
-										</CentuariTypography> */}
-                  </div>
+										</CentuariTypography>
+                  </div> */}
 
                   {/* <div>
 										<Label className="mb-2 mt-4">
@@ -385,22 +406,28 @@ export function CentuariLendDialog() {
             </div>
           </ScrollArea>
         </DialogHeader>
-        <DialogFooter className="flex-row items-center justify-end px-6 py-4">
-          <DialogClose asChild>
-            <CentuariButton variant="secondary">Cancel</CentuariButton>
-          </DialogClose>
-          <CentuariButton
-            type="button"
-            variant={"primary"}
-            className="flex-1"
-            onClick={handleLend}
-          >
-            {viewMode === "lend"
-              ? "Confirm Lend"
-              : viewMode === "deposit-lend"
-              ? "Confirm Deposit"
-              : "Confirm Add Collateral"}
-          </CentuariButton>
+        <DialogFooter className="flex !flex-col gap-2 px-6">
+          <div className="flex items-center gap-4">
+            <DialogClose asChild>
+              <CentuariButton variant="secondary">Cancel</CentuariButton>
+            </DialogClose>
+            <CentuariButton
+              type="button"
+              variant={"primary"}
+              className="flex-1"
+              onClick={handleLend}
+            >
+              {viewMode === "lend"
+                ? "Confirm Lend"
+                : viewMode === "deposit-lend"
+                ? "Confirm Deposit"
+                : "Confirm Add Collateral"}
+            </CentuariButton>
+          </div>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
+            This position is automatically refinanced. At maturity, it will roll
+            over to the next available term unless you take action.
+          </p>
         </DialogFooter>
       </DialogContent>
     </Dialog>

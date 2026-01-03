@@ -25,8 +25,25 @@ import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
 import { SelectToken } from "./select-token";
+import { MultiSelect } from "./ui/multi-select";
+import Link from "next/link";
 
 type ViewMode = "borrow" | "deposit-collateral";
+
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/centuari-eth.png", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
+  { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
+  {
+    logo: "/tokens/centuari-centuari.png",
+    value: "centuari",
+    label: "Centuari",
+  },
+];
 
 export function CentuariBorrowDialog() {
   const [viewMode, setViewMode] = useState<ViewMode>("borrow");
@@ -118,6 +135,20 @@ export function CentuariBorrowDialog() {
                         className="flex items-center gap-1 text-muted-foreground"
                         variant="b3"
                       >
+                        Maturity{" "}
+                        <CentuariTooltip message="The date when the loan will be repaid.">
+                          <Info size={16} />
+                        </CentuariTooltip>
+                      </CentuariTypography>
+                      <CentuariTypography variant="h5" className="text-center">
+                        1 Feb 2026
+                      </CentuariTypography>
+                    </div>
+                    <div>
+                      <CentuariTypography
+                        className="flex items-center gap-1 text-muted-foreground"
+                        variant="b3"
+                      >
                         Borrow Rate{" "}
                         <CentuariTooltip message="The interest rate at which you can borrow USDT.">
                           <Info size={16} />
@@ -144,7 +175,15 @@ export function CentuariBorrowDialog() {
                   </div>
                 </div>
 
-                <div className="mt-6 px-6">
+                <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+                  Go to{" "}
+                  <Link href="/market" className="font-medium !underline">
+                    Market View
+                  </Link>{" "}
+                  to select other maturities.
+                </div>
+
+                <div className="mt-4 px-6">
                   <form action="">
                     <CentuariInput
                       id="amount"
@@ -159,7 +198,18 @@ export function CentuariBorrowDialog() {
                       }
                       balanceText="$1,000"
                     />
-
+                    <div className="mt-5">
+                      <Label>Collateral Used</Label>
+                      <MultiSelect
+                        options={tokenList}
+                        onValueChange={(values) => console.log(values)}
+                        placeholder="Select Coins"
+                        variant="default"
+                        maxCount={4}
+                        className="mt-1.5"
+                      />
+                    </div>
+                    {/* 
                     <div>
                       <Label className="mb-2 mt-4">
                         Maturity{" "}
@@ -177,15 +227,15 @@ export function CentuariBorrowDialog() {
                           21 Oct 2026
                         </CentuariTypography>
                       </CentuariTypography>
-                    </div>
+                    </div> */}
 
-                    <SelectSingleToken />
+                    {/* <SelectSingleToken /> */}
 
                     <CentuariAlert
                       variant="destructive"
                       text="Not enough collateral"
                       description="Increase collateral to borrow more"
-                      className="mt-4"
+                      className="mt-1.5"
                       action={
                         <Button
                           variant="destructive"
@@ -371,15 +421,21 @@ export function CentuariBorrowDialog() {
             </div>
           </ScrollArea>
         </DialogHeader>
-        <DialogFooter className="flex-row items-center justify-end px-6 py-4">
-          <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
-          </DialogClose>
-          <Button type="button" variant="primary" className="flex-1">
-            {viewMode === "borrow"
-              ? "Confirm Borrow"
-              : "Confirm Add Collateral"}
-          </Button>
+        <DialogFooter className="flex !flex-col gap-2 pt-2 px-6">
+          <div className="flex items-center gap-4">
+            <DialogClose asChild>
+              <Button variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button type="button" variant="primary" className="flex-1">
+              {viewMode === "borrow"
+                ? "Confirm Borrow"
+                : "Confirm Add Collateral"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
+            This position is automatically refinanced. At maturity, it will roll
+            over to the next available term unless you take action.
+          </p>
         </DialogFooter>
       </DialogContent>
     </Dialog>

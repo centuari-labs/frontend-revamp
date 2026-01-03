@@ -19,7 +19,7 @@ export function CentuariAlert({
   return (
     <Alert
       variant={variant || "default"}
-      className={`flex items-center justify-between [&>svg]:translate-y-0 ${className}`}
+      className={`flex items-center justify-between !border-[0.5px] [&>svg]:translate-y-0 ${className}`}
     >
       <div className="flex items-center gap-2">
         {icon}
