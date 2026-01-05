@@ -15,7 +15,7 @@ export function TokenGrid() {
   return (
     <div
       id="tour-token-grid"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-8"
     >
       {TOKENS.map((token, index) => (
         <CentuariTokenCard

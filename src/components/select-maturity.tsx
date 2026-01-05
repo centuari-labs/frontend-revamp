@@ -14,7 +14,7 @@ import { Label } from "./ui/label";
 
 export function SelectMaturity() {
   const id = React.useId();
-  const [selectedMaturity, setSelectedMaturity] = React.useState("7 Days");
+  const [selectedMaturity, setSelectedMaturity] = React.useState("1 Jan 2026");
 
   // ref ke SelectTrigger supaya bisa ukur lebarnya
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
@@ -59,7 +59,7 @@ export function SelectMaturity() {
           // padding kiri dinamis, ngikut lebar select
           style={{ paddingLeft: leftPadding }}
         />
-        <span className="absolute inset-y-0 right-3 flex items-center">%</span>
+        {/* <span className="absolute inset-y-0 right-3 flex items-center">%</span> */}
         <div className="absolute inset-y-0 left-1 flex items-center">
           <Select value={selectedMaturity} onValueChange={setSelectedMaturity}>
             <SelectTrigger
@@ -70,11 +70,9 @@ export function SelectMaturity() {
             </SelectTrigger>
             <SelectContent className="bg-white/5 backdrop-blur-[140px]">
               <SelectGroup>
-                <SelectItem value="7 Days">7 Days</SelectItem>
-                <SelectItem value="30 Days">30 Days</SelectItem>
-                <SelectItem value="90 Days">90 Days</SelectItem>
-                <SelectItem value="180 Days">180 Days</SelectItem>
-                <SelectItem value="1 Year">1 Year</SelectItem>
+                <SelectItem value="1 Jan 2026">1 Jan 2026</SelectItem>
+                <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
+                <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

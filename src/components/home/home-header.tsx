@@ -28,8 +28,8 @@ export function HomeHeader() {
       {/* Desktop dot-world background - hidden on mobile */}
       <div className="hidden md:block absolute top-0 right-0 w-[621px] h-[240px] overflow-hidden">
         <Image
-          src="/assets/dot-world.png"
-          alt="dot-world"
+          src="/assets/centuari-home-header.png"
+          alt="centuari-home-header"
           fill
           className="object-cover z-50 object-right"
         />
@@ -37,11 +37,11 @@ export function HomeHeader() {
 
       {/* Header Text - centered on mobile, left-aligned on desktop */}
       <div className="text-center md:text-left w-full">
-        <CentuariTypography className="text-transparent text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-          Hi Centuari!, Let's
+        <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+          Hi Alex Muhammad!,
         </CentuariTypography>
         <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
-          Earning and Borrowing
+          Welcome To Centuari
         </CentuariTypography>
       </div>
 
@@ -66,6 +66,14 @@ export function HomeHeader() {
             </CentuariTypography>
           </div>
         </div>
+
+        <Image
+          src="/assets/separator.svg"
+          alt="Separator"
+          width={1}
+          height={37}
+          className="hidden md:block"
+        />
 
         <div
           id="tour-active-loans"

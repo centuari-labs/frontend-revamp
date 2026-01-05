@@ -66,7 +66,7 @@ export function LendForm({ tokenList }: LendFormProps) {
               className="mt-0"
               containerClassName="mt-3.5"
             />
-            <div>
+            {/* <div>
               <Label className="mb-1.5 mt-3.5">Collaterals</Label>
               <MultiSelect
                 options={tokenList}
@@ -75,7 +75,7 @@ export function LendForm({ tokenList }: LendFormProps) {
                 variant="destructive"
                 maxCount={2}
               />
-            </div>
+            </div> */}
             <div>
               <SelectMaturity />
             </div>
@@ -112,7 +112,7 @@ export function LendForm({ tokenList }: LendFormProps) {
               className="mt-0"
               containerClassName="mt-3.5"
             />
-            <div>
+            {/* <div>
               <Label className="mb-1.5 mt-3.5">Collaterals</Label>
               <MultiSelect
                 options={tokenList}
@@ -121,7 +121,7 @@ export function LendForm({ tokenList }: LendFormProps) {
                 variant="default"
                 maxCount={2}
               />
-            </div>
+            </div> */}
             <div>
               <Label className="mb-1.5 mt-3.5">
                 Maturity
@@ -132,11 +132,10 @@ export function LendForm({ tokenList }: LendFormProps) {
               <MaturityToggle />
 
               <CentuariTypography
-                variant="s4"
+                variant="s3"
                 className="mt-2 text-muted-foreground text-start"
               >
-                Withdrawal Unlocks on{" "}
-                <span className="text-white">21 Oct 2026</span>
+                APY is determined by the market
               </CentuariTypography>
             </div>
             <TransactionSummary />
@@ -146,7 +145,7 @@ export function LendForm({ tokenList }: LendFormProps) {
             variant="primary"
             className="w-full mt-3.5 md:shrink-0"
           >
-            Place Order
+            Supply
           </Button>
         </form>
       </TabsContent>

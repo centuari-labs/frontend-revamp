@@ -261,7 +261,7 @@ export function CentuariBorrowDialog() {
                           <HealthFactor />
                         </div>
                         <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground text-center">
                             If USDC drops{" "}
                             <span className="text-white font-medium">
                               below $000

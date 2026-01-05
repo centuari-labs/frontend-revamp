@@ -13,6 +13,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import { SelectMaturity } from "../select-maturity";
+import Image from "next/image";
+import { MultiSelect } from "../ui/multi-select";
+
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/centuari-eth.png", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
+  { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
+  {
+    logo: "/tokens/centuari-centuari.png",
+    value: "centuari",
+    label: "Centuari",
+  },
+];
 
 export function BorrowForm() {
   return (
@@ -44,10 +61,17 @@ export function BorrowForm() {
             <ScrollArea className="h-auto md:flex-1 md:min-h-0">
               <CentuariInput
                 id="amount"
-                label="Amount to Lend"
+                label="Amount to Borrow"
                 size="large"
                 placeholder="Placeholder"
-                leftIcon={<IcDollarCentuari size={16} />}
+                leftIcon={
+                  <Image
+                    src="/tokens/usdc-icon.svg"
+                    alt="usdc icon"
+                    width={16}
+                    height={16}
+                  />
+                }
                 rightIcon={
                   <Button variant={"link"} className="px-0" type="button">
                     Max
@@ -57,7 +81,17 @@ export function BorrowForm() {
                 className="mt-0"
                 containerClassName="mt-3.5"
               />
-              <SelectSingleToken />
+              {/* <SelectSingleToken /> */}
+              <div className="mt-3">
+                <Label className="mb-2">Collateral</Label>
+                <MultiSelect
+                  options={tokenList}
+                  onValueChange={(values) => console.log(values)}
+                  placeholder="Select Coins"
+                  variant="default"
+                  maxCount={2}
+                />
+              </div>
               <SelectMaturity />
               <div>
                 <Label className="mb-2 mt-2.5">
@@ -70,6 +104,13 @@ export function BorrowForm() {
                 <div className="border border-white/5 rounded-lg mt-2">
                   <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                     <HealthFactor />
+                  </div>
+                  <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <p className="text-xs text-muted-foreground text-center">
+                      If USDC drops{" "}
+                      <span className="text-white font-medium">below $000</span>
+                      , your position could be liquidated.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -94,10 +135,17 @@ export function BorrowForm() {
             <ScrollArea className="h-auto md:flex-1 md:min-h-0">
               <CentuariInput
                 id="amount"
-                label="Amount to Lend"
+                label="Amount to Borrow"
                 size="large"
                 placeholder="Placeholder"
-                leftIcon={<IcDollarCentuari size={16} />}
+                leftIcon={
+                  <Image
+                    src="/tokens/usdc-icon.svg"
+                    alt="usdc icon"
+                    width={16}
+                    height={16}
+                  />
+                }
                 rightIcon={
                   <Button variant={"link"} className="px-0" type="button">
                     Max
@@ -107,7 +155,16 @@ export function BorrowForm() {
                 className="mt-0"
                 containerClassName="mt-3.5"
               />
-              <SelectSingleToken />
+              <div className="mt-3">
+                <Label className="mb-2 mt-2.5">Collateral</Label>
+                <MultiSelect
+                  options={tokenList}
+                  onValueChange={(values) => console.log(values)}
+                  placeholder="Select Coins"
+                  variant="default"
+                  maxCount={2}
+                />
+              </div>
               <div>
                 <Label className="mb-2 mt-3.5">
                   Maturity{" "}
@@ -128,6 +185,13 @@ export function BorrowForm() {
                 <div className="border border-white/5 rounded-lg mt-2">
                   <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                     <HealthFactor />
+                  </div>
+                  <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <p className="text-xs text-muted-foreground text-center">
+                      If USDC drops{" "}
+                      <span className="text-white font-medium">below $000</span>
+                      , your position could be liquidated.
+                    </p>
                   </div>
                 </div>
               </div>

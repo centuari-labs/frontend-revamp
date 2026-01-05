@@ -144,41 +144,39 @@ export function PositionSection() {
         </div>
 
         <div className="hidden md:block p-2 sm:p-3">
-          <div className="mb-3 md:mb-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="mb-4 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <h1 className="text-sm sm:text-base font-medium">Position</h1>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-              <Input
-                placeholder="Search Position..."
-                className="w-full sm:max-w-xs md:max-w-sm text-sm"
-              />
-              <div className="overflow-x-auto">
-                <TabsList className="bg-white/5 w-full sm:w-auto">
-                  <TabsTrigger
-                    value="open_orders"
-                    className="data-[state=active]:!border-none text-xs sm:text-sm px-2 sm:px-3 md:px-4"
-                  >
-                    Open Orders
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="active_position"
-                    className="data-[state=active]:!border-none text-xs sm:text-sm px-2 sm:px-3 md:px-4"
-                  >
-                    Active Position
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="order_history"
-                    className="data-[state=active]:!border-none text-xs sm:text-sm px-2 sm:px-3 md:px-4"
-                  >
-                    Order History
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="all_transactions"
-                    className="data-[state=active]:!border-none text-xs sm:text-sm px-2 sm:px-3 md:px-4"
-                  >
-                    All Transactions
-                  </TabsTrigger>
-                </TabsList>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  size={16}
+                />
+                <Input
+                  placeholder="Search Position..."
+                  className="pl-9 w-full sm:w-[240px] text-sm bg-white/5 border-white/10 h-9"
+                />
               </div>
+              <TabsList className="bg-white/5 h-9 p-1">
+                <TabsTrigger
+                  value="open_orders"
+                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
+                >
+                  Open Orders
+                </TabsTrigger>
+                <TabsTrigger
+                  value="active_position"
+                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
+                >
+                  Active Position
+                </TabsTrigger>
+                <TabsTrigger
+                  value="all_transactions"
+                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
+                >
+                  All Transaction
+                </TabsTrigger>
+              </TabsList>
             </div>
           </div>
 
