@@ -5,10 +5,29 @@ import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-c
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin", symbol: "BTC" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave", symbol: "AAVE" },
+  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum", symbol: "ETH" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum", symbol: "ARB" },
+  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC", symbol: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT", symbol: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI", symbol: "DAI" },
+  { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari", symbol: "CENT" },
+];
 
 export function MarketHeader() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get selected token from URL params, default to USDC
+  const selectedToken = useMemo(() => {
+    const tokenParam = searchParams.get("token") || "usdc";
+    return tokenList.find(t => t.value === tokenParam) || tokenList.find(t => t.value === "usdc") || tokenList[4];
+  }, [searchParams]);
   return (
     <>
       {/* Mobile Header - Simple centered layout */}
@@ -22,13 +41,13 @@ export function MarketHeader() {
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <Image
-            src={"/tokens/usdc-icon.svg"}
-            alt="USDC Icon"
+            src={selectedToken.logo}
+            alt={`${selectedToken.symbol} Icon`}
             width={24}
             height={24}
           />
           <CentuariTypography className="uppercase font-semibold text-lg">
-            USDC
+            {selectedToken.symbol}
           </CentuariTypography>
         </div>
 
@@ -44,8 +63,8 @@ export function MarketHeader() {
           <ArrowLeft size={20} />
           <div className="inline-flex items-center gap-2">
             <Image
-              src={"/tokens/usdc-icon.svg"}
-              alt="USDC Icon"
+              src={selectedToken.logo}
+              alt={`${selectedToken.symbol} Icon`}
               width={35}
               height={35}
             />
@@ -53,7 +72,7 @@ export function MarketHeader() {
               className="uppercase font-semibold"
               variant="heading-md"
             >
-              USDC
+              {selectedToken.symbol}
             </CentuariTypography>
           </div>
         </div>

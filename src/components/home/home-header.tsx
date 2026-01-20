@@ -7,8 +7,8 @@ import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 
 export function HomeHeader() {
-  const totalBalance = 8910.11;
-  const activeLoans = 8910.11;
+  const totalBalance = 521000000; // 521M
+  const activeLoans = 248000000; // 248M
 
   const renderCurrency = (value: number) => {
     const formatted = formatCurrency(value);
@@ -38,7 +38,7 @@ export function HomeHeader() {
       {/* Header Text - centered on mobile, left-aligned on desktop */}
       <div className="text-center md:text-left w-full">
         <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-          Hi Alex Muhammad!,
+          Hi William!,
         </CentuariTypography>
         <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
           Welcome To Centuari

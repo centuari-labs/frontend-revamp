@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { gsap } from "gsap";
 import {
   Dialog,
@@ -12,50 +12,371 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
-import { Info, ArrowLeft } from "lucide-react";
+import { Info, ArrowLeft, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariInput } from "./centuari-input";
-import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { MaturityToggle } from "./maturity-toggle";
+import { CentuariButton } from "./centuari-button";
 import { Label } from "./ui/label";
-import { SelectSingleToken } from "./select-single-token";
 import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
 import { SelectToken } from "./select-token";
 import { MultiSelect } from "./ui/multi-select";
 import Link from "next/link";
+import { usePrivy } from "@privy-io/react-auth";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, parseDateString, calculateDaysDifference } from "@/lib/utils";
+import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
+import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 
 type ViewMode = "borrow" | "deposit-collateral";
 
-const tokenList = [
-  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
-  { logo: "/tokens/centuari-eth.png", value: "eth", label: "Ethereum" },
-  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
-  { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
-  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
-  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
-  {
-    logo: "/tokens/centuari-centuari.png",
-    value: "centuari",
-    label: "Centuari",
-  },
-];
+interface CentuariBorrowDialogProps {
+  token_image: string;
+  token_name: string;
+  token_symbol: string;
+  netAPR: string; // Format: "6,5%"
+  borrowRate: string;
+  collateralFactor: string;
+  vaultTotal: number;
+}
 
-export function CentuariBorrowDialog() {
+export function CentuariBorrowDialog({
+  token_image,
+  token_name,
+  token_symbol,
+  netAPR,
+  borrowRate,
+  collateralFactor,
+  vaultTotal,
+}: CentuariBorrowDialogProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("borrow");
   const borrowViewRef = useRef<HTMLDivElement>(null);
   const collateralViewRef = useRef<HTMLDivElement>(null);
+  const reactId = useId();
+  const { getAccessToken } = usePrivy();
+
+  // State for amount input
+  const [amountToBorrow, setAmountToBorrow] = useState<string>("");
+  const [displayAmount, setDisplayAmount] = useState<string>("");
+
+  // State for collateral selection (only select, no amount input)
+  // This is for selecting which tokens to use for THIS borrow, NOT for "As Collateral" checkbox
+  // Should start empty and user selects manually
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
+
+  // State for portfolio (dummy data - in real app from API/state)
+  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
+    // Load from localStorage if available
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_portfolio");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return defaultPortfolio;
+        }
+      }
+    }
+    return defaultPortfolio;
+  });
+
+  // State for total debt (all borrows combined)
+  // Default to a realistic debt amount that allows various health factor statuses
+  // With default portfolio ~$200k, default debt of $80k allows HF to vary:
+  // - Small borrows -> Good/Warning status
+  // - Medium borrows -> Critical status  
+  // - Large borrows -> Danger status
+  const [totalDebt, setTotalDebt] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_total_debt");
+      if (stored) {
+        try {
+          const parsed = parseFloat(stored);
+          // Use stored value if it's valid and > 0; otherwise use default for realistic HF scenarios
+          // This ensures users see various HF statuses instead of always Excellent
+          return !isNaN(parsed) && parsed > 0 ? parsed : 80000;
+        } catch {
+          return 80000; // Default: $80k debt for realistic HF scenarios
+        }
+      }
+    }
+    return 80000; // Default: $80k debt for realistic HF scenarios
+  });
+
+  // State for collateral status (which tokens are marked as collateral)
+  const [collateralStatus, setCollateralStatus] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_collateral");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
+
+  // State for transaction processing
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
+  const [successAmount, setSuccessAmount] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+
+  // Sync portfolio to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
+    }
+  }, [portfolio]);
+
+  // Do NOT sync selectedCollaterals to collateralStatus
+  // collateralStatus is controlled by "As Collateral" checkbox in portfolio, not by MultiSelect
+
+  // Sync total debt to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("centuari_total_debt", totalDebt.toString());
+    }
+  }, [totalDebt]);
+
+  // Do NOT auto-sync selectedCollaterals with collateralStatus
+  // selectedCollaterals is for selecting tokens for THIS borrow (user selects manually)
+  // collateralStatus is for determining which tokens CAN be used as collateral (from "As Collateral" checkbox)
+
+  // Sync collateral status from localStorage (listen for changes)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("centuari_collateral");
+        if (stored) {
+          try {
+            const collateralStatusData = JSON.parse(stored);
+            setCollateralStatus(collateralStatusData);
+          } catch {
+            // If parsing fails, keep current state
+          }
+        }
+      }
+    };
+
+    // Listen for storage changes (from other tabs/components)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically (for same-tab updates)
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []); // Only run once on mount
+
+  // Parse Net APR and Borrow Rate from format "6,5%" to number (6.5)
+  const parseRate = (rateString: string): number => {
+    const cleaned = rateString.replace("%", "").replace(",", ".");
+    return parseFloat(cleaned) || 0;
+  };
+
+  const netAPRNumeric = parseRate(netAPR);
+  const borrowRateNumeric = parseRate(borrowRate);
+  const collateralFactorNumeric = parseRate(collateralFactor) / 100; // Convert to decimal
+
+  // Calculate derived values - support decimal amounts like 0.1
+  const numericAmount = parseFloat(amountToBorrow) || 0;
+
+  // Transaction fee: 0.01% of amount (supports decimal amounts)
+  const transactionFee = numericAmount * 0.0001; // 0.01%
+
+  // Amount to pay: borrow amount + transaction fee
+  const amountToPay = numericAmount + transactionFee;
+
+  // Maturity date - withdrawal unlocks on the same date
+  const maturityDate = "1 Feb 2026";
+
+  // Calculate future amount based on new formula:
+  // Amount + (Amount * Rate/365 * days)
+  // where days = (Maturity Date - (Current Date + 1))
+  const calculateFutureAmount = () => {
+    if (numericAmount <= 0 || borrowRateNumeric <= 0) return numericAmount;
+
+    // Current date + 1 day
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    // Parse maturity date
+    const maturityDateObj = parseDateString(maturityDate);
+    if (!maturityDateObj) return numericAmount;
+
+    // Calculate days difference
+    const days = calculateDaysDifference(currentDate, maturityDateObj);
+    if (days <= 0) return numericAmount;
+
+    // Calculate future amount: Amount + (Amount * Rate/365 * days)
+    const futureAmount = numericAmount + (numericAmount * (borrowRateNumeric / 100) / 365 * days);
+    return futureAmount;
+  };
+
+  const futureAmount = calculateFutureAmount();
+
+  // Calculate total portfolio value from selected collaterals
+  const totalPortfolioValue = selectedCollaterals.reduce((total, collateralValue) => {
+    const portfolioValue = portfolio[collateralValue] || 0;
+    return total + portfolioValue;
+  }, 0);
+
+  // Calculate weighted LTV (average LTV of selected collaterals)
+  const weightedLTV = selectedCollaterals.length > 0 && totalPortfolioValue > 0
+    ? selectedCollaterals.reduce((sum, collateralValue) => {
+      const token = tokenList.find(t => t.value === collateralValue);
+      const portfolioValue = portfolio[collateralValue] || 0;
+      if (token && portfolioValue > 0) {
+        return sum + (token.ltv * portfolioValue);
+      }
+      return sum;
+    }, 0) / totalPortfolioValue
+    : parseRate(collateralFactor) / 100; // Use collateralFactor as LTV if no selection
+
+  // Calculate weighted Liquidation Threshold (average LT of selected collaterals)
+  const weightedLT = selectedCollaterals.length > 0 && totalPortfolioValue > 0
+    ? selectedCollaterals.reduce((sum, collateralValue) => {
+      const token = tokenList.find(t => t.value === collateralValue);
+      const portfolioValue = portfolio[collateralValue] || 0;
+      if (token && portfolioValue > 0) {
+        const lt = getLiquidationThreshold(token);
+        return sum + (lt * portfolioValue);
+      }
+      return sum;
+    }, 0) / totalPortfolioValue
+    : weightedLTV * 0.92; // Default: 92% of LTV
+
+  // Calculate max borrow capacity = (Total Portfolio Value × LTV)
+  const maxBorrowCapacity = totalPortfolioValue * weightedLTV;
+
+  // Calculate available quota = Max Borrow Capacity - Total Debt
+  const availableQuota = maxBorrowCapacity - totalDebt;
+
+  // Calculate new total debt after this borrow (current debt + new borrow amount)
+  const newTotalDebt = totalDebt + numericAmount;
+
+  // Health Factor calculation (More realistic Aave/Morpho-like formula)
+  // Health Factor = (Total Collateral Value × Liquidation Threshold) / Total Debt
+  // Using Liquidation Threshold instead of LTV for more accurate calculation
+  // After borrow: HF = (Portfolio × LT) / (Current Debt + New Borrow)
+  // Only calculate if we have collateral selected and borrow amount
+  // Ensure health factor is a reasonable number (typically 0-10 range)
+  const healthFactor = newTotalDebt > 0 && totalPortfolioValue > 0 && !isNaN(weightedLT) && selectedCollaterals.length > 0
+    ? (() => {
+      const calculatedHF = (totalPortfolioValue * weightedLT) / newTotalDebt;
+      // Cap at 10 for display, but log if it's unreasonably large (likely a bug)
+      if (calculatedHF > 10) {
+        console.warn(`Health factor is unusually high: ${calculatedHF}. Portfolio: ${totalPortfolioValue}, LT: ${weightedLT}, Debt: ${newTotalDebt}`);
+      }
+      return Math.min(calculatedHF, 10);
+    })()
+    : 0;
+
+  // Convert health factor to percentage for display (0-100 scale)
+  // More realistic mapping:
+  // - HF >= 2.5: Excellent (100%)
+  // - HF >= 1.5: Good (75%)
+  // - HF >= 1.2: Warning (50%)
+  // - HF >= 1.0: Critical (25%)
+  // - HF < 1.0: Danger (0%)
+  // Show 0 (empty) if no collateral selected or no borrow amount
+  const healthFactorPercentage = healthFactor > 0 && !isNaN(healthFactor) && selectedCollaterals.length > 0 && numericAmount > 0
+    ? healthFactor >= 2.5
+      ? 100
+      : healthFactor >= 1.5
+        ? 75 + ((healthFactor - 1.5) / 1.0) * 25 // 75-100%
+        : healthFactor >= 1.2
+          ? 50 + ((healthFactor - 1.2) / 0.3) * 25 // 50-75%
+          : healthFactor >= 1.0
+            ? 25 + ((healthFactor - 1.0) / 0.2) * 25 // 25-50%
+            : (healthFactor / 1.0) * 25 // 0-25%
+    : 0;
+
+  // Format vault total with currency
+  const formattedVaultTotal = formatCurrency(vaultTotal);
+
+  // Handle amount input change - support decimal values like 0.1
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // Parse to get clean numeric value (removes thousand separators, keeps decimal point)
+    const numericValue = parseNumberFromSeparator(inputValue);
+
+    // Format for display with thousand separators
+    const formattedValue = formatNumberWithSeparator(numericValue);
+
+    // Update both states: numeric value for calculations, formatted value for display
+    setAmountToBorrow(numericValue);
+    setDisplayAmount(formattedValue);
+  };
+
+  // Handle collateral selection change (only select, no amount input)
+  // This only updates selectedCollaterals for THIS borrow, does NOT affect "As Collateral" checkbox
+  const handleCollateralChange = (values: string[]) => {
+    setSelectedCollaterals(values);
+    // Do NOT update collateralStatus here - that's controlled by "As Collateral" checkbox in portfolio
+  };
+
+  // Handle Max button - set amount to available quota
+  const handleMaxClick = () => {
+    const maxAmount = Math.max(0, availableQuota);
+    // Format to preserve decimals if needed
+    const maxAmountStr = maxAmount.toString();
+    const formattedMax = formatNumberWithSeparator(maxAmountStr);
+    setAmountToBorrow(maxAmountStr);
+    setDisplayAmount(formattedMax);
+  };
 
   const handleAddCollateralClick = () => setViewMode("deposit-collateral");
   const handleBackToBorrow = () => setViewMode("borrow");
 
   const handleDialogChange = (open: boolean) => {
-    if (!open) setViewMode("borrow");
+    setIsDialogOpen(open);
+    if (open) {
+      // Load collateralStatus from localStorage when dialog opens
+      // This determines which tokens CAN be used as collateral (from "As Collateral" checkbox)
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("centuari_collateral");
+        if (stored) {
+          try {
+            const collateralStatusData = JSON.parse(stored);
+            setCollateralStatus(collateralStatusData);
+          } catch {
+            // If parsing fails, keep current state
+          }
+        }
+      }
+      // Do NOT auto-select collaterals - user must select manually
+      // Reset selectedCollaterals to empty when dialog opens
+      setSelectedCollaterals([]);
+    } else {
+      setViewMode("borrow");
+      setAmountToBorrow("");
+      setDisplayAmount("");
+      setIsProcessing(false);
+      setShowSuccessDialog(false);
+      // Clear selectedCollaterals when dialog closes
+      setSelectedCollaterals([]);
+    }
   };
+
+  // Auto-close success dialog after 3 seconds
+  useEffect(() => {
+    if (showSuccessDialog) {
+      const timer = setTimeout(() => {
+        setShowSuccessDialog(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessDialog]);
 
   // Animate transitions between views
   useEffect(() => {
@@ -96,120 +417,269 @@ export function CentuariBorrowDialog() {
     }
   }, [viewMode]);
 
-  return (
-    <Dialog onOpenChange={handleDialogChange}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" className="flex-1">
-          Borrow
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
-        <DialogHeader className="contents space-y-0 text-left">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
-            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
-            <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
-          </div>
-          <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
-            <div className="relative overflow-hidden min-h-[400px]">
-              {/* Borrow View */}
-              <div
-                ref={borrowViewRef}
-                className={
-                  viewMode === "borrow"
-                    ? "relative"
-                    : "absolute inset-0 pointer-events-none"
+  const handleBorrow = async () => {
+    if (viewMode === "borrow") {
+      // Validate amount
+      if (numericAmount <= 0) {
+        return;
+      }
+
+      // Check if amount exceeds available quota
+      if (numericAmount > availableQuota) {
+        return;
+      }
+
+      // Check if collateral is selected
+      if (selectedCollaterals.length === 0) {
+        return;
+      }
+
+      // Check if portfolio has value
+      if (totalPortfolioValue === 0) {
+        return;
+      }
+
+      // Check health factor (should be >= 1.2 to be safe, >= 1.0 is critical)
+      if (healthFactor < 1.0) {
+        return;
+      }
+
+      // Start processing
+      setIsProcessing(true);
+
+      try {
+        // Simulate transaction processing delay (1.5 seconds)
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Get access token (for future API integration)
+        const accessToken = await getAccessToken();
+        console.log("Access Token:", accessToken);
+
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Update total debt (add new borrow amount)
+        const updatedTotalDebt = totalDebt + numericAmount;
+        setTotalDebt(updatedTotalDebt);
+
+        // Create and save new borrow position
+        // Get token info for the borrowed token
+        const borrowedToken = tokenList.find(t =>
+          t.label.toUpperCase() === token_symbol.toUpperCase() ||
+          t.value.toUpperCase() === token_symbol.toUpperCase()
+        );
+
+        if (borrowedToken) {
+          const newPosition = {
+            id: `borrow-${borrowedToken.value}-${Date.now()}`,
+            assetImg: borrowedToken.logo,
+            assetName: borrowedToken.label,
+            amount: numericAmount,
+            apy: 3.5 + Math.random() * 2, // Random APY between 3.5% and 5.5%
+            type: "borrow" as const,
+            tokenValue: borrowedToken.value,
+            timestamp: Date.now(),
+            collateralTokens: selectedCollaterals, // Store which collaterals were used
+          };
+
+          // Get existing positions from localStorage
+          const existingPositions = (() => {
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("centuari_positions");
+              if (stored) {
+                try {
+                  return JSON.parse(stored);
+                } catch {
+                  return [];
                 }
-                style={{ opacity: viewMode === "borrow" ? 1 : 0 }}
-              >
-                <div className="flex flex-col items-center justify-center gap-2 mt-6">
-                  <Image
-                    src="/tokens/centuari-usdt.png"
-                    alt="usdt"
-                    width={76.5}
-                    height={76.5}
-                  />
-                  <CentuariTypography variant="h4">USDT</CentuariTypography>
-                  <div className="flex w-full items-center justify-around mt-4 px-6">
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Maturity{" "}
-                        <CentuariTooltip message="The date when the loan will be repaid.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        1 Feb 2026
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Borrow Rate{" "}
-                        <CentuariTooltip message="The interest rate at which you can borrow USDT.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        7.2%
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Net APR{" "}
-                        <CentuariTooltip message="The annual percentage rate for borrowing USDT after fees.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        7.2%
-                      </CentuariTypography>
+              }
+            }
+            return [];
+          })();
+
+          // Add new position
+          const updatedPositions = [...existingPositions, newPosition];
+
+          // Save to localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
+          }
+        }
+
+        // Store success data
+        setSuccessAmount(formatNumberWithSeparator(numericAmount));
+
+        // Reset amount input
+        setAmountToBorrow("");
+        setDisplayAmount("");
+
+        // Log transaction (simulating real transaction)
+        console.log(`Borrowed ${numericAmount} ${token_symbol}`);
+        console.log(`New total debt: ${formatCurrency(updatedTotalDebt)}`);
+        console.log(`Available quota: ${formatCurrency(maxBorrowCapacity - updatedTotalDebt)}`);
+        console.log(`Health Factor: ${healthFactor.toFixed(2)}`);
+
+        // Close main dialog and show success dialog
+        setIsDialogOpen(false);
+        setIsProcessing(false);
+        setShowSuccessDialog(true);
+      } catch (error) {
+        console.error("Transaction failed:", error);
+        setIsProcessing(false);
+        // In real app, show error dialog here
+      }
+    } else if (viewMode === "deposit-collateral") {
+      // Handle deposit logic here if needed
+      setIsProcessing(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const accessToken = await getAccessToken();
+        console.log("Access Token:", accessToken);
+        setIsProcessing(false);
+      } catch (error) {
+        console.error("Deposit failed:", error);
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <DialogTrigger asChild>
+          <Button variant="secondary" className="flex-1">
+            Borrow
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+          <DialogHeader className="contents space-y-0 text-left">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+            </div>
+            <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
+              <div className="relative overflow-hidden min-h-[400px]">
+                {/* Borrow View */}
+                <div
+                  ref={borrowViewRef}
+                  className={
+                    viewMode === "borrow"
+                      ? "relative"
+                      : "absolute inset-0 pointer-events-none"
+                  }
+                  style={{ opacity: viewMode === "borrow" ? 1 : 0 }}
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 mt-6">
+                    <Image
+                      src={token_image}
+                      alt={token_name}
+                      width={76.5}
+                      height={76.5}
+                    />
+                    <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
+                    <div className="flex w-full items-center justify-around mt-4 px-6">
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Maturity{" "}
+                          <CentuariTooltip message="The date when the loan will be repaid.">
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {maturityDate}
+                        </CentuariTypography>
+                      </div>
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Borrow Rate{" "}
+                          <CentuariTooltip message={`The interest rate at which you can borrow ${token_symbol}.`}>
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {borrowRate}
+                        </CentuariTypography>
+                      </div>
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Net APR{" "}
+                          <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {netAPR}
+                        </CentuariTypography>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
-                  Go to{" "}
-                  <Link href="/market" className="font-medium !underline">
-                    Market View
-                  </Link>{" "}
-                  to select other maturities.
-                </div>
+                  <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+                    Go to{" "}
+                    <Link href="/market" className="font-medium !underline">
+                      Market View
+                    </Link>{" "}
+                    to select other maturities.
+                  </div>
 
-                <div className="mt-4 px-6">
-                  <form action="">
-                    <CentuariInput
-                      id="amount"
-                      label="Amount to Borrow"
-                      size="large"
-                      placeholder="Placeholder"
-                      leftIcon={<IcDollarCentuari size={16} />}
-                      rightIcon={
-                        <Button variant="link" className="px-0" type="button">
-                          Max
-                        </Button>
-                      }
-                      balanceText="$1,000"
-                    />
-                    <div className="mt-5">
-                      <Label>Collateral Used</Label>
-                      <MultiSelect
-                        options={tokenList}
-                        onValueChange={(values) => console.log(values)}
-                        placeholder="Select Coins"
-                        variant="default"
-                        maxCount={4}
-                        className="mt-1.5"
+                  <div className="mt-4 px-6">
+                    <form action="">
+                      <CentuariInput
+                        id={`amount-${reactId}`}
+                        label="Amount to Borrow"
+                        size="large"
+                        placeholder="1,000"
+                        leftIcon={
+                          <Image
+                            src={token_image}
+                            alt={token_symbol}
+                            width={16}
+                            height={16}
+                            className="w-4 h-4"
+                          />
+                        }
+                        // rightIcon={
+                        //   <Button 
+                        //     variant="link" 
+                        //     className="px-0" 
+                        //     type="button"
+                        //     onClick={handleMaxClick}
+                        //   >
+                        //     Max
+                        //   </Button>
+                        // }
+                        // balanceText={`Available Quota: ${formatCurrency(availableQuota)}`}
+                        value={displayAmount}
+                        onChange={handleAmountChange}
                       />
-                    </div>
-                    {/* 
+                      <div className="mt-5">
+                        <Label>Collateral Used</Label>
+                        <MultiSelect
+                          options={tokenList.filter(token =>
+                            portfolio[token.value] &&
+                            portfolio[token.value] > 0 &&
+                            collateralStatus[token.value] === true
+                          )}
+                          onValueChange={handleCollateralChange}
+                          placeholder="Select Coins"
+                          variant="default"
+                          maxCount={4}
+                          className="mt-1.5"
+                          hideSelectAll={true}
+                          defaultValue={selectedCollaterals}
+                          resetOnDefaultValueChange={true}
+                        />
+                      </div>
+                      {/* 
                     <div>
                       <Label className="mb-2 mt-4">
                         Maturity{" "}
@@ -229,94 +699,179 @@ export function CentuariBorrowDialog() {
                       </CentuariTypography>
                     </div> */}
 
-                    {/* <SelectSingleToken /> */}
+                      {/* <SelectSingleToken /> */}
 
-                    <CentuariAlert
-                      variant="destructive"
-                      text="Not enough collateral"
-                      description="Increase collateral to borrow more"
-                      className="mt-1.5"
-                      action={
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={handleAddCollateralClick}
-                          type="button"
-                        >
-                          Add Collateral
-                        </Button>
-                      }
-                    />
+                      {/* {(numericAmount > availableQuota || selectedCollaterals.length === 0 || totalPortfolioValue === 0 || healthFactor < 1.0) && (
+                      <CentuariAlert
+                        variant="destructive"
+                        text={
+                          numericAmount > availableQuota
+                            ? "Exceeds available quota"
+                            : selectedCollaterals.length === 0
+                            ? "No collateral selected"
+                            : totalPortfolioValue === 0
+                            ? "No portfolio value"
+                            : "Health factor too low"
+                        }
+                        description={
+                          numericAmount > availableQuota
+                            ? `Available quota: ${formatCurrency(availableQuota)}. Select more collateral or repay debt.`
+                            : selectedCollaterals.length === 0
+                            ? "Select collateral from your portfolio to borrow"
+                            : totalPortfolioValue === 0
+                            ? "Selected collateral has no value in portfolio"
+                            : "Increase collateral or reduce borrow amount to improve health factor"
+                        }
+                        className="mt-1.5"
+                        action={
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleAddCollateralClick}
+                            type="button"
+                          >
+                            {selectedCollaterals.length === 0 ? "Add Collateral" : "Deposit"}
+                          </Button>
+                        }
+                      />
+                    )} */}
 
-                    <div>
-                      <Label className="mb-2 mt-4">
-                        Health Factor{" "}
-                        <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                        <Badge variant="success">0.0 ~ Safe</Badge>
-                      </Label>
-                      <div className="border border-white/5 rounded-lg mt-2">
-                        <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                          <HealthFactor />
-                        </div>
-                        <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
-                          <p className="text-xs text-muted-foreground text-center">
-                            If USDC drops{" "}
-                            <span className="text-white font-medium">
-                              below $000
-                            </span>
-                            , your position could be liquidated.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                      <div>
+                        <Label className="mb-2 mt-4">
+                          Health Factor{" "}
+                          <CentuariTooltip message="Your health factor indicates the safety of your borrowed position. Health Factor = (Total Collateral Value × Collateral Factor) / Total Borrowed Value">
+                            <Info size={16} />
+                          </CentuariTooltip>
+                          <Badge
+                            variant={
+                              healthFactor === 0 || selectedCollaterals.length === 0 || numericAmount === 0
+                                ? "default"
+                                : healthFactor >= 2.5
+                                  ? "success"
+                                  : healthFactor >= 1.5
+                                    ? "default"
+                                    : healthFactor >= 1.2
+                                      ? "warning"
+                                      : healthFactor >= 1.0
+                                        ? "warning"
+                                        : "destructive"
+                            }
+                          >
+                            {(() => {
+                              // Ensure we're displaying the actual health factor value, not other values
+                              if (healthFactor > 0 && !isNaN(healthFactor) && selectedCollaterals.length > 0 && numericAmount > 0) {
+                                // Format health factor with 2 decimal places
+                                // Health factor should be in range 0-10 typically
+                                // Ensure health factor is a reasonable number (not thousands)
+                                let hfValue = healthFactor;
 
-                    <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
-                      {[
-                        { label: "Transaction Fee", value: "0.1%" },
-                        { label: "Amount to Pay Now", value: "$1,001.00" },
-                      ].map(({ label, value }, i) => (
-                        <div
-                          key={label}
-                          className={`flex items-center justify-between ${
-                            i < 1 ? "border-b border-dashed pb-2" : ""
-                          }`}
-                        >
-                          <p className="flex text-muted-foreground items-center gap-2">
-                            {label}{" "}
-                            {i === 0 && (
-                              <CentuariTooltip message="Coming Soon">
-                                <Info size={12} />
-                              </CentuariTooltip>
-                            )}
-                          </p>
-                          <div className="flex items-center gap-1">
-                            <p>{value}</p>
+                                // If health factor is unreasonably large (likely a calculation error), cap it
+                                if (hfValue > 10) {
+                                  hfValue = 10;
+                                }
+
+                                const hfDisplay = parseFloat(hfValue.toFixed(2));
+                                let status: string;
+
+                                if (hfDisplay >= 2.5) {
+                                  status = "Excellent";
+                                } else if (hfDisplay >= 1.5) {
+                                  status = "Good";
+                                } else if (hfDisplay >= 1.2) {
+                                  status = "Warning";
+                                } else if (hfDisplay >= 1.0) {
+                                  status = "Critical";
+                                } else {
+                                  status = "Danger";
+                                }
+
+                                // Return formatted health factor (e.g., "2.50 ~ Excellent", "1.50 ~ Good")
+                                return `${hfDisplay.toFixed(2)} ~ ${status}`;
+                              }
+                              return "0.00 ~ Safe";
+                            })()}
+                          </Badge>
+                        </Label>
+                        <div className="border border-white/5 rounded-lg mt-2">
+                          <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                            <HealthFactor
+                              targetValue={healthFactorPercentage}
+                              healthFactor={healthFactor > 0 && !isNaN(healthFactor) ? healthFactor : undefined}
+                            />
+                          </div>
+                          <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                            <p className="text-xs text-muted-foreground text-center">
+                              {healthFactor > 0 && !isNaN(healthFactor) ? (
+                                <>
+                                  If portfolio value drops{" "}
+                                  <span className="text-white font-medium">
+                                    below {formatCurrency(newTotalDebt / weightedLT)}
+                                  </span>
+                                  {" "}or total debt exceeds{" "}
+                                  <span className="text-white font-medium">
+                                    {formatCurrency(totalPortfolioValue * weightedLT)}
+                                  </span>
+                                  , your position could be liquidated.
+                                </>
+                              ) : (
+                                <>Select collateral from portfolio and enter borrow amount to see health factor.</>
+                              )}
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          In the future you'll pay{" "}
-                          <CentuariTooltip message="Coming Soon">
-                            <Info size={12} />
-                          </CentuariTooltip>{" "}
-                        </div>
-                        <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-                          $1,049.00
-                        </span>
                       </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
 
-              {/* Add-Collateral View */}
-              {/* <div
+                      <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
+                        <div className="flex items-center justify-between border-b border-dashed pb-2">
+                          <p className="flex text-muted-foreground items-center gap-2">
+                            Transaction Fee{" "}
+                            <CentuariTooltip message="Coming Soon">
+                              <Info size={12} />
+                            </CentuariTooltip>
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"} (0.01%)</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="flex text-muted-foreground items-center gap-2">
+                            Amount to Pay Now
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <p>{numericAmount > 0 ? formatCurrency(amountToPay) : "$0.00"}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            In the future you'll pay{" "}
+                            <CentuariTooltip message="Coming Soon">
+                              <Info size={12} />
+                            </CentuariTooltip>{" "}
+                          </div>
+                          <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+                            {numericAmount > 0 ? formatCurrency(futureAmount) : "$0.00"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <CentuariTypography
+                        variant="s4"
+                        className="mt-2 text-muted-foreground justify-center flex items-center gap-1"
+                      >
+                        Withdrawal Unlocks on
+                        <CentuariTypography variant="s4" className="underline">
+                          {maturityDate}
+                        </CentuariTypography>
+                      </CentuariTypography>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Add-Collateral View */}
+                {/* <div
                 ref={collateralViewRef}
                 className={
                   viewMode === "add-collateral"
@@ -368,76 +923,135 @@ export function CentuariBorrowDialog() {
                 </form>
               </div> */}
 
-              {/* Deposit */}
-              <div
-                ref={collateralViewRef}
-                className={
-                  viewMode === "deposit-collateral"
-                    ? "relative mt-6 px-6"
-                    : "absolute inset-0 pointer-events-none mt-6 px-6"
-                }
-                style={{ opacity: viewMode === "deposit-collateral" ? 1 : 0 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBackToBorrow}
-                  className="mb-4 -ml-2"
-                  type="button"
+                {/* Deposit */}
+                <div
+                  ref={collateralViewRef}
+                  className={
+                    viewMode === "deposit-collateral"
+                      ? "relative mt-6 px-6"
+                      : "absolute inset-0 pointer-events-none mt-6 px-6"
+                  }
+                  style={{ opacity: viewMode === "deposit-collateral" ? 1 : 0 }}
                 >
-                  <ArrowLeft size={16} />
-                </Button>
-                <div className="flex flex-col items-center justify-center text-center">
-                  <Image
-                    src={"/centuari-logo.png"}
-                    width={48}
-                    height={48}
-                    alt="centuari-logo"
-                  />
-                  <CentuariTypography variant="h1" className="mt-8">
-                    Deposit to Your Vault
-                  </CentuariTypography>
-                  <CentuariTypography
-                    variant="b3"
-                    className="mb-1 text-muted-foreground mt-3"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToBorrow}
+                    className="mb-4 -ml-2"
+                    type="button"
                   >
-                    Select the asset and amount you want to add, and power up
-                    your Centuari balance.
-                  </CentuariTypography>
+                    <ArrowLeft size={16} />
+                  </Button>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <Image
+                      src={"/centuari-logo.png"}
+                      width={48}
+                      height={48}
+                      alt="centuari-logo"
+                    />
+                    <CentuariTypography variant="h1" className="mt-8">
+                      Deposit to Your Vault
+                    </CentuariTypography>
+                    <CentuariTypography
+                      variant="b3"
+                      className="mb-1 text-muted-foreground mt-3"
+                    >
+                      Select the asset and amount you want to add, and power up
+                      your Centuari balance.
+                    </CentuariTypography>
+                  </div>
+                  <form>
+                    <SelectToken />
+                    <CentuariInput
+                      id="amount"
+                      label="Deposit Amount"
+                      size="large"
+                      placeholder="Amount"
+                      leftIcon={<IcDollarCentuari size={16} />}
+                      className="mt-0"
+                      containerClassName="mt-3.5"
+                    />
+                  </form>
                 </div>
-                <form>
-                  <SelectToken />
-                  <CentuariInput
-                    id="amount"
-                    label="Deposit Amount"
-                    size="large"
-                    placeholder="Amount"
-                    leftIcon={<IcDollarCentuari size={16} />}
-                    className="mt-0"
-                    containerClassName="mt-3.5"
-                  />
-                </form>
+              </div>
+            </ScrollArea>
+          </DialogHeader>
+          <DialogFooter className="flex !flex-col gap-2 pt-2 px-6">
+            <div className="flex items-center gap-4">
+              <DialogClose asChild>
+                <CentuariButton variant="secondary">Cancel</CentuariButton>
+              </DialogClose>
+              <CentuariButton
+                type="button"
+                variant="primary"
+                className="flex-1"
+                onClick={handleBorrow}
+                disabled={
+                  isProcessing ||
+                  (viewMode === "borrow" &&
+                    (numericAmount <= 0 ||
+                      numericAmount > availableQuota ||
+                      selectedCollaterals.length === 0 ||
+                      totalPortfolioValue === 0 ||
+                      healthFactor < 1.0))
+                }
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : viewMode === "borrow" ? (
+                  "Confirm Borrow"
+                ) : (
+                  "Confirm Add Collateral"
+                )}
+              </CentuariButton>
+            </div>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
+              This position is automatically refinanced. At maturity, it will roll
+              over to the next available term unless you take action.
+            </p>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+          <DialogHeader className="contents space-y-0 text-left">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+            </div>
+            <div className="mt-6 px-6 flex items-center justify-center flex-col gap-4 pb-6">
+              <Image
+                src="/assets/tx-success.png"
+                alt="Success"
+                width={116}
+                height={124}
+              />
+              <CentuariTypography className="text-2xl font-semibold">
+                Borrow Successful!
+              </CentuariTypography>
+              <CentuariTypography className="text-center text-muted-foreground">
+                {successAmount ? (
+                  <>
+                    You have successfully borrowed {successAmount} {token_symbol} from
+                    the vault.
+                  </>
+                ) : (
+                  <>Your {token_symbol} borrow has been completed successfully.</>
+                )}
+              </CentuariTypography>
+              <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Closing...</span>
               </div>
             </div>
-          </ScrollArea>
-        </DialogHeader>
-        <DialogFooter className="flex !flex-col gap-2 pt-2 px-6">
-          <div className="flex items-center gap-4">
-            <DialogClose asChild>
-              <Button variant="secondary">Cancel</Button>
-            </DialogClose>
-            <Button type="button" variant="primary" className="flex-1">
-              {viewMode === "borrow"
-                ? "Confirm Borrow"
-                : "Confirm Add Collateral"}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
-            This position is automatically refinanced. At maturity, it will roll
-            over to the next available term unless you take action.
-          </p>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

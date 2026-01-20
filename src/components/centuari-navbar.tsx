@@ -187,11 +187,10 @@ export default function CentuariNavbar() {
   return (
     <nav
       id="tour-home-nav"
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-        isScrolled
-          ? "bg-primary-blue-90/20 backdrop-blur-xl md:border-b md:border-white/10"
-          : ""
-      }`}
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
+        ? "bg-primary-blue-90/20 backdrop-blur-xl md:border-b md:border-white/10"
+        : ""
+        }`}
     >
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
         <div className="px-4 md:px-6">
@@ -222,11 +221,10 @@ export default function CentuariNavbar() {
                     ref={(el) => {
                       desktopNavRef.current[index] = el;
                     }}
-                    className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isNavItemActive(item)
-                        ? "text-white font-semibold"
-                        : "text-white/70 hover:text-white"
-                    }`}
+                    className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isNavItemActive(item)
+                      ? "text-white font-semibold"
+                      : "text-white/70 hover:text-white"
+                      }`}
                     onMouseEnter={(e) => {
                       if (!isNavItemActive(item)) {
                         gsap.to(e.currentTarget, {
@@ -355,11 +353,10 @@ export default function CentuariNavbar() {
                     navItemsRef.current[index] = el;
                   }}
                   onClick={handleNavClick}
-                  className={`block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isNavItemActive(item)
-                      ? "text-white bg-white/10"
-                      : "text-white/70 hover:text-white hover:bg-white/5"
-                  }`}
+                  className={`block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${isNavItemActive(item)
+                    ? "text-white bg-white/10"
+                    : "text-white/70 hover:text-white hover:bg-white/5"
+                    }`}
                 >
                   {item.name}
                 </Link>

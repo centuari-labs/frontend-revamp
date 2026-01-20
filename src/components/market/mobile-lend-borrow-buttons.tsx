@@ -19,10 +19,12 @@ interface TokenOption {
 
 interface MobileLendBorrowButtonsProps {
   tokenList: TokenOption[];
+  selectedToken?: TokenOption;
 }
 
 export function MobileLendBorrowButtons({
   tokenList,
+  selectedToken,
 }: MobileLendBorrowButtonsProps) {
   const [isLendOpen, setIsLendOpen] = useState(false);
   const [isBorrowOpen, setIsBorrowOpen] = useState(false);
@@ -54,7 +56,7 @@ export function MobileLendBorrowButtons({
             <DrawerTitle className="text-xl">Lend</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto">
-            <LendForm tokenList={tokenList} />
+            <LendForm tokenList={tokenList} selectedToken={selectedToken} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -65,7 +67,7 @@ export function MobileLendBorrowButtons({
             <DrawerTitle className="text-xl">Borrow</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto">
-            <BorrowForm />
+            <BorrowForm tokenList={tokenList} selectedToken={selectedToken} />
           </div>
         </DrawerContent>
       </Drawer>

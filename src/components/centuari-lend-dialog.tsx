@@ -28,16 +28,179 @@ import { Label } from "./ui/label";
 import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
 import Link from "next/link";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, parseDateString, calculateDaysDifference } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 
 type ViewMode = "lend" | "deposit-lend";
 
-export function CentuariLendDialog() {
+interface CentuariLendDialogProps {
+  token_image: string;
+  token_name: string;
+  token_symbol: string;
+  netAPR: string; // Format: "6,5%"
+  borrowRate: string;
+  collateralFactor: string;
+  vaultTotal: number;
+}
+
+export function CentuariLendDialog({
+  token_image,
+  token_name,
+  token_symbol,
+  netAPR,
+  borrowRate,
+  collateralFactor,
+  vaultTotal,
+}: CentuariLendDialogProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("lend");
   const lendViewRef = useRef<HTMLDivElement>(null);
   const collateralViewRef = useRef<HTMLDivElement>(null);
 
   const reactId = useId();
   const { getAccessToken } = usePrivy();
+
+  // State for amount input
+  const [amountToLend, setAmountToLend] = useState<string>("");
+  const [displayAmount, setDisplayAmount] = useState<string>("");
+
+  // Get token value from symbol (e.g., "USDT" -> "usdt")
+  const getTokenValue = (symbol: string): string => {
+    const token = tokenList.find(t =>
+      t.label.toUpperCase() === symbol.toUpperCase() ||
+      t.value.toUpperCase() === symbol.toUpperCase()
+    );
+    return token?.value || symbol.toLowerCase();
+  };
+
+  const tokenValue = getTokenValue(token_symbol);
+
+  // State for portfolio - sync with localStorage
+  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_portfolio");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return defaultPortfolio;
+        }
+      }
+    }
+    return defaultPortfolio;
+  });
+
+  // State for available balance - derived from portfolio
+  const [availableBalance, setAvailableBalance] = useState<number>(() => {
+    // Get from portfolio, or use default
+    const token = tokenList.find(t => t.value === tokenValue);
+    if (token) {
+      const portfolioValue = portfolio[tokenValue] || 0;
+      // Convert USD value to token amount
+      return token.price > 0 ? portfolioValue / token.price : 1000;
+    }
+    return 1000;
+  });
+
+  // State for total supply (all lends combined)
+  const [totalSupply, setTotalSupply] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_total_supply");
+      if (stored) {
+        try {
+          return parseFloat(stored) || 0;
+        } catch {
+          return 0;
+        }
+      }
+    }
+    return 0;
+  });
+
+  // Sync portfolio to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
+    }
+  }, [portfolio]);
+
+  // Sync total supply to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("centuari_total_supply", totalSupply.toString());
+    }
+  }, [totalSupply]);
+
+  // Update available balance when portfolio changes
+  useEffect(() => {
+    const token = tokenList.find(t => t.value === tokenValue);
+    if (token) {
+      const portfolioValue = portfolio[tokenValue] || 0;
+      const newBalance = token.price > 0 ? portfolioValue / token.price : 0;
+      setAvailableBalance(newBalance);
+    }
+  }, [portfolio, tokenValue]);
+
+  // State for transaction processing
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
+  const [successAmount, setSuccessAmount] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+
+  // Parse Net APR from format "6,5%" to number (6.5)
+  const parseNetAPR = (aprString: string): number => {
+    // Remove % and replace comma with dot
+    const cleaned = aprString.replace("%", "").replace(",", ".");
+    return parseFloat(cleaned) || 0;
+  };
+
+  const netAPRNumeric = parseNetAPR(netAPR);
+
+  // Calculate derived values
+  const numericAmount = parseFloat(amountToLend) || 0;
+  const transactionFee = numericAmount * 0.0001; // 0.01%
+  const amountToPay = numericAmount + transactionFee;
+
+  // Format vault total with currency
+  const formattedVaultTotal = formatCurrency(vaultTotal);
+
+  // Maturity date - withdrawal unlocks on the same date
+  const maturityDate = "1 Feb 2026";
+
+  // Calculate future amount based on new formula:
+  // Amount + (Amount * Rate/365 * days)
+  // where days = (Maturity Date - (Current Date + 1))
+  const calculateFutureAmount = () => {
+    if (numericAmount <= 0 || netAPRNumeric <= 0) return numericAmount;
+
+    // Current date + 1 day
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    // Parse maturity date
+    const maturityDateObj = parseDateString(maturityDate);
+    if (!maturityDateObj) return numericAmount;
+
+    // Calculate days difference
+    const days = calculateDaysDifference(currentDate, maturityDateObj);
+    if (days <= 0) return numericAmount;
+
+    // Calculate future amount: Amount + (Amount * Rate/365 * days)
+    const futureAmount = numericAmount + (numericAmount * (netAPRNumeric / 100) / 365 * days);
+    return futureAmount;
+  };
+
+  const futureAmount = calculateFutureAmount();
+
+  // Handle amount input change
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numericValue = parseNumberFromSeparator(value);
+    const formattedValue = formatNumberWithSeparator(numericValue);
+
+    setAmountToLend(numericValue);
+    setDisplayAmount(formattedValue);
+  };
 
   const handleAddCollateralClick = () => {
     setViewMode("deposit-lend");
@@ -48,8 +211,34 @@ export function CentuariLendDialog() {
   };
 
   const handleDialogChange = (open: boolean) => {
-    if (!open) setViewMode("lend");
+    setIsDialogOpen(open);
+    if (!open) {
+      setViewMode("lend");
+      setAmountToLend("");
+      setDisplayAmount("");
+      setIsProcessing(false);
+      setShowSuccessDialog(false);
+    }
   };
+
+  // Handle Max button - set amount to available balance
+  const handleMaxClick = () => {
+    const maxAmount = availableBalance.toString();
+    const formattedMax = formatNumberWithSeparator(maxAmount);
+    setAmountToLend(maxAmount);
+    setDisplayAmount(formattedMax);
+  };
+
+  // Auto-close success dialog after 3 seconds
+  useEffect(() => {
+    if (showSuccessDialog) {
+      const timer = setTimeout(() => {
+        setShowSuccessDialog(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessDialog]);
 
   // Animate in when view changes
   useEffect(() => {
@@ -95,110 +284,262 @@ export function CentuariLendDialog() {
   }, [viewMode]);
 
   const handleLend = async () => {
-    const accessToken = await getAccessToken();
-    console.log("Access Token:", accessToken);
+    if (viewMode === "lend") {
+      // Validate amount
+      if (numericAmount <= 0) {
+        return;
+      }
+
+      // Check if amount exceeds available balance
+      if (numericAmount > availableBalance) {
+        return;
+      }
+
+      // Start processing
+      setIsProcessing(true);
+
+      try {
+        // Simulate transaction processing delay (1.5 seconds)
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Get access token (for future API integration)
+        const accessToken = await getAccessToken();
+        console.log("Access Token:", accessToken);
+
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Reduce available balance
+        const newBalance = availableBalance - numericAmount;
+        setAvailableBalance(newBalance);
+
+        // Update portfolio in localStorage
+        const token = tokenList.find(t => t.value === tokenValue);
+        if (token && token.price > 0) {
+          const currentPortfolioValue = portfolio[tokenValue] || 0;
+          const amountInUsd = numericAmount * token.price;
+          const newPortfolioValue = Math.max(0, currentPortfolioValue - amountInUsd);
+
+          setPortfolio(prev => ({
+            ...prev,
+            [tokenValue]: newPortfolioValue,
+          }));
+
+          // Update total supply (add lent amount in USD)
+          const updatedTotalSupply = totalSupply + amountInUsd;
+          setTotalSupply(updatedTotalSupply);
+
+          // Create and save new lend position
+          const newPosition = {
+            id: `lend-${tokenValue}-${Date.now()}`,
+            assetImg: token.logo,
+            assetName: token.label,
+            amount: amountInUsd,
+            apy: (4.5 + Math.random() * 3) / 100, // Random APY between 4.5% and 7.5% as decimal (0.045 to 0.075)
+            type: "lend" as const,
+            tokenValue: tokenValue,
+            tokenSymbol: token_symbol,
+            maturity: maturityDate,
+            status: "pending" as const,
+            createdAt: formatDate(new Date()),
+            timestamp: Date.now(),
+            orderType: "limit" as const,
+          };
+
+          // Get existing positions from localStorage
+          const existingPositions = (() => {
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("centuari_positions");
+              if (stored) {
+                try {
+                  return JSON.parse(stored);
+                } catch {
+                  return [];
+                }
+              }
+            }
+            return [];
+          })();
+
+          // Add new position
+          const updatedPositions = [...existingPositions, newPosition];
+
+          // Save to localStorage
+          if (typeof window !== "undefined") {
+            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
+          }
+        }
+
+        // Store success data
+        setSuccessAmount(formatNumberWithSeparator(numericAmount));
+
+        // Reset amount input
+        setAmountToLend("");
+        setDisplayAmount("");
+
+        // Log transaction (simulating real transaction)
+        console.log(`Lent ${numericAmount} ${token_symbol}`);
+        console.log(`New available balance: ${newBalance} ${token_symbol}`);
+
+        // Close main dialog and show success dialog
+        setIsDialogOpen(false);
+        setIsProcessing(false);
+        setShowSuccessDialog(true);
+      } catch (error) {
+        console.error("Transaction failed:", error);
+        setIsProcessing(false);
+        // In real app, show error dialog here
+      }
+    } else if (viewMode === "deposit-lend") {
+      // Handle deposit logic here if needed
+      setIsProcessing(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const accessToken = await getAccessToken();
+        console.log("Access Token:", accessToken);
+        setIsProcessing(false);
+      } catch (error) {
+        console.error("Deposit failed:", error);
+        setIsProcessing(false);
+      }
+    }
   };
 
   return (
-    <Dialog onOpenChange={handleDialogChange}>
-      <DialogTrigger asChild>
-        <Button variant="primary-dark" className="flex-1">
-          Start Earning
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
-        <DialogHeader className="contents space-y-0 text-left">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
-            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
-            <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
-          </div>
-          <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
-            <div className="relative overflow-hidden">
-              <div
-                ref={lendViewRef}
-                className={
-                  viewMode === "lend"
-                    ? "relative"
-                    : "absolute inset-0 pointer-events-none"
-                }
-                style={{ opacity: viewMode === "lend" ? 1 : 0 }}
-              >
-                <div className="flex flex-col items-center justify-center gap-2 mt-6">
-                  <Image
-                    src="/tokens/centuari-usdt.png"
-                    alt="usdt"
-                    width={76.5}
-                    height={76.5}
-                  />
-                  <CentuariTypography variant="h4">USDT</CentuariTypography>
-                  <div className="flex w-full items-center justify-around mt-4 px-6">
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Maturity{" "}
-                        <CentuariTooltip message="The date when the loan will be repaid.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        1 Feb 2026
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Vault Total{" "}
-                        <CentuariTooltip message="The total amount of USDT in the vault.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        $150,000
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Net APR{" "}
-                        <CentuariTooltip message="The annual percentage rate for borrowing USDT after fees.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        7.2%
-                      </CentuariTypography>
+    <>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+        <DialogTrigger asChild>
+          <Button variant="primary-dark" className="flex-1">
+            Start Earning
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+          <DialogHeader className="contents space-y-0 text-left">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+            </div>
+            <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
+              <div className="relative overflow-hidden">
+                <div
+                  ref={lendViewRef}
+                  className={
+                    viewMode === "lend"
+                      ? "relative"
+                      : "absolute inset-0 pointer-events-none"
+                  }
+                  style={{ opacity: viewMode === "lend" ? 1 : 0 }}
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 mt-6">
+                    <Image
+                      src={token_image}
+                      alt={token_name}
+                      width={76.5}
+                      height={76.5}
+                    />
+                    <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
+                    <div className="flex w-full items-center justify-around mt-4 px-6">
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Maturity{" "}
+                          <CentuariTooltip message="The date when the loan will be repaid.">
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {maturityDate}
+                        </CentuariTypography>
+                      </div>
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Vault Total{" "}
+                          <CentuariTooltip message={`The total amount of ${token_symbol} in the vault.`}>
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {formattedVaultTotal}
+                        </CentuariTypography>
+                      </div>
+                      <div>
+                        <CentuariTypography
+                          className="flex items-center gap-1 text-muted-foreground"
+                          variant="b3"
+                        >
+                          Net APR{" "}
+                          <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
+                        <CentuariTypography variant="h5" className="text-center">
+                          {netAPR}
+                        </CentuariTypography>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
-                  Go to{" "}
-                  <Link href="/market" className="font-medium !underline">
-                    Market View
-                  </Link>{" "}
-                  to select other maturities.
-                </div>
-                <div className="mt-4 px-6">
-                  <CentuariInput
-                    id={`amount-${reactId}`}
-                    label="Amount to Lend"
-                    size="large"
-                    placeholder="1,000"
-                    leftIcon={<IcDollarCentuari size={16} />}
-                    rightIcon={
-                      <Button variant={"link"} className="px-0" type="button">
-                        Max
-                      </Button>
-                    }
-                    balanceText="$1,000"
-                  />
+                  <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+                    Go to{" "}
+                    <Link href="/market" className="font-medium !underline">
+                      Market View
+                    </Link>{" "}
+                    to select other maturities.
+                  </div>
+                  <div className="mt-4 px-6">
+                    <CentuariInput
+                      id={`amount-${reactId}`}
+                      label="Amount to Lend"
+                      size="large"
+                      placeholder="1,000"
+                      leftIcon={
+                        <Image
+                          src={token_image}
+                          alt={token_symbol}
+                          width={16}
+                          height={16}
+                          className="w-4 h-4"
+                        />
+                      }
+                      rightIcon={
+                        <Button
+                          variant={"link"}
+                          className="px-0"
+                          type="button"
+                          onClick={handleMaxClick}
+                        >
+                          Max
+                        </Button>
+                      }
+                      balanceText={`${token_symbol} ${formatNumberWithSeparator(availableBalance)}`}
+                      value={displayAmount}
+                      onChange={handleAmountChange}
+                    />
 
-                  <CentuariAlert
+                    {numericAmount > availableBalance && (
+                      <CentuariAlert
+                        variant="destructive"
+                        text="Insufficient balance"
+                        description="Deposit now to continue your order"
+                        className="mt-1.5"
+                        action={
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleAddCollateralClick}
+                            type="button"
+                          >
+                            Deposit
+                          </Button>
+                        }
+                      />
+                    )}
+
+                    {/* <CentuariAlert
                     variant="destructive"
                     text="Insufficient balance"
                     description="Deposit now to continue your order"
@@ -213,9 +554,9 @@ export function CentuariLendDialog() {
                         Deposit
                       </Button>
                     }
-                  />
+                  /> */}
 
-                  {/* <div>
+                    {/* <div>
                     <Label className="mb-2 mt-4">
                       Maturity{" "}
                       <CentuariTooltip message="Select the maturity period for your borrowed USDT.">
@@ -234,7 +575,7 @@ export function CentuariLendDialog() {
 										</CentuariTypography>
                   </div> */}
 
-                  {/* <div>
+                    {/* <div>
 										<Label className="mb-2 mt-4">
 											Health Factor{" "}
 											<CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
@@ -258,60 +599,56 @@ export function CentuariLendDialog() {
 										</div>
 									</div> */}
 
-                  <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
-                    {[
-                      { label: "Transaction Fee", value: "0.1%" },
-                      { label: "Amount to Pay Now", value: "$1,001.00" },
-                    ].map(({ label, value }, i) => (
-                      <div
-                        key={label}
-                        className={`flex items-center justify-between ${
-                          i < 1 ? "border-b border-dashed pb-2" : ""
-                        }`}
-                      >
+                    <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
+                      <div className="flex items-center justify-between border-b border-dashed pb-2">
                         <p className="flex text-muted-foreground items-center gap-2">
-                          {label}{" "}
-                          {i === 0 && (
-                            <CentuariTooltip message="Coming Soon">
-                              <Info size={12} />
-                            </CentuariTooltip>
-                          )}
+                          Transaction Fee{" "}
+                          <CentuariTooltip message="Coming Soon">
+                            <Info size={12} />
+                          </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
-                          <p>{value}</p>
+                          <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"} (0.01%)</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        In the future you'll pay{" "}
-                        <CentuariTooltip message="Coming Soon">
-                          <Info size={12} />
-                        </CentuariTooltip>{" "}
+                      <div className="flex items-center justify-between">
+                        <p className="flex text-muted-foreground items-center gap-2">
+                          Amount to Pay Now
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <p>{numericAmount > 0 ? formatCurrency(amountToPay) : "$0.00"}</p>
+                        </div>
                       </div>
-                      <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-                        $1,049.00
-                      </span>
                     </div>
-                  </div>
 
-                  <CentuariTypography
-                    variant="s4"
-                    className="mt-2 text-muted-foreground justify-center flex items-center gap-1"
-                  >
-                    Withdrawal Unlocks on
-                    <CentuariTypography variant="s4" className="underline">
-                      21 Oct 2026
+                    <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          In the future you'll get and pay{" "}
+                          <CentuariTooltip message="Coming Soon">
+                            <Info size={12} />
+                          </CentuariTooltip>{" "}
+                        </div>
+                        <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+                          {numericAmount > 0 ? formatCurrency(futureAmount) : "$0.00"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <CentuariTypography
+                      variant="s4"
+                      className="mt-2 text-muted-foreground justify-center flex items-center gap-1"
+                    >
+                      Withdrawal Unlocks on
+                      <CentuariTypography variant="s4" className="underline">
+                        {maturityDate}
+                      </CentuariTypography>
                     </CentuariTypography>
-                  </CentuariTypography>
+                  </div>
                 </div>
-              </div>
 
-              {/* Funds Payment */}
-              {/* <div
+                {/* Funds Payment */}
+                {/* <div
                 ref={collateralViewRef}
                 className={
                   viewMode === "add-collateral"
@@ -353,83 +690,133 @@ export function CentuariLendDialog() {
                   ))}
                 </div>
               </div> */}
-              {/* Deposit */}
-              <div
-                ref={collateralViewRef}
-                className={
-                  viewMode === "deposit-lend"
-                    ? "relative mt-6 px-6"
-                    : "absolute inset-0 pointer-events-none mt-6 px-6"
-                }
-                style={{ opacity: viewMode === "deposit-lend" ? 1 : 0 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBackToLend}
-                  className="mb-4 -ml-2"
-                  type="button"
+                {/* Deposit */}
+                <div
+                  ref={collateralViewRef}
+                  className={
+                    viewMode === "deposit-lend"
+                      ? "relative mt-6 px-6"
+                      : "absolute inset-0 pointer-events-none mt-6 px-6"
+                  }
+                  style={{ opacity: viewMode === "deposit-lend" ? 1 : 0 }}
                 >
-                  <ArrowLeft size={16} />
-                </Button>
-                <div className="flex flex-col items-center justify-center text-center">
-                  <Image
-                    src={"/centuari-logo.png"}
-                    width={48}
-                    height={48}
-                    alt="centuari-logo"
-                  />
-                  <CentuariTypography variant="h1" className="mt-8">
-                    Deposit to Your Vault
-                  </CentuariTypography>
-                  <CentuariTypography
-                    variant="b3"
-                    className="mb-1 text-muted-foreground mt-3"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToLend}
+                    className="mb-4 -ml-2"
+                    type="button"
                   >
-                    Select the asset and amount you want to add, and power up
-                    your Centuari balance.
-                  </CentuariTypography>
+                    <ArrowLeft size={16} />
+                  </Button>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <Image
+                      src={"/centuari-logo.png"}
+                      width={48}
+                      height={48}
+                      alt="centuari-logo"
+                    />
+                    <CentuariTypography variant="h1" className="mt-8">
+                      Deposit to Your Vault
+                    </CentuariTypography>
+                    <CentuariTypography
+                      variant="b3"
+                      className="mb-1 text-muted-foreground mt-3"
+                    >
+                      Select the asset and amount you want to add, and power up
+                      your Centuari balance.
+                    </CentuariTypography>
+                  </div>
+                  <form>
+                    <SelectToken />
+                    <CentuariInput
+                      id="amount"
+                      label="Deposit Amount"
+                      size="large"
+                      placeholder="Amount"
+                      leftIcon={<IcDollarCentuari size={16} />}
+                      className="mt-0"
+                      containerClassName="mt-3.5"
+                    />
+                  </form>
                 </div>
-                <form>
-                  <SelectToken />
-                  <CentuariInput
-                    id="amount"
-                    label="Deposit Amount"
-                    size="large"
-                    placeholder="Amount"
-                    leftIcon={<IcDollarCentuari size={16} />}
-                    className="mt-0"
-                    containerClassName="mt-3.5"
-                  />
-                </form>
+              </div>
+            </ScrollArea>
+          </DialogHeader>
+          <DialogFooter className="flex !flex-col gap-2 px-6">
+            <div className="flex items-center gap-4">
+              <DialogClose asChild>
+                <CentuariButton variant="secondary">Cancel</CentuariButton>
+              </DialogClose>
+              <CentuariButton
+                type="button"
+                variant={"primary"}
+                className="flex-1"
+                onClick={handleLend}
+                disabled={
+                  isProcessing ||
+                  (viewMode === "lend" &&
+                    (numericAmount <= 0 || numericAmount > availableBalance))
+                }
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : viewMode === "lend" ? (
+                  "Confirm Lend"
+                ) : viewMode === "deposit-lend" ? (
+                  "Confirm Deposit"
+                ) : (
+                  "Confirm Add Collateral"
+                )}
+              </CentuariButton>
+            </div>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
+              This position is automatically refinanced. At maturity, it will roll
+              over to the next available term unless you take action.
+            </p>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+          <DialogHeader className="contents space-y-0 text-left">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+            </div>
+            <div className="mt-6 px-6 flex items-center justify-center flex-col gap-4 pb-6">
+              <Image
+                src="/assets/tx-success.png"
+                alt="Success"
+                width={116}
+                height={124}
+              />
+              <CentuariTypography className="text-2xl font-semibold">
+                Lend Successful!
+              </CentuariTypography>
+              <CentuariTypography className="text-center text-muted-foreground">
+                {successAmount ? (
+                  <>
+                    You have successfully lent {successAmount} {token_symbol} to
+                    the vault.
+                  </>
+                ) : (
+                  <>Your {token_symbol} lend has been completed successfully.</>
+                )}
+              </CentuariTypography>
+              <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Closing...</span>
               </div>
             </div>
-          </ScrollArea>
-        </DialogHeader>
-        <DialogFooter className="flex !flex-col gap-2 px-6">
-          <div className="flex items-center gap-4">
-            <DialogClose asChild>
-              <CentuariButton variant="secondary">Cancel</CentuariButton>
-            </DialogClose>
-            <CentuariButton
-              type="button"
-              variant={"primary"}
-              className="flex-1"
-              onClick={handleLend}
-            >
-              {viewMode === "lend"
-                ? "Confirm Lend"
-                : viewMode === "deposit-lend"
-                ? "Confirm Deposit"
-                : "Confirm Add Collateral"}
-            </CentuariButton>
-          </div>
-          <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
-            This position is automatically refinanced. At maturity, it will roll
-            over to the next available term unless you take action.
-          </p>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

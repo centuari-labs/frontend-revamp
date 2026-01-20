@@ -4,47 +4,159 @@ import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import Image from "next/image";
 
-export default function HealthFactor() {
-  const [targetValue, setTargetValue] = useState(55);
-  const [displayValue, setDisplayValue] = useState(55);
-  const progressRef = useRef(null);
-  const markerRef = useRef(null);
-  const textRef = useRef(null);
-  const glowRef = useRef(null);
-  const animationRef = useRef({ value: 55 });
+interface HealthFactorProps {
+  targetValue?: number;
+  healthFactor?: number; // Actual health factor value (e.g., 4.60)
+}
+
+export default function HealthFactor({ 
+  targetValue: propTargetValue, 
+  healthFactor 
+}: HealthFactorProps = {}) {
+  // Initialize as 0 (empty) if no value provided
+  const [targetValue, setTargetValue] = useState(propTargetValue ?? 0);
+  const [displayValue, setDisplayValue] = useState(propTargetValue ?? 0);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef({ value: 0 });
+
+  // Health Factor to percentage mapping based on thresholds:
+  // - HF >= 2.5: Excellent (100%)
+  // - HF >= 1.5: Good (75-100%)
+  // - HF >= 1.2: Warning (50-75%)
+  // - HF >= 1.0: Critical (25-50%)
+  // - HF < 1.0: Danger (0-25%)
+  const getHFPercentage = (hf: number | undefined): number => {
+    if (!hf || hf <= 0) return 0;
+    
+    // HF >= 2.5: Excellent (100%)
+    if (hf >= 2.5) {
+      return 100;
+    }
+    
+    // HF >= 1.5: Good (75-100%)
+    // Linear interpolation: 75% at HF=1.5, 100% at HF=2.5
+    if (hf >= 1.5) {
+      const range = 2.5 - 1.5; // 1.0
+      const progress = (hf - 1.5) / range; // 0 to 1
+      return 75 + progress * 25; // 75% to 100%
+    }
+    
+    // HF >= 1.2: Warning (50-75%)
+    // Linear interpolation: 50% at HF=1.2, 75% at HF=1.5
+    if (hf >= 1.2) {
+      const range = 1.5 - 1.2; // 0.3
+      const progress = (hf - 1.2) / range; // 0 to 1
+      return 50 + progress * 25; // 50% to 75%
+    }
+    
+    // HF >= 1.0: Critical (25-50%)
+    // Linear interpolation: 25% at HF=1.0, 50% at HF=1.2
+    if (hf >= 1.0) {
+      const range = 1.2 - 1.0; // 0.2
+      const progress = (hf - 1.0) / range; // 0 to 1
+      return 25 + progress * 25; // 25% to 50%
+    }
+    
+    // HF < 1.0: Danger (0-25%)
+    // Linear interpolation: 0% at HF=0, 25% at HF=1.0
+    const progress = hf / 1.0; // 0 to 1
+    return progress * 25; // 0% to 25%
+  };
+
+  // Determine segment based on health factor value with accurate colors
+  // Thresholds: HF >= 2.5 (Excellent), >= 1.5 (Good), >= 1.2 (Warning), >= 1.0 (Critical), < 1.0 (Danger)
+  const getSegment = (hf: number | undefined) => {
+    if (!hf || hf <= 0) {
+      return {
+        color: "bg-red-500",
+        hex: "#ef4444",
+        label: "Danger",
+        glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
+      };
+    }
+    if (hf >= 2.5) {
+      return {
+        color: "bg-green-500",
+        hex: "#22c55e",
+        label: "Excellent",
+        glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
+      };
+    }
+    if (hf >= 1.5) {
+      return {
+        color: "bg-blue-500",
+        hex: "#3b82f6",
+        label: "Good",
+        glow: "shadow-[0_0_20px_rgba(59,130,246,0.6)]",
+      };
+    }
+    if (hf >= 1.2) {
+      return {
+        color: "bg-yellow-500",
+        hex: "#eab308",
+        label: "Warning",
+        glow: "shadow-[0_0_20px_rgba(234,179,8,0.6)]",
+      };
+    }
+    if (hf >= 1.0) {
+      return {
+        color: "bg-orange-500",
+        hex: "#f97316",
+        label: "Critical",
+        glow: "shadow-[0_0_20px_rgba(249,115,22,0.6)]",
+      };
+    }
+    return {
+      color: "bg-red-500",
+      hex: "#ef4444",
+      label: "Danger",
+      glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
+    };
+  };
 
   const segments = [
     {
       start: 0,
-      end: 60,
-      color: "bg-green-500",
-      hex: "#22c55e",
-      label: "Excellent",
-      glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
+      end: 25,
+      color: "bg-red-500",
+      hex: "#ef4444",
+      label: "Danger",
+      glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
     },
     {
-      start: 60,
+      start: 25,
+      end: 50,
+      color: "bg-orange-500",
+      hex: "#f97316",
+      label: "Critical",
+      glow: "shadow-[0_0_20px_rgba(249,115,22,0.6)]",
+    },
+    {
+      start: 50,
       end: 75,
       color: "bg-yellow-500",
       hex: "#eab308",
-      label: "Good",
+      label: "Warning",
       glow: "shadow-[0_0_20px_rgba(234,179,8,0.6)]",
     },
     {
       start: 75,
-      end: 90,
-      color: "bg-orange-500",
-      hex: "#f97316",
-      label: "Warning",
-      glow: "shadow-[0_0_20px_rgba(249,115,22,0.6)]",
+      end: 100,
+      color: "bg-blue-500",
+      hex: "#3b82f6",
+      label: "Good",
+      glow: "shadow-[0_0_20px_rgba(59,130,246,0.6)]",
     },
     {
-      start: 90,
+      start: 100,
       end: 100,
-      color: "bg-red-500",
-      hex: "#ef4444",
-      label: "Critical",
-      glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
+      color: "bg-green-500",
+      hex: "#22c55e",
+      label: "Excellent",
+      glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
     },
   ];
 
@@ -54,6 +166,19 @@ export default function HealthFactor() {
       segments[segments.length - 1]
     );
   };
+
+  // Update target value when prop changes
+  useEffect(() => {
+    if (propTargetValue !== undefined) {
+      setTargetValue(propTargetValue);
+    } else if (healthFactor !== undefined && healthFactor > 0) {
+      const percentage = getHFPercentage(healthFactor);
+      setTargetValue(percentage);
+    } else {
+      // Reset to 0 if healthFactor is 0 or undefined
+      setTargetValue(0);
+    }
+  }, [propTargetValue, healthFactor]);
 
   useEffect(() => {
     const duration = (Math.abs(targetValue - displayValue) / 100) * 2;
@@ -93,7 +218,9 @@ export default function HealthFactor() {
     }
   }, [targetValue, displayValue]);
 
-  const activeSegment = getActiveSegment(displayValue);
+  const activeSegment = healthFactor !== undefined 
+    ? getSegment(healthFactor)
+    : getActiveSegment(displayValue);
 
   return (
     <div className="w-full">
@@ -140,21 +267,21 @@ export default function HealthFactor() {
             className="absolute -top-2 -translate-x-1/2 -translate-y-1 pointer-events-none transition-all duration-300"
             style={{ left: `${displayValue}%` }}
           >
-            <div
-              className="relative"
-              style={{
-                filter: `drop-shadow(0 0 8px ${activeSegment.hex}) drop-shadow(0 0 12px ${activeSegment.hex}80)`,
-              }}
-            >
-              <Image
-                className="w-2 rounded-xs"
-                src="/icons/marker.svg"
-                alt="Progress Marker"
-                width={10}
-                height={10}
-              />
+              <div
+                className="relative"
+                style={{
+                  filter: `drop-shadow(0 0 8px ${activeSegment.hex}) drop-shadow(0 0 12px ${activeSegment.hex}80)`,
+                }}
+              >
+                <Image
+                  className="w-2 rounded-xs"
+                  src="/icons/marker.svg"
+                  alt="Progress Marker"
+                  width={10}
+                  height={10}
+                />
+              </div>
             </div>
-          </div>
         </div>
       </div>
     </div>

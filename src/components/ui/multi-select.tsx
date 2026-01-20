@@ -5,6 +5,7 @@ import { CheckIcon, ChevronDown, WandSparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { tokenList } from "@/lib/portfolio-data";
 import {
   Popover,
   PopoverContent,
@@ -1050,17 +1051,30 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                               />
                             </div>
                           ) : null}
-                          <div>
+                          <div className="flex-1">
                             <span>{option.label}</span>
-                            <div className="flex gap-2 mt-0.5">
-                              <span className="text-xs text-white">
-                                LLTV: 95%
-                              </span>
-                              <span className="text-xs text-white">
-                                LT: 92%
-                              </span>
-                              <span className="text-xs text-white">LP: 1%</span>
-                            </div>
+                            {(() => {
+                              const token = tokenList.find((t) => t.value === option.value);
+                              if (!token) return null;
+                              
+                              const ltv = Math.round(token.ltv * 100);
+                              const lt = Math.round((token.liquidationThreshold || token.ltv * 0.92) * 100);
+                              const lp = token.liquidationPenalty || 5;
+                              
+                              return (
+                                <div className="flex gap-2 mt-0.5 flex-wrap">
+                                  <span className="text-xs text-white/70">
+                                    LTV: {ltv}%
+                                  </span>
+                                  <span className="text-xs text-white/70">
+                                    LT: {lt}%
+                                  </span>
+                                  <span className="text-xs text-white/70">
+                                    LP: {lp}%
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </CommandItem>
                       );

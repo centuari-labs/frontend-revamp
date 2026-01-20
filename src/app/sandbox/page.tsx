@@ -322,7 +322,7 @@ export default function Sandbox() {
           </Tabs>
         </div>
       </div>
-      <CentuariBorrowDialog />
+      {/* <CentuariBorrowDialog /> */}
       <div className="mt-10">
         <CentuariCalender />
       </div>

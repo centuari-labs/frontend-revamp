@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { tokenList, defaultPortfolio, getTokenSymbol } from "@/lib/portfolio-data";
 
 export type AssetProps = {
   id: string;
@@ -42,171 +43,218 @@ export type AssetProps = {
   walletBalance: number;
   amountInUsd: number;
   isCollateral: boolean;
+  tokenValue: string; // Add token value to identify which token this is
 };
 
-const data: AssetProps[] = [
-  {
-    id: "1",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    assetSymbol: "ETH",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: true,
-  },
-  {
-    id: "2",
-    assetImg: "/tokens/chainlink-icon.svg",
-    assetName: "Link",
-    assetSymbol: "Link",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: false,
-  },
-  {
-    id: "3",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    assetSymbol: "ETH",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: false,
-  },
-  {
-    id: "4",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    assetSymbol: "ETH",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: true,
-  },
-  {
-    id: "5",
-    assetImg: "/tokens/chainlink-icon.svg",
-    assetName: "Link",
-    assetSymbol: "Link",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: false,
-  },
-  {
-    id: "6",
-    assetImg: "/tokens/chainlink-icon.svg",
-    assetName: "Link",
-    assetSymbol: "Link",
-    walletBalance: 1234.0,
-    amountInUsd: 4234.0,
-    isCollateral: true,
-  },
-];
-
-export const columns: ColumnDef<AssetProps>[] = [
-  {
-    accessorKey: "assetName",
-    header: "Assets",
-    cell: ({ row }) => {
-      const asset = row.original;
-      return (
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-            <Image
-              src={asset.assetImg}
-              alt={asset.assetName}
-              width={24}
-              height={24}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="font-medium text-white">{asset.assetName}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "walletBalance",
-    header: "Wallet Balance",
-    cell: ({ row }) => {
-      const asset = row.original;
-      return (
-        <div className="flex items-center gap-1.5">
-          <span className="text-white font-medium">
-            {asset.walletBalance.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
-          <span className="text-white/40">{asset.assetSymbol}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "amountInUsd",
-    // header: "Amount in USD",
-    header: () => <p className="text-center">Amount in USD</p>,
-    cell: ({ row }) => {
-      const amount = row.original.amountInUsd;
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      }).format(amount);
-
-      const [main, cents] = formatted.split(".");
-
-      return (
-        <div className="font-medium text-center text-white">
-          {main}
-          <span className="text-white/40">.{cents}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "isCollateral",
-    header: () => (
-      <div className="flex items-center justify-end gap-2">
-        <span>Collateral</span>
-        <div className="w-4 h-4 rounded-full border border-white/20" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const isCollateral = row.original.isCollateral;
-      return (
-        <div className="flex items-center gap-2 justify-end">
-          <span className="text-white/40 text-sm">As Collateral</span>
-          <div
-            className={cn(
-              "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
-              isCollateral
-                ? "bg-blue-600 border-blue-600"
-                : "bg-transparent border-white/20"
-            )}
-          >
-            {isCollateral && (
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-white"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
-          </div>
-        </div>
-      );
-    },
-  },
-];
-
 export function DataTableAssets() {
+  // Portfolio state - sync with borrow dialog
+  const [portfolio, setPortfolio] = React.useState<Record<string, number>>(() => {
+    // Try to get from localStorage, fallback to default
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_portfolio");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return defaultPortfolio;
+        }
+      }
+    }
+    return defaultPortfolio;
+  });
+
+  // Collateral status - which assets are being used as collateral
+  const [collateralStatus, setCollateralStatus] = React.useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_collateral");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
+
+  // Sync portfolio from localStorage on mount and when it changes
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("centuari_portfolio");
+        if (stored) {
+          try {
+            setPortfolio(JSON.parse(stored));
+          } catch {}
+        }
+        const storedCollateral = localStorage.getItem("centuari_collateral");
+        if (storedCollateral) {
+          try {
+            setCollateralStatus(JSON.parse(storedCollateral));
+          } catch {}
+        }
+      }
+    };
+
+    // Listen for storage changes (from other tabs/components)
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Also check periodically (for same-tab updates)
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Handle collateral toggle
+  const handleToggleCollateral = React.useCallback((tokenValue: string) => {
+    setCollateralStatus((prev) => {
+      const newStatus = {
+        ...prev,
+        [tokenValue]: !prev[tokenValue],
+      };
+      
+      // Save to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("centuari_collateral", JSON.stringify(newStatus));
+      }
+      
+      return newStatus;
+    });
+  }, []);
+
+  // Columns definition with toggle handler
+  const columns: ColumnDef<AssetProps>[] = React.useMemo(() => [
+    {
+      accessorKey: "assetName",
+      header: "Assets",
+      cell: ({ row }) => {
+        const asset = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+              <Image
+                src={asset.assetImg}
+                alt={asset.assetName}
+                width={24}
+                height={24}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="font-medium text-white">{asset.assetName}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "walletBalance",
+      header: "Wallet Balance",
+      cell: ({ row }) => {
+        const asset = row.original;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="text-white font-medium">
+              {asset.walletBalance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+            <span className="text-white/40">{asset.assetSymbol}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "amountInUsd",
+      header: () => <p className="text-center">Amount in USD</p>,
+      cell: ({ row }) => {
+        const amount = row.original.amountInUsd;
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }).format(amount);
+
+        const [main, cents] = formatted.split(".");
+
+        return (
+          <div className="font-medium text-center text-white">
+            {main}
+            <span className="text-white/40">.{cents}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "isCollateral",
+      header: () => (
+        <div className="flex items-center justify-end gap-2">
+          <span>Collateral</span>
+          <div className="w-4 h-4 rounded-full border border-white/20" />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const asset = row.original;
+        const isCollateral = asset.isCollateral;
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            <span className="text-white/40 text-sm">As Collateral</span>
+            <div
+              onClick={() => handleToggleCollateral(asset.tokenValue)}
+              className={cn(
+                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                isCollateral
+                  ? "bg-blue-600 border-blue-600"
+                  : "bg-transparent border-white/20"
+              )}
+            >
+              {isCollateral && (
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-white"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+  ], [handleToggleCollateral]);
+
+  // Transform portfolio data to AssetProps format
+  const data: AssetProps[] = React.useMemo(() => {
+    return tokenList
+      .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
+      .map((token, index) => {
+        const amountInUsd = portfolio[token.value] || 0;
+        const walletBalance = token.price > 0 ? amountInUsd / token.price : 0;
+        const isCollateral = collateralStatus[token.value] || false;
+
+        return {
+          id: `${token.value}-${index}`,
+          assetImg: token.logo,
+          assetName: token.label,
+          assetSymbol: getTokenSymbol(token.label),
+          walletBalance,
+          amountInUsd,
+          isCollateral,
+          tokenValue: token.value, // Add token value
+        };
+      });
+  }, [portfolio, collateralStatus]);
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -304,9 +352,13 @@ export function DataTableAssets() {
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-white font-medium">Page 1 of 10</span>
+          <span className="text-white font-medium">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+          </span>
           <span className="text-white/20">•</span>
-          <span className="text-white/40">Showing 10 of 16 Data</span>
+          <span className="text-white/40">
+            Showing {table.getRowModel().rows.length} of {data.length} Data
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Button

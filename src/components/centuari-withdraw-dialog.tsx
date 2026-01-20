@@ -192,7 +192,7 @@ export function CentuariWithdrawDialog() {
                         className={cn(
                           "w-full flex items-center justify-between hover:bg-white/5 transition-all duration-200 group px-2 py-1",
                           index === availableTokens.length - 1 &&
-                            "rounded-b-xl",
+                          "rounded-b-xl",
                           index === 0 && "rounded-t-xl"
                         )}
                       >
@@ -306,15 +306,15 @@ export function CentuariWithdrawDialog() {
                         value={
                           withdrawAmount
                             ? `$${parseFloat(withdrawAmount).toLocaleString(
-                                "en-US",
-                                {
-                                  minimumFractionDigits:
-                                    withdrawAmount.includes(".")
-                                      ? withdrawAmount.split(".")[1].length
-                                      : 0,
-                                  maximumFractionDigits: 20, // Allow many decimal places for input, then truncate later if needed
-                                }
-                              )}`
+                              "en-US",
+                              {
+                                minimumFractionDigits:
+                                  withdrawAmount.includes(".")
+                                    ? withdrawAmount.split(".")[1].length
+                                    : 0,
+                                maximumFractionDigits: 20, // Allow many decimal places for input, then truncate later if needed
+                              }
+                            )}`
                             : ""
                         }
                         onChange={(e) => {

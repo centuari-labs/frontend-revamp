@@ -4,8 +4,23 @@ import * as React from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
-export function MaturityToggle({ className }: { className?: string }) {
-  const [value, setValue] = React.useState("7 Day");
+interface MaturityToggleProps {
+  className?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+export function MaturityToggle({ className, value: valueProp, onValueChange: onValueChangeProp }: MaturityToggleProps) {
+  const [internalValue, setInternalValue] = React.useState("1 Jan 2026");
+
+  const value = valueProp !== undefined ? valueProp : internalValue;
+  const handleValueChange = (newValue: string) => {
+    if (onValueChangeProp) {
+      onValueChangeProp(newValue);
+    } else {
+      setInternalValue(newValue);
+    }
+  };
 
   return (
     <ToggleGroup
@@ -16,10 +31,10 @@ export function MaturityToggle({ className }: { className?: string }) {
       className={cn("w-full grid sm:grid-cols-2 xl:grid-cols-3", className)}
       value={value}
       onValueChange={(newValue) => {
-        if (newValue) setValue(newValue);
+        if (newValue) handleValueChange(newValue);
       }}
     >
-      {["1 Jan 2026", "1 Feb 2026", "1 Mar 2026"].map((item) => (
+      {["1 Feb 2026", "1 Mar 2026", "1 Apr 2026"].map((item) => (
         <ToggleGroupItem
           key={item}
           value={item}

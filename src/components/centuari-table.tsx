@@ -117,10 +117,82 @@ export type PositionProps = {
   status: "pending" | "processing" | "success" | "failed";
 };
 
-const ActionCell: React.FC<{ row: PositionProps }> = ({ row }) => {
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
+  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
+  { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari" },
+];
+
+type PositionForDialog =
+  | {
+    id: string;
+    assetImg: string;
+    assetName: string;
+    amount: number;
+    apy: number;
+    type: "lend";
+    tokenValue: string;
+    tokenSymbol: string;
+    maturity: string;
+    status: "pending" | "processing" | "success" | "failed";
+    createdAt: string;
+    timestamp: number;
+    orderType?: "limit" | "market";
+  }
+  | {
+    id: string;
+    assetImg: string;
+    assetName: string;
+    amount: number;
+    apy: number;
+    type: "borrow";
+    tokenValue: string;
+    tokenSymbol: string;
+    maturity: string;
+    status: "pending" | "processing" | "success" | "failed";
+    createdAt: string;
+    timestamp: number;
+    orderType?: "limit" | "market";
+    collateralTokens: string[];
+  };
+
+const ActionCell: React.FC<{
+  row: PositionProps;
+  onUpdate?: (position: PositionForDialog) => void;
+}> = ({ row, onUpdate }) => {
+  // Convert PositionProps to PositionForDialog format for AmendDialog
+  // Since PositionProps has loanTokenSymbol, it's a borrow position
+  const positionForDialog: PositionForDialog | null = row.loanTokenSymbol ? {
+    id: row.id,
+    assetImg: row.loanTokenImg || "/tokens/usdc-icon.svg",
+    assetName: row.loanTokenSymbol,
+    amount: row.amount,
+    apy: row.apr || 0.12,
+    type: "borrow" as const,
+    tokenValue: (row.loanTokenSymbol || "usdc").toLowerCase(),
+    tokenSymbol: row.loanTokenSymbol || "USDC",
+    maturity: row.maturity || "22 Oct 2026",
+    status: row.status,
+    createdAt: row.createdAt || new Date().toLocaleDateString(),
+    timestamp: Date.now(),
+    orderType: "limit" as const,
+    collateralTokens: row.collateralTokenSymbol ? [(row.collateralTokenSymbol || "usdt").toLowerCase()] : [],
+  } : null;
+
+  if (!positionForDialog) return null;
+
   return (
     <div className="flex gap-1 items-center">
-      <AmendDialog />
+      <AmendDialog
+        position={positionForDialog}
+        tokenList={tokenList}
+        onUpdate={onUpdate}
+      />
       <Button variant="secondary" size="icon">
         <Trash size={14} />
       </Button>
@@ -128,7 +200,7 @@ const ActionCell: React.FC<{ row: PositionProps }> = ({ row }) => {
   );
 };
 
-export const columns: ColumnDef<PositionProps>[] = [
+export const columns = (onUpdate?: (position: PositionForDialog) => void): ColumnDef<PositionProps>[] => [
   {
     accessorKey: "collateralTokenSymbol",
     header: "Collateral Token",
@@ -221,12 +293,16 @@ export const columns: ColumnDef<PositionProps>[] = [
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      return <ActionCell row={row.original} />;
+      return <ActionCell row={row.original} onUpdate={onUpdate} />;
     },
   },
 ];
 
-export function CentuariTable() {
+interface CentuariTableProps {
+  onUpdate?: (position: PositionForDialog) => void;
+}
+
+export function CentuariTable({ onUpdate }: CentuariTableProps = {}) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -237,7 +313,7 @@ export function CentuariTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns(onUpdate),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -265,23 +341,21 @@ export function CentuariTable() {
                   return (
                     <TableHead
                       key={header.id}
-                      className={`text-sm text-muted-foreground font-normal ${
-                        headerGroup.headers[0].id === header.id
+                      className={`text-sm text-muted-foreground font-normal ${headerGroup.headers[0].id === header.id
                           ? "rounded-l-sm"
                           : ""
-                      } ${
-                        headerGroup.headers[headerGroup.headers.length - 1]
+                        } ${headerGroup.headers[headerGroup.headers.length - 1]
                           .id === header.id
                           ? "rounded-r-sm"
                           : ""
-                      }`}
+                        }`}
                     >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

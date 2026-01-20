@@ -1,0 +1,128 @@
+// Shared portfolio data and token list
+// This file contains the portfolio state that should be shared across components
+
+export interface TokenInfo {
+  logo: string;
+  value: string;
+  label: string;
+  ltv: number; // Loan-to-Value (e.g., 0.75 = 75%)
+  price: number;
+  liquidationThreshold?: number; // Liquidation Threshold (default: LTV * 0.92)
+  liquidationPenalty?: number; // Liquidation Penalty in percentage (default: 1-5%)
+}
+
+export const tokenList: TokenInfo[] = [
+  { 
+    logo: "/tokens/btc-icon.svg", 
+    value: "btc", 
+    label: "Bitcoin", 
+    ltv: 0.75, 
+    price: 45000,
+    liquidationThreshold: 0.80, // 80% of LTV
+    liquidationPenalty: 5, // 5%
+  },
+  { 
+    logo: "/tokens/centuari-aave.png", 
+    value: "aave", 
+    label: "Aave", 
+    ltv: 0.70, 
+    price: 120,
+    liquidationThreshold: 0.75,
+    liquidationPenalty: 5,
+  },
+  { 
+    logo: "/tokens/centuari-eth.png", 
+    value: "eth", 
+    label: "Ethereum", 
+    ltv: 0.80, 
+    price: 2800,
+    liquidationThreshold: 0.82,
+    liquidationPenalty: 5,
+  },
+  { 
+    logo: "/tokens/eth-icon.svg", 
+    value: "arb", 
+    label: "Arbitrum", 
+    ltv: 0.65, 
+    price: 1.2,
+    liquidationThreshold: 0.70,
+    liquidationPenalty: 8,
+  },
+  { 
+    logo: "/tokens/usdc-icon.svg", 
+    value: "usdc", 
+    label: "USDC", 
+    ltv: 0.90, 
+    price: 1,
+    liquidationThreshold: 0.92,
+    liquidationPenalty: 1,
+  },
+  { 
+    logo: "/tokens/centuari-usdt.png", 
+    value: "usdt", 
+    label: "USDT", 
+    ltv: 0.90, 
+    price: 1,
+    liquidationThreshold: 0.92,
+    liquidationPenalty: 1,
+  },
+  { 
+    logo: "/tokens/usdc-icon.svg", 
+    value: "dai", 
+    label: "DAI", 
+    ltv: 0.85, 
+    price: 1,
+    liquidationThreshold: 0.88,
+    liquidationPenalty: 3,
+  },
+  {
+    logo: "/tokens/centuari-eth.png",
+    value: "centuari",
+    label: "Centuari",
+    ltv: 0.80,
+    price: 0.5,
+    liquidationThreshold: 0.82,
+    liquidationPenalty: 5,
+  },
+];
+
+// Default portfolio data (in real app, this would come from API/state management)
+// Key: token value (e.g., "btc", "eth"), Value: USD amount
+export const defaultPortfolio: Record<string, number> = {
+  btc: 100000, // BTC value $100k
+  eth: 50000,  // ETH value $50k
+  aave: 25000, // Aave value $25k
+  usdc: 15000, // USDC value $15k
+  usdt: 10000, // USDT value $10k
+};
+
+// Helper function to get token info by value
+export function getTokenInfo(value: string): TokenInfo | undefined {
+  return tokenList.find(token => token.value === value);
+}
+
+// Helper function to get token symbol from label
+export function getTokenSymbol(label: string): string {
+  // Map common labels to symbols
+  const symbolMap: Record<string, string> = {
+    "Bitcoin": "BTC",
+    "Ethereum": "ETH",
+    "Aave": "AAVE",
+    "Arbitrum": "ARB",
+    "USDC": "USDC",
+    "USDT": "USDT",
+    "DAI": "DAI",
+    "Centuari": "CENT",
+  };
+  return symbolMap[label] || label.toUpperCase().slice(0, 4);
+}
+
+// Helper function to get liquidation threshold (default: LTV * 0.92)
+export function getLiquidationThreshold(token: TokenInfo): number {
+  return token.liquidationThreshold || token.ltv * 0.92;
+}
+
+// Helper function to get liquidation penalty (default: 5%)
+export function getLiquidationPenalty(token: TokenInfo): number {
+  return token.liquidationPenalty || 5;
+}

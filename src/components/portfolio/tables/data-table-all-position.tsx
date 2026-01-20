@@ -13,7 +13,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowLeft, ArrowRight, HandCoins, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -27,90 +27,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
+import { CentuariSellPositionDialog } from "@/components/centuari-sell-position-dialog";
+import { CentuariRepayDialog } from "@/components/centuari-repay-dialog";
 
 export type PositionProps = {
   id: string;
   assetImg: string;
   assetName: string;
-  collateralImgs: string[];
   amount: number;
   apy: number;
+  type?: "lend" | "borrow";
+  tokenValue?: string;
+  timestamp?: number;
+  collateralTokens?: string[];
 };
-
-const data: PositionProps[] = [
-  {
-    id: "1",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-  {
-    id: "2",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-  {
-    id: "3",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-  {
-    id: "4",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-  {
-    id: "5",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-  {
-    id: "6",
-    assetImg: "/tokens/eth-icon.svg",
-    assetName: "Ethereum",
-    collateralImgs: [
-      "/tokens/eth-icon.svg",
-      "/tokens/btc-icon.svg",
-      "/tokens/chainlink-icon.svg",
-    ],
-    amount: 4234.0,
-    apy: 4.9,
-  },
-];
 
 export const columns: ColumnDef<PositionProps>[] = [
   {
@@ -130,34 +61,6 @@ export const columns: ColumnDef<PositionProps>[] = [
             />
           </div>
           <span className="font-medium text-white">{asset.assetName}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "collateral",
-    header: () => <span>Collateral</span>,
-    cell: ({ row }) => {
-      const imgs = row.original.collateralImgs;
-      return (
-        <div className="flex items-center">
-          {imgs.map((img, i) => (
-            <div
-              key={i}
-              className={cn(
-                "w-6 h-6 rounded-full border border-slate-900 bg-slate-800 overflow-hidden",
-                i !== 0 && "-ml-2"
-              )}
-            >
-              <Image
-                src={img}
-                alt="collateral"
-                width={24}
-                height={24}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
         </div>
       );
     },
@@ -190,7 +93,7 @@ export const columns: ColumnDef<PositionProps>[] = [
       const apy = row.original.apy;
       return (
         <div className="text-white font-medium">
-          {apy.toString().replace(".", ",")}%
+          {apy.toFixed(2).replace(".", ",")}%
         </div>
       );
     },
@@ -198,13 +101,54 @@ export const columns: ColumnDef<PositionProps>[] = [
   {
     id: "action",
     header: "Action",
-    cell: () => {
+    cell: ({ row }) => {
+      const position = row.original;
+      const isBorrow = position.type === "borrow";
+
       return (
         <div className="flex items-center gap-4">
-          <button className="text-white/80 hover:text-white transition-colors">
-            <HandCoins size={18} />
-          </button>
-          <button className="text-white/80 hover:text-white transition-colors">
+          {isBorrow ? (
+            <CentuariRepayDialog
+              positionId={position.id}
+              token_image={position.assetImg}
+              token_name={position.assetName}
+              token_symbol={position.assetName}
+              amountBorrowed={position.amount}
+              apy={position.apy}
+              maturityDate={(position as any).maturity || "1 Feb 2026"}
+              onSuccess={() => {
+                // Trigger re-render to update positions
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("storage"));
+                }
+              }}
+            />
+          ) : (
+            <CentuariSellPositionDialog
+              positionId={position.id}
+              token_image={position.assetImg}
+              token_name={position.assetName}
+              token_symbol={position.assetName}
+              maturityDate="1 Feb 2026"
+              availableFunds={1100}
+              moneyDeposited={position.amount * 0.9}
+              profitReturn={position.amount * 0.1}
+              apr={position.apy}
+              onSuccess={() => {
+                // Trigger re-render to update positions
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("storage"));
+                }
+              }}
+            />
+          )}
+          <button
+            className="text-white/80 hover:text-white transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            type="button"
+          >
             <Plus size={18} />
           </button>
         </div>
@@ -214,17 +158,74 @@ export const columns: ColumnDef<PositionProps>[] = [
 ];
 
 export function DataTableAllPosition() {
+  const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("borrow");
+
+  // Single state to track positions data - simplified approach
+  const [positionsData, setPositionsData] = React.useState<string>("");
+
+  // Get positions from localStorage on mount and when positionsData changes
+  const getPositions = React.useCallback(() => {
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("centuari_positions");
+    if (!stored) return [];
+    try {
+      return JSON.parse(stored) as PositionProps[];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // Listen for storage changes to update positions
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("centuari_positions");
+        if (stored) {
+          setPositionsData(stored);
+        }
+      }
+    };
+
+    // Listen for storage events (from other tabs)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically (for same-tab updates)
+    const interval = setInterval(handleStorageChange, 500);
+
+    // Initial load
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Memoize borrow and lend data separately
+  const borrowData: PositionProps[] = React.useMemo(() => {
+    const allPositions = getPositions();
+    return allPositions.filter(pos => pos.type === "borrow");
+  }, [positionsData, getPositions]);
+
+  const lendData: PositionProps[] = React.useMemo(() => {
+    const allPositions = getPositions();
+    return allPositions.filter(pos => pos.type === "lend");
+  }, [positionsData, getPositions]);
+
+  // Memoize currentData to prevent unnecessary re-renders
+  const currentData = React.useMemo(() => {
+    return activeTab === "borrow" ? borrowData : lendData;
+  }, [activeTab, borrowData, lendData]);
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data,
+    data: currentData,
     columns,
+    getRowId: (row) => row.id,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -241,7 +242,8 @@ export function DataTableAllPosition() {
     },
   });
 
-  const PositionTable = () => (
+  // PositionTable as memoized component to prevent recreation
+  const PositionTable = React.useMemo(() => (
     <>
       <div className="overflow-x-auto">
         <Table className="min-w-[700px]">
@@ -261,9 +263,9 @@ export function DataTableAllPosition() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
@@ -310,9 +312,13 @@ export function DataTableAllPosition() {
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-white font-medium">Page 1 of 10</span>
+          <span className="text-white font-medium">
+            Page {currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0} of {Math.max(1, table.getPageCount() || 1)}
+          </span>
           <span className="text-white/20">•</span>
-          <span className="text-white/40">Showing 10 of 16 Data</span>
+          <span className="text-white/40">
+            Showing {table.getRowModel().rows.length} of {currentData.length} Data
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -332,11 +338,11 @@ export function DataTableAllPosition() {
         </div>
       </div>
     </>
-  );
+  ), [table, currentData.length]);
 
   return (
     <div className="w-full overflow-hidden rounded-xl bg-white/5 border">
-      <Tabs defaultValue="borrow" className="w-full !gap-0">
+      <Tabs defaultValue="borrow" className="w-full !gap-0" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
         <div className="flex items-center justify-between py-2 px-6">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
           <TabsList className="bg-white/5 h-10 border border-white/5">
@@ -356,11 +362,11 @@ export function DataTableAllPosition() {
         </div>
 
         <TabsContent value="borrow" className="mt-0">
-          <PositionTable />
+          {PositionTable}
         </TabsContent>
 
         <TabsContent value="lend" className="mt-0">
-          <PositionTable />
+          {PositionTable}
         </TabsContent>
       </Tabs>
     </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import { CentuariCalender } from "@/components/centuari-calender";
 import { CentuariTable } from "@/components/centuari-table";
 import { PortfolioChart } from "@/components/portfolio/portfolio-chart";
@@ -27,8 +29,118 @@ import Image from "next/image";
 import { DataTableAssets } from "@/components/portfolio/tables/data-table-assets";
 import { DataTableAllPosition } from "@/components/portfolio/tables/data-table-all-position";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { defaultPortfolio, tokenList } from "@/lib/portfolio-data";
 
 export default function PortfolioPage() {
+  // State for portfolio data
+  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_portfolio");
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return defaultPortfolio;
+        }
+      }
+    }
+    return defaultPortfolio;
+  });
+
+  // State for total debt (borrows)
+  const [totalDebt, setTotalDebt] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_total_debt");
+      if (stored) {
+        try {
+          return parseFloat(stored) || 0;
+        } catch {
+          return 0;
+        }
+      }
+    }
+    return 0;
+  });
+
+  // State for total supply (lends)
+  const [totalSupply, setTotalSupply] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_total_supply");
+      if (stored) {
+        try {
+          return parseFloat(stored) || 0;
+        } catch {
+          return 0;
+        }
+      }
+    }
+    return 0;
+  });
+
+  // Sync from localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (typeof window !== "undefined") {
+        const storedPortfolio = localStorage.getItem("centuari_portfolio");
+        if (storedPortfolio) {
+          try {
+            setPortfolio(JSON.parse(storedPortfolio));
+          } catch {}
+        }
+        const storedDebt = localStorage.getItem("centuari_total_debt");
+        if (storedDebt) {
+          try {
+            setTotalDebt(parseFloat(storedDebt) || 0);
+          } catch {}
+        }
+        const storedSupply = localStorage.getItem("centuari_total_supply");
+        if (storedSupply) {
+          try {
+            setTotalSupply(parseFloat(storedSupply) || 0);
+          } catch {}
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Calculate total portfolio value (available balance)
+  const totalPortfolioValue = Object.values(portfolio).reduce((sum, value) => sum + value, 0);
+
+  // Calculate total balance (portfolio + supply - debt)
+  const totalBalance = totalPortfolioValue + totalSupply - totalDebt;
+
+  // Calculate percentages for chart
+  const availableBalancePercent = totalBalance > 0 
+    ? Math.round((totalPortfolioValue / totalBalance) * 100) 
+    : 0;
+  const suppliedPercent = totalBalance > 0 
+    ? Math.round((totalSupply / totalBalance) * 100) 
+    : 0;
+  const borrowedPercent = totalBalance > 0 
+    ? Math.round((totalDebt / totalBalance) * 100) 
+    : 0;
+
+  // Calculate health factor (simplified: portfolio value / debt)
+  const healthFactor = totalDebt > 0 
+    ? (totalPortfolioValue / totalDebt).toFixed(2)
+    : "0.00";
+  
+  const healthFactorStatus = parseFloat(healthFactor) >= 2.0 
+    ? "Safe" 
+    : parseFloat(healthFactor) >= 1.5 
+    ? "Good" 
+    : parseFloat(healthFactor) >= 1.0 
+    ? "Warning" 
+    : "Critical";
   return (
     <div className="relative w-full mt-14">
       <div className="w-full max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-4 2xl:min-h-[calc(100vh-6rem)]">
@@ -53,11 +165,11 @@ export default function PortfolioPage() {
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     {(() => {
-                      const totalBalance = 2340340.0; // nanti ganti dari API`
                       const formatted = new Intl.NumberFormat("en-US", {
                         style: "currency",
                         currency: "USD",
                         minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       }).format(totalBalance);
                       const idx = formatted.lastIndexOf(".");
                       if (idx === -1) return formatted;
@@ -85,12 +197,12 @@ export default function PortfolioPage() {
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     {(() => {
-                      const activeLoans = 840340.0; // nanti ganti dari API
                       const formatted = new Intl.NumberFormat("en-US", {
                         style: "currency",
                         currency: "USD",
                         minimumFractionDigits: 2,
-                      }).format(activeLoans);
+                        maximumFractionDigits: 2,
+                      }).format(totalSupply);
                       const idx = formatted.lastIndexOf(".");
                       if (idx === -1) return formatted;
                       return (
@@ -117,12 +229,12 @@ export default function PortfolioPage() {
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     {(() => {
-                      const activeLoans = 840340.0; // nanti ganti dari API
                       const formatted = new Intl.NumberFormat("en-US", {
                         style: "currency",
                         currency: "USD",
                         minimumFractionDigits: 2,
-                      }).format(activeLoans);
+                        maximumFractionDigits: 2,
+                      }).format(totalDebt);
                       const idx = formatted.lastIndexOf(".");
                       if (idx === -1) return formatted;
                       return (
@@ -145,17 +257,17 @@ export default function PortfolioPage() {
                   {
                     label: "Available Balance",
                     color: "bg-[#2A4AC2]",
-                    value: "60%",
+                    value: `${availableBalancePercent}%`,
                   },
                   {
                     label: "Supplied Assets",
                     color: "bg-[#AAC7F9]",
-                    value: "30%",
+                    value: `${suppliedPercent}%`,
                   },
                   {
                     label: "Borrowed Assets",
                     color: "bg-[#4F8FFD]",
-                    value: "10%",
+                    value: `${borrowedPercent}%`,
                   },
                 ].map((item, idx) => (
                   <div
@@ -199,7 +311,14 @@ export default function PortfolioPage() {
               <div className="mt-8 lg:mt-12 flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
                 <div className="space-y-1.5">
                   <p className="text-sm">Supplied Assets</p>
-                  <span className="text-2xl font-semibold">$0,000.00</span>
+                  <span className="text-2xl font-semibold">
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(totalSupply)}
+                  </span>
                 </div>
                 <Image
                   src="/assets/separator.svg"
@@ -210,7 +329,14 @@ export default function PortfolioPage() {
                 />
                 <div className="space-y-1.5">
                   <p className="text-sm">Borrowed Assets</p>
-                  <span className="text-2xl font-semibold">$0,000.00</span>
+                  <span className="text-2xl font-semibold">
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(totalDebt)}
+                  </span>
                 </div>
                 <Image
                   src="/assets/separator.svg"
@@ -221,7 +347,17 @@ export default function PortfolioPage() {
                 />
                 <div className="space-y-1.5">
                   <p className="text-sm">Health Factor</p>
-                  <Badge variant={"success"}>0.0 ~ Safe</Badge>
+                  <Badge 
+                    variant={
+                      healthFactorStatus === "Safe" || healthFactorStatus === "Good"
+                        ? "success"
+                        : healthFactorStatus === "Warning"
+                        ? "warning"
+                        : "destructive"
+                    }
+                  >
+                    {healthFactor} ~ {healthFactorStatus}
+                  </Badge>
                 </div>
               </div>
             </div>

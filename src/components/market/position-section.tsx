@@ -1,51 +1,142 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import { CentuariTable } from "@/components/centuari-table";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { Edit2, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { formatCurrency } from "@/lib/utils";
+import { AmendDialog } from "@/components/amend-dialog";
+import { Badge } from "../ui/badge";
+import { CentuariBadge } from "../centuari-badge";
 
-const mockPositions = [
-  {
-    id: 1,
-    token: "USDT",
-    logo: "/tokens/centuari-usdt.png",
-    status: "Pending",
-    amount: "$12,000",
-    targetAPY: "8%",
-    maturity: "22 Oct 2025",
-    createdAt: "21 Oct 2025",
-  },
-  {
-    id: 2,
-    token: "USDT",
-    logo: "/tokens/centuari-usdt.png",
-    status: "Pending",
-    amount: "$12,000",
-    targetAPY: "8%",
-    maturity: "22 Oct 2025",
-    createdAt: "21 Oct 2025",
-  },
+const tokenList = [
+  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
+  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
+  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
+  { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari" },
 ];
 
-function PositionCard({ position }: { position: (typeof mockPositions)[0] }) {
+// Helper function to get correct token logo path
+const getTokenLogo = (tokenValue: string, assetImg?: string): string => {
+  const tokenLogoMap: Record<string, string> = {
+    usdc: "/tokens/usdc-icon.svg",
+    usdt: "/tokens/centuari-usdt.png",
+    btc: "/tokens/btc-icon.svg",
+    eth: "/tokens/eth-icon.svg",
+    sol: "/tokens/sol-icon.svg",
+    link: "/tokens/chainlink-icon.svg",
+    aave: "/tokens/centuari-aave.png",
+    arb: "/tokens/centuari-arbitrum.png",
+    dai: "/tokens/centuari-dai.png",
+    centuari: "/tokens/centuari-centuari.png",
+  };
+  
+  const mappedLogo = tokenLogoMap[tokenValue.toLowerCase()];
+  if (mappedLogo) {
+    return mappedLogo;
+  }
+  
+  if (assetImg && assetImg.startsWith("/")) {
+    return assetImg;
+  }
+  
+  return "/tokens/usdc-icon.svg";
+};
+
+interface LendPosition {
+  id: string;
+  assetImg: string;
+  assetName: string;
+  amount: number;
+  apy: number;
+  type: "lend";
+  tokenValue: string;
+  tokenSymbol: string;
+  maturity: string;
+  status: "pending" | "processing" | "success" | "failed";
+  createdAt: string;
+  timestamp: number;
+  orderType?: "limit" | "market";
+}
+
+interface BorrowPosition {
+  id: string;
+  assetImg: string;
+  assetName: string;
+  amount: number;
+  apy: number;
+  type: "borrow";
+  tokenValue: string;
+  tokenSymbol: string;
+  maturity: string;
+  status: "pending" | "processing" | "success" | "failed";
+  createdAt: string;
+  timestamp: number;
+  collateralTokens: string[];
+  orderType?: "limit" | "market";
+}
+
+type Position = LendPosition | BorrowPosition;
+
+function PositionCard({ 
+  position, 
+  onDelete,
+  onUpdate
+}: { 
+  position: Position;
+  onDelete: (id: string) => void;
+  onUpdate?: (updatedPosition: Position) => void;
+}) {
+  const statusColors = {
+    pending: "bg-yellow-500",
+    processing: "bg-blue-500",
+    success: "bg-green-500",
+    failed: "bg-red-500",
+  };
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this position?")) {
+      onDelete(position.id);
+    }
+  };
+
   return (
     <div className="px-4 py-4 border-b border-white/10 last:border-b-0">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Image
-            src={position.logo}
-            alt={position.token}
+            src={getTokenLogo(position.tokenValue, position.assetImg)}
+            alt={position.tokenSymbol}
             width={32}
             height={32}
             className="rounded-full"
           />
           <div>
-            <p className="font-semibold text-white">{position.token}</p>
+            <p className="font-semibold text-white">{position.tokenSymbol}</p>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-              <span className="text-sm text-muted-foreground">
+              <span className={`w-2 h-2 ${statusColors[position.status]} rounded-full`}></span>
+              <span className="text-sm text-muted-foreground capitalize">
                 {position.status}
               </span>
             </div>
@@ -59,11 +150,11 @@ function PositionCard({ position }: { position: (typeof mockPositions)[0] }) {
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Amount</span>
-          <span className="text-white font-semibold">{position.amount}</span>
+          <span className="text-white font-semibold">{formatCurrency(position.amount)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Target APY%</span>
-          <span className="text-white font-semibold">{position.targetAPY}</span>
+          <span className="text-white font-semibold">{(position.apy * 100).toFixed(1).replace(".", ",")}%</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Maturity</span>
@@ -72,10 +163,20 @@ function PositionCard({ position }: { position: (typeof mockPositions)[0] }) {
       </div>
 
       <div className="flex gap-2 justify-end">
-        <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-          <Edit2 size={16} className="text-white" />
-        </button>
-        <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+        <AmendDialog
+          position={position}
+          tokenList={tokenList}
+          onUpdate={onUpdate}
+          trigger={
+            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+              <Edit2 size={16} className="text-white" />
+            </button>
+          }
+        />
+        <button 
+          onClick={handleDelete}
+          className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+        >
           <Trash2 size={16} className="text-red-400" />
         </button>
       </div>
@@ -83,13 +184,679 @@ function PositionCard({ position }: { position: (typeof mockPositions)[0] }) {
   );
 }
 
+// Lend Position Table Component
+function LendPositionTable({ 
+  positions, 
+  onDelete,
+  onUpdate
+}: { 
+  positions: LendPosition[];
+  onDelete: (id: string) => void;
+  onUpdate?: (updatedPosition: LendPosition) => void;
+}) {
+  const columns: ColumnDef<LendPosition>[] = useMemo(() => [
+    {
+      accessorKey: "tokenSymbol",
+      header: "Token",
+      cell: ({ row }) => {
+        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
+        return (
+          <div className="flex items-center gap-2">
+            <Image
+              src={logoPath}
+              alt={row.original.tokenSymbol}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span>{row.original.tokenSymbol}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => formatCurrency(row.original.amount),
+    },
+    {
+      accessorKey: "apy",
+      header: "Target Apy %",
+      cell: ({ row }) => {
+        const apyPercent = (row.original.apy * 100).toFixed(1);
+        return apyPercent.replace(".", ",") + "%";
+      },
+    },
+    {
+      accessorKey: "maturity",
+      header: "Maturity",
+      cell: ({ row }) => row.original.maturity,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created at",
+      cell: ({ row }) => row.original.createdAt,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const statusColors = {
+          pending: "bg-yellow-500",
+          processing: "bg-blue-500",
+          success: "bg-green-500",
+          failed: "bg-red-500",
+        };
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
+            <span className="capitalize">{status}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2">
+            <AmendDialog
+              position={row.original}
+              tokenList={tokenList}
+              onUpdate={onUpdate ? (pos) => onUpdate(pos as LendPosition) : undefined}
+              trigger={
+                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Edit2 size={14} className="text-white" />
+                </button>
+              }
+            />
+            <button 
+              onClick={() => onDelete(row.original.id)}
+              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <Trash2 size={14} className="text-red-400" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [onDelete, onUpdate]);
+
+  const table = useReactTable({
+    data: positions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  return (
+    <div className="overflow-hidden rounded-md">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="bg-white/5">
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead
+                    key={header.id}
+                    className="text-sm text-muted-foreground font-normal"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="border border-transparent py-1"
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center"
+              >
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// Unified Position Table Component for Open Orders
+function UnifiedPositionTable({ 
+  positions, 
+  onDelete,
+  onUpdate
+}: { 
+  positions: Position[];
+  onDelete: (id: string) => void;
+  onUpdate?: (updatedPosition: Position) => void;
+}) {
+  const columns: ColumnDef<Position>[] = useMemo(() => [
+    {
+      accessorKey: "tokenSymbol",
+      header: "Loan Token",
+      cell: ({ row }) => {
+        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
+        return (
+          <div className="flex items-center gap-2">
+            <Image
+              src={logoPath}
+              alt={row.original.tokenSymbol}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span>{row.original.tokenSymbol}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "type",
+      header: "Order Type",
+      cell: ({ row }) => {
+        const type = row.original.type;
+        return <CentuariBadge variant={type === "lend" ? "primary" : "warning"} className="capitalize">{type === "lend" ? "Lend" : "Borrow"}</CentuariBadge>;
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => formatCurrency(row.original.amount),
+    },
+    {
+      accessorKey: "apy",
+      header: "Target APR %",
+      cell: ({ row }) => {
+        const aprPercent = (row.original.apy * 100).toFixed(1);
+        return aprPercent.replace(".", ",") + "%";
+      },
+    },
+    {
+      accessorKey: "maturity",
+      header: "Maturity",
+      cell: ({ row }) => row.original.maturity,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created at",
+      cell: ({ row }) => row.original.createdAt,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const statusColors = {
+          pending: "bg-yellow-500",
+          processing: "bg-blue-500",
+          success: "bg-green-500",
+          failed: "bg-red-500",
+        };
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
+            <span className="capitalize">{status}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2">
+            <AmendDialog
+              position={row.original}
+              tokenList={tokenList}
+              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+              trigger={
+                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Edit2 size={14} className="text-white" />
+                </button>
+              }
+            />
+            <button 
+              onClick={() => onDelete(row.original.id)}
+              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <Trash2 size={14} className="text-red-400" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [onDelete, onUpdate]);
+
+  const table = useReactTable({
+    data: positions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  return (
+    <div className="overflow-hidden rounded-md">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="bg-white/5">
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead
+                    key={header.id}
+                    className="text-sm text-muted-foreground font-normal"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="border border-transparent py-1"
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center"
+              >
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// Borrow Position Table Component
+function BorrowPositionTable({ 
+  positions, 
+  onDelete,
+  onUpdate
+}: { 
+  positions: BorrowPosition[];
+  onDelete: (id: string) => void;
+  onUpdate?: (updatedPosition: BorrowPosition) => void;
+}) {
+  const columns: ColumnDef<BorrowPosition>[] = useMemo(() => [
+    {
+      accessorKey: "collateralToken",
+      header: "Collateral Token",
+      cell: ({ row }) => {
+        const collateralTokens = row.original.collateralTokens || [];
+        const firstCollateral = collateralTokens[0];
+        if (!firstCollateral) return "-";
+        
+        const logoPath = getTokenLogo(firstCollateral);
+        const tokenName = firstCollateral.toUpperCase().slice(0, 4);
+        
+        return (
+          <div className="flex items-center gap-2">
+            <Image
+              src={logoPath}
+              alt={tokenName}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span>{tokenName}</span>
+            {collateralTokens.length > 1 && (
+              <span className="text-xs text-muted-foreground">+{collateralTokens.length - 1}</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "tokenSymbol",
+      header: "Loan Token",
+      cell: ({ row }) => {
+        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
+        return (
+          <div className="flex items-center gap-2">
+            <Image
+              src={logoPath}
+              alt={row.original.tokenSymbol}
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+            <span>{row.original.tokenSymbol}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount Borrowed",
+      cell: ({ row }) => formatCurrency(row.original.amount),
+    },
+    {
+      accessorKey: "apy",
+      header: "Target APR %",
+      cell: ({ row }) => {
+        const aprPercent = (row.original.apy * 100).toFixed(1);
+        return aprPercent.replace(".", ",") + "%";
+      },
+    },
+    {
+      accessorKey: "maturity",
+      header: "Maturity",
+      cell: ({ row }) => row.original.maturity,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created at",
+      cell: ({ row }) => row.original.createdAt,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const statusColors = {
+          pending: "bg-yellow-500",
+          processing: "bg-blue-500",
+          success: "bg-green-500",
+          failed: "bg-red-500",
+        };
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
+            <span className="capitalize">{status}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2">
+            <AmendDialog
+              position={row.original}
+              tokenList={tokenList}
+              onUpdate={onUpdate ? (pos) => onUpdate(pos as BorrowPosition) : undefined}
+              trigger={
+                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Edit2 size={14} className="text-white" />
+                </button>
+              }
+            />
+            <button 
+              onClick={() => onDelete(row.original.id)}
+              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <Trash2 size={14} className="text-red-400" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ], [onDelete, onUpdate]);
+
+  const table = useReactTable({
+    data: positions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  return (
+    <div className="overflow-hidden rounded-md">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="bg-white/5">
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead
+                    key={header.id}
+                    className="text-sm text-muted-foreground font-normal"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="border border-transparent py-1"
+                  >
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center"
+              >
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 export function PositionSection() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [activeTab, setActiveTab] = useState("open_orders");
+
+  const handleDelete = (id: string) => {
+    if (typeof window === "undefined") return;
+    
+    const stored = localStorage.getItem("centuari_positions");
+    if (stored) {
+      try {
+        const allPositions: Position[] = JSON.parse(stored);
+        const updatedPositions = allPositions.filter((pos) => pos.id !== id);
+        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
+        
+        setPositions(updatedPositions);
+        
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
+      } catch {
+        console.error("Failed to delete position");
+      }
+    }
+  };
+
+  const handleUpdate = (updatedPosition: Position) => {
+    if (typeof window === "undefined") return;
+    
+    const stored = localStorage.getItem("centuari_positions");
+    if (stored) {
+      try {
+        const allPositions: Position[] = JSON.parse(stored);
+        const updatedPositions = allPositions.map((pos) =>
+          pos.id === updatedPosition.id ? updatedPosition : pos
+        );
+        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
+        
+        setPositions(updatedPositions);
+        
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
+      } catch {
+        console.error("Failed to update position");
+      }
+    }
+  };
+
+  useEffect(() => {
+    const loadPositions = () => {
+      if (typeof window === "undefined") return;
+      
+      const stored = localStorage.getItem("centuari_positions");
+      if (stored) {
+        try {
+          const allPositions: Position[] = JSON.parse(stored);
+          setPositions((prevPositions) => {
+            const newPositionsStr = JSON.stringify(allPositions);
+            const currentPositionsStr = JSON.stringify(prevPositions);
+            if (newPositionsStr !== currentPositionsStr) {
+              return allPositions;
+            }
+            return prevPositions;
+          });
+        } catch {
+          setPositions((prevPositions) => {
+            if (prevPositions.length > 0) {
+              return [];
+            }
+            return prevPositions;
+          });
+        }
+      } else {
+        setPositions((prevPositions) => {
+          if (prevPositions.length > 0) {
+            return [];
+          }
+          return prevPositions;
+        });
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_positions");
+      if (stored) {
+        try {
+          const allPositions: Position[] = JSON.parse(stored);
+          setPositions(allPositions);
+        } catch {
+          setPositions([]);
+        }
+      } else {
+        setPositions([]);
+      }
+    }
+
+    const handleStorageChange = () => {
+      loadPositions();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("centuari-positions-updated", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("centuari-positions-updated", handleStorageChange);
+    };
+  }, []);
+
+  const filteredPositions = useMemo(() => {
+    let filtered = positions;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (pos) =>
+          pos.tokenSymbol.toLowerCase().includes(query) ||
+          pos.assetName.toLowerCase().includes(query) ||
+          formatCurrency(pos.amount).toLowerCase().includes(query)
+      );
+    }
+
+    if (activeTab === "open_orders") {
+      filtered = filtered.filter((pos) => pos.status === "pending");
+    } else if (activeTab === "active_position") {
+      filtered = filtered.filter((pos) => pos.status === "success" || pos.status === "processing");
+    }
+
+    return filtered;
+  }, [positions, searchQuery, activeTab]);
+
   return (
     <div className="mt-2 bg-white/5 rounded-md md:p-4">
-      <Tabs defaultValue="open_orders">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="md:hidden">
           <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 px-3 pt-3 pb-2 border-b border-white/10">
-            <h1 className="text-base font-medium mb-3">Your Position</h1>
+            <h1 className="text-base font-medium mb-3">Position</h1>
 
             <div className="relative mb-3">
               <Search
@@ -97,49 +864,70 @@ export function PositionSection() {
                 size={18}
               />
               <Input
-                placeholder="Search position"
+                placeholder="Search Position"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-white/5 border-white/10"
               />
             </div>
 
-            <TabsList className="bg-white/5 w-full grid grid-cols-3">
+            <TabsList className="bg-white/5 w-full grid grid-cols-3 mb-3">
               <TabsTrigger
                 value="open_orders"
-                className="data-[state=active]:!border-none data-[state=active]:bg-white/10 text-xs"
+                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
                 Open Order
               </TabsTrigger>
               <TabsTrigger
                 value="active_position"
-                className="data-[state=active]:!border-none data-[state=active]:bg-white/10 text-xs"
+                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
                 Positions
               </TabsTrigger>
               <TabsTrigger
                 value="all_transactions"
-                className="data-[state=active]:!border-none data-[state=active]:bg-white/10 text-xs"
+                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
                 All Transaction
               </TabsTrigger>
             </TabsList>
+
           </div>
 
           <TabsContent value="open_orders" className="mt-0">
-            {mockPositions.map((position) => (
-              <PositionCard key={position.id} position={position} />
-            ))}
+            {filteredPositions.length > 0 ? (
+              filteredPositions.map((position) => (
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} onUpdate={handleUpdate} />
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-muted-foreground">
+                No open orders found
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="active_position" className="mt-0">
-            {mockPositions.map((position) => (
-              <PositionCard key={position.id} position={position} />
-            ))}
+            {filteredPositions.length > 0 ? (
+              filteredPositions.map((position) => (
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-muted-foreground">
+                No active positions found
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="all_transactions" className="mt-0">
-            {mockPositions.map((position) => (
-              <PositionCard key={position.id} position={position} />
-            ))}
+            {filteredPositions.length > 0 ? (
+              filteredPositions.map((position) => (
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-muted-foreground">
+                No transactions found
+              </div>
+            )}
           </TabsContent>
         </div>
 
@@ -154,6 +942,8 @@ export function PositionSection() {
                 />
                 <Input
                   placeholder="Search Position..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 w-full sm:w-[240px] text-sm bg-white/5 border-white/10 h-9"
                 />
               </div>
@@ -180,17 +970,34 @@ export function PositionSection() {
             </div>
           </div>
 
+
           <TabsContent value="open_orders">
-            <CentuariTable />
+            {filteredPositions.length > 0 ? (
+              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                No open orders found
+              </div>
+            )}
           </TabsContent>
+          
           <TabsContent value="active_position">
-            <CentuariTable />
-          </TabsContent>
-          <TabsContent value="order_history">
-            <CentuariTable />
+            {filteredPositions.length > 0 ? (
+              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                No active positions found
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="all_transactions">
-            <CentuariTable />
+            {filteredPositions.length > 0 ? (
+              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
+            ) : (
+              <div className="py-8 text-center text-muted-foreground">
+                No transactions found
+              </div>
+            )}
           </TabsContent>
         </div>
       </Tabs>
