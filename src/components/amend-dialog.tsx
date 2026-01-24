@@ -64,7 +64,7 @@ interface AmendDialogProps {
 
 const defaultTokenList: TokenOption[] = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
   { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },

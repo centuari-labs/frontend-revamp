@@ -66,7 +66,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   // State for limit order
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
-  const [limitMaturity, setLimitMaturity] = useState<string>("1 Jan 2026");
+  const [limitMaturity, setLimitMaturity] = useState<string>("1 Feb 2026");
   const [limitTargetAPY, setLimitTargetAPY] = useState<string>("");
 
   // State for market order

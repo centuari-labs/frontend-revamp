@@ -86,19 +86,19 @@ export default function PortfolioPage() {
         if (storedPortfolio) {
           try {
             setPortfolio(JSON.parse(storedPortfolio));
-          } catch {}
+          } catch { }
         }
         const storedDebt = localStorage.getItem("centuari_total_debt");
         if (storedDebt) {
           try {
             setTotalDebt(parseFloat(storedDebt) || 0);
-          } catch {}
+          } catch { }
         }
         const storedSupply = localStorage.getItem("centuari_total_supply");
         if (storedSupply) {
           try {
             setTotalSupply(parseFloat(storedSupply) || 0);
-          } catch {}
+          } catch { }
         }
       }
     };
@@ -119,28 +119,28 @@ export default function PortfolioPage() {
   const totalBalance = totalPortfolioValue + totalSupply - totalDebt;
 
   // Calculate percentages for chart
-  const availableBalancePercent = totalBalance > 0 
-    ? Math.round((totalPortfolioValue / totalBalance) * 100) 
+  const availableBalancePercent = totalBalance > 0
+    ? Math.round((totalPortfolioValue / totalBalance) * 100)
     : 0;
-  const suppliedPercent = totalBalance > 0 
-    ? Math.round((totalSupply / totalBalance) * 100) 
+  const suppliedPercent = totalBalance > 0
+    ? Math.round((totalSupply / totalBalance) * 100)
     : 0;
-  const borrowedPercent = totalBalance > 0 
-    ? Math.round((totalDebt / totalBalance) * 100) 
+  const borrowedPercent = totalBalance > 0
+    ? Math.round((totalDebt / totalBalance) * 100)
     : 0;
 
   // Calculate health factor (simplified: portfolio value / debt)
-  const healthFactor = totalDebt > 0 
+  const healthFactor = totalDebt > 0
     ? (totalPortfolioValue / totalDebt).toFixed(2)
     : "0.00";
-  
-  const healthFactorStatus = parseFloat(healthFactor) >= 2.0 
-    ? "Safe" 
-    : parseFloat(healthFactor) >= 1.5 
-    ? "Good" 
-    : parseFloat(healthFactor) >= 1.0 
-    ? "Warning" 
-    : "Critical";
+
+  const healthFactorStatus = parseFloat(healthFactor) >= 2.0
+    ? "Safe"
+    : parseFloat(healthFactor) >= 1.5
+      ? "Good"
+      : parseFloat(healthFactor) >= 1.0
+        ? "Warning"
+        : "Critical";
   return (
     <div className="relative w-full mt-14">
       <div className="w-full max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-4 2xl:min-h-[calc(100vh-6rem)]">
@@ -272,9 +272,8 @@ export default function PortfolioPage() {
                 ].map((item, idx) => (
                   <div
                     key={item.label}
-                    className={`flex items-center justify-between py-2.5 ${
-                      idx !== 0 ? "border-t border-white/10" : ""
-                    }`}
+                    className={`flex items-center justify-between py-2.5 ${idx !== 0 ? "border-t border-white/10" : ""
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <div
@@ -347,13 +346,13 @@ export default function PortfolioPage() {
                 />
                 <div className="space-y-1.5">
                   <p className="text-sm">Health Factor</p>
-                  <Badge 
+                  <Badge
                     variant={
                       healthFactorStatus === "Safe" || healthFactorStatus === "Good"
                         ? "success"
                         : healthFactorStatus === "Warning"
-                        ? "warning"
-                        : "destructive"
+                          ? "warning"
+                          : "destructive"
                     }
                   >
                     {healthFactor} ~ {healthFactorStatus}
@@ -367,10 +366,10 @@ export default function PortfolioPage() {
           </div>
         </div>
         <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-3">
-          <div className="flex-1 min-w-0 overflow-x-auto">
+          <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
             <DataTableAssets />
           </div>
-          <div className="flex-1 min-w-0 overflow-x-auto">
+          <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
             <DataTableAllPosition />
           </div>
         </div>

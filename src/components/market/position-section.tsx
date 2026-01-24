@@ -28,7 +28,7 @@ import { CentuariBadge } from "../centuari-badge";
 
 const tokenList = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
+  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
   { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
@@ -46,21 +46,21 @@ const getTokenLogo = (tokenValue: string, assetImg?: string): string => {
     eth: "/tokens/eth-icon.svg",
     sol: "/tokens/sol-icon.svg",
     link: "/tokens/chainlink-icon.svg",
-    aave: "/tokens/centuari-aave.png",
+    xaut: "/tokens/xaut-icon.png",
     arb: "/tokens/centuari-arbitrum.png",
     dai: "/tokens/centuari-dai.png",
     centuari: "/tokens/centuari-centuari.png",
   };
-  
+
   const mappedLogo = tokenLogoMap[tokenValue.toLowerCase()];
   if (mappedLogo) {
     return mappedLogo;
   }
-  
+
   if (assetImg && assetImg.startsWith("/")) {
     return assetImg;
   }
-  
+
   return "/tokens/usdc-icon.svg";
 };
 
@@ -99,11 +99,11 @@ interface BorrowPosition {
 
 type Position = LendPosition | BorrowPosition;
 
-function PositionCard({ 
-  position, 
+function PositionCard({
+  position,
   onDelete,
   onUpdate
-}: { 
+}: {
   position: Position;
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
@@ -173,7 +173,7 @@ function PositionCard({
             </button>
           }
         />
-        <button 
+        <button
           onClick={handleDelete}
           className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
         >
@@ -185,11 +185,11 @@ function PositionCard({
 }
 
 // Lend Position Table Component
-function LendPositionTable({ 
-  positions, 
+function LendPositionTable({
+  positions,
   onDelete,
   onUpdate
-}: { 
+}: {
   positions: LendPosition[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: LendPosition) => void;
@@ -272,7 +272,7 @@ function LendPositionTable({
                 </button>
               }
             />
-            <button 
+            <button
               onClick={() => onDelete(row.original.id)}
               className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -306,9 +306,9 @@ function LendPositionTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 );
               })}
@@ -352,11 +352,11 @@ function LendPositionTable({
 }
 
 // Unified Position Table Component for Open Orders
-function UnifiedPositionTable({ 
-  positions, 
+function UnifiedPositionTable({
+  positions,
   onDelete,
   onUpdate
-}: { 
+}: {
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
@@ -447,7 +447,7 @@ function UnifiedPositionTable({
                 </button>
               }
             />
-            <button 
+            <button
               onClick={() => onDelete(row.original.id)}
               className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -481,9 +481,9 @@ function UnifiedPositionTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 );
               })}
@@ -527,11 +527,11 @@ function UnifiedPositionTable({
 }
 
 // Borrow Position Table Component
-function BorrowPositionTable({ 
-  positions, 
+function BorrowPositionTable({
+  positions,
   onDelete,
   onUpdate
-}: { 
+}: {
   positions: BorrowPosition[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: BorrowPosition) => void;
@@ -544,10 +544,10 @@ function BorrowPositionTable({
         const collateralTokens = row.original.collateralTokens || [];
         const firstCollateral = collateralTokens[0];
         if (!firstCollateral) return "-";
-        
+
         const logoPath = getTokenLogo(firstCollateral);
         const tokenName = firstCollateral.toUpperCase().slice(0, 4);
-        
+
         return (
           <div className="flex items-center gap-2">
             <Image
@@ -642,7 +642,7 @@ function BorrowPositionTable({
                 </button>
               }
             />
-            <button 
+            <button
               onClick={() => onDelete(row.original.id)}
               className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -676,9 +676,9 @@ function BorrowPositionTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 );
               })}
@@ -728,16 +728,16 @@ export function PositionSection() {
 
   const handleDelete = (id: string) => {
     if (typeof window === "undefined") return;
-    
+
     const stored = localStorage.getItem("centuari_positions");
     if (stored) {
       try {
         const allPositions: Position[] = JSON.parse(stored);
         const updatedPositions = allPositions.filter((pos) => pos.id !== id);
         localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-        
+
         setPositions(updatedPositions);
-        
+
         window.dispatchEvent(new Event("storage"));
         window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
       } catch {
@@ -748,7 +748,7 @@ export function PositionSection() {
 
   const handleUpdate = (updatedPosition: Position) => {
     if (typeof window === "undefined") return;
-    
+
     const stored = localStorage.getItem("centuari_positions");
     if (stored) {
       try {
@@ -757,9 +757,9 @@ export function PositionSection() {
           pos.id === updatedPosition.id ? updatedPosition : pos
         );
         localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-        
+
         setPositions(updatedPositions);
-        
+
         window.dispatchEvent(new Event("storage"));
         window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
       } catch {
@@ -771,7 +771,7 @@ export function PositionSection() {
   useEffect(() => {
     const loadPositions = () => {
       if (typeof window === "undefined") return;
-      
+
       const stored = localStorage.getItem("centuari_positions");
       if (stored) {
         try {
@@ -980,7 +980,7 @@ export function PositionSection() {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="active_position">
             {filteredPositions.length > 0 ? (
               <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />

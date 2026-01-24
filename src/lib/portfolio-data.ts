@@ -22,12 +22,12 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 5, // 5%
   },
   { 
-    logo: "/tokens/centuari-aave.png", 
-    value: "aave", 
-    label: "Aave", 
-    ltv: 0.70, 
-    price: 120,
-    liquidationThreshold: 0.75,
+    logo: "/tokens/xaut-icon.png", 
+    value: "xaut", 
+    label: "Tether Gold", 
+    ltv: 0.75, 
+    price: 2000,
+    liquidationThreshold: 0.80,
     liquidationPenalty: 5,
   },
   { 
@@ -91,7 +91,7 @@ export const tokenList: TokenInfo[] = [
 export const defaultPortfolio: Record<string, number> = {
   btc: 100000, // BTC value $100k
   eth: 50000,  // ETH value $50k
-  aave: 25000, // Aave value $25k
+  xaut: 25000, // Tether Gold value $25k
   usdc: 15000, // USDC value $15k
   usdt: 10000, // USDT value $10k
 };
@@ -107,7 +107,7 @@ export function getTokenSymbol(label: string): string {
   const symbolMap: Record<string, string> = {
     "Bitcoin": "BTC",
     "Ethereum": "ETH",
-    "Aave": "AAVE",
+    "Tether Gold": "XAUT",
     "Arbitrum": "ARB",
     "USDC": "USDC",
     "USDT": "USDT",

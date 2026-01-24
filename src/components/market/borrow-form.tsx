@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CentuariInput } from "@/components/centuari-input";
 import { CentuariTooltip } from "@/components/centuari-tooltip";
 import HealthFactor from "@/components/centuari-health-factor";
@@ -8,6 +8,7 @@ import { MaturityToggle } from "@/components/maturity-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, Loader2 } from "lucide-react";
@@ -21,6 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import Link from "next/link";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate } from "@/lib/utils";
 import { tokenList as portfolioTokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 import {
@@ -81,13 +88,13 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
     if (editingPosition) {
       // Convert APR decimal to percentage
       const aprPercent = (editingPosition.apy * 100).toFixed(1).replace(".", ",");
-      
+
       // Set token
       const token = tokenList.find(t => t.value === editingPosition.tokenValue);
       if (token) {
         setSelectedToken(token);
       }
-      
+
       // Set order type specific fields
       if (editingPosition.orderType === "limit") {
         setLimitAmount(editingPosition.amount.toString());
@@ -107,15 +114,48 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   // State for limit order
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
-  const [limitMaturity, setLimitMaturity] = useState<string>("22 Oct 2026");
+  const [limitMaturity, setLimitMaturity] = useState<string>("1 Feb 2026");
   const [limitTargetAPR, setLimitTargetAPR] = useState<string>("");
   const [limitSelectedCollaterals, setLimitSelectedCollaterals] = useState<string[]>([]);
 
   // State for market order
   const [marketAmount, setMarketAmount] = useState<string>("");
   const [marketDisplayAmount, setMarketDisplayAmount] = useState<string>("");
-  const [marketMaturity, setMarketMaturity] = useState<string>("22 Oct 2026");
+  const [marketMaturity, setMarketMaturity] = useState<string>("1 Feb 2026");
   const [marketSelectedCollaterals, setMarketSelectedCollaterals] = useState<string[]>([]);
+
+  // Ref for maturity select to calculate dynamic padding
+  const maturitySelectRef = useRef<HTMLButtonElement | null>(null);
+  const [maturitySelectPadding, setMaturitySelectPadding] = useState<number>(88);
+
+  // Update padding when maturity select width changes
+  useEffect(() => {
+    const updatePadding = () => {
+      if (!maturitySelectRef.current) return;
+      const rect = maturitySelectRef.current.getBoundingClientRect();
+      // +16px untuk gap yang lebih besar antara select dan input text agar tidak overlap
+      setMaturitySelectPadding(rect.width + 16);
+    };
+
+    // Initial calculation
+    const timeoutId = setTimeout(updatePadding, 0);
+
+    const observer = new ResizeObserver(() => {
+      updatePadding();
+    });
+
+    if (maturitySelectRef.current) {
+      observer.observe(maturitySelectRef.current);
+    }
+
+    // Also update when maturity value changes
+    updatePadding();
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [limitMaturity]); // Re-calculate when maturity changes
 
   // State for portfolio, total debt, and collateral status
   const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
@@ -167,6 +207,28 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [successTokenSymbol, setSuccessTokenSymbol] = useState<string>("");
 
+  // Auto-select collateral tokens when collateral status changes
+  useEffect(() => {
+    if (!editingPosition) {
+      // Auto-select all tokens that are set as collateral
+      const autoSelected = portfolioTokenList
+        .filter(token =>
+          portfolio[token.value] &&
+          portfolio[token.value] > 0 &&
+          collateralStatus[token.value] === true
+        )
+        .map(token => token.value);
+
+      // Only auto-select if no collateral is currently selected
+      if (limitSelectedCollaterals.length === 0) {
+        setLimitSelectedCollaterals(autoSelected);
+      }
+      if (marketSelectedCollaterals.length === 0) {
+        setMarketSelectedCollaterals(autoSelected);
+      }
+    }
+  }, [collateralStatus, portfolio, editingPosition, limitSelectedCollaterals.length, marketSelectedCollaterals.length]);
+
   // Sync portfolio, total debt, and collateral status from localStorage
   useEffect(() => {
     const handleStorageChange = () => {
@@ -184,7 +246,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
               }
               return prevPortfolio;
             });
-          } catch {}
+          } catch { }
         }
 
         const storedDebt = localStorage.getItem("centuari_total_debt");
@@ -199,7 +261,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 return prevDebt;
               });
             }
-          } catch {}
+          } catch { }
         }
 
         const storedCollateral = localStorage.getItem("centuari_collateral");
@@ -215,7 +277,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
               }
               return prevCollateralStatus;
             });
-          } catch {}
+          } catch { }
         }
       }
     };
@@ -223,7 +285,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
     // Only listen to storage events from other tabs/windows
     // Remove interval polling to prevent infinite loops
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Also listen to custom events from same-tab updates
     window.addEventListener("centuari-positions-updated", handleStorageChange);
 
@@ -285,13 +347,13 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   }, 0);
   const limitWeightedLTV = limitSelectedCollaterals.length > 0 && limitTotalPortfolioValue > 0
     ? limitSelectedCollaterals.reduce((sum, collateralValue) => {
-        const token = portfolioTokenList.find(t => t.value === collateralValue);
-        const portfolioValue = portfolio[collateralValue] || 0;
-        if (token && portfolioValue > 0) {
-          return sum + (token.ltv * portfolioValue);
-        }
-        return sum;
-      }, 0) / limitTotalPortfolioValue
+      const token = portfolioTokenList.find(t => t.value === collateralValue);
+      const portfolioValue = portfolio[collateralValue] || 0;
+      if (token && portfolioValue > 0) {
+        return sum + (token.ltv * portfolioValue);
+      }
+      return sum;
+    }, 0) / limitTotalPortfolioValue
     : 0.85;
   const limitMaxBorrowCapacity = limitTotalPortfolioValue * limitWeightedLTV;
   const limitAvailableQuota = limitMaxBorrowCapacity - totalDebt;
@@ -302,13 +364,13 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   }, 0);
   const marketWeightedLTV = marketSelectedCollaterals.length > 0 && marketTotalPortfolioValue > 0
     ? marketSelectedCollaterals.reduce((sum, collateralValue) => {
-        const token = portfolioTokenList.find(t => t.value === collateralValue);
-        const portfolioValue = portfolio[collateralValue] || 0;
-        if (token && portfolioValue > 0) {
-          return sum + (token.ltv * portfolioValue);
-        }
-        return sum;
-      }, 0) / marketTotalPortfolioValue
+      const token = portfolioTokenList.find(t => t.value === collateralValue);
+      const portfolioValue = portfolio[collateralValue] || 0;
+      if (token && portfolioValue > 0) {
+        return sum + (token.ltv * portfolioValue);
+      }
+      return sum;
+    }, 0) / marketTotalPortfolioValue
     : 0.85;
   const marketMaxBorrowCapacity = marketTotalPortfolioValue * marketWeightedLTV;
   const marketAvailableQuota = marketMaxBorrowCapacity - totalDebt;
@@ -348,7 +410,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   const handleLimitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseFloat(limitAmount) || 0;
-    
+
     if (numericAmount <= 0 || isProcessing) return;
     if (numericAmount > limitAvailableQuota) return;
     if (limitSelectedCollaterals.length === 0) return;
@@ -469,7 +531,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   const handleMarketSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseFloat(marketAmount) || 0;
-    
+
     if (numericAmount <= 0 || isProcessing) return;
     if (numericAmount > marketAvailableQuota) return;
     if (marketSelectedCollaterals.length === 0) return;
@@ -598,9 +660,9 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
 
   // Get available collateral tokens
   const getAvailableCollaterals = () => {
-    return portfolioTokenList.filter(token => 
-      portfolio[token.value] && 
-      portfolio[token.value] > 0 && 
+    return portfolioTokenList.filter(token =>
+      portfolio[token.value] &&
+      portfolio[token.value] > 0 &&
       collateralStatus[token.value] === true
     ).map(token => ({
       logo: token.logo,
@@ -667,16 +729,16 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     />
                   }
                   rightIcon={
-                    <Button 
-                      variant={"link"} 
-                      className="px-0" 
+                    <Button
+                      variant={"link"}
+                      className="px-0"
                       type="button"
                       onClick={handleLimitMaxClick}
                     >
                       Max
                     </Button>
                   }
-                  balanceText={`Available Quota: ${formatCurrency(limitAvailableQuota)}`}
+                  // balanceText={`Available Quota: ${formatCurrency(limitAvailableQuota)}`}
                   value={limitDisplayAmount}
                   onChange={handleLimitAmountChange}
                   className="mt-0"
@@ -684,18 +746,105 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 />
                 <div className="mt-3">
                   <Label className="mb-2">Collateral</Label>
-                  <MultiSelect
-                    options={getAvailableCollaterals()}
-                    onValueChange={(values) => setLimitSelectedCollaterals(values)}
-                    placeholder="Select Coins"
-                    variant="default"
-                    maxCount={4}
-                  />
+                  <div className="mt-1.5">
+                    {/* Custom Display for Selected Collaterals */}
+                    {limitSelectedCollaterals.length > 0 ? (
+                      <div className="flex items-center justify-between gap-3 p-0.5 rounded-md border bg-white/5 hover:bg-white/5">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 px-2">
+                          {/* Display max 4 token icons */}
+                          <div className="flex items-center -space-x-2">
+                            {limitSelectedCollaterals.slice(0, 4).map((tokenValue, index) => {
+                              const token = portfolioTokenList.find(t => t.value === tokenValue);
+                              if (!token) return null;
+                              return (
+                                <div
+                                  key={tokenValue}
+                                  className="relative"
+                                  style={{ zIndex: 10 - index }}
+                                >
+                                  <Image
+                                    src={token.logo}
+                                    alt={token.label}
+                                    width={24}
+                                    height={24}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Badge for remaining tokens */}
+                          {limitSelectedCollaterals.length > 4 && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors cursor-pointer"
+                                >
+                                  {limitSelectedCollaterals.length - 4 === 1
+                                    ? "+1 asset"
+                                    : `+${limitSelectedCollaterals.length - 4} assets`}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-3 border-white/10">
+                                <div className="flex flex-col gap-2">
+                                  <p className="text-xs font-medium text-white/60 mb-1">Additional Assets:</p>
+                                  {limitSelectedCollaterals.slice(4).map((tokenValue) => {
+                                    const token = portfolioTokenList.find(t => t.value === tokenValue);
+                                    if (!token) return null;
+                                    return (
+                                      <div
+                                        key={tokenValue}
+                                        className="flex items-center gap-2 py-1"
+                                      >
+                                        <Image
+                                          src={token.logo}
+                                          alt={token.label}
+                                          width={20}
+                                          height={20}
+                                          className="rounded-full"
+                                        />
+                                        <span className="text-sm text-white">{token.label}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+
+                        {/* Change Button */}
+                        <Link href="/portfolio">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="hover:underline hover:!bg-transparent hover:cursor-pointer"
+                          >
+                            Change
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      /* MultiSelect for selecting when no collateral selected */
+                      <MultiSelect
+                        options={getAvailableCollaterals()}
+                        onValueChange={(values) => setLimitSelectedCollaterals(values)}
+                        placeholder="Select Coins"
+                        variant="default"
+                        maxCount={4}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="mt-3">
-                  <Label className="mb-2">Target APR</Label>
+                <div className="w-full space-y-2 mt-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="limit-target-apr">Target APR</Label>
+                  </div>
                   <div className="relative">
-                    <input
+                    <Input
+                      id="limit-target-apr"
                       type="text"
                       placeholder="12.5"
                       value={limitTargetAPR}
@@ -703,26 +852,28 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                         const value = e.target.value.replace(/[^\d.,]/g, "");
                         setLimitTargetAPR(value);
                       }}
-                      className="w-full h-9 px-3 text-base bg-[#1a1d24] border border-[#2a2e38] rounded-md focus-visible:outline-none focus-visible:ring-0"
+                      className="peer h-9 text-base bg-[#1a1d24] border-[#2a2e38] focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none"
+                      style={{ paddingLeft: maturitySelectPadding }}
                     />
                     <span className="absolute inset-y-0 right-3 flex items-center text-muted-foreground">%</span>
+                    <div className="absolute inset-y-0 left-1 flex items-center">
+                      <Select value={limitMaturity} onValueChange={setLimitMaturity}>
+                        <SelectTrigger
+                          ref={maturitySelectRef}
+                          className="!h-7 w-auto border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1"
+                        >
+                          <SelectValue placeholder="Select Maturity" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white/5 backdrop-blur-[140px]">
+                          <SelectGroup>
+                            <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
+                            <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
+                            <SelectItem value="1 Apr 2026">1 Apr 2026</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-3">
-                  <Label className="mb-2">Maturity</Label>
-                  <Select value={limitMaturity} onValueChange={setLimitMaturity}>
-                    <SelectTrigger className="w-full h-9 bg-[#1a1d24] border border-[#2a2e38]">
-                      <SelectValue placeholder="Select Maturity" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white/5 backdrop-blur-[140px]">
-                      <SelectGroup>
-                        <SelectItem value="1 Jan 2026">1 Jan 2026</SelectItem>
-                        <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
-                        <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
-                        <SelectItem value="22 Oct 2026">22 Oct 2026</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div>
                   <Label className="mb-2 mt-2.5">
@@ -730,19 +881,19 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
                       <Info size={16} />
                     </CentuariTooltip>
-                    <Badge 
+                    <Badge
                       variant={
                         limitHealthFactor === 0 || limitSelectedCollaterals.length === 0 || limitNumericAmount === 0
                           ? "default"
-                          : limitHealthFactor >= 2.5 
-                          ? "success" 
-                          : limitHealthFactor >= 1.5 
-                          ? "default" 
-                          : limitHealthFactor >= 1.2 
-                          ? "warning" 
-                          : limitHealthFactor >= 1.0 
-                          ? "warning"
-                          : "destructive"
+                          : limitHealthFactor >= 2.5
+                            ? "success"
+                            : limitHealthFactor >= 1.5
+                              ? "default"
+                              : limitHealthFactor >= 1.2
+                                ? "warning"
+                                : limitHealthFactor >= 1.0
+                                  ? "warning"
+                                  : "destructive"
                       }
                     >
                       {(() => {
@@ -762,7 +913,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                   </Label>
                   <div className="border border-white/5 rounded-lg mt-2">
                     <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                      <HealthFactor 
+                      <HealthFactor
                         targetValue={limitHealthFactorPercentage}
                         healthFactor={limitHealthFactor > 0 && !isNaN(limitHealthFactor) ? limitHealthFactor : undefined}
                       />
@@ -833,16 +984,16 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     />
                   }
                   rightIcon={
-                    <Button 
-                      variant={"link"} 
-                      className="px-0" 
+                    <Button
+                      variant={"link"}
+                      className="px-0"
                       type="button"
                       onClick={handleMarketMaxClick}
                     >
                       Max
                     </Button>
                   }
-                  balanceText={`Available Quota: ${formatCurrency(marketAvailableQuota)}`}
+                  // balanceText={`Available Quota: ${formatCurrency(marketAvailableQuota)}`}
                   value={marketDisplayAmount}
                   onChange={handleMarketAmountChange}
                   className="mt-0"
@@ -850,13 +1001,97 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 />
                 <div className="mt-3">
                   <Label className="mb-2 mt-2.5">Collateral</Label>
-                  <MultiSelect
-                    options={getAvailableCollaterals()}
-                    onValueChange={(values) => setMarketSelectedCollaterals(values)}
-                    placeholder="Select Coins"
-                    variant="default"
-                    maxCount={4}
-                  />
+                  <div className="mt-1.5">
+                    {/* Custom Display for Selected Collaterals */}
+                    {marketSelectedCollaterals.length > 0 ? (
+                      <div className="flex items-center justify-between gap-3 p-0.5 rounded-md border bg-white/5 hover:bg-white/5">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 px-2">
+                          {/* Display max 4 token icons */}
+                          <div className="flex items-center -space-x-2">
+                            {marketSelectedCollaterals.slice(0, 4).map((tokenValue, index) => {
+                              const token = portfolioTokenList.find(t => t.value === tokenValue);
+                              if (!token) return null;
+                              return (
+                                <div
+                                  key={tokenValue}
+                                  className="relative"
+                                  style={{ zIndex: 10 - index }}
+                                >
+                                  <Image
+                                    src={token.logo}
+                                    alt={token.label}
+                                    width={24}
+                                    height={24}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Badge for remaining tokens */}
+                          {marketSelectedCollaterals.length > 4 && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors cursor-pointer"
+                                >
+                                  {marketSelectedCollaterals.length - 4 === 1
+                                    ? "+1 asset"
+                                    : `+${marketSelectedCollaterals.length - 4} assets`}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-3 border-white/10">
+                                <div className="flex flex-col gap-2">
+                                  <p className="text-xs font-medium text-white/60 mb-1">Additional Assets:</p>
+                                  {marketSelectedCollaterals.slice(4).map((tokenValue) => {
+                                    const token = portfolioTokenList.find(t => t.value === tokenValue);
+                                    if (!token) return null;
+                                    return (
+                                      <div
+                                        key={tokenValue}
+                                        className="flex items-center gap-2 py-1"
+                                      >
+                                        <Image
+                                          src={token.logo}
+                                          alt={token.label}
+                                          width={20}
+                                          height={20}
+                                          className="rounded-full"
+                                        />
+                                        <span className="text-sm text-white">{token.label}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+
+                        {/* Change Button */}
+                        <Link href="/portfolio">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="hover:underline hover:!bg-transparent hover:cursor-pointer"
+                          >
+                            Change
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      /* MultiSelect for selecting when no collateral selected */
+                      <MultiSelect
+                        options={getAvailableCollaterals()}
+                        onValueChange={(values) => setMarketSelectedCollaterals(values)}
+                        placeholder="Select Coins"
+                        variant="default"
+                        maxCount={4}
+                      />
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label className="mb-2 mt-3.5">
@@ -865,7 +1100,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                       <Info size={16} />
                     </CentuariTooltip>
                   </Label>
-                  <MaturityToggle 
+                  <MaturityToggle
                     value={marketMaturity}
                     onValueChange={setMarketMaturity}
                   />
@@ -876,19 +1111,19 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
                       <Info size={16} />
                     </CentuariTooltip>
-                    <Badge 
+                    <Badge
                       variant={
                         marketHealthFactor === 0 || marketSelectedCollaterals.length === 0 || marketNumericAmount === 0
                           ? "default"
-                          : marketHealthFactor >= 2.5 
-                          ? "success" 
-                          : marketHealthFactor >= 1.5 
-                          ? "default" 
-                          : marketHealthFactor >= 1.2 
-                          ? "warning" 
-                          : marketHealthFactor >= 1.0 
-                          ? "warning"
-                          : "destructive"
+                          : marketHealthFactor >= 2.5
+                            ? "success"
+                            : marketHealthFactor >= 1.5
+                              ? "default"
+                              : marketHealthFactor >= 1.2
+                                ? "warning"
+                                : marketHealthFactor >= 1.0
+                                  ? "warning"
+                                  : "destructive"
                       }
                     >
                       {(() => {
@@ -908,7 +1143,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                   </Label>
                   <div className="border border-white/5 rounded-lg mt-2">
                     <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                      <HealthFactor 
+                      <HealthFactor
                         targetValue={marketHealthFactorPercentage}
                         healthFactor={marketHealthFactor > 0 && !isNaN(marketHealthFactor) ? marketHealthFactor : undefined}
                       />

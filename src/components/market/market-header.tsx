@@ -10,7 +10,7 @@ import { useMemo } from "react";
 
 const tokenList = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin", symbol: "BTC" },
-  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave", symbol: "AAVE" },
+  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold", symbol: "XAUT" },
   { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum", symbol: "ETH" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum", symbol: "ARB" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC", symbol: "USDC" },

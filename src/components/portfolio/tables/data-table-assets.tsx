@@ -54,7 +54,14 @@ export function DataTableAssets() {
       const stored = localStorage.getItem("centuari_portfolio");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          // Migrate old AAVE data to XAUT if exists
+          if (parsed.aave && !parsed.xaut) {
+            parsed.xaut = parsed.aave;
+            delete parsed.aave;
+            localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
+          }
+          return parsed;
         } catch {
           return defaultPortfolio;
         }
@@ -69,7 +76,14 @@ export function DataTableAssets() {
       const stored = localStorage.getItem("centuari_collateral");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          // Migrate old AAVE collateral status to XAUT if exists
+          if (parsed.aave !== undefined && parsed.xaut === undefined) {
+            parsed.xaut = parsed.aave;
+            delete parsed.aave;
+            localStorage.setItem("centuari_collateral", JSON.stringify(parsed));
+          }
+          return parsed;
         } catch {
           return {};
         }
@@ -86,20 +100,20 @@ export function DataTableAssets() {
         if (stored) {
           try {
             setPortfolio(JSON.parse(stored));
-          } catch {}
+          } catch { }
         }
         const storedCollateral = localStorage.getItem("centuari_collateral");
         if (storedCollateral) {
           try {
             setCollateralStatus(JSON.parse(storedCollateral));
-          } catch {}
+          } catch { }
         }
       }
     };
 
     // Listen for storage changes (from other tabs/components)
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Also check periodically (for same-tab updates)
     const interval = setInterval(handleStorageChange, 500);
 
@@ -116,12 +130,12 @@ export function DataTableAssets() {
         ...prev,
         [tokenValue]: !prev[tokenValue],
       };
-      
+
       // Save to localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("centuari_collateral", JSON.stringify(newStatus));
       }
-      
+
       return newStatus;
     });
   }, []);
@@ -142,6 +156,10 @@ export function DataTableAssets() {
                 width={24}
                 height={24}
                 className="w-full h-full object-cover"
+                unoptimized
+                onError={(e) => {
+                  console.error(`Failed to load image: ${asset.assetImg}`);
+                }}
               />
             </div>
             <span className="font-medium text-white">{asset.assetName}</span>
@@ -283,7 +301,7 @@ export function DataTableAssets() {
   });
 
   return (
-    <div className="w-full overflow-hidden rounded-xl bg-white/5 border">
+    <div className="w-full overflow-hidden relative h-full rounded-xl bg-white/5 border">
       <h1 className="text-white text-lg font-normal py-3.5 px-6">My Assets</h1>
       <div className="overflow-x-auto">
         <Table className="min-w-[600px]">
@@ -303,9 +321,9 @@ export function DataTableAssets() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
@@ -350,7 +368,7 @@ export function DataTableAssets() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row absolute bottom-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}

@@ -310,38 +310,11 @@ export function DataTableAllPosition() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-white font-medium">
-            Page {currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0} of {Math.max(1, table.getPageCount() || 1)}
-          </span>
-          <span className="text-white/20">•</span>
-          <span className="text-white/40">
-            Showing {table.getRowModel().rows.length} of {currentData.length} Data
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-          >
-            <ArrowLeft size={16} className="text-white" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-          >
-            <ArrowRight size={16} className="text-white" />
-          </Button>
-        </div>
-      </div>
     </>
   ), [table, currentData.length]);
 
   return (
-    <div className="w-full overflow-hidden rounded-xl bg-white/5 border">
+    <div className="w-full relative overflow-hidden h-full rounded-xl bg-white/5 border">
       <Tabs defaultValue="borrow" className="w-full !gap-0" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
         <div className="flex items-center justify-between py-2 px-6">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
@@ -369,6 +342,33 @@ export function DataTableAllPosition() {
           {PositionTable}
         </TabsContent>
       </Tabs>
+      <div className="flex flex-col sm:flex-row absolute bottom-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-white font-medium">
+            Page {currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0} of {Math.max(1, table.getPageCount() || 1)}
+          </span>
+          <span className="text-white/20">•</span>
+          <span className="text-white/40">
+            Showing {table.getRowModel().rows.length} of {currentData.length} Data
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+          >
+            <ArrowLeft size={16} className="text-white" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+          >
+            <ArrowRight size={16} className="text-white" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

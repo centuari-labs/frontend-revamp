@@ -26,6 +26,11 @@ import { SelectToken } from "./select-token";
 import { MultiSelect } from "./ui/multi-select";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, parseDateString, calculateDaysDifference } from "@/lib/utils";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
@@ -348,14 +353,26 @@ export function CentuariBorrowDialog({
           try {
             const collateralStatusData = JSON.parse(stored);
             setCollateralStatus(collateralStatusData);
+
+            // Auto-select all tokens that are set as collateral
+            const autoSelected = tokenList
+              .filter(token =>
+                portfolio[token.value] &&
+                portfolio[token.value] > 0 &&
+                collateralStatusData[token.value] === true
+              )
+              .map(token => token.value);
+
+            setSelectedCollaterals(autoSelected);
           } catch {
             // If parsing fails, keep current state
+            setSelectedCollaterals([]);
           }
+        } else {
+          // No collateral status, reset to empty
+          setSelectedCollaterals([]);
         }
       }
-      // Do NOT auto-select collaterals - user must select manually
-      // Reset selectedCollaterals to empty when dialog opens
-      setSelectedCollaterals([]);
     } else {
       setViewMode("borrow");
       setAmountToBorrow("");
@@ -663,21 +680,105 @@ export function CentuariBorrowDialog({
                       />
                       <div className="mt-5">
                         <Label>Collateral Used</Label>
-                        <MultiSelect
-                          options={tokenList.filter(token =>
-                            portfolio[token.value] &&
-                            portfolio[token.value] > 0 &&
-                            collateralStatus[token.value] === true
+                        <div className="mt-1.5">
+                          {/* Custom Display for Selected Collaterals */}
+                          {selectedCollaterals.length > 0 ? (
+                            <div className="flex items-center justify-between gap-3 p-0.5 rounded-md border bg-white/5 hover:bg-white/5">
+                              <div className="flex items-center gap-2 flex-1 min-w-0 px-2">
+                                {/* Display max 4 token icons */}
+                                <div className="flex items-center -space-x-2">
+                                  {selectedCollaterals.slice(0, 4).map((tokenValue, index) => {
+                                    const token = tokenList.find(t => t.value === tokenValue);
+                                    if (!token) return null;
+                                    return (
+                                      <div
+                                        key={tokenValue}
+                                        className="relative"
+                                        style={{ zIndex: 10 - index }}
+                                      >
+                                        <Image
+                                          src={token.logo}
+                                          alt={token.label}
+                                          width={24}
+                                          height={24}
+                                        // className="rounded-full border-2 border-white/10 bg-white/5"
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Badge for remaining tokens */}
+                                {selectedCollaterals.length > 4 && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button
+                                        type="button"
+                                        className="flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors cursor-pointer"
+                                      >
+                                        {selectedCollaterals.length - 4 === 1
+                                          ? "+1 asset"
+                                          : `+${selectedCollaterals.length - 4} assets`}
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-3 border-white/10">
+                                      <div className="flex flex-col gap-2">
+                                        <p className="text-xs font-medium text-white/60 mb-1">Additional Assets:</p>
+                                        {selectedCollaterals.slice(4).map((tokenValue) => {
+                                          const token = tokenList.find(t => t.value === tokenValue);
+                                          if (!token) return null;
+                                          return (
+                                            <div
+                                              key={tokenValue}
+                                              className="flex items-center gap-2 py-1"
+                                            >
+                                              <Image
+                                                src={token.logo}
+                                                alt={token.label}
+                                                width={20}
+                                                height={20}
+                                                className="rounded-full"
+                                              />
+                                              <span className="text-sm text-white">{token.label}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
+                              </div>
+
+                              {/* Change Button */}
+                              <Link href="/portfolio">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:underline hover:!bg-transparent hover:cursor-pointer"
+                                >
+                                  Change
+                                </Button>
+                              </Link>
+                            </div>
+                          ) : (
+                            /* MultiSelect for selecting when no collateral selected */
+                            <MultiSelect
+                              options={tokenList.filter(token =>
+                                portfolio[token.value] &&
+                                portfolio[token.value] > 0 &&
+                                collateralStatus[token.value] === true
+                              )}
+                              onValueChange={handleCollateralChange}
+                              placeholder="Select Coins"
+                              variant="default"
+                              maxCount={4}
+                              hideSelectAll={true}
+                              defaultValue={selectedCollaterals}
+                              resetOnDefaultValueChange={true}
+                            />
                           )}
-                          onValueChange={handleCollateralChange}
-                          placeholder="Select Coins"
-                          variant="default"
-                          maxCount={4}
-                          className="mt-1.5"
-                          hideSelectAll={true}
-                          defaultValue={selectedCollaterals}
-                          resetOnDefaultValueChange={true}
-                        />
+                        </div>
                       </div>
                       {/* 
                     <div>
