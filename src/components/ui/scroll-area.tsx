@@ -13,7 +13,7 @@ function ScrollArea({
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative", className)}
+      className={cn("relative overflow-hidden", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
@@ -38,18 +38,23 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "flex touch-none p-px transition-colors select-none",
+        "flex touch-none select-none transition-colors",
         orientation === "vertical" &&
-          "h-full w-2 border-l border-l-transparent",
+          "h-full w-2.5 border-l border-l-transparent p-px",
         orientation === "horizontal" &&
-          "h-2.5 flex-col border-t border-t-transparent",
+          "h-2.5 flex-col border-t border-t-transparent p-px",
+        // Force scrollbar to always be visible when content overflows
+        // Remove fade-out animation and keep scrollbar visible for better UX
+        "[&[data-state='visible']]:opacity-100 [&[data-state='visible']]:animate-none",
+        // Ensure scrollbar stays visible (no auto-hide)
+        "[&[data-state='visible']]:pointer-events-auto",
         className
       )}
       {...props}
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="bg-border relative flex-1 rounded-full -right-2"
+        className="bg-white/30 hover:bg-white/40 active:bg-white/50 relative flex-1 rounded-full transition-colors cursor-pointer"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );

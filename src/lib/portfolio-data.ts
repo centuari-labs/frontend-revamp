@@ -84,6 +84,15 @@ export const tokenList: TokenInfo[] = [
     liquidationThreshold: 0.82,
     liquidationPenalty: 5,
   },
+  {
+    logo: "/tokens/nvda-icon.svg",
+    value: "nvda",
+    label: "NVIDIA",
+    ltv: 0.75,
+    price: 150,
+    liquidationThreshold: 0.80,
+    liquidationPenalty: 5,
+  },
 ];
 
 // Default portfolio data (in real app, this would come from API/state management)
@@ -94,6 +103,7 @@ export const defaultPortfolio: Record<string, number> = {
   xaut: 25000, // Tether Gold value $25k
   usdc: 15000, // USDC value $15k
   usdt: 10000, // USDT value $10k
+  nvda: 30000, // NVIDIA value $30k
 };
 
 // Helper function to get token info by value
@@ -113,6 +123,7 @@ export function getTokenSymbol(label: string): string {
     "USDT": "USDT",
     "DAI": "DAI",
     "Centuari": "CENT",
+    "NVIDIA": "NVDA",
   };
   return symbolMap[label] || label.toUpperCase().slice(0, 4);
 }

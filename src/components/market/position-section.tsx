@@ -27,20 +27,17 @@ import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
 
 const tokenList = [
-  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
-  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
-  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
-  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
-  { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari" },
+  { logo: "/tokens/xsgd-icon.png", value: "xsgd", label: "XSGD" },
+  { logo: "/tokens/idrx-icon.png", value: "idrx", label: "IDRX" },
 ];
 
 // Helper function to get correct token logo path
 const getTokenLogo = (tokenValue: string, assetImg?: string): string => {
   const tokenLogoMap: Record<string, string> = {
     usdc: "/tokens/usdc-icon.svg",
+    xsgd: "/tokens/xsgd-icon.png",
+    idrx: "/tokens/idrx-icon.png",
     usdt: "/tokens/centuari-usdt.png",
     btc: "/tokens/btc-icon.svg",
     eth: "/tokens/eth-icon.svg",
@@ -876,7 +873,7 @@ export function PositionSection() {
                 value="open_orders"
                 className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
-                Open Order
+                Open Orders
               </TabsTrigger>
               <TabsTrigger
                 value="active_position"

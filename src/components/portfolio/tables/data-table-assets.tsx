@@ -42,6 +42,7 @@ export type AssetProps = {
   assetSymbol: string;
   walletBalance: number;
   amountInUsd: number;
+  idleAssetYield: number; // Annual yield amount for idle assets
   isCollateral: boolean;
   tokenValue: string; // Add token value to identify which token this is
 };
@@ -59,8 +60,13 @@ export function DataTableAssets() {
           if (parsed.aave && !parsed.xaut) {
             parsed.xaut = parsed.aave;
             delete parsed.aave;
-            localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
           }
+          // Add NVDA if it doesn't exist (migration for new token)
+          if (!parsed.nvda && defaultPortfolio.nvda) {
+            parsed.nvda = defaultPortfolio.nvda;
+          }
+          // Save updated portfolio back to localStorage
+          localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
           return parsed;
         } catch {
           return defaultPortfolio;
@@ -207,6 +213,27 @@ export function DataTableAssets() {
       },
     },
     {
+      accessorKey: "idleAssetYield",
+      header: () => <p className="text-center">Idle Asset Yield</p>,
+      cell: ({ row }) => {
+        const yieldAmount = row.original.idleAssetYield;
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }).format(yieldAmount);
+
+        const [main, cents] = formatted.split(".");
+
+        return (
+          <div className="font-medium text-center text-white">
+            {main}
+            <span className="text-white/40">.{cents}</span>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "isCollateral",
       header: () => (
         <div className="flex items-center justify-end gap-2">
@@ -253,12 +280,14 @@ export function DataTableAssets() {
 
   // Transform portfolio data to AssetProps format
   const data: AssetProps[] = React.useMemo(() => {
+    const marketAPY = 0.06; // Fixed market APY of 6.0%
     return tokenList
       .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
       .map((token, index) => {
         const amountInUsd = portfolio[token.value] || 0;
         const walletBalance = token.price > 0 ? amountInUsd / token.price : 0;
         const isCollateral = collateralStatus[token.value] || false;
+        const idleAssetYield = amountInUsd * marketAPY; // Annual yield amount
 
         return {
           id: `${token.value}-${index}`,
@@ -267,6 +296,7 @@ export function DataTableAssets() {
           assetSymbol: getTokenSymbol(token.label),
           walletBalance,
           amountInUsd,
+          idleAssetYield,
           isCollateral,
           tokenValue: token.value, // Add token value
         };
@@ -280,6 +310,10 @@ export function DataTableAssets() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const table = useReactTable({
     data,
@@ -292,18 +326,20 @@ export function DataTableAssets() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
   });
 
   return (
-    <div className="w-full overflow-hidden relative h-full rounded-xl bg-white/5 border">
-      <h1 className="text-white text-lg font-normal py-3.5 px-6">My Assets</h1>
-      <div className="overflow-x-auto">
+    <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+      <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
+      <div className="flex-1 overflow-y-auto overflow-x-auto">
         <Table className="min-w-[600px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -368,7 +404,7 @@ export function DataTableAssets() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row absolute bottom-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
@@ -383,6 +419,8 @@ export function DataTableAssets() {
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
           >
             <ArrowLeft size={16} className="text-white" />
           </Button>
@@ -390,6 +428,8 @@ export function DataTableAssets() {
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
           >
             <ArrowRight size={16} className="text-white" />
           </Button>

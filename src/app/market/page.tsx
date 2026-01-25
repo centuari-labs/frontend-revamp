@@ -10,18 +10,9 @@ import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 const tokenList = [
-  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
-  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
-  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
-  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
-  {
-    logo: "/tokens/centuari-centuari.png",
-    value: "centuari",
-    label: "Centuari",
-  },
+  { logo: "/tokens/xsgd-icon.png", value: "xsgd", label: "XSGD" },
+  { logo: "/tokens/idrx-icon.png", value: "idrx", label: "IDRX" },
 ];
 
 export default function Page() {
@@ -30,7 +21,7 @@ export default function Page() {
   // Get selected token from URL params, default to USDC
   const selectedToken = useMemo(() => {
     const tokenParam = searchParams.get("token") || "usdc";
-    return tokenList.find(t => t.value === tokenParam) || tokenList.find(t => t.value === "usdc") || tokenList[4];
+    return tokenList.find(t => t.value === tokenParam) || tokenList.find(t => t.value === "usdc") || tokenList[0];
   }, [searchParams]);
   return (
     <div className="relative w-full mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0">

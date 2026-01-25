@@ -3,12 +3,9 @@
 import { CentuariTokenCard } from "@/components/centuari-token-card";
 
 const TOKENS = [
-  { image: "/tokens/centuari-usdt.png", name: "Tether", symbol: "USDT" },
   { image: "/tokens/usdc-icon.svg", name: "USD Coin", symbol: "USDC" },
-  { image: "/tokens/sol-icon.svg", name: "Solana", symbol: "SOL" },
-  { image: "/tokens/btc-icon.svg", name: "Bitcoin", symbol: "BTC" },
-  { image: "/tokens/eth-icon.svg", name: "Ethereum", symbol: "ETH" },
-  { image: "/tokens/chainlink-icon.svg", name: "Chainlink", symbol: "LINK" },
+  { image: "/tokens/xsgd-icon.png", name: "XSGD", symbol: "XSGD" },
+  { image: "/tokens/idrx-icon.png", name: "IDRX", symbol: "IDRX" },
 ];
 
 export function TokenGrid() {

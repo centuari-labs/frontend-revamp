@@ -22,7 +22,7 @@ interface NavItem {
 const NAV_ITEMS: readonly NavItem[] = [
   { name: "Earn & Borrow", href: "/" },
   { name: "Portfolio", href: "/portfolio" },
-  { name: "Points", href: "/points" },
+  // { name: "Points", href: "/points" },
 ] as const;
 
 export default function CentuariNavbar() {

@@ -116,8 +116,10 @@ export const CentuariTokenCard = ({
           onClick={() => {
             // Map token symbol to token value for market page
             const tokenValueMap: Record<string, string> = {
-              "USDT": "usdt",
               "USDC": "usdc",
+              "XSGD": "xsgd",
+              "IDRX": "idrx",
+              "USDT": "usdt",
               "SOL": "sol",
               "BTC": "btc",
               "ETH": "eth",

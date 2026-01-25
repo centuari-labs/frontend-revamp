@@ -221,6 +221,15 @@ export function DataTableAllPosition() {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Reset pagination to first page when tab changes
+  React.useEffect(() => {
+    setPagination({ pageIndex: 0, pageSize: 10 });
+  }, [activeTab]);
 
   const table = useReactTable({
     data: currentData,
@@ -234,18 +243,20 @@ export function DataTableAllPosition() {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
   });
 
   // PositionTable as memoized component to prevent recreation
   const PositionTable = React.useMemo(() => (
     <>
-      <div className="overflow-x-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-auto">
         <Table className="min-w-[700px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -314,9 +325,9 @@ export function DataTableAllPosition() {
   ), [table, currentData.length]);
 
   return (
-    <div className="w-full relative overflow-hidden h-full rounded-xl bg-white/5 border">
-      <Tabs defaultValue="borrow" className="w-full !gap-0" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
-        <div className="flex items-center justify-between py-2 px-6">
+    <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+      <Tabs defaultValue="borrow" className="w-full !gap-0 flex flex-col h-full" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
+        <div className="flex items-center justify-between py-2 px-6 flex-shrink-0">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
           <TabsList className="bg-white/5 h-10 border border-white/5">
             <TabsTrigger
@@ -334,15 +345,15 @@ export function DataTableAllPosition() {
           </TabsList>
         </div>
 
-        <TabsContent value="borrow" className="mt-0">
+        <TabsContent value="borrow" className="mt-0 flex-1 flex flex-col min-h-0">
           {PositionTable}
         </TabsContent>
 
-        <TabsContent value="lend" className="mt-0">
+        <TabsContent value="lend" className="mt-0 flex-1 flex flex-col min-h-0">
           {PositionTable}
         </TabsContent>
       </Tabs>
-      <div className="flex flex-col sm:flex-row absolute bottom-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0} of {Math.max(1, table.getPageCount() || 1)}
@@ -357,6 +368,8 @@ export function DataTableAllPosition() {
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
           >
             <ArrowLeft size={16} className="text-white" />
           </Button>
@@ -364,6 +377,8 @@ export function DataTableAllPosition() {
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
           >
             <ArrowRight size={16} className="text-white" />
           </Button>

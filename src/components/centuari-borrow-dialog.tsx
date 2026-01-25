@@ -78,7 +78,19 @@ export function CentuariBorrowDialog({
       const stored = localStorage.getItem("centuari_portfolio");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          // Migrate old AAVE data to XAUT if exists
+          if (parsed.aave && !parsed.xaut) {
+            parsed.xaut = parsed.aave;
+            delete parsed.aave;
+          }
+          // Add NVDA if it doesn't exist (migration for new token)
+          if (!parsed.nvda && defaultPortfolio.nvda) {
+            parsed.nvda = defaultPortfolio.nvda;
+          }
+          // Save updated portfolio back to localStorage
+          localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
+          return parsed;
         } catch {
           return defaultPortfolio;
         }

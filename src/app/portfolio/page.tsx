@@ -39,7 +39,19 @@ export default function PortfolioPage() {
       const stored = localStorage.getItem("centuari_portfolio");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          // Migrate old AAVE data to XAUT if exists
+          if (parsed.aave && !parsed.xaut) {
+            parsed.xaut = parsed.aave;
+            delete parsed.aave;
+          }
+          // Add NVDA if it doesn't exist (migration for new token)
+          if (!parsed.nvda && defaultPortfolio.nvda) {
+            parsed.nvda = defaultPortfolio.nvda;
+          }
+          // Save updated portfolio back to localStorage
+          localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
+          return parsed;
         } catch {
           return defaultPortfolio;
         }
@@ -193,7 +205,7 @@ export default function PortfolioPage() {
                 />
                 <div>
                   <CentuariTypography className="text-xs md:text-sm text-white">
-                    My Total Supply
+                    All Time Return
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     {(() => {
@@ -225,27 +237,10 @@ export default function PortfolioPage() {
                 />
                 <div>
                   <CentuariTypography className="text-xs md:text-sm text-white">
-                    My Total Borrow
+                    Net APY
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
-                    {(() => {
-                      const formatted = new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(totalDebt);
-                      const idx = formatted.lastIndexOf(".");
-                      if (idx === -1) return formatted;
-                      return (
-                        <>
-                          {formatted.slice(0, idx)}
-                          <span className="text-white">
-                            {formatted.slice(idx)}
-                          </span>
-                        </>
-                      );
-                    })()}
+                    6.9%
                   </CentuariTypography>
                 </div>
               </div>

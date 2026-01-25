@@ -292,4 +292,21 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Ensure scrollbar is always visible when content overflows in ScrollArea */
+  /* This improves UX by making it clear when content is scrollable */
+  [data-slot="scroll-area-scrollbar"][data-state="visible"] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Keep scrollbar visible - prevent fade out animation */
+  [data-slot="scroll-area-scrollbar"] {
+    transition: opacity 0s !important;
+  }
+  
+  /* Ensure scrollbar thumb is always visible when scrollbar is visible */
+  [data-slot="scroll-area-scrollbar"][data-state="visible"] [data-slot="scroll-area-thumb"] {
+    opacity: 1 !important;
+  }
 }
