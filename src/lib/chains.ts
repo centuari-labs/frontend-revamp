@@ -11,12 +11,12 @@ export const CHAINS = [
   },
   {
     value: "eth",
-    label: "Eth",
+    label: "Ethereum",
     icon: "https://assets.coingecko.com/coins/images/279/standard/ethereum.png?1696501628",
   },
   {
     value: "sol",
-    label: "SOL",
+    label: "Solana",
     icon: "https://assets.coingecko.com/coins/images/4128/standard/solana.png?1718769756",
   },
 ] as const;
