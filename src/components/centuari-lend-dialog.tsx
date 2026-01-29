@@ -38,7 +38,7 @@ interface CentuariLendDialogProps {
   token_image: string;
   token_name: string;
   token_symbol: string;
-  netAPR: string; // Format: "6,5%"
+  lendRate: string; // Format: "6,5%"
   borrowRate: string;
   collateralFactor: string;
   vaultTotal: number;
@@ -48,7 +48,7 @@ export function CentuariLendDialog({
   token_image,
   token_name,
   token_symbol,
-  netAPR,
+  lendRate,
   borrowRate,
   collateralFactor,
   vaultTotal,
@@ -147,14 +147,14 @@ export function CentuariLendDialog({
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
-  // Parse Net APR from format "6,5%" to number (6.5)
-  const parseNetAPR = (aprString: string): number => {
+  // Parse Lend Rate from format "6,5%" to number (6.5)
+  const parseLendRate = (aprString: string): number => {
     // Remove % and replace comma with dot
     const cleaned = aprString.replace("%", "").replace(",", ".");
     return parseFloat(cleaned) || 0;
   };
 
-  const netAPRNumeric = parseNetAPR(netAPR);
+  const lendRateNumeric = parseLendRate(lendRate);
 
   // Calculate derived values
   const numericAmount = parseFloat(amountToLend) || 0;
@@ -171,7 +171,7 @@ export function CentuariLendDialog({
   // Amount + (Amount * Rate/365 * days)
   // where days = (Maturity Date - (Current Date + 1))
   const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || netAPRNumeric <= 0) return numericAmount;
+    if (numericAmount <= 0 || lendRateNumeric <= 0) return numericAmount;
 
     // Current date + 1 day
     const currentDate = new Date();
@@ -186,7 +186,7 @@ export function CentuariLendDialog({
     if (days <= 0) return numericAmount;
 
     // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = numericAmount + (numericAmount * (netAPRNumeric / 100) / 365 * days);
+    const futureAmount = numericAmount + (numericAmount * (lendRateNumeric / 100) / 365 * days);
     return futureAmount;
   };
 
@@ -472,13 +472,13 @@ export function CentuariLendDialog({
                           className="flex items-center gap-1 text-muted-foreground"
                           variant="b3"
                         >
-                          Net APR{" "}
+                          Lend Rate{" "}
                           <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
                         <CentuariTypography variant="h5" className="text-center">
-                          {netAPR}
+                          {lendRate}
                         </CentuariTypography>
                       </div>
                     </div>

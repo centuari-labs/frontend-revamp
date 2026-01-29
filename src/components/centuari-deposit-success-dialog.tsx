@@ -10,12 +10,14 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
 import { getTokenIcon } from "@/lib/tokens";
+import { getChainByValue } from "@/lib/chains";
 
 interface CentuariDepositSuccessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   token?: string;
   amount?: string;
+  chain?: string;
 }
 
 export function CentuariDepositSuccessDialog({
@@ -23,6 +25,7 @@ export function CentuariDepositSuccessDialog({
   onOpenChange,
   token,
   amount,
+  chain,
 }: CentuariDepositSuccessDialogProps) {
   // Auto-close after 3 seconds
   useEffect(() => {
@@ -38,6 +41,7 @@ export function CentuariDepositSuccessDialog({
   const tokenName = token?.toUpperCase() || "Token";
   const tokenIcon = token ? getTokenIcon(token) : null;
   const displayAmount = amount || "";
+  const chainLabel = chain ? getChainByValue(chain)?.label : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,6 +79,7 @@ export function CentuariDepositSuccessDialog({
                   ) : (
                     tokenName
                   )}{" "}
+                  {chainLabel ? `on ${chainLabel} ` : ""}
                   to your vault.
                 </>
               ) : (
@@ -94,7 +99,9 @@ export function CentuariDepositSuccessDialog({
                   ) : (
                     tokenName
                   )}{" "}
-                  deposit has been completed successfully.
+                  deposit
+                  {chainLabel ? ` on ${chainLabel} ` : " "}
+                  has been completed successfully.
                 </>
               )}
             </CentuariTypography>

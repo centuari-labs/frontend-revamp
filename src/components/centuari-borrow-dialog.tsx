@@ -41,7 +41,7 @@ interface CentuariBorrowDialogProps {
   token_image: string;
   token_name: string;
   token_symbol: string;
-  netAPR: string; // Format: "6,5%"
+  lendRate: string; // Format: "6,5%"
   borrowRate: string;
   collateralFactor: string;
   vaultTotal: number;
@@ -51,7 +51,7 @@ export function CentuariBorrowDialog({
   token_image,
   token_name,
   token_symbol,
-  netAPR,
+  lendRate,
   borrowRate,
   collateralFactor,
   vaultTotal,
@@ -192,13 +192,13 @@ export function CentuariBorrowDialog({
     };
   }, []); // Only run once on mount
 
-  // Parse Net APR and Borrow Rate from format "6,5%" to number (6.5)
+  // Parse Lend Rate and Borrow Rate from format "6,5%" to number (6.5)
   const parseRate = (rateString: string): number => {
     const cleaned = rateString.replace("%", "").replace(",", ".");
     return parseFloat(cleaned) || 0;
   };
 
-  const netAPRNumeric = parseRate(netAPR);
+  const lendRateNumeric = parseRate(lendRate);
   const borrowRateNumeric = parseRate(borrowRate);
   const collateralFactorNumeric = parseRate(collateralFactor) / 100; // Convert to decimal
 
@@ -640,13 +640,13 @@ export function CentuariBorrowDialog({
                           className="flex items-center gap-1 text-muted-foreground"
                           variant="b3"
                         >
-                          Net APR{" "}
+                          Lend Rate{" "}
                           <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
                         <CentuariTypography variant="h5" className="text-center">
-                          {netAPR}
+                          {lendRate}
                         </CentuariTypography>
                       </div>
                     </div>

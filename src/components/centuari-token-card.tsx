@@ -30,11 +30,11 @@ export const CentuariTokenCard = ({
   id: number;
 }) => {
   const router = useRouter();
-  
+
   // Generate random rates once per card instance using lazy initialization
   const [rates] = useState(() => ({
     borrowRate: generateRandomRate(),
-    netAPR: generateRandomRate(),
+    lendRate: generateRandomRate(),
     collateralFactor: generateRandomRate(),
   }));
 
@@ -44,7 +44,7 @@ export const CentuariTokenCard = ({
     const max = 500000;
     return Math.floor(Math.random() * (max - min + 1)) + min;
   });
-  
+
   return (
     <Card
       id={`tour-token-card-${id}`}
@@ -70,14 +70,13 @@ export const CentuariTokenCard = ({
         <div className="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5 flex flex-col gap-3 md:gap-4">
           {[
             { label: "Borrow Rate", value: rates.borrowRate },
-            { label: "Net APR", value: rates.netAPR },
+            { label: "Lend Rate", value: rates.lendRate },
             { label: "Collateral Factor", value: rates.collateralFactor },
           ].map(({ label, value }, i) => (
             <div
               key={label}
-              className={`flex items-center justify-between ${
-                i < 2 ? "border-b border-dashed pb-2" : ""
-              }`}
+              className={`flex items-center justify-between ${i < 2 ? "border-b border-dashed pb-2" : ""
+                }`}
             >
               <p className="text-xs md:text-sm">{label}</p>
               <div className="flex items-center gap-1">
@@ -96,7 +95,7 @@ export const CentuariTokenCard = ({
             token_image={token_image}
             token_name={token_name}
             token_symbol={token_symbol}
-            netAPR={rates.netAPR}
+            lendRate={rates.lendRate}
             borrowRate={rates.borrowRate}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}
@@ -105,7 +104,7 @@ export const CentuariTokenCard = ({
             token_image={token_image}
             token_name={token_name}
             token_symbol={token_symbol}
-            netAPR={rates.netAPR}
+            lendRate={rates.lendRate}
             borrowRate={rates.borrowRate}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}

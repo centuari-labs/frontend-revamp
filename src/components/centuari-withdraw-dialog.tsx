@@ -21,6 +21,8 @@ import { CentuariTypography } from "./centuari-typography";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { Button } from "./ui/button";
 import { IcCreditCardUploadCentuari } from "./icons/ic-credit-card-upload-centuari";
+import { SelectChain } from "./select-chain";
+import { ChainValue, getChainByValue, getChainIcon } from "@/lib/chains";
 import { cn } from "@/lib/utils";
 
 type Token = {
@@ -60,6 +62,7 @@ const availableTokens: Token[] = [
 type Step = "select-token" | "enter-amount";
 
 export function CentuariWithdrawDialog() {
+  const [selectedChain, setSelectedChain] = useState<ChainValue>("eth");
   const [step, setStep] = useState<Step>("select-token");
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const selectTokenViewRef = useRef<HTMLDivElement>(null);
@@ -79,6 +82,7 @@ export function CentuariWithdrawDialog() {
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
+      setSelectedChain("eth");
       setStep("select-token");
       setSelectedToken(null);
     }
@@ -178,9 +182,15 @@ export function CentuariWithdrawDialog() {
                 </div>
 
                 <div className="mt-8 px-6">
+                  <SelectChain
+                    value={selectedChain}
+                    onValueChange={(value) =>
+                      setSelectedChain(value as ChainValue)
+                    }
+                  />
                   <CentuariTypography
                     variant="s3"
-                    className="text-muted-foreground mb-3"
+                    className="text-muted-foreground mb-3 mt-3.5"
                   >
                     Available Assets
                   </CentuariTypography>
@@ -282,6 +292,20 @@ export function CentuariWithdrawDialog() {
                             className="text-muted-foreground"
                           >
                             {selectedToken.balance}
+                          </CentuariTypography>
+                          <div className="w-1 h-1 bg-white/10 rounded-full"></div>
+                          <img
+                            src={getChainIcon(selectedChain)}
+                            alt=""
+                            width={16}
+                            height={16}
+                            className="size-4 rounded-full object-cover"
+                          />
+                          <CentuariTypography
+                            variant="b3"
+                            className="text-muted-foreground"
+                          >
+                            {getChainByValue(selectedChain)?.label ?? selectedChain}
                           </CentuariTypography>
                         </div>
                       </>

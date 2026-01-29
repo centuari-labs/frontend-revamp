@@ -25,14 +25,17 @@ import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
 import { SelectToken } from "./select-token";
+import { SelectChain } from "./select-chain";
 import { CentuariDepositSuccessDialog } from "./centuari-deposit-success-dialog";
 import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
 } from "@/lib/utils";
 import { TokenValue, getTokenIcon } from "@/lib/tokens";
+import { ChainValue } from "@/lib/chains";
 
 export function CentuariDepositDialog() {
+  const [selectedChain, setSelectedChain] = useState<ChainValue>("eth");
   const [selectedToken, setSelectedToken] = useState<TokenValue>("usdt");
   const [depositAmount, setDepositAmount] = useState<string>(""); // Stored as numeric value (without separator)
   const [displayAmount, setDisplayAmount] = useState<string>(""); // Display value (with separator)
@@ -42,6 +45,7 @@ export function CentuariDepositDialog() {
   const [successData, setSuccessData] = useState<{
     token: TokenValue;
     amount: string;
+    chain?: ChainValue;
   } | null>(null);
 
   // Handle opening success dialog after deposit dialog closes
@@ -62,6 +66,7 @@ export function CentuariDepositDialog() {
       // Normal close - reset everything (only if not a successful deposit)
       setDepositAmount("");
       setDisplayAmount("");
+      setSelectedChain("eth");
       setSelectedToken("usdt");
       setIsProcessing(false);
       setShowSuccessDialog(false);
@@ -96,6 +101,7 @@ export function CentuariDepositDialog() {
     const success = {
       token: selectedToken,
       amount: displayAmount || depositAmount,
+      chain: selectedChain,
     };
     
     setSuccessData(success);
@@ -151,6 +157,12 @@ export function CentuariDepositDialog() {
                   handleDeposit();
                 }}
               >
+                <SelectChain
+                  value={selectedChain}
+                  onValueChange={(value) =>
+                    setSelectedChain(value as ChainValue)
+                  }
+                />
                 <SelectToken
                   value={selectedToken}
                   onValueChange={(value) =>
@@ -202,12 +214,14 @@ export function CentuariDepositDialog() {
             // Reset everything when success dialog closes
             setDepositAmount("");
             setDisplayAmount("");
+            setSelectedChain("eth");
             setSelectedToken("usdt");
             setSuccessData(null);
           }
         }}
         token={successData?.token || selectedToken}
         amount={successData?.amount || displayAmount || depositAmount}
+        chain={successData?.chain ?? selectedChain}
       />
     </>
   );
