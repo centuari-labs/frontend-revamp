@@ -9,6 +9,7 @@ import {
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
+import { getTokenIcon } from "@/lib/tokens";
 
 interface CentuariDepositSuccessDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export function CentuariDepositSuccessDialog({
   }, [open, onOpenChange]);
 
   const tokenName = token?.toUpperCase() || "Token";
+  const tokenIcon = token ? getTokenIcon(token) : null;
   const displayAmount = amount || "";
 
   return (
@@ -58,11 +60,42 @@ export function CentuariDepositSuccessDialog({
             <CentuariTypography className="text-center text-muted-foreground">
               {displayAmount ? (
                 <>
-                  You have successfully deposited {displayAmount} {tokenName} to
-                  your vault.
+                  You have successfully deposited {displayAmount}{" "}
+                  {tokenIcon ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Image
+                        src={tokenIcon}
+                        width={16}
+                        height={16}
+                        alt={tokenName}
+                        className="inline-block align-middle"
+                      />
+                      {tokenName}
+                    </span>
+                  ) : (
+                    tokenName
+                  )}{" "}
+                  to your vault.
                 </>
               ) : (
-                <>Your {tokenName} deposit has been completed successfully.</>
+                <>
+                  Your{" "}
+                  {tokenIcon ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Image
+                        src={tokenIcon}
+                        width={16}
+                        height={16}
+                        alt={tokenName}
+                        className="inline-block align-middle"
+                      />
+                      {tokenName}
+                    </span>
+                  ) : (
+                    tokenName
+                  )}{" "}
+                  deposit has been completed successfully.
+                </>
               )}
             </CentuariTypography>
             <div className="flex items-center gap-2 text-muted-foreground mt-2">

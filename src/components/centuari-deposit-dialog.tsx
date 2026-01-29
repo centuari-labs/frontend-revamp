@@ -30,31 +30,17 @@ import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
 } from "@/lib/utils";
-
-type TokenType = "usdt" | "usdc" | "btc";
-
-const getTokenIcon = (token: TokenType) => {
-  switch (token) {
-    case "usdt":
-      return "/tokens/usdt-icon.svg";
-    case "usdc":
-      return "/tokens/usdc-icon.svg";
-    case "btc":
-      return "/tokens/btc-icon.svg";
-    default:
-      return "/tokens/usdt-icon.svg";
-  }
-};
+import { TokenValue, getTokenIcon } from "@/lib/tokens";
 
 export function CentuariDepositDialog() {
-  const [selectedToken, setSelectedToken] = useState<TokenType>("usdt");
+  const [selectedToken, setSelectedToken] = useState<TokenValue>("usdt");
   const [depositAmount, setDepositAmount] = useState<string>(""); // Stored as numeric value (without separator)
   const [displayAmount, setDisplayAmount] = useState<string>(""); // Display value (with separator)
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [successData, setSuccessData] = useState<{
-    token: TokenType;
+    token: TokenValue;
     amount: string;
   } | null>(null);
 
@@ -168,7 +154,7 @@ export function CentuariDepositDialog() {
                 <SelectToken
                   value={selectedToken}
                   onValueChange={(value) =>
-                    setSelectedToken(value as TokenType)
+                    setSelectedToken(value as TokenValue)
                   }
                 />
                 <CentuariInput

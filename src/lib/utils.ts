@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(value: number) {
+export function formatCurrency(value: number, decimalPlaces: number = 3) {
   // Handle very small values (less than 0.01) with more decimal places
   if (value > 0 && value < 0.01) {
     return new Intl.NumberFormat("en-US", {
@@ -15,13 +15,13 @@ export function formatCurrency(value: number) {
       maximumFractionDigits: 6,
     }).format(value);
   }
-  
+
   // Standard formatting for normal values
   const formatted = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
   }).format(value);
 
   return formatted;
@@ -38,39 +38,41 @@ export function formatCurrency(value: number) {
  */
 export function formatNumberWithSeparator(value: string | number): string {
   if (!value && value !== 0) return "";
-  
+
   // Convert to string and remove all non-digit characters except decimal point
   const stringValue = String(value);
   const cleanValue = stringValue.replace(/[^\d.]/g, "");
-  
+
   // Handle empty or invalid input
   if (!cleanValue || cleanValue === ".") return cleanValue;
-  
+
   // Split by decimal point
   const parts = cleanValue.split(".");
   const integerPart = parts[0] || "";
   const decimalPart = parts[1] || "";
-  
+
   // Handle case where input starts with decimal point (e.g., ".1" -> "0.1")
   // But preserve user input if they're still typing (e.g., "0." should stay "0.")
   if (!integerPart && decimalPart) {
     return `0.${decimalPart}`;
   }
-  
+
   // Add thousand separator to integer part (only if there's an integer part)
-  const formattedInteger = integerPart ? integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
-  
+  const formattedInteger = integerPart
+    ? integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    : "";
+
   // Combine integer and decimal parts
   if (decimalPart !== undefined && decimalPart !== "") {
     // If user typed "0." or similar, preserve it
     return `${formattedInteger || "0"}.${decimalPart}`;
   }
-  
+
   // If there's a decimal point but no decimal part (e.g., "1000."), preserve it
   if (cleanValue.endsWith(".")) {
     return `${formattedInteger || "0"}.`;
   }
-  
+
   return formattedInteger || "0";
 }
 
@@ -84,7 +86,7 @@ export function formatNumberWithSeparator(value: string | number): string {
  */
 export function parseNumberFromSeparator(value: string): string {
   if (!value) return "";
-  
+
   // Remove all non-digit characters except decimal point
   return value.replace(/[^\d.]/g, "");
 }
@@ -102,14 +104,14 @@ export function parseNumberFromSeparator(value: string): string {
  */
 export function handleNumberInputChange(
   value: string,
-  onChange: (displayValue: string, numericValue: string) => void
+  onChange: (displayValue: string, numericValue: string) => void,
 ): void {
   // Parse to get clean numeric value
   const numericValue = parseNumberFromSeparator(value);
-  
+
   // Format for display
   const displayValue = formatNumberWithSeparator(numericValue);
-  
+
   // Call onChange with both values
   onChange(displayValue, numericValue);
 }
@@ -127,7 +129,7 @@ export function generateRandomRate(min: number = 5, max: number = 12): string {
   // Generate random number between min and max with 1 decimal place
   const randomValue = Math.random() * (max - min) + min;
   const roundedValue = Math.round(randomValue * 10) / 10; // Round to 1 decimal place
-  
+
   // Format with comma as decimal separator (matching existing format "7,2%")
   return roundedValue.toFixed(1).replace(".", ",") + "%";
 }
@@ -160,20 +162,30 @@ export function parseDateString(dateString: string): Date | null {
     // Parse format like "1 Feb 2026" or "19 Jan 2026"
     const parts = dateString.trim().split(" ");
     if (parts.length !== 3) return null;
-    
+
     const day = parseInt(parts[0], 10);
     const monthStr = parts[1];
     const year = parseInt(parts[2], 10);
-    
+
     // Map month abbreviations to month index (0-11)
     const monthMap: Record<string, number> = {
-      "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
-      "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10, "Dec": 11
+      Jan: 0,
+      Feb: 1,
+      Mar: 2,
+      Apr: 3,
+      May: 4,
+      Jun: 5,
+      Jul: 6,
+      Aug: 7,
+      Sep: 8,
+      Oct: 9,
+      Nov: 10,
+      Dec: 11,
     };
-    
+
     const month = monthMap[monthStr];
     if (month === undefined || isNaN(day) || isNaN(year)) return null;
-    
+
     return new Date(year, month, day);
   } catch {
     return null;

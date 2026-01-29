@@ -11,7 +11,7 @@ export function HomeHeader() {
   const activeLoans = 248000000; // 248M
 
   const renderCurrency = (value: number) => {
-    const formatted = formatCurrency(value);
+    const formatted = formatCurrency(value, 0);
     const idx = formatted.lastIndexOf(".");
     if (idx === -1) return formatted;
 
