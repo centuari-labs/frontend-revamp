@@ -727,9 +727,9 @@ export function PositionSection() {
   const [activeTab, setActiveTab] = useState("open_orders");
 
   const tabConfig = {
-    open_orders: { label: "Open Orders", placeholder: "Search Open Orders..." },
-    active_position: { label: "Active Position", placeholder: "Search Active Position..." },
-    all_transactions: { label: "All Transaction", placeholder: "Search Transactions..." },
+    open_orders: { label: "Open Orders", placeholder: "Search Open Orders" },
+    active_position: { label: "Active Position", placeholder: "Search Active Position" },
+    all_transactions: { label: "All Transaction", placeholder: "Search Transactions" },
   } as const;
 
   const currentTabConfig = tabConfig[activeTab as keyof typeof tabConfig] ?? { label: "Position", placeholder: "Search Position..." };
