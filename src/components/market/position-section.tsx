@@ -726,6 +726,14 @@ export function PositionSection() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [activeTab, setActiveTab] = useState("open_orders");
 
+  const tabConfig = {
+    open_orders: { label: "Open Orders", placeholder: "Search Open Orders..." },
+    active_position: { label: "Active Position", placeholder: "Search Active Position..." },
+    all_transactions: { label: "All Transaction", placeholder: "Search Transactions..." },
+  } as const;
+
+  const currentTabConfig = tabConfig[activeTab as keyof typeof tabConfig] ?? { label: "Position", placeholder: "Search Position..." };
+
   const handleDelete = (id: string) => {
     if (typeof window === "undefined") return;
 
@@ -856,7 +864,7 @@ export function PositionSection() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="md:hidden">
           <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 px-3 pt-3 pb-2 border-b border-white/10">
-            <h1 className="text-base font-medium mb-3">Position</h1>
+            <h1 className="text-base font-medium mb-3">{currentTabConfig.label}</h1>
 
             <div className="relative mb-3">
               <Search
@@ -864,7 +872,7 @@ export function PositionSection() {
                 size={18}
               />
               <Input
-                placeholder="Search Position"
+                placeholder={currentTabConfig.placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-white/5 border-white/10"
@@ -933,7 +941,7 @@ export function PositionSection() {
 
         <div className="hidden md:block p-2 sm:p-3">
           <div className="mb-4 w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <h1 className="text-sm sm:text-base font-medium">Position</h1>
+            <h1 className="text-sm sm:text-base font-medium">{currentTabConfig.label}</h1>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative">
                 <Search
@@ -941,7 +949,7 @@ export function PositionSection() {
                   size={16}
                 />
                 <Input
-                  placeholder="Search Position..."
+                  placeholder={currentTabConfig.placeholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 w-full sm:w-[240px] text-sm bg-white/5 border-white/10 h-9"
