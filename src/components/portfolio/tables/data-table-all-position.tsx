@@ -41,6 +41,7 @@ export type PositionProps = {
   tokenValue?: string;
   timestamp?: number;
   collateralTokens?: string[];
+  maturity?: string;
 };
 
 export const columns: ColumnDef<PositionProps>[] = [
@@ -99,6 +100,15 @@ export const columns: ColumnDef<PositionProps>[] = [
     },
   },
   {
+    accessorKey: "maturity",
+    header: "Maturity",
+    cell: ({ row }) => (
+      <div className="text-white font-medium">
+        {row.original.maturity ?? "1 Feb 2026"}
+      </div>
+    ),
+  },
+  {
     id: "action",
     header: "Action",
     cell: ({ row }) => {
@@ -115,7 +125,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_symbol={position.assetName}
               amountBorrowed={position.amount}
               apr={position.apr ?? 0}
-              maturityDate={(position as any).maturity || "1 Feb 2026"}
+              maturityDate={position.maturity ?? "1 Feb 2026"}
               onSuccess={() => {
                 // Trigger re-render to update positions
                 if (typeof window !== "undefined") {
@@ -129,7 +139,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_image={position.assetImg}
               token_name={position.assetName}
               token_symbol={position.assetName}
-              maturityDate="1 Feb 2026"
+              maturityDate={position.maturity ?? "1 Feb 2026"}
               availableFunds={1100}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}

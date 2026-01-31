@@ -70,12 +70,6 @@ export function CentuariSellPositionDialog({
   const isHoveringRef = useRef<boolean>(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Calculate profit percentage
-  const calculatedProfitPercentage =
-    moneyDeposited > 0
-      ? Math.round((profitReturn / moneyDeposited) * 100)
-      : 0;
-
   // Calculate derived values
   const numericAmount = parseFloat(withdrawAmount) || 0;
 
