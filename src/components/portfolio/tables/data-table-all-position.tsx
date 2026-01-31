@@ -158,7 +158,7 @@ export const columns: ColumnDef<PositionProps>[] = [
 ];
 
 export function DataTableAllPosition() {
-  const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("borrow");
+  const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
 
   // Single state to track positions data - simplified approach
   const [positionsData, setPositionsData] = React.useState<string>("");
@@ -326,21 +326,21 @@ export function DataTableAllPosition() {
 
   return (
     <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
-      <Tabs defaultValue="borrow" className="w-full !gap-0 flex flex-col h-full" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
+      <Tabs defaultValue="lend" className="w-full !gap-0 flex flex-col h-full" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
         <div className="flex items-center justify-between py-2 px-6 flex-shrink-0">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
           <TabsList className="bg-white/5 h-10 border border-white/5">
-            <TabsTrigger
-              value="borrow"
-              className="px-6 h-8 rounded-md data-[state=active]:bg-[#3B3F46] data-[state=active]:text-white !border-none text-white/40"
-            >
-              Borrow
-            </TabsTrigger>
             <TabsTrigger
               value="lend"
               className="px-6 h-8 rounded-md data-[state=active]:bg-[#3B3F46] data-[state=active]:text-white !border-none text-white/40"
             >
               Lend
+            </TabsTrigger>
+            <TabsTrigger
+              value="borrow"
+              className="px-6 h-8 rounded-md data-[state=active]:bg-[#3B3F46] data-[state=active]:text-white !border-none text-white/40"
+            >
+              Borrow
             </TabsTrigger>
           </TabsList>
         </div>
