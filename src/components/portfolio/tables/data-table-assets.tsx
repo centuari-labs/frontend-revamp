@@ -146,6 +146,47 @@ export function DataTableAssets() {
     });
   }, []);
 
+  // Transform portfolio data to AssetProps format (before columns so header can use it)
+  const data: AssetProps[] = React.useMemo(() => {
+    const marketAPR = 0.06; // Fixed market APR of 6.0%
+    return tokenList
+      .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
+      .map((token, index) => {
+        const amountInUsd = portfolio[token.value] || 0;
+        const walletBalance = token.price > 0 ? amountInUsd / token.price : 0;
+        const isCollateral = collateralStatus[token.value] || false;
+        const idleAssetYield = amountInUsd * marketAPR; // Annual yield amount
+
+        return {
+          id: `${token.value}-${index}`,
+          assetImg: token.logo,
+          assetName: token.label,
+          assetSymbol: getTokenSymbol(token.label),
+          walletBalance,
+          amountInUsd,
+          idleAssetYield,
+          isCollateral,
+          tokenValue: token.value, // Add token value
+        };
+      });
+  }, [portfolio, collateralStatus]);
+
+  // Select all / deselect all collateral (toggle)
+  const handleSelectAllCollateral = React.useCallback(() => {
+    if (data.length === 0) return;
+    const allSelected = data.every((d) => d.isCollateral);
+    setCollateralStatus((prev) => {
+      const next = { ...prev };
+      for (const d of data) {
+        next[d.tokenValue] = !allSelected;
+      }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("centuari_collateral", JSON.stringify(next));
+      }
+      return next;
+    });
+  }, [data]);
+
   // Columns definition with toggle handler
   const columns: ColumnDef<AssetProps>[] = React.useMemo(() => [
     {
@@ -235,12 +276,44 @@ export function DataTableAssets() {
     },
     {
       accessorKey: "isCollateral",
-      header: () => (
-        <div className="flex items-center justify-end gap-2">
-          <span>Collateral</span>
-          <div className="w-4 h-4 rounded-full border border-white/20" />
-        </div>
-      ),
+      header: () => {
+        const allSelected = data.length > 0 && data.every((d) => d.isCollateral);
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <span>Collateral</span>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelectAllCollateral();
+              }}
+              className={cn(
+                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                allSelected
+                  ? "bg-blue-600 border-blue-600"
+                  : "bg-transparent border-white/20"
+              )}
+            >
+              {allSelected && (
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-white"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const asset = row.original;
         const isCollateral = asset.isCollateral;
@@ -276,32 +349,7 @@ export function DataTableAssets() {
         );
       },
     },
-  ], [handleToggleCollateral]);
-
-  // Transform portfolio data to AssetProps format
-  const data: AssetProps[] = React.useMemo(() => {
-    const marketAPR = 0.06; // Fixed market APR of 6.0%
-    return tokenList
-      .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
-      .map((token, index) => {
-        const amountInUsd = portfolio[token.value] || 0;
-        const walletBalance = token.price > 0 ? amountInUsd / token.price : 0;
-        const isCollateral = collateralStatus[token.value] || false;
-        const idleAssetYield = amountInUsd * marketAPR; // Annual yield amount
-
-        return {
-          id: `${token.value}-${index}`,
-          assetImg: token.logo,
-          assetName: token.label,
-          assetSymbol: getTokenSymbol(token.label),
-          walletBalance,
-          amountInUsd,
-          idleAssetYield,
-          isCollateral,
-          tokenValue: token.value, // Add token value
-        };
-      });
-  }, [portfolio, collateralStatus]);
+  ], [handleToggleCollateral, handleSelectAllCollateral, data]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(

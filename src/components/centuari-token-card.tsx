@@ -35,7 +35,7 @@ export const CentuariTokenCard = ({
   const [rates] = useState(() => ({
     borrowAPR: generateRandomAPR(),
     lendAPR: generateRandomAPR(),
-    collateralFactor: generateRandomAPR(),
+    collateralFactor: "75%",
   }));
 
   // Generate random vault total for each token card (between 50,000 and 500,000)
