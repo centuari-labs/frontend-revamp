@@ -204,3 +204,29 @@ export function calculateDaysDifference(date1: Date, date2: Date): number {
   const timeDiff = date2.getTime() - date1.getTime();
   return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Calculate future amount with simple interest.
+ * Formula: amount + (amount * rate% / 365 * (maturity date - current date))
+ *
+ * @param amount - Principal amount
+ * @param aprPercent - APR as percentage (e.g., 6.9 for 6.9%, 10 for 10%)
+ * @param maturityDateStr - Maturity date in "DD MMM YYYY" format (e.g., "1 Feb 2026")
+ * @returns Future amount (principal + interest), or amount if invalid inputs
+ */
+export function calculateFutureAmount(
+  amount: number,
+  aprPercent: number,
+  maturityDateStr: string,
+): number {
+  if (amount <= 0 || aprPercent <= 0) return amount;
+
+  const currentDate = new Date();
+  const maturityDateObj = parseDateString(maturityDateStr);
+  if (!maturityDateObj) return amount;
+
+  const days = calculateDaysDifference(currentDate, maturityDateObj);
+  if (days <= 0) return amount;
+
+  return amount + (amount * (aprPercent / 100) / 365 * days);
+}

@@ -31,7 +31,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, parseDateString, calculateDaysDifference } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 
@@ -214,30 +214,7 @@ export function CentuariBorrowDialog({
   // Maturity date - withdrawal unlocks on the same date
   const maturityDate = "1 Feb 2026";
 
-  // Calculate future amount based on new formula:
-  // Amount + (Amount * APR/365 * days)
-  // where days = (Maturity Date - (Current Date + 1))
-  const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || borrowAPRNumeric <= 0) return numericAmount;
-
-    // Current date + 1 day
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(maturityDate);
-    if (!maturityDateObj) return numericAmount;
-
-    // Calculate days difference
-    const days = calculateDaysDifference(currentDate, maturityDateObj);
-    if (days <= 0) return numericAmount;
-
-    // Calculate future amount: Amount + (Amount * APR/365 * days)
-    const futureAmount = numericAmount + (numericAmount * (borrowAPRNumeric / 100) / 365 * days);
-    return futureAmount;
-  };
-
-  const futureAmount = calculateFutureAmount();
+  const futureAmount = calculateFutureAmount(numericAmount, borrowAPRNumeric, maturityDate);
 
   // Calculate total portfolio value from selected collaterals
   const totalPortfolioValue = selectedCollaterals.reduce((total, collateralValue) => {

@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, parseDateString, calculateDaysDifference } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
 import { tokenList as portfolioTokenList, defaultPortfolio } from "@/lib/portfolio-data";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -209,30 +209,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const limitAmountToPay = limitNumericAmount + limitTransactionFee;
   const limitTargetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
 
-  // Calculate future amount based on new formula:
-  // Amount + (Amount * Rate/365 * days)
-  // where days = (Maturity Date - (Current Date + 1))
-  const calculateLimitFutureAmount = () => {
-    if (limitNumericAmount <= 0 || limitTargetAPRNumeric <= 0) return 0;
-
-    // Current date + 1 day
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(limitMaturity);
-    if (!maturityDateObj) return limitNumericAmount;
-
-    // Calculate days difference
-    const days = calculateDaysDifference(currentDate, maturityDateObj);
-    if (days <= 0) return limitNumericAmount;
-
-    // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = limitNumericAmount + (limitNumericAmount * (limitTargetAPRNumeric / 100) / 365 * days);
-    return futureAmount;
-  };
-
-  const limitFutureAmount = calculateLimitFutureAmount();
+  const limitFutureAmount = calculateFutureAmount(limitNumericAmount, limitTargetAPRNumeric, limitMaturity);
 
   // Calculate transaction values for market order (using average APR)
   const marketNumericAmount = parseFloat(marketAmount) || 0;
@@ -241,30 +218,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   // Market APR is determined by market (using average of 4.5-7.5% range)
   const marketAPR = 6.0; // Average market APR (can be dynamic from order book)
 
-  // Calculate future amount based on new formula:
-  // Amount + (Amount * Rate/365 * days)
-  // where days = (Maturity Date - (Current Date + 1))
-  const calculateMarketFutureAmount = () => {
-    if (marketNumericAmount <= 0 || marketAPR <= 0) return 0;
-
-    // Current date + 1 day
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(marketMaturity);
-    if (!maturityDateObj) return marketNumericAmount;
-
-    // Calculate days difference
-    const days = calculateDaysDifference(currentDate, maturityDateObj);
-    if (days <= 0) return marketNumericAmount;
-
-    // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = marketNumericAmount + (marketNumericAmount * (marketAPR / 100) / 365 * days);
-    return futureAmount;
-  };
-
-  const marketFutureAmount = calculateMarketFutureAmount();
+  const marketFutureAmount = calculateFutureAmount(marketNumericAmount, marketAPR, marketMaturity);
 
   const handleLimitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

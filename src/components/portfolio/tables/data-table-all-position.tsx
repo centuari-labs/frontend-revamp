@@ -124,7 +124,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_name={position.assetName}
               token_symbol={position.assetName}
               amountBorrowed={position.amount}
-              apr={position.apr ?? 0}
+              apr={(position.apr ?? 0) * 100}
               maturityDate={position.maturity ?? "1 Feb 2026"}
               onSuccess={() => {
                 // Trigger re-render to update positions
@@ -143,7 +143,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               availableFunds={1100}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}
-              apr={position.apr ?? 0}
+              apr={(position.apr ?? 0) * 100}
               onSuccess={() => {
                 // Trigger re-render to update positions
                 if (typeof window !== "undefined") {

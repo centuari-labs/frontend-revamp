@@ -24,8 +24,7 @@ import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
   formatCurrency,
-  parseDateString,
-  calculateDaysDifference,
+  calculateFutureAmount,
 } from "@/lib/utils";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 import HealthFactor from "./centuari-health-factor";
@@ -132,30 +131,7 @@ export function CentuariRepayDialog({
   // Calculate derived values
   const numericAmount = parseFloat(repayAmount) || 0;
 
-  // Calculate future amount to repay based on formula:
-  // Future Amount = Amount + (Amount * APR/365 * days)
-  // where days = (Maturity Date - Current Date)
-  const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || apr <= 0) return numericAmount;
-
-    // Current date
-    const currentDate = new Date();
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(maturityDate);
-    if (!maturityDateObj) return numericAmount;
-
-    // Calculate days difference (maturity - current)
-    const days = calculateDaysDifference(currentDate, maturityDateObj);
-    if (days <= 0) return numericAmount; // If maturity has passed, just return amount
-
-    // Calculate future amount: Amount + (Amount * APR/365 * days)
-    // APR is in percentage (e.g., 6.9 for 6.9%), so divide by 100
-    const futureAmount = numericAmount + (numericAmount * (apr / 100) / 365 * days);
-    return futureAmount;
-  };
-
-  const futureAmount = calculateFutureAmount();
+  const futureAmount = calculateFutureAmount(numericAmount, apr, maturityDate);
 
   // Calculate new total debt after repayment
   const newTotalDebt = Math.max(0, totalDebt - numericAmount);

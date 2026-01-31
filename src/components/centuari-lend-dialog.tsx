@@ -28,7 +28,7 @@ import { Label } from "./ui/label";
 import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
 import Link from "next/link";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, parseDateString, calculateDaysDifference } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 
@@ -167,30 +167,7 @@ export function CentuariLendDialog({
   // Maturity date - withdrawal unlocks on the same date
   const maturityDate = "1 Feb 2026";
 
-  // Calculate future amount based on new formula:
-  // Amount + (Amount * APR/365 * days)
-  // where days = (Maturity Date - (Current Date + 1))
-  const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || lendAPRNumeric <= 0) return numericAmount;
-
-    // Current date + 1 day
-    const currentDate = new Date();
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(maturityDate);
-    if (!maturityDateObj) return numericAmount;
-
-    // Calculate days difference
-    const days = calculateDaysDifference(currentDate, maturityDateObj);
-    if (days <= 0) return numericAmount;
-
-    // Calculate future amount: Amount + (Amount * APR/365 * days)
-    const futureAmount = numericAmount + (numericAmount * (lendAPRNumeric / 100) / 365 * days);
-    return futureAmount;
-  };
-
-  const futureAmount = calculateFutureAmount();
+  const futureAmount = calculateFutureAmount(numericAmount, lendAPRNumeric, maturityDate);
 
   // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {

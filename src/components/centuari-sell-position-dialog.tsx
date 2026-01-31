@@ -23,8 +23,7 @@ import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
   formatCurrency,
-  parseDateString,
-  calculateDaysDifference,
+  calculateFutureAmount,
 } from "@/lib/utils";
 import { tokenList } from "@/lib/portfolio-data";
 import { IcCreditCardUpload } from "./icons/ic-credit-card-upload";
@@ -38,7 +37,7 @@ interface CentuariSellPositionDialogProps {
   availableFunds: number; // Available funds in USD (current position value)
   moneyDeposited: number; // Original deposit amount
   profitReturn: number; // Profit amount
-  apr?: number; // APR as decimal (e.g., 0.1 for 10%)
+  apr?: number; // APR as percentage (e.g., 10 for 10%)
   onSuccess?: () => void; // Callback after successful sell
 }
 
@@ -51,7 +50,7 @@ export function CentuariSellPositionDialog({
   availableFunds,
   moneyDeposited,
   profitReturn,
-  apr = 0.1, // Default 10% APR
+  apr = 10, // Default 10% APR
   onSuccess,
 }: CentuariSellPositionDialogProps) {
   const reactId = useId();
@@ -73,40 +72,14 @@ export function CentuariSellPositionDialog({
   // Calculate derived values
   const numericAmount = parseFloat(withdrawAmount) || 0;
 
-  // Calculate profit return based on APR formula
-  // Formula: moneyDeposited + (moneyDeposited * APR/100/365 * (today+1 - maturity date))
-  const calculateProfitReturn = (): number => {
-    if (numericAmount <= 0) return 0;
-
-    // Parse maturity date
-    const maturityDateObj = parseDateString(maturityDate);
-    if (!maturityDateObj) return 0;
-
-    // Get today + 1 day
-    const todayPlusOne = new Date();
-    todayPlusOne.setDate(todayPlusOne.getDate() + 1);
-
-    // Calculate days difference: (today+1 - maturity date)
-    // Using absolute value to ensure positive days
-    const days = Math.abs(calculateDaysDifference(maturityDateObj, todayPlusOne));
-
-    // Calculate proportional money deposited for this withdrawal
-    const proportionalDeposit = availableFunds > 0
-      ? (numericAmount / availableFunds) * moneyDeposited
-      : 0;
-
-    // Profit Return = moneyDeposited + (moneyDeposited * APR/100/365 * days)
-    // APR is in decimal form (e.g., 0.1 for 10%), so we multiply by 100 to get percentage
-    const profit = proportionalDeposit + (proportionalDeposit * apr / 365 * days);
-
-    return profit;
-  };
-
   // Withdraw Shares = the input amount
   const withdrawShares = numericAmount > 0 ? numericAmount : 0;
 
-  // Calculate profit return based on APR formula
-  const calculatedProfitReturn = calculateProfitReturn();
+  // Calculate proportional deposit for this withdrawal, then future amount (principal + interest)
+  const proportionalDeposit = availableFunds > 0 && numericAmount > 0
+    ? (numericAmount / availableFunds) * moneyDeposited
+    : 0;
+  const calculatedProfitReturn = calculateFutureAmount(proportionalDeposit, apr, maturityDate);
 
   // Total amount after withdraw = Withdraw Shares + Profit Return
   const totalAfterWithdraw = withdrawShares + calculatedProfitReturn;
@@ -388,7 +361,7 @@ export function CentuariSellPositionDialog({
                         </CentuariTooltip>
                       </CentuariTypography>
                       <CentuariTypography variant="h5" className="text-center">
-                        {apr.toFixed(2).replace(".", ",")}%
+                        {apr.toFixed(1).replace(".", ",")}%
                       </CentuariTypography>
                     </div>
                     <div>
