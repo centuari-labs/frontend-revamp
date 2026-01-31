@@ -36,7 +36,7 @@ export type PositionProps = {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type?: "lend" | "borrow";
   tokenValue?: string;
   timestamp?: number;
@@ -87,13 +87,13 @@ export const columns: ColumnDef<PositionProps>[] = [
     },
   },
   {
-    accessorKey: "apy",
-    header: "APY %",
+    accessorKey: "apr",
+    header: "APR %",
     cell: ({ row }) => {
-      const apy = row.original.apy;
+      const apr = row.original.apr ?? 0;
       return (
         <div className="text-white font-medium">
-          {apy.toFixed(2).replace(".", ",")}%
+          {(apr ?? 0).toFixed(2).replace(".", ",")}%
         </div>
       );
     },
@@ -114,7 +114,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_name={position.assetName}
               token_symbol={position.assetName}
               amountBorrowed={position.amount}
-              apy={position.apy}
+              apr={position.apr ?? 0}
               maturityDate={(position as any).maturity || "1 Feb 2026"}
               onSuccess={() => {
                 // Trigger re-render to update positions
@@ -133,7 +133,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               availableFunds={1100}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}
-              apr={position.apy}
+              apr={position.apr ?? 0}
               onSuccess={() => {
                 // Trigger re-render to update positions
                 if (typeof window !== "undefined") {
@@ -169,7 +169,7 @@ export function DataTableAllPosition() {
     const stored = localStorage.getItem("centuari_positions");
     if (!stored) return [];
     try {
-      return JSON.parse(stored) as PositionProps[];
+      const parsed = JSON.parse(stored) as PositionProps[];
     } catch {
       return [];
     }
@@ -204,12 +204,12 @@ export function DataTableAllPosition() {
   // Memoize borrow and lend data separately
   const borrowData: PositionProps[] = React.useMemo(() => {
     const allPositions = getPositions();
-    return allPositions.filter(pos => pos.type === "borrow");
+    return allPositions?.filter((pos: PositionProps) => pos.type === "borrow") || [];
   }, [positionsData, getPositions]);
 
   const lendData: PositionProps[] = React.useMemo(() => {
     const allPositions = getPositions();
-    return allPositions.filter(pos => pos.type === "lend");
+    return allPositions?.filter((pos: PositionProps) => pos.type === "lend") || [];
   }, [positionsData, getPositions]);
 
   // Memoize currentData to prevent unnecessary re-renders

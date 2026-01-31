@@ -46,14 +46,14 @@ export function WelcomeDialog({
             Welcome to Centuari
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm mt-2">
-            Welcome aboard you've just joined Centuari, the fixed-rate lending
+            Welcome aboard you've just joined Centuari, the fixed-APR lending
             protocol built for the next generation of DeFi. Your journey starts
             here:
           </DialogDescription>
           <ul className="ps-3 my-4 space-y-1 list-disc list-inside text-white text-sm">
             <li>Earn stable yield by lending your assets to curated vaults.</li>
             <li>
-              Borrow safely with transparent rates and live health tracking.
+              Borrow safely with transparent APR and live health tracking.
             </li>
             <li>
               Climb the Leagues and earn Centuari Points to boost your Astral

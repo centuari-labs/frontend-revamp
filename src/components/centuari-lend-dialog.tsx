@@ -38,8 +38,8 @@ interface CentuariLendDialogProps {
   token_image: string;
   token_name: string;
   token_symbol: string;
-  lendRate: string; // Format: "6,5%"
-  borrowRate: string;
+  lendAPR: string; // Format: "6,5%"
+  borrowAPR: string;
   collateralFactor: string;
   vaultTotal: number;
 }
@@ -48,8 +48,8 @@ export function CentuariLendDialog({
   token_image,
   token_name,
   token_symbol,
-  lendRate,
-  borrowRate,
+  lendAPR,
+  borrowAPR,
   collateralFactor,
   vaultTotal,
 }: CentuariLendDialogProps) {
@@ -147,14 +147,14 @@ export function CentuariLendDialog({
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
-  // Parse Lend Rate from format "6,5%" to number (6.5)
-  const parseLendRate = (aprString: string): number => {
+  // Parse Lend APR from format "6,5%" to number (6.5)
+  const parseLendAPR = (aprString: string): number => {
     // Remove % and replace comma with dot
     const cleaned = aprString.replace("%", "").replace(",", ".");
     return parseFloat(cleaned) || 0;
   };
 
-  const lendRateNumeric = parseLendRate(lendRate);
+  const lendAPRNumeric = parseLendAPR(lendAPR);
 
   // Calculate derived values
   const numericAmount = parseFloat(amountToLend) || 0;
@@ -168,10 +168,10 @@ export function CentuariLendDialog({
   const maturityDate = "1 Feb 2026";
 
   // Calculate future amount based on new formula:
-  // Amount + (Amount * Rate/365 * days)
+  // Amount + (Amount * APR/365 * days)
   // where days = (Maturity Date - (Current Date + 1))
   const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || lendRateNumeric <= 0) return numericAmount;
+    if (numericAmount <= 0 || lendAPRNumeric <= 0) return numericAmount;
 
     // Current date + 1 day
     const currentDate = new Date();
@@ -185,8 +185,8 @@ export function CentuariLendDialog({
     const days = calculateDaysDifference(currentDate, maturityDateObj);
     if (days <= 0) return numericAmount;
 
-    // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = numericAmount + (numericAmount * (lendRateNumeric / 100) / 365 * days);
+    // Calculate future amount: Amount + (Amount * APR/365 * days)
+    const futureAmount = numericAmount + (numericAmount * (lendAPRNumeric / 100) / 365 * days);
     return futureAmount;
   };
 
@@ -335,7 +335,7 @@ export function CentuariLendDialog({
             assetImg: token.logo,
             assetName: token.label,
             amount: amountInUsd,
-            apy: (4.5 + Math.random() * 3) / 100, // Random APY between 4.5% and 7.5% as decimal (0.045 to 0.075)
+            apr: (4.5 + Math.random() * 3) / 100, // Random APR between 4.5% and 7.5% as decimal (0.045 to 0.075)
             type: "lend" as const,
             tokenValue: tokenValue,
             tokenSymbol: token_symbol,
@@ -472,13 +472,13 @@ export function CentuariLendDialog({
                           className="flex items-center gap-1 text-muted-foreground"
                           variant="b3"
                         >
-                          Lend Rate{" "}
+                          Lend APR{" "}
                           <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
                         <CentuariTypography variant="h5" className="text-center">
-                          {lendRate}
+                          {lendAPR}
                         </CentuariTypography>
                       </div>
                     </div>

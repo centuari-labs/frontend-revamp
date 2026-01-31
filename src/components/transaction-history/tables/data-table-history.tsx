@@ -44,7 +44,7 @@ export type HistoryItemProps = {
   collateralSymbol?: string;
   collateralImg?: string;
   amount: number;
-  rateType: "APY" | "APR";
+  rateType: "APR";
   rateValue: number;
   healthFactor?: string;
 };
@@ -59,7 +59,7 @@ const data: HistoryItemProps[] = [
     collateralSymbol: "ETH",
     collateralImg: "/tokens/eth-icon.svg",
     amount: 12000,
-    rateType: "APY",
+    rateType: "APR",
     rateValue: 12,
     healthFactor: "0.0 - Safe",
   },
@@ -118,7 +118,7 @@ const data: HistoryItemProps[] = [
     collateralSymbol: "ETH",
     collateralImg: "/tokens/eth-icon.svg",
     amount: 12000,
-    rateType: "APY",
+    rateType: "APR",
     rateValue: 12,
     healthFactor: "0.0 - Safe",
   },
@@ -224,7 +224,7 @@ export const columns: ColumnDef<HistoryItemProps>[] = [
   },
   {
     id: "rate",
-    header: "APY/APR",
+    header: "APR",
     cell: ({ row }) => `${row.original.rateType} ${row.original.rateValue}%`,
   },
   {

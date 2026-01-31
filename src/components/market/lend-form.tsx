@@ -44,7 +44,7 @@ interface LendPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
@@ -67,7 +67,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
   const [limitMaturity, setLimitMaturity] = useState<string>("1 Feb 2026");
-  const [limitTargetAPY, setLimitTargetAPY] = useState<string>("");
+  const [limitTargetAPR, setLimitTargetAPR] = useState<string>("");
 
   // State for market order
   const [marketAmount, setMarketAmount] = useState<string>("");
@@ -132,8 +132,9 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
         const amountStr = tokenAmount.toString();
         const formattedAmount = formatNumberWithSeparator(amountStr);
 
-        // Convert APY decimal to percentage
-        const apyPercent = (editingPosition.apy * 100).toFixed(1).replace(".", ",");
+        // Convert APR decimal to percentage
+        const aprValue = editingPosition.apr ?? 0;
+        const aprPercent = (aprValue * 100).toFixed(1).replace(".", ",");
 
         // Set token
         const token = tokenList.find(t => t.value === editingPosition.tokenValue);
@@ -145,7 +146,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
         if (editingPosition.orderType === "limit") {
           setLimitAmount(amountStr);
           setLimitDisplayAmount(formattedAmount);
-          setLimitTargetAPY(apyPercent);
+          setLimitTargetAPR(aprPercent);
           setLimitMaturity(editingPosition.maturity);
         } else {
           setMarketAmount(amountStr);
@@ -206,13 +207,13 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const limitNumericAmount = parseFloat(limitAmount) || 0;
   const limitTransactionFee = limitNumericAmount * 0.0001; // 0.01%
   const limitAmountToPay = limitNumericAmount + limitTransactionFee;
-  const limitTargetAPYNumeric = parseFloat(limitTargetAPY.replace(/,/g, ".")) || 0;
+  const limitTargetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
 
   // Calculate future amount based on new formula:
   // Amount + (Amount * Rate/365 * days)
   // where days = (Maturity Date - (Current Date + 1))
   const calculateLimitFutureAmount = () => {
-    if (limitNumericAmount <= 0 || limitTargetAPYNumeric <= 0) return 0;
+    if (limitNumericAmount <= 0 || limitTargetAPRNumeric <= 0) return 0;
 
     // Current date + 1 day
     const currentDate = new Date();
@@ -227,24 +228,24 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
     if (days <= 0) return limitNumericAmount;
 
     // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = limitNumericAmount + (limitNumericAmount * (limitTargetAPYNumeric / 100) / 365 * days);
+    const futureAmount = limitNumericAmount + (limitNumericAmount * (limitTargetAPRNumeric / 100) / 365 * days);
     return futureAmount;
   };
 
   const limitFutureAmount = calculateLimitFutureAmount();
 
-  // Calculate transaction values for market order (using average APY)
+  // Calculate transaction values for market order (using average APR)
   const marketNumericAmount = parseFloat(marketAmount) || 0;
   const marketTransactionFee = marketNumericAmount * 0.0001; // 0.01%
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
-  // Market APY is determined by market (using average of 4.5-7.5% range)
-  const marketAPY = 6.0; // Average market APY (can be dynamic from order book)
+  // Market APR is determined by market (using average of 4.5-7.5% range)
+  const marketAPR = 6.0; // Average market APR (can be dynamic from order book)
 
   // Calculate future amount based on new formula:
   // Amount + (Amount * Rate/365 * days)
   // where days = (Maturity Date - (Current Date + 1))
   const calculateMarketFutureAmount = () => {
-    if (marketNumericAmount <= 0 || marketAPY <= 0) return 0;
+    if (marketNumericAmount <= 0 || marketAPR <= 0) return 0;
 
     // Current date + 1 day
     const currentDate = new Date();
@@ -259,7 +260,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
     if (days <= 0) return marketNumericAmount;
 
     // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    const futureAmount = marketNumericAmount + (marketNumericAmount * (marketAPY / 100) / 365 * days);
+    const futureAmount = marketNumericAmount + (marketNumericAmount * (marketAPR / 100) / 365 * days);
     return futureAmount;
   };
 
@@ -281,8 +282,8 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const amountInUsd = numericAmount * tokenInfo.price;
-      const targetAPYNumeric = parseFloat(limitTargetAPY.replace(/,/g, ".")) || 0;
-      const apyDecimal = targetAPYNumeric / 100; // Convert percentage to decimal
+      const targetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
+      const aprDecimal = targetAPRNumeric / 100; // Convert percentage to decimal
 
       // Check if we're in edit mode
       if (editingPosition && onUpdate) {
@@ -292,7 +293,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
           assetImg: selectedToken.logo,
           assetName: selectedToken.label,
           amount: amountInUsd,
-          apy: apyDecimal || editingPosition.apy,
+          apr: aprDecimal || editingPosition.apr,
           tokenValue: selectedToken.value,
           tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
           maturity: limitMaturity,
@@ -334,7 +335,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
         assetImg: selectedToken.logo,
         assetName: selectedToken.label,
         amount: amountInUsd,
-        apy: apyDecimal || (4.5 + Math.random() * 3) / 100, // Use target APY or random between 4.5% and 7.5%
+        apr: aprDecimal || (4.5 + Math.random() * 3) / 100, // Use target APR or random between 4.5% and 7.5%
         type: "lend" as const,
         tokenValue: selectedToken.value,
         tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
@@ -382,7 +383,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
         // Reset form
         setLimitAmount("");
         setLimitDisplayAmount("");
-        setLimitTargetAPY("");
+        setLimitTargetAPR("");
 
         // Trigger storage event to notify other components
         window.dispatchEvent(new Event("storage"));
@@ -415,8 +416,8 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const amountInUsd = numericAmount * tokenInfo.price;
-      // Market APY is determined by market (random for now)
-      const apyDecimal = (4.5 + Math.random() * 3) / 100;
+      // Market APR is determined by market (random for now)
+      const aprDecimal = (4.5 + Math.random() * 3) / 100;
 
       // Check if we're in edit mode
       if (editingPosition && onUpdate) {
@@ -426,7 +427,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
           assetImg: selectedToken.logo,
           assetName: selectedToken.label,
           amount: amountInUsd,
-          apy: apyDecimal,
+          apr: aprDecimal,
           tokenValue: selectedToken.value,
           tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
           maturity: marketMaturity,
@@ -468,7 +469,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
         assetImg: selectedToken.logo,
         assetName: selectedToken.label,
         amount: amountInUsd,
-        apy: apyDecimal,
+        apr: aprDecimal,
         type: "lend" as const,
         tokenValue: selectedToken.value,
         tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
@@ -606,17 +607,17 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
               />
               <div className="w-full space-y-2 mt-3.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="limit-target-apy">Target APY</Label>
+                  <Label htmlFor="limit-target-apr">Target APR</Label>
                 </div>
                 <div className="relative">
                   <Input
-                    id="limit-target-apy"
+                    id="limit-target-apr"
                     type="text"
                     placeholder="12.5"
-                    value={limitTargetAPY}
+                    value={limitTargetAPR}
                     onChange={(e) => {
                       const value = e.target.value.replace(/[^\d.,]/g, "");
-                      setLimitTargetAPY(value);
+                      setLimitTargetAPR(value);
                     }}
                     className="peer h-9 text-base bg-[#1a1d24] border-[#2a2e38] focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-search-cancel-button]:appearance-none"
                     style={{ paddingLeft: maturitySelectPadding }}
@@ -733,7 +734,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                   variant="s3"
                   className="mt-2 text-muted-foreground text-start"
                 >
-                  APY is determined by the market
+                  APR is determined by the market
                 </CentuariTypography>
               </div>
               <TransactionSummary

@@ -66,7 +66,7 @@ interface LendPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
@@ -82,7 +82,7 @@ interface BorrowPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
@@ -150,8 +150,8 @@ function PositionCard({
           <span className="text-white font-semibold">{formatCurrency(position.amount)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Target APY%</span>
-          <span className="text-white font-semibold">{(position.apy * 100).toFixed(1).replace(".", ",")}%</span>
+          <span className="text-muted-foreground">Target APR %</span>
+          <span className="text-white font-semibold">{((position.apr ?? 0) * 100).toFixed(1).replace(".", ",")}%</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Maturity</span>
@@ -217,11 +217,12 @@ function LendPositionTable({
       cell: ({ row }) => formatCurrency(row.original.amount),
     },
     {
-      accessorKey: "apy",
-      header: "Target Apy %",
+      accessorKey: "apr",
+      header: "Target APR %",
       cell: ({ row }) => {
-        const apyPercent = (row.original.apy * 100).toFixed(1);
-        return apyPercent.replace(".", ",") + "%";
+        const aprValue = row.original.apr ?? 0;
+        const aprPercent = (aprValue * 100).toFixed(1);
+        return aprPercent.replace(".", ",") + "%";
       },
     },
     {
@@ -392,10 +393,11 @@ function UnifiedPositionTable({
       cell: ({ row }) => formatCurrency(row.original.amount),
     },
     {
-      accessorKey: "apy",
+      accessorKey: "apr",
       header: "Target APR %",
       cell: ({ row }) => {
-        const aprPercent = (row.original.apy * 100).toFixed(1);
+        const aprValue = row.original.apr ?? 0;
+        const aprPercent = (aprValue * 100).toFixed(1);
         return aprPercent.replace(".", ",") + "%";
       },
     },
@@ -587,10 +589,11 @@ function BorrowPositionTable({
       cell: ({ row }) => formatCurrency(row.original.amount),
     },
     {
-      accessorKey: "apy",
+      accessorKey: "apr",
       header: "Target APR %",
       cell: ({ row }) => {
-        const aprPercent = (row.original.apy * 100).toFixed(1);
+        const aprValue = row.original.apr ?? 0;
+        const aprPercent = (aprValue * 100).toFixed(1);
         return aprPercent.replace(".", ",") + "%";
       },
     },
@@ -772,7 +775,7 @@ export function PositionSection() {
       const stored = localStorage.getItem("centuari_positions");
       if (stored) {
         try {
-          const allPositions: Position[] = JSON.parse(stored);
+          const allPositions: Position[] = JSON.parse(stored)
           setPositions((prevPositions) => {
             const newPositionsStr = JSON.stringify(allPositions);
             const currentPositionsStr = JSON.stringify(prevPositions);
@@ -803,7 +806,7 @@ export function PositionSection() {
       const stored = localStorage.getItem("centuari_positions");
       if (stored) {
         try {
-          const allPositions: Position[] = JSON.parse(stored);
+          const allPositions: Position[] = JSON.parse(stored)
           setPositions(allPositions);
         } catch {
           setPositions([]);

@@ -117,15 +117,15 @@ export function handleNumberInputChange(
 }
 
 /**
- * Generate random percentage rate with average around 7-10%
+ * Generate random percentage APR with average around 7-10%
  * @param min - Minimum percentage (default: 5)
  * @param max - Maximum percentage (default: 12)
  * @returns Formatted string with 1 decimal place using comma as separator (e.g., "7,2%", "8,5%")
  * @example
- * generateRandomRate() // "7,2%"
- * generateRandomRate(6, 10) // "8,5%"
+ * generateRandomAPR() // "7,2%"
+ * generateRandomAPR(6, 10) // "8,5%"
  */
-export function generateRandomRate(min: number = 5, max: number = 12): string {
+export function generateRandomAPR(min: number = 5, max: number = 12): string {
   // Generate random number between min and max with 1 decimal place
   const randomValue = Math.random() * (max - min) + min;
   const roundedValue = Math.round(randomValue * 10) / 10; // Round to 1 decimal place

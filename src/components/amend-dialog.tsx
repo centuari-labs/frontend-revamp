@@ -19,7 +19,7 @@ interface LendPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
@@ -35,7 +35,7 @@ interface BorrowPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
@@ -108,7 +108,7 @@ export function AmendDialog({
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">Amend Order</h1>
             <span className="text-sm text-muted-foreground">
-              Want to make a quick change? You can update your rate or amount
+              Want to make a quick change? You can update your APR or amount
               here — no need to cancel.
             </span>
           </div>

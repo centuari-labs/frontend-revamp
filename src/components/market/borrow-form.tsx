@@ -48,7 +48,7 @@ interface BorrowPosition {
   assetImg: string;
   assetName: string;
   amount: number;
-  apy: number;
+  apr: number;
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
@@ -87,7 +87,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   useEffect(() => {
     if (editingPosition) {
       // Convert APR decimal to percentage
-      const aprPercent = (editingPosition.apy * 100).toFixed(1).replace(".", ",");
+      const aprPercent = ((editingPosition.apr ?? 0) * 100).toFixed(1).replace(".", ",");
 
       // Set token
       const token = tokenList.find(t => t.value === editingPosition.tokenValue);
@@ -423,7 +423,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const targetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
-      const apyDecimal = targetAPRNumeric / 100;
+      const aprDecimal = targetAPRNumeric / 100;
 
       // Check if we're in edit mode
       if (editingPosition && onUpdate) {
@@ -433,7 +433,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
           assetImg: selectedToken.logo,
           assetName: selectedToken.label,
           amount: numericAmount,
-          apy: apyDecimal || editingPosition.apy,
+          apr: aprDecimal || editingPosition.apr,
           tokenValue: selectedToken.value,
           tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
           maturity: limitMaturity,
@@ -476,7 +476,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
         assetImg: selectedToken.logo,
         assetName: selectedToken.label,
         amount: numericAmount,
-        apy: apyDecimal || (12 + Math.random() * 3) / 100, // Default 12-15% APR
+        apr: aprDecimal || (12 + Math.random() * 3) / 100, // Default 12-15% APR
         type: "borrow" as const,
         tokenValue: selectedToken.value,
         tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
@@ -544,7 +544,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Market APR is determined by market (random for now, typically 12-15%)
-      const apyDecimal = (12 + Math.random() * 3) / 100;
+      const aprDecimal = (12 + Math.random() * 3) / 100;
 
       // Check if we're in edit mode
       if (editingPosition && onUpdate) {
@@ -554,7 +554,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
           assetImg: selectedToken.logo,
           assetName: selectedToken.label,
           amount: numericAmount,
-          apy: apyDecimal,
+          apr: aprDecimal,
           tokenValue: selectedToken.value,
           tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
           maturity: marketMaturity,
@@ -597,7 +597,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
         assetImg: selectedToken.logo,
         assetName: selectedToken.label,
         amount: numericAmount,
-        apy: apyDecimal,
+        apr: aprDecimal,
         type: "borrow" as const,
         tokenValue: selectedToken.value,
         tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),

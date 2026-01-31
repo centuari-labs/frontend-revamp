@@ -26,7 +26,7 @@ export const TOUR_STEPS: DriveStep[] = [
     popover: {
       title: "Understand Your Returns and Risks",
       description:
-        "Borrow Rate is what you pay. Lend Rate is what you earn. Collateral Factor defines your borrow power.",
+        "Borrow APR is what you pay. Lend APR is what you earn. Collateral Factor defines your borrow power.",
       side: "right",
       align: "start",
     },

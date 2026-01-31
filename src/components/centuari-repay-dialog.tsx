@@ -36,7 +36,7 @@ interface CentuariRepayDialogProps {
   token_name: string;
   token_symbol: string;
   amountBorrowed: number; // Amount borrowed in USD
-  apy: number; // APY as number (e.g., 4.9 for 4.9%)
+  apr: number; // APR as number (e.g., 4.9 for 4.9%)
   maturityDate?: string; // Maturity date in "DD MMM YYYY" format (e.g., "1 Feb 2026")
   onSuccess?: () => void; // Callback after successful repay
 }
@@ -47,7 +47,7 @@ export function CentuariRepayDialog({
   token_name,
   token_symbol,
   amountBorrowed,
-  apy,
+  apr,
   maturityDate = "1 Feb 2026",
   onSuccess,
 }: CentuariRepayDialogProps) {
@@ -133,10 +133,10 @@ export function CentuariRepayDialog({
   const numericAmount = parseFloat(repayAmount) || 0;
 
   // Calculate future amount to repay based on formula:
-  // Future Amount = Amount + (Amount * Rate/365 * days)
+  // Future Amount = Amount + (Amount * APR/365 * days)
   // where days = (Maturity Date - Current Date)
   const calculateFutureAmount = () => {
-    if (numericAmount <= 0 || apy <= 0) return numericAmount;
+    if (numericAmount <= 0 || apr <= 0) return numericAmount;
 
     // Current date
     const currentDate = new Date();
@@ -149,9 +149,9 @@ export function CentuariRepayDialog({
     const days = calculateDaysDifference(currentDate, maturityDateObj);
     if (days <= 0) return numericAmount; // If maturity has passed, just return amount
 
-    // Calculate future amount: Amount + (Amount * Rate/365 * days)
-    // APY is in percentage (e.g., 6.9 for 6.9%), so divide by 100
-    const futureAmount = numericAmount + (numericAmount * (apy / 100) / 365 * days);
+    // Calculate future amount: Amount + (Amount * APR/365 * days)
+    // APR is in percentage (e.g., 6.9 for 6.9%), so divide by 100
+    const futureAmount = numericAmount + (numericAmount * (apr / 100) / 365 * days);
     return futureAmount;
   };
 
@@ -204,8 +204,8 @@ export function CentuariRepayDialog({
   const currentHealthFactorPercentage = getHealthFactorPercentage(currentHealthFactor);
   const newHealthFactorPercentage = getHealthFactorPercentage(newHealthFactor);
 
-  // Format APY with comma as decimal separator
-  const formattedAPY = apy.toFixed(1).replace(".", ",") + "%";
+  // Format APR with comma as decimal separator
+  const formattedAPR = apr.toFixed(1).replace(".", ",") + "%";
 
   // Format amount borrowed
   const formattedAmountBorrowed = formatCurrency(amountBorrowed);
@@ -559,13 +559,13 @@ export function CentuariRepayDialog({
                         className="flex items-center gap-1 text-muted-foreground"
                         variant="b3"
                       >
-                        APY{" "}
-                        <CentuariTooltip message="The annual percentage yield for this borrow position.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
+                        APR{" "}
+                          <CentuariTooltip message="The annual percentage rate for this borrow position.">
+                            <Info size={16} />
+                          </CentuariTooltip>
+                        </CentuariTypography>
                       <CentuariTypography variant="h5" className="text-center">
-                        {formattedAPY}
+                        {formattedAPR}
                       </CentuariTypography>
                     </div>
                   </div>

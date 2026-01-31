@@ -2,7 +2,7 @@
 
 import { MarketHeader } from "@/components/market/market-header";
 import { OrderBookCard } from "@/components/market/order-book";
-import { RateHistoryCard } from "@/components/market/rate-history-card";
+import { APRHistoryCard } from "@/components/market/apr-history-card";
 import { LendBorrowCard } from "@/components/market/lend-borrow-card";
 import { PositionSection } from "@/components/market/position-section";
 import { MobileLendBorrowButtons } from "@/components/market/mobile-lend-borrow-buttons";
@@ -29,7 +29,7 @@ export default function Page() {
         <MarketHeader />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
-          <RateHistoryCard />
+          <APRHistoryCard />
 
           <div className="col-span-1">
             <OrderBookCard height="500px" />

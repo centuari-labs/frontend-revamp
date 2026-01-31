@@ -16,7 +16,7 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
-import { generateRandomRate } from "@/lib/utils";
+import { generateRandomAPR } from "@/lib/utils";
 
 export const CentuariTokenCard = ({
   token_image,
@@ -31,11 +31,11 @@ export const CentuariTokenCard = ({
 }) => {
   const router = useRouter();
 
-  // Generate random rates once per card instance using lazy initialization
+  // Generate random APR values once per card instance using lazy initialization
   const [rates] = useState(() => ({
-    borrowRate: generateRandomRate(),
-    lendRate: generateRandomRate(),
-    collateralFactor: generateRandomRate(),
+    borrowAPR: generateRandomAPR(),
+    lendAPR: generateRandomAPR(),
+    collateralFactor: generateRandomAPR(),
   }));
 
   // Generate random vault total for each token card (between 50,000 and 500,000)
@@ -69,8 +69,8 @@ export const CentuariTokenCard = ({
       <CardContent id={`tour-token-card-${id}-content`} className="px-0">
         <div className="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5 flex flex-col gap-3 md:gap-4">
           {[
-            { label: "Borrow Rate", value: rates.borrowRate },
-            { label: "Lend Rate", value: rates.lendRate },
+            { label: "Borrow APR", value: rates.borrowAPR },
+            { label: "Lend APR", value: rates.lendAPR },
             { label: "Collateral Factor", value: rates.collateralFactor },
           ].map(({ label, value }, i) => (
             <div
@@ -95,8 +95,8 @@ export const CentuariTokenCard = ({
             token_image={token_image}
             token_name={token_name}
             token_symbol={token_symbol}
-            lendRate={rates.lendRate}
-            borrowRate={rates.borrowRate}
+            lendAPR={rates.lendAPR}
+            borrowAPR={rates.borrowAPR}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}
           />
@@ -104,8 +104,8 @@ export const CentuariTokenCard = ({
             token_image={token_image}
             token_name={token_name}
             token_symbol={token_symbol}
-            lendRate={rates.lendRate}
-            borrowRate={rates.borrowRate}
+            lendAPR={rates.lendAPR}
+            borrowAPR={rates.borrowAPR}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}
           />

@@ -4,13 +4,13 @@ import { CentuariChart } from "@/components/centuari-chart";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export function RateHistoryCard() {
+export function APRHistoryCard() {
   return (
     <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden">
       {/* Desktop Header - Only visible on md+ */}
       <div className="hidden md:flex px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4 items-center gap-3 sm:gap-6 lg:gap-10 justify-between w-full">
         <CentuariTypography className="inline-block text-sm sm:text-base">
-          Rate History
+          APR History
         </CentuariTypography>
         <div className="w-full sm:w-auto overflow-x-auto">
           <Tabs defaultValue="satu">

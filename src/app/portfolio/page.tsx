@@ -237,7 +237,7 @@ export default function PortfolioPage() {
                 />
                 <div>
                   <CentuariTypography className="text-xs md:text-sm text-white">
-                    Net APY
+                    Net APR
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     6.9%

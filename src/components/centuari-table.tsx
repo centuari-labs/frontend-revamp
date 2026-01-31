@@ -134,7 +134,7 @@ type PositionForDialog =
     assetImg: string;
     assetName: string;
     amount: number;
-    apy: number;
+    apr: number;
     type: "lend";
     tokenValue: string;
     tokenSymbol: string;
@@ -149,7 +149,7 @@ type PositionForDialog =
     assetImg: string;
     assetName: string;
     amount: number;
-    apy: number;
+    apr: number;
     type: "borrow";
     tokenValue: string;
     tokenSymbol: string;
@@ -172,7 +172,7 @@ const ActionCell: React.FC<{
     assetImg: row.loanTokenImg || "/tokens/usdc-icon.svg",
     assetName: row.loanTokenSymbol,
     amount: row.amount,
-    apy: row.apr || 0.12,
+    apr: row.apr || 0.12,
     type: "borrow" as const,
     tokenValue: (row.loanTokenSymbol || "usdc").toLowerCase(),
     tokenSymbol: row.loanTokenSymbol || "USDC",

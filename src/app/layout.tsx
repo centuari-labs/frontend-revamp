@@ -8,7 +8,7 @@ import { TourProvider } from "@/components/product-tour/tour-context";
 
 export const metadata: Metadata = {
   title: "Centuari",
-  description: "Fixed rated CLOB lending protocol",
+  description: "Fixed rate CLOB lending protocol",
 };
 
 export default function RootLayout({

@@ -48,7 +48,7 @@ export function SelectMaturity() {
   return (
     <div className="w-full space-y-2 mt-3.5">
       <div className="flex items-center justify-between">
-        <Label htmlFor={id}>Target APY</Label>
+        <Label htmlFor={id}>Target APR</Label>
       </div>
       <div className="relative">
         <Input

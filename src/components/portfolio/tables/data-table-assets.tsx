@@ -280,14 +280,14 @@ export function DataTableAssets() {
 
   // Transform portfolio data to AssetProps format
   const data: AssetProps[] = React.useMemo(() => {
-    const marketAPY = 0.06; // Fixed market APY of 6.0%
+    const marketAPR = 0.06; // Fixed market APR of 6.0%
     return tokenList
       .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
       .map((token, index) => {
         const amountInUsd = portfolio[token.value] || 0;
         const walletBalance = token.price > 0 ? amountInUsd / token.price : 0;
         const isCollateral = collateralStatus[token.value] || false;
-        const idleAssetYield = amountInUsd * marketAPY; // Annual yield amount
+        const idleAssetYield = amountInUsd * marketAPR; // Annual yield amount
 
         return {
           id: `${token.value}-${index}`,
