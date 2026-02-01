@@ -7,7 +7,7 @@
  * - centuari_open_orders: open orders (unfilled, Open Orders tab)
  */
 
-import { formatDate } from "@/lib/utils";
+import { formatDate, generateRandomAPR } from "@/lib/utils";
 import { defaultPortfolio } from "@/lib/portfolio-data";
 import type {
   LendPosition,
@@ -20,6 +20,19 @@ import type {
   WithdrawLendParams,
   RepayBorrowParams,
 } from "@/types/positions";
+
+// Best available market rates - from generateRandomAPR, evaluated once per session
+// Single source of truth for all market orders and token cards
+const bestLendAPRDisplay = generateRandomAPR(5, 12);
+const bestBorrowAPRDisplay = generateRandomAPR(5, 12);
+
+function parseAPRDisplay(s: string): number {
+  return parseFloat(s.replace(",", ".").replace("%", "")) || 6;
+}
+
+export const bestLendAPR = parseAPRDisplay(bestLendAPRDisplay);
+export const bestBorrowAPR = parseAPRDisplay(bestBorrowAPRDisplay);
+export { bestLendAPRDisplay, bestBorrowAPRDisplay };
 
 const STORAGE_POSITIONS = "centuari_positions"; // Filled positions (All Transaction)
 const STORAGE_OPEN_ORDERS = "centuari_open_orders"; // Open orders (unfilled, Open Orders tab)
@@ -316,7 +329,7 @@ export function buildLendLimitPosition(params: SubmitLendLimitParams): LendPosit
 
 export function buildLendMarketPosition(params: SubmitLendMarketParams): LendPosition {
   const id = params.editingPosition?.id ?? `lend-${params.tokenValue}-${Date.now()}`;
-  const apr = (4.5 + Math.random() * 3);
+  const apr = bestLendAPR / 100;
   return {
     id,
     assetImg: params.tokenLogo,
@@ -357,7 +370,7 @@ export function buildBorrowLimitPosition(params: SubmitBorrowLimitParams): Borro
 
 export function buildBorrowMarketPosition(params: SubmitBorrowMarketParams): BorrowPosition {
   const id = params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`;
-  const apr = (12 + Math.random() * 3);
+  const apr = bestBorrowAPR / 100;
   return {
     id,
     assetImg: params.tokenLogo,

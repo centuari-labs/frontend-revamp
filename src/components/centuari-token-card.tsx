@@ -16,7 +16,7 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
-import { generateRandomAPR } from "@/lib/utils";
+import { bestLendAPRDisplay, bestBorrowAPRDisplay } from "@/lib/positions-adapter.mock";
 
 export const CentuariTokenCard = ({
   token_image,
@@ -31,12 +31,11 @@ export const CentuariTokenCard = ({
 }) => {
   const router = useRouter();
 
-  // Generate random APR values once per card instance using lazy initialization
-  const [rates] = useState(() => ({
-    borrowAPR: generateRandomAPR(),
-    lendAPR: generateRandomAPR(),
+  const rates = {
+    borrowAPR: bestBorrowAPRDisplay,
+    lendAPR: bestLendAPRDisplay,
     collateralFactor: "75%",
-  }));
+  };
 
   // Generate random vault total for each token card (between 50,000 and 500,000)
   const [vaultTotal] = useState(() => {

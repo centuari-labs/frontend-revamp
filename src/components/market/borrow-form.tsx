@@ -419,7 +419,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
         tokenLabel: selectedToken.label,
         amount: numericAmount,
         maturity: limitMaturity,
-        targetApr: aprDecimal || (12 + Math.random() * 3) / 100,
+        targetApr: aprDecimal,
         collateralTokens: limitSelectedCollaterals,
         editingPosition: editingPosition ?? undefined,
       });
