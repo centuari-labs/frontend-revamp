@@ -3,8 +3,8 @@
  * Swap to positions-adapter.api.ts for real backend.
  *
  * Storage keys:
- * - centuari_positions: limit orders (pending, Open Orders tab)
- * - centuari_open_orders: market orders (filled, All Transaction tab)
+ * - centuari_positions: filled positions (All Transaction tab)
+ * - centuari_open_orders: open orders (unfilled, Open Orders tab)
  */
 
 import { formatDate } from "@/lib/utils";
@@ -21,8 +21,8 @@ import type {
   RepayBorrowParams,
 } from "@/types/positions";
 
-const STORAGE_POSITIONS = "centuari_positions"; // Limit orders (Open Orders)
-const STORAGE_OPEN_ORDERS = "centuari_open_orders"; // Market orders (All Transaction)
+const STORAGE_POSITIONS = "centuari_positions"; // Filled positions (All Transaction)
+const STORAGE_OPEN_ORDERS = "centuari_open_orders"; // Open orders (unfilled, Open Orders tab)
 
 function notifyUpdate() {
   if (typeof window !== "undefined") {
@@ -48,14 +48,14 @@ function setStored(key: string, data: Position[]) {
   notifyUpdate();
 }
 
-// Limit orders -> centuari_positions (Open Orders)
+// Open orders (unfilled) -> centuari_open_orders
 export function getOpenOrders(): Position[] {
-  return getStored<Position>(STORAGE_POSITIONS);
+  return getStored<Position>(STORAGE_OPEN_ORDERS);
 }
 
-// Market orders -> centuari_open_orders (All Transaction)
+// Filled positions (All Transaction) -> centuari_positions
 export function getAllTransactions(): Position[] {
-  return getStored<Position>(STORAGE_OPEN_ORDERS);
+  return getStored<Position>(STORAGE_POSITIONS);
 }
 
 export function getAllPositions(): { openOrders: Position[]; allTransactions: Position[] } {
@@ -71,26 +71,51 @@ export async function mockDelay(ms = MOCK_DELAY_MS) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// --- Submit limit order (-> centuari_positions, no portfolio update) ---
+// --- Submit open order (-> centuari_open_orders, no portfolio update) ---
 export async function submitOpenOrder(
   position: LendPosition | BorrowPosition
 ): Promise<LendPosition | BorrowPosition> {
   await mockDelay();
   const existing = getOpenOrders();
   const updated = [...existing, position];
-  setStored(STORAGE_POSITIONS, updated);
+  setStored(STORAGE_OPEN_ORDERS, updated);
   return position;
 }
 
-// --- Submit filled position (-> centuari_open_orders, with portfolio update) ---
+// --- Submit filled position (-> centuari_positions, with portfolio update) ---
 export async function submitFilledLendPosition(
   position: LendPosition,
   options: { amountInUsd: number; tokenValue: string }
 ): Promise<LendPosition> {
   await mockDelay();
   const existing = getAllTransactions();
-  const updated = [...existing, position];
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  const matchIdx = existing.findIndex(
+    (p) =>
+      p.type === "lend" &&
+      p.tokenValue === position.tokenValue &&
+      p.maturity === position.maturity
+  );
+
+  let updated: Position[];
+  let result: LendPosition;
+  if (matchIdx >= 0) {
+    const existingPos = existing[matchIdx] as LendPosition;
+    const totalAmount = existingPos.amount + position.amount;
+    const weightedApr =
+      (existingPos.amount * existingPos.apr + position.amount * position.apr) /
+      totalAmount;
+    const merged: LendPosition = {
+      ...existingPos,
+      amount: totalAmount,
+      apr: weightedApr,
+    };
+    updated = existing.map((p, i) => (i === matchIdx ? merged : p));
+    result = merged;
+  } else {
+    updated = [...existing, position];
+    result = position;
+  }
+  setStored(STORAGE_POSITIONS, updated);
 
   // Update portfolio and total supply
   if (typeof window !== "undefined") {
@@ -108,7 +133,7 @@ export async function submitFilledLendPosition(
     );
   }
   notifyUpdate();
-  return position;
+  return result;
 }
 
 export async function submitFilledBorrowPosition(
@@ -117,8 +142,39 @@ export async function submitFilledBorrowPosition(
 ): Promise<BorrowPosition> {
   await mockDelay();
   const existing = getAllTransactions();
-  const updated = [...existing, position];
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  const matchIdx = existing.findIndex(
+    (p) =>
+      p.type === "borrow" &&
+      p.tokenValue === position.tokenValue &&
+      p.maturity === position.maturity
+  );
+
+  let updated: Position[];
+  let result: BorrowPosition;
+  if (matchIdx >= 0) {
+    const existingPos = existing[matchIdx] as BorrowPosition;
+    const totalAmount = existingPos.amount + position.amount;
+    const weightedApr =
+      (existingPos.amount * existingPos.apr + position.amount * position.apr) /
+      totalAmount;
+    const merged: BorrowPosition = {
+      ...existingPos,
+      amount: totalAmount,
+      apr: weightedApr,
+      collateralTokens: [
+        ...new Set([
+          ...existingPos.collateralTokens,
+          ...position.collateralTokens,
+        ]),
+      ],
+    };
+    updated = existing.map((p, i) => (i === matchIdx ? merged : p));
+    result = merged;
+  } else {
+    updated = [...existing, position];
+    result = position;
+  }
+  setStored(STORAGE_POSITIONS, updated);
 
   if (typeof window !== "undefined") {
     const stored = localStorage.getItem("centuari_total_debt");
@@ -129,10 +185,10 @@ export async function submitFilledBorrowPosition(
     );
   }
   notifyUpdate();
-  return position;
+  return result;
 }
 
-// --- Update open order (limit order in centuari_positions) ---
+// --- Update open order (in centuari_open_orders) ---
 export async function updateOpenOrder(
   position: LendPosition | BorrowPosition
 ): Promise<void> {
@@ -143,38 +199,38 @@ export async function updateOpenOrder(
     idx >= 0
       ? existing.map((p) => (p.id === position.id ? position : p))
       : [...existing, position];
-  setStored(STORAGE_POSITIONS, updated);
+  setStored(STORAGE_OPEN_ORDERS, updated);
 }
 
-// --- Update filled position (market order in centuari_open_orders) ---
+// --- Update filled position (in centuari_positions) ---
 export async function updateFilledPosition(
   position: LendPosition | BorrowPosition
 ): Promise<void> {
   await mockDelay();
   const existing = getAllTransactions();
   const updated = existing.map((p) => (p.id === position.id ? position : p));
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  setStored(STORAGE_POSITIONS, updated);
   notifyUpdate();
 }
 
-// --- Delete open order (limit order in centuari_positions) ---
+// --- Delete open order (from centuari_open_orders) ---
 export async function deleteOpenOrder(positionId: string): Promise<void> {
   await mockDelay();
   const existing = getOpenOrders();
   const updated = existing.filter((p) => p.id !== positionId);
-  setStored(STORAGE_POSITIONS, updated);
+  setStored(STORAGE_OPEN_ORDERS, updated);
 }
 
-// --- Delete filled position (from centuari_open_orders) ---
+// --- Delete filled position (from centuari_positions) ---
 export async function deleteFilledPosition(positionId: string): Promise<void> {
   await mockDelay();
   const existing = getAllTransactions();
   const updated = existing.filter((p) => p.id !== positionId);
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  setStored(STORAGE_POSITIONS, updated);
   notifyUpdate();
 }
 
-// --- Withdraw from lend position (in centuari_open_orders) ---
+// --- Withdraw from lend position (in centuari_positions) ---
 export async function withdrawLendPosition(params: WithdrawLendParams): Promise<void> {
   await mockDelay();
   const existing = getAllTransactions();
@@ -186,7 +242,7 @@ export async function withdrawLendPosition(params: WithdrawLendParams): Promise<
       return { ...pos, amount: newAmount };
     })
     .filter((p): p is Position => p !== null);
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  setStored(STORAGE_POSITIONS, updated);
 
   // Update portfolio and total supply
   if (typeof window !== "undefined") {
@@ -206,7 +262,7 @@ export async function withdrawLendPosition(params: WithdrawLendParams): Promise<
   notifyUpdate();
 }
 
-// --- Repay borrow position (in centuari_open_orders) ---
+// --- Repay borrow position (in centuari_positions) ---
 export async function repayBorrowPosition(params: RepayBorrowParams): Promise<void> {
   await mockDelay();
   const existing = getAllTransactions();
@@ -218,7 +274,7 @@ export async function repayBorrowPosition(params: RepayBorrowParams): Promise<vo
       return { ...pos, amount: newAmount };
     })
     .filter((p): p is Position => p !== null);
-  setStored(STORAGE_OPEN_ORDERS, updated);
+  setStored(STORAGE_POSITIONS, updated);
 
   if (typeof window !== "undefined") {
     const stored = localStorage.getItem("centuari_total_debt");
@@ -260,7 +316,7 @@ export function buildLendLimitPosition(params: SubmitLendLimitParams): LendPosit
 
 export function buildLendMarketPosition(params: SubmitLendMarketParams): LendPosition {
   const id = params.editingPosition?.id ?? `lend-${params.tokenValue}-${Date.now()}`;
-  const apr = (4.5 + Math.random() * 3) / 100;
+  const apr = (4.5 + Math.random() * 3);
   return {
     id,
     assetImg: params.tokenLogo,
@@ -301,7 +357,7 @@ export function buildBorrowLimitPosition(params: SubmitBorrowLimitParams): Borro
 
 export function buildBorrowMarketPosition(params: SubmitBorrowMarketParams): BorrowPosition {
   const id = params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`;
-  const apr = (12 + Math.random() * 3) / 100;
+  const apr = (12 + Math.random() * 3);
   return {
     id,
     assetImg: params.tokenLogo,

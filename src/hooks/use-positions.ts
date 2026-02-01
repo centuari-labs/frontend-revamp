@@ -6,8 +6,8 @@ import type { Position } from "@/types/positions";
 
 /**
  * Hook to read positions and orders reactively.
- * openOrders: from centuari_positions (limit orders)
- * allTransactions: from centuari_open_orders (market/filled positions)
+ * openOrders: from centuari_open_orders (unfilled orders)
+ * allTransactions: from centuari_positions (filled positions / All Transaction tab)
  */
 export function usePositions() {
   const [openOrders, setOpenOrders] = useState<Position[]>([]);
