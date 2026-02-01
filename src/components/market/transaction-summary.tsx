@@ -33,40 +33,42 @@ export function TransactionSummary({
 
   return (
     <>
-      <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
+      <div className="bg-white/5 py-3 px-5 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
         {displayItems.map(({ label, value }, i) => (
           <div
             key={label}
-            className={`flex items-center justify-between ${
-              i < displayItems.length - 1 ? "border-b border-dashed pb-2" : ""
+            className={`flex flex-row items-center justify-between gap-4 min-h-[2rem] ${
+              i < displayItems.length - 1 ? "border-b border-dashed pb-3" : ""
             }`}
           >
-            <p className="flex text-muted-foreground items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1 text-muted-foreground">
               {label}{" "}
               {i === 0 && (
                 <CentuariTooltip message="Coming Soon">
                   <Info size={12} />
                 </CentuariTooltip>
               )}
-            </p>
-            <div className="flex items-center gap-1">
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
               <p>{value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
+      <div className="py-3 px-5 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5 flex flex-col justify-center">
+        <div className="flex flex-row items-center justify-between gap-4 min-h-[2rem]">
+          <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
             In the future you'll get and pay{" "}
             <CentuariTooltip message="Coming Soon">
               <Info size={12} />
             </CentuariTooltip>{" "}
           </div>
-          <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-            {displayFuturePayment}
-          </span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+              {displayFuturePayment}
+            </span>
+          </div>
         </div>
       </div>
     </>
