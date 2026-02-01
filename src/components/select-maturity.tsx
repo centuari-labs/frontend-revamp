@@ -11,12 +11,36 @@ import {
 } from "@/components/ui/select";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import {
+  getAvailableMaturityTimestamps,
+  getDefaultMaturityTimestamp,
+  formatMaturityTimestamp,
+} from "@/lib/maturity";
 
-export function SelectMaturity() {
+interface SelectMaturityProps {
+  value?: number;
+  onValueChange?: (value: number) => void;
+}
+
+export function SelectMaturity({ value, onValueChange }: SelectMaturityProps) {
   const id = React.useId();
-  const [selectedMaturity, setSelectedMaturity] = React.useState("1 Jan 2026");
+  const [selectedMaturity, setSelectedMaturity] = React.useState(() =>
+    getDefaultMaturityTimestamp()
+  );
 
-  // ref ke SelectTrigger supaya bisa ukur lebarnya
+  const options = React.useMemo(() => getAvailableMaturityTimestamps(), []);
+  const currentValue = value !== undefined ? value : selectedMaturity;
+
+  const handleChange = (valueStr: string) => {
+    const ts = Number(valueStr);
+    if (isNaN(ts)) return;
+    if (onValueChange) {
+      onValueChange(ts);
+    } else {
+      setSelectedMaturity(ts);
+    }
+  };
+
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const [leftPadding, setLeftPadding] = React.useState<number>(88); // default awal
 
@@ -43,7 +67,7 @@ export function SelectMaturity() {
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [currentValue]);
 
   return (
     <div className="w-full space-y-2 mt-3.5">
@@ -59,9 +83,8 @@ export function SelectMaturity() {
           // padding kiri dinamis, ngikut lebar select
           style={{ paddingLeft: leftPadding }}
         />
-        {/* <span className="absolute inset-y-0 right-3 flex items-center">%</span> */}
         <div className="absolute inset-y-0 left-1 flex items-center">
-          <Select value={selectedMaturity} onValueChange={setSelectedMaturity}>
+          <Select value={currentValue.toString()} onValueChange={handleChange}>
             <SelectTrigger
               ref={triggerRef}
               className="!h-7 w-auto border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1"
@@ -70,9 +93,11 @@ export function SelectMaturity() {
             </SelectTrigger>
             <SelectContent className="bg-white/5 backdrop-blur-[140px]">
               <SelectGroup>
-                <SelectItem value="1 Jan 2026">1 Jan 2026</SelectItem>
-                <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
-                <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
+                {options.map((ts) => (
+                  <SelectItem key={ts} value={ts.toString()}>
+                    {formatMaturityTimestamp(ts)}
+                  </SelectItem>
+                ))}
               </SelectGroup>
             </SelectContent>
           </Select>

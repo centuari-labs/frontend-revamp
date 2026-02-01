@@ -34,6 +34,7 @@ import {
 import Image from "next/image";
 import { CentuariBadge } from "./centuari-badge";
 import { AmendDialog } from "./amend-dialog";
+import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 
 const data: PositionProps[] = [
   {
@@ -45,7 +46,7 @@ const data: PositionProps[] = [
     amount: 500,
     apr: 0.05,
     healthFactor: "0.0 ~ Safe",
-    maturity: "22 Sep 2024",
+    maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
     status: "pending",
   },
@@ -57,7 +58,7 @@ const data: PositionProps[] = [
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
-    maturity: "22 Sep 2024",
+    maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
     healthFactor: "0.0 ~ Safe",
     status: "pending",
@@ -70,7 +71,7 @@ const data: PositionProps[] = [
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
-    maturity: "22 Sep 2024",
+    maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
     healthFactor: "0.0 ~ Safe",
     status: "pending",
@@ -83,7 +84,7 @@ const data: PositionProps[] = [
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
-    maturity: "22 Sep 2024",
+    maturity: new Date(2024, 8, 22).getTime(),
     healthFactor: "0.0 ~ Safe",
     createdAt: "22 Jun 2024",
     status: "pending",
@@ -96,7 +97,7 @@ const data: PositionProps[] = [
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
-    maturity: "22 Sep 2024",
+    maturity: new Date(2024, 8, 22).getTime(),
     healthFactor: "0.0 ~ Safe",
     createdAt: "22 Jun 2024",
     status: "pending",
@@ -111,7 +112,7 @@ export type PositionProps = {
   loanTokenSymbol?: string;
   amount: number;
   apr?: number;
-  maturity?: string;
+  maturity?: number;
   createdAt?: string;
   healthFactor?: string;
   status: "pending" | "processing" | "success" | "failed";
@@ -138,7 +139,7 @@ type PositionForDialog =
     type: "lend";
     tokenValue: string;
     tokenSymbol: string;
-    maturity: string;
+    maturity: number;
     status: "pending" | "processing" | "success" | "failed";
     createdAt: string;
     timestamp: number;
@@ -153,7 +154,7 @@ type PositionForDialog =
     type: "borrow";
     tokenValue: string;
     tokenSymbol: string;
-    maturity: string;
+    maturity: number;
     status: "pending" | "processing" | "success" | "failed";
     createdAt: string;
     timestamp: number;
@@ -176,7 +177,7 @@ const ActionCell: React.FC<{
     type: "borrow" as const,
     tokenValue: (row.loanTokenSymbol || "usdc").toLowerCase(),
     tokenSymbol: row.loanTokenSymbol || "USDC",
-    maturity: row.maturity || "22 Oct 2026",
+    maturity: normalizeMaturity(row.maturity),
     status: row.status,
     createdAt: row.createdAt || new Date().toLocaleDateString(),
     timestamp: Date.now(),
@@ -256,6 +257,7 @@ export const columns = (onUpdate?: (position: PositionForDialog) => void): Colum
   {
     accessorKey: "maturity",
     header: "Maturity",
+    cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
   },
   {
     accessorKey: "createdAt",

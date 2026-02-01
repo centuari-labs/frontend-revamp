@@ -23,7 +23,7 @@ interface LendPosition {
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;
@@ -39,7 +39,7 @@ interface BorrowPosition {
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;

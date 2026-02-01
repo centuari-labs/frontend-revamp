@@ -29,6 +29,12 @@ import {
 } from "@/components/ui/popover";
 import Link from "next/link";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate } from "@/lib/utils";
+import {
+  getDefaultMaturityTimestamp,
+  getAvailableMaturityTimestamps,
+  formatMaturityTimestamp,
+  normalizeMaturity,
+} from "@/lib/maturity";
 import { tokenList as portfolioTokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 import {
   Dialog,
@@ -52,7 +58,7 @@ interface BorrowPosition {
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;
@@ -100,12 +106,12 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
         setLimitAmount(editingPosition.amount.toString());
         setLimitDisplayAmount(formatNumberWithSeparator(editingPosition.amount.toString()));
         setLimitTargetAPR(aprPercent);
-        setLimitMaturity(editingPosition.maturity);
+        setLimitMaturity(normalizeMaturity(editingPosition.maturity));
         setLimitSelectedCollaterals(editingPosition.collateralTokens || []);
       } else {
         setMarketAmount(editingPosition.amount.toString());
         setMarketDisplayAmount(formatNumberWithSeparator(editingPosition.amount.toString()));
-        setMarketMaturity(editingPosition.maturity);
+        setMarketMaturity(normalizeMaturity(editingPosition.maturity));
         setMarketSelectedCollaterals(editingPosition.collateralTokens || []);
       }
     }
@@ -114,14 +120,14 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   // State for limit order
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
-  const [limitMaturity, setLimitMaturity] = useState<string>("1 Feb 2026");
+  const [limitMaturity, setLimitMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
   const [limitTargetAPR, setLimitTargetAPR] = useState<string>("");
   const [limitSelectedCollaterals, setLimitSelectedCollaterals] = useState<string[]>([]);
 
   // State for market order
   const [marketAmount, setMarketAmount] = useState<string>("");
   const [marketDisplayAmount, setMarketDisplayAmount] = useState<string>("");
-  const [marketMaturity, setMarketMaturity] = useState<string>("1 Feb 2026");
+  const [marketMaturity, setMarketMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
   const [marketSelectedCollaterals, setMarketSelectedCollaterals] = useState<string[]>([]);
 
   // Ref for maturity select to calculate dynamic padding
@@ -857,7 +863,10 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     />
                     <span className="absolute inset-y-0 right-3 flex items-center text-muted-foreground">%</span>
                     <div className="absolute inset-y-0 left-1 flex items-center">
-                      <Select value={limitMaturity} onValueChange={setLimitMaturity}>
+                      <Select
+                        value={limitMaturity.toString()}
+                        onValueChange={(v) => setLimitMaturity(Number(v))}
+                      >
                         <SelectTrigger
                           ref={maturitySelectRef}
                           className="!h-7 w-auto border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1"
@@ -866,9 +875,11 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                         </SelectTrigger>
                         <SelectContent className="bg-white/5 backdrop-blur-[140px]">
                           <SelectGroup>
-                            <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
-                            <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
-                            <SelectItem value="1 Apr 2026">1 Apr 2026</SelectItem>
+                            {getAvailableMaturityTimestamps().map((ts) => (
+                              <SelectItem key={ts} value={ts.toString()}>
+                                {formatMaturityTimestamp(ts)}
+                              </SelectItem>
+                            ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>

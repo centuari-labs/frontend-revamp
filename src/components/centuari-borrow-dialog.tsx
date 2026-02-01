@@ -32,6 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
+import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 
@@ -212,7 +213,7 @@ export function CentuariBorrowDialog({
   const amountToPay = numericAmount + transactionFee;
 
   // Maturity date - withdrawal unlocks on the same date
-  const maturityDate = "1 Feb 2026";
+  const maturityDate = getDefaultMaturityTimestamp();
 
   const futureAmount = calculateFutureAmount(numericAmount, borrowAPRNumeric, maturityDate);
 
@@ -595,7 +596,7 @@ export function CentuariBorrowDialog({
                           </CentuariTooltip>
                         </CentuariTypography>
                         <CentuariTypography variant="h5" className="text-center">
-                          {maturityDate}
+                          {formatMaturityTimestamp(maturityDate)}
                         </CentuariTypography>
                       </div>
                       <div>
@@ -953,7 +954,7 @@ export function CentuariBorrowDialog({
                       >
                         Withdrawal Unlocks on
                         <CentuariTypography variant="s4" className="underline">
-                          {maturityDate}
+                          {formatMaturityTimestamp(maturityDate)}
                         </CentuariTypography>
                       </CentuariTypography>
                     </form>

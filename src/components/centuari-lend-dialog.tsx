@@ -29,6 +29,7 @@ import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
 import Link from "next/link";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
+import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { Loader2 } from "lucide-react";
 import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 
@@ -165,7 +166,7 @@ export function CentuariLendDialog({
   const formattedVaultTotal = formatCurrency(vaultTotal);
 
   // Maturity date - withdrawal unlocks on the same date
-  const maturityDate = "1 Feb 2026";
+  const maturityDate = getDefaultMaturityTimestamp();
 
   const futureAmount = calculateFutureAmount(numericAmount, lendAPRNumeric, maturityDate);
 
@@ -427,7 +428,7 @@ export function CentuariLendDialog({
                           </CentuariTooltip>
                         </CentuariTypography>
                         <CentuariTypography variant="h5" className="text-center">
-                          {maturityDate}
+                          {formatMaturityTimestamp(maturityDate)}
                         </CentuariTypography>
                       </div>
                       <div>
@@ -618,7 +619,7 @@ export function CentuariLendDialog({
                     >
                       Withdrawal Unlocks on
                       <CentuariTypography variant="s4" className="underline">
-                        {maturityDate}
+                        {formatMaturityTimestamp(maturityDate)}
                       </CentuariTypography>
                     </CentuariTypography>
                   </div>

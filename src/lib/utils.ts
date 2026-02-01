@@ -211,19 +211,18 @@ export function calculateDaysDifference(date1: Date, date2: Date): number {
  *
  * @param amount - Principal amount
  * @param aprPercent - APR as percentage (e.g., 6.9 for 6.9%, 10 for 10%)
- * @param maturityDateStr - Maturity date in "DD MMM YYYY" format (e.g., "1 Feb 2026")
+ * @param maturityTimestamp - Maturity date as Unix timestamp (ms)
  * @returns Future amount (principal + interest), or amount if invalid inputs
  */
 export function calculateFutureAmount(
   amount: number,
   aprPercent: number,
-  maturityDateStr: string,
+  maturityTimestamp: number,
 ): number {
   if (amount <= 0 || aprPercent <= 0) return amount;
 
   const currentDate = new Date();
-  const maturityDateObj = parseDateString(maturityDateStr);
-  if (!maturityDateObj) return amount;
+  const maturityDateObj = new Date(maturityTimestamp);
 
   const days = calculateDaysDifference(currentDate, maturityDateObj);
   if (days <= 0) return amount;

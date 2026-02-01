@@ -22,6 +22,7 @@ import {
 import { Edit2, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
+import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
@@ -70,7 +71,7 @@ interface LendPosition {
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;
@@ -86,7 +87,7 @@ interface BorrowPosition {
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;
@@ -155,7 +156,7 @@ function PositionCard({
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Maturity</span>
-          <span className="text-white font-semibold">{position.maturity}</span>
+          <span className="text-white font-semibold">{formatMaturityTimestamp(normalizeMaturity(position.maturity))}</span>
         </div>
       </div>
 
@@ -228,7 +229,7 @@ function LendPositionTable({
     {
       accessorKey: "maturity",
       header: "Maturity",
-      cell: ({ row }) => row.original.maturity,
+      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
     },
     {
       accessorKey: "createdAt",
@@ -404,7 +405,7 @@ function UnifiedPositionTable({
     {
       accessorKey: "maturity",
       header: "Maturity",
-      cell: ({ row }) => row.original.maturity,
+      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
     },
     {
       accessorKey: "createdAt",
@@ -600,7 +601,7 @@ function BorrowPositionTable({
     {
       accessorKey: "maturity",
       header: "Maturity",
-      cell: ({ row }) => row.original.maturity,
+      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
     },
     {
       accessorKey: "createdAt",

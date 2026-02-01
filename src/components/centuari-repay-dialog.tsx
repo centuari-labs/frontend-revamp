@@ -26,6 +26,7 @@ import {
   formatCurrency,
   calculateFutureAmount,
 } from "@/lib/utils";
+import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
 import HealthFactor from "./centuari-health-factor";
 
@@ -36,7 +37,7 @@ interface CentuariRepayDialogProps {
   token_symbol: string;
   amountBorrowed: number; // Amount borrowed in USD
   apr: number; // APR as number (e.g., 4.9 for 4.9%)
-  maturityDate?: string; // Maturity date in "DD MMM YYYY" format (e.g., "1 Feb 2026")
+  maturityDate?: number;
   onSuccess?: () => void; // Callback after successful repay
 }
 
@@ -47,7 +48,7 @@ export function CentuariRepayDialog({
   token_symbol,
   amountBorrowed,
   apr,
-  maturityDate = "1 Feb 2026",
+  maturityDate,
   onSuccess,
 }: CentuariRepayDialogProps) {
   const reactId = useId();
@@ -131,7 +132,8 @@ export function CentuariRepayDialog({
   // Calculate derived values
   const numericAmount = parseFloat(repayAmount) || 0;
 
-  const futureAmount = calculateFutureAmount(numericAmount, apr, maturityDate);
+  const normalizedMaturity = normalizeMaturity(maturityDate);
+  const futureAmount = calculateFutureAmount(numericAmount, apr, normalizedMaturity);
 
   // Calculate new total debt after repayment
   const newTotalDebt = Math.max(0, totalDebt - numericAmount);

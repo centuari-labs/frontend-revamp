@@ -25,6 +25,7 @@ import {
   formatCurrency,
   calculateFutureAmount,
 } from "@/lib/utils";
+import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
 import { IcCreditCardUpload } from "./icons/ic-credit-card-upload";
 
@@ -33,7 +34,7 @@ interface CentuariSellPositionDialogProps {
   token_image: string;
   token_name: string;
   token_symbol: string;
-  maturityDate?: string; // Default: "1 Feb 2026"
+  maturityDate?: number;
   availableFunds: number; // Available funds in USD (current position value)
   moneyDeposited: number; // Original deposit amount
   profitReturn: number; // Profit amount
@@ -46,7 +47,7 @@ export function CentuariSellPositionDialog({
   token_image,
   token_name,
   token_symbol,
-  maturityDate = "1 Feb 2026",
+  maturityDate,
   availableFunds,
   moneyDeposited,
   profitReturn,
@@ -79,7 +80,8 @@ export function CentuariSellPositionDialog({
   const proportionalDeposit = availableFunds > 0 && numericAmount > 0
     ? (numericAmount / availableFunds) * moneyDeposited
     : 0;
-  const calculatedProfitReturn = calculateFutureAmount(proportionalDeposit, apr, maturityDate);
+  const normalizedMaturity = normalizeMaturity(maturityDate);
+  const calculatedProfitReturn = calculateFutureAmount(proportionalDeposit, apr, normalizedMaturity);
 
   // Total amount after withdraw = Withdraw Shares + Profit Return
   const totalAfterWithdraw = withdrawShares + calculatedProfitReturn;
@@ -347,7 +349,7 @@ export function CentuariSellPositionDialog({
                         </CentuariTooltip>
                       </CentuariTypography>
                       <CentuariTypography variant="h5" className="text-center">
-                        {maturityDate}
+                        {formatMaturityTimestamp(normalizedMaturity)}
                       </CentuariTypography>
                     </div>
                     <div>

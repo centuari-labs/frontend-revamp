@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
+import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { CentuariSellPositionDialog } from "@/components/centuari-sell-position-dialog";
 import { CentuariRepayDialog } from "@/components/centuari-repay-dialog";
 
@@ -41,7 +42,7 @@ export type PositionProps = {
   tokenValue?: string;
   timestamp?: number;
   collateralTokens?: string[];
-  maturity?: string;
+  maturity?: number;
 };
 
 export const columns: ColumnDef<PositionProps>[] = [
@@ -104,7 +105,7 @@ export const columns: ColumnDef<PositionProps>[] = [
     header: "Maturity",
     cell: ({ row }) => (
       <div className="text-white font-medium">
-        {row.original.maturity ?? "1 Feb 2026"}
+        {formatMaturityTimestamp(normalizeMaturity(row.original.maturity))}
       </div>
     ),
   },
@@ -125,7 +126,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_symbol={position.assetName}
               amountBorrowed={position.amount}
               apr={(position.apr ?? 0) * 100}
-              maturityDate={position.maturity ?? "1 Feb 2026"}
+              maturityDate={normalizeMaturity(position.maturity)}
               onSuccess={() => {
                 // Trigger re-render to update positions
                 if (typeof window !== "undefined") {
@@ -139,7 +140,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_image={position.assetImg}
               token_name={position.assetName}
               token_symbol={position.assetName}
-              maturityDate={position.maturity ?? "1 Feb 2026"}
+              maturityDate={normalizeMaturity(position.maturity)}
               availableFunds={1100}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}

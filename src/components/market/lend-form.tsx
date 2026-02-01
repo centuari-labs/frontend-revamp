@@ -24,6 +24,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
+import {
+  getDefaultMaturityTimestamp,
+  getAvailableMaturityTimestamps,
+  formatMaturityTimestamp,
+  normalizeMaturity,
+} from "@/lib/maturity";
 import { tokenList as portfolioTokenList, defaultPortfolio } from "@/lib/portfolio-data";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -48,7 +54,7 @@ interface LendPosition {
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
-  maturity: string;
+  maturity: number;
   status: "pending" | "processing" | "success" | "failed";
   createdAt: string;
   timestamp: number;
@@ -66,13 +72,13 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   // State for limit order
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
-  const [limitMaturity, setLimitMaturity] = useState<string>("1 Feb 2026");
+  const [limitMaturity, setLimitMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
   const [limitTargetAPR, setLimitTargetAPR] = useState<string>("");
 
   // State for market order
   const [marketAmount, setMarketAmount] = useState<string>("");
   const [marketDisplayAmount, setMarketDisplayAmount] = useState<string>("");
-  const [marketMaturity, setMarketMaturity] = useState<string>("1 Jan 2026");
+  const [marketMaturity, setMarketMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
 
   // Ref for maturity select to calculate dynamic padding
   const maturitySelectRef = React.useRef<HTMLButtonElement | null>(null);
@@ -147,11 +153,11 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
           setLimitAmount(amountStr);
           setLimitDisplayAmount(formattedAmount);
           setLimitTargetAPR(aprPercent);
-          setLimitMaturity(editingPosition.maturity);
+          setLimitMaturity(normalizeMaturity(editingPosition.maturity));
         } else {
           setMarketAmount(amountStr);
           setMarketDisplayAmount(formattedAmount);
-          setMarketMaturity(editingPosition.maturity);
+          setMarketMaturity(normalizeMaturity(editingPosition.maturity));
         }
       }
     }
@@ -578,7 +584,10 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                   />
                   <span className="absolute inset-y-0 right-3 flex items-center text-muted-foreground">%</span>
                   <div className="absolute inset-y-0 left-1 flex items-center">
-                    <Select value={limitMaturity} onValueChange={setLimitMaturity}>
+                    <Select
+                      value={limitMaturity.toString()}
+                      onValueChange={(v) => setLimitMaturity(Number(v))}
+                    >
                       <SelectTrigger
                         ref={maturitySelectRef}
                         className="!h-7 w-auto border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1"
@@ -587,9 +596,11 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                       </SelectTrigger>
                       <SelectContent className="bg-white/5 backdrop-blur-[140px]">
                         <SelectGroup>
-                          <SelectItem value="1 Feb 2026">1 Feb 2026</SelectItem>
-                          <SelectItem value="1 Mar 2026">1 Mar 2026</SelectItem>
-                          <SelectItem value="1 Apr 2026">1 Apr 2026</SelectItem>
+                          {getAvailableMaturityTimestamps().map((ts) => (
+                            <SelectItem key={ts} value={ts.toString()}>
+                              {formatMaturityTimestamp(ts)}
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -668,18 +679,18 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                   </CentuariTooltip>
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-                  {["1 Feb 2026", "1 Mar 2026", "1 Apr 2026"].map((item) => (
+                  {getAvailableMaturityTimestamps().map((ts) => (
                     <Button
-                      key={item}
+                      key={ts}
                       type="button"
-                      variant={marketMaturity === item ? "default" : "outline"}
-                      className={`h-9 ${marketMaturity === item
+                      variant={marketMaturity === ts ? "default" : "outline"}
+                      className={`h-9 ${marketMaturity === ts
                         ? "bg-primary-blue-base/20 border border-primary-blue-base text-white hover:text-white hover:bg-primary-blue-base/20"
                         : ""
                         }`}
-                      onClick={() => setMarketMaturity(item)}
+                      onClick={() => setMarketMaturity(ts)}
                     >
-                      {item}
+                      {formatMaturityTimestamp(ts)}
                     </Button>
                   ))}
                 </div>
