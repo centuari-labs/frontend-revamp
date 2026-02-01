@@ -2,7 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { gsap } from "gsap";
-import { ArrowLeft, CreditCard, Info } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import {
@@ -16,16 +16,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CentuariAlert } from "./centuari-alert";
 import { CentuariButton } from "./centuari-button";
-import HealthFactor from "./centuari-health-factor";
 import { CentuariInput } from "./centuari-input";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariTypography } from "./centuari-typography";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { MaturityToggle } from "./maturity-toggle";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
 import Link from "next/link";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
@@ -78,13 +73,14 @@ export function CentuariLendDialog({
 
   const tokenValue = getTokenValue(token_symbol);
 
-  // State for portfolio - sync with localStorage
+  // State for portfolio - sync with localStorage; merge with defaultPortfolio so new tokens (e.g. XSGD, IDRX) get default balances
   const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("centuari_portfolio");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          return { ...defaultPortfolio, ...parsed };
         } catch {
           return defaultPortfolio;
         }

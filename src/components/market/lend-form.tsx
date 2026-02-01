@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { formatNumberWithSeparator, parseNumberFromSeparator, calculateFutureAmount } from "@/lib/utils";
-import { bestLendAPR } from "@/lib/positions-adapter.mock";
+import { getBestLendAPR } from "@/lib/positions-adapter.mock";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
@@ -206,7 +206,11 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const marketNumericAmount = parseFloat(marketAmount) || 0;
   const marketTransactionFee = marketNumericAmount * 0.0001; // 0.01%
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
-  const marketFutureAmount = calculateFutureAmount(marketNumericAmount, bestLendAPR, marketMaturity);
+  const marketFutureAmount = calculateFutureAmount(
+    marketNumericAmount,
+    getBestLendAPR(selectedToken?.value ?? "usdc"),
+    marketMaturity,
+  );
 
   const handleLimitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

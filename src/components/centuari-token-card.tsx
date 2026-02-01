@@ -16,7 +16,11 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
-import { bestLendAPRDisplay, bestBorrowAPRDisplay } from "@/lib/positions-adapter.mock";
+import {
+  getBestLendAPRDisplay,
+  getBestBorrowAPRDisplay,
+  getCollateralFactorDisplay,
+} from "@/lib/positions-adapter.mock";
 
 export const CentuariTokenCard = ({
   token_image,
@@ -32,9 +36,9 @@ export const CentuariTokenCard = ({
   const router = useRouter();
 
   const rates = {
-    borrowAPR: bestBorrowAPRDisplay,
-    lendAPR: bestLendAPRDisplay,
-    collateralFactor: "75%",
+    borrowAPR: getBestBorrowAPRDisplay(token_symbol),
+    lendAPR: getBestLendAPRDisplay(token_symbol),
+    collateralFactor: getCollateralFactorDisplay(token_symbol),
   };
 
   // Generate random vault total for each token card (between 50,000 and 500,000)

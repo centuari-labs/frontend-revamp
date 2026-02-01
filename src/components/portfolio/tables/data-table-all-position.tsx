@@ -95,7 +95,7 @@ export const columns: ColumnDef<PositionProps>[] = [
       const apr = row.original.apr ?? 0;
       return (
         <div className="text-white font-medium">
-          {(apr ?? 0).toFixed(2).replace(".", ",")}%
+          {((apr ?? 0) * 100).toFixed(2).replace(".", ",")}%
         </div>
       );
     },

@@ -76,7 +76,7 @@ export function CentuariBorrowDialog({
 
   // State for portfolio (dummy data - in real app from API/state)
   const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
-    // Load from localStorage if available
+    // Load from localStorage if available; merge with defaultPortfolio so new tokens (e.g. XSGD, IDRX) get default balances
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("centuari_portfolio");
       if (stored) {
@@ -87,13 +87,10 @@ export function CentuariBorrowDialog({
             parsed.xaut = parsed.aave;
             delete parsed.aave;
           }
-          // Add NVDA if it doesn't exist (migration for new token)
-          if (!parsed.nvda && defaultPortfolio.nvda) {
-            parsed.nvda = defaultPortfolio.nvda;
-          }
-          // Save updated portfolio back to localStorage
-          localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
-          return parsed;
+          // Merge with defaultPortfolio so missing keys (e.g. xsgd, idrx) get defaults
+          const merged = { ...defaultPortfolio, ...parsed };
+          localStorage.setItem("centuari_portfolio", JSON.stringify(merged));
+          return merged;
         } catch {
           return defaultPortfolio;
         }

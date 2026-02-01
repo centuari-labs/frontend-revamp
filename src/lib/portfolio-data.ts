@@ -76,6 +76,24 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 3,
   },
   {
+    logo: "/tokens/xsgd-icon.png",
+    value: "xsgd",
+    label: "XSGD",
+    ltv: 0.90,
+    price: 1,
+    liquidationThreshold: 0.92,
+    liquidationPenalty: 1,
+  },
+  {
+    logo: "/tokens/idrx-icon.png",
+    value: "idrx",
+    label: "IDRX",
+    ltv: 0.90,
+    price: 1,
+    liquidationThreshold: 0.92,
+    liquidationPenalty: 1,
+  },
+  {
     logo: "/tokens/centuari-eth.png",
     value: "centuari",
     label: "Centuari",
@@ -103,6 +121,8 @@ export const defaultPortfolio: Record<string, number> = {
   xaut: 25000, // Tether Gold value $25k
   usdc: 15000, // USDC value $15k
   usdt: 10000, // USDT value $10k
+  xsgd: 5000,  // XSGD value $5k
+  idrx: 5000,  // IDRX value $5k
   nvda: 30000, // NVIDIA value $30k
 };
 
@@ -122,6 +142,8 @@ export function getTokenSymbol(label: string): string {
     "USDC": "USDC",
     "USDT": "USDT",
     "DAI": "DAI",
+    "XSGD": "XSGD",
+    "IDRX": "IDRX",
     "Centuari": "CENT",
     "NVIDIA": "NVDA",
   };

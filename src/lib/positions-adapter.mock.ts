@@ -21,18 +21,64 @@ import type {
   RepayBorrowParams,
 } from "@/types/positions";
 
-// Best available market rates - from generateRandomAPR, evaluated once per session
-// Single source of truth for all market orders and token cards
-const bestLendAPRDisplay = generateRandomAPR(5, 12);
-const bestBorrowAPRDisplay = generateRandomAPR(5, 12);
+// Per-token best APR (display strings and numeric percentage). Each token has different rates.
+const TOKEN_APRS: Record<
+  string,
+  { lendDisplay: string; borrowDisplay: string; collateralFactor: string; lendPct: number; borrowPct: number }
+> = {
+  usdc: { lendDisplay: "6,5%", borrowDisplay: "10,1%", collateralFactor: "75%", lendPct: 6.5, borrowPct: 10.1 },
+  xsgd: { lendDisplay: "5,2%", borrowDisplay: "9,3%", collateralFactor: "75%", lendPct: 5.2, borrowPct: 9.3 },
+  idrx: { lendDisplay: "7,1%", borrowDisplay: "11,2%", collateralFactor: "75%", lendPct: 7.1, borrowPct: 11.2 },
+  usdt: { lendDisplay: "6,2%", borrowDisplay: "9,8%", collateralFactor: "75%", lendPct: 6.2, borrowPct: 9.8 },
+};
 
 function parseAPRDisplay(s: string): number {
   return parseFloat(s.replace(",", ".").replace("%", "")) || 6;
 }
 
-export const bestLendAPR = parseAPRDisplay(bestLendAPRDisplay);
-export const bestBorrowAPR = parseAPRDisplay(bestBorrowAPRDisplay);
-export { bestLendAPRDisplay, bestBorrowAPRDisplay };
+function getTokenRates(tokenSymbolOrValue: string) {
+  const key = tokenSymbolOrValue.toLowerCase();
+  return (
+    TOKEN_APRS[key] ?? {
+      lendDisplay: "6,0%",
+      borrowDisplay: "9,5%",
+      collateralFactor: "75%",
+      lendPct: 6,
+      borrowPct: 9.5,
+    }
+  );
+}
+
+/** Per-token display string for Lend APR (e.g. "6,5%"). */
+export function getBestLendAPRDisplay(tokenSymbolOrValue: string): string {
+  return getTokenRates(tokenSymbolOrValue).lendDisplay;
+}
+
+/** Per-token display string for Borrow APR (e.g. "10,1%"). */
+export function getBestBorrowAPRDisplay(tokenSymbolOrValue: string): string {
+  return getTokenRates(tokenSymbolOrValue).borrowDisplay;
+}
+
+/** Per-token display string for Collateral Factor (e.g. "75%"). */
+export function getCollateralFactorDisplay(tokenSymbolOrValue: string): string {
+  return getTokenRates(tokenSymbolOrValue).collateralFactor;
+}
+
+/** Per-token numeric Lend APR as percentage (e.g. 6.5). Use / 100 for decimal in position.apr. */
+export function getBestLendAPR(tokenValue: string): number {
+  return getTokenRates(tokenValue).lendPct;
+}
+
+/** Per-token numeric Borrow APR as percentage (e.g. 10.1). Use / 100 for decimal in position.apr. */
+export function getBestBorrowAPR(tokenValue: string): number {
+  return getTokenRates(tokenValue).borrowPct;
+}
+
+// Legacy exports for consumers that don't have token context (e.g. lend-form market APR); use first token as default
+export const bestLendAPRDisplay = getBestLendAPRDisplay("usdc");
+export const bestBorrowAPRDisplay = getBestBorrowAPRDisplay("usdc");
+export const bestLendAPR = getBestLendAPR("usdc");
+export const bestBorrowAPR = getBestBorrowAPR("usdc");
 
 const STORAGE_POSITIONS = "centuari_positions"; // Filled positions (All Transaction)
 const STORAGE_OPEN_ORDERS = "centuari_open_orders"; // Open orders (unfilled, Open Orders tab)
@@ -309,7 +355,7 @@ export async function repayBorrowPosition(params: RepayBorrowParams): Promise<vo
 // --- Helpers to build position payloads ---
 export function buildLendLimitPosition(params: SubmitLendLimitParams): LendPosition {
   const id = params.editingPosition?.id ?? `lend-${params.tokenValue}-${Date.now()}`;
-  const apr = params.targetApr || (4.5 + Math.random() * 3) / 100;
+  const apr = params.targetApr;
   return {
     id,
     assetImg: params.tokenLogo,
@@ -329,7 +375,7 @@ export function buildLendLimitPosition(params: SubmitLendLimitParams): LendPosit
 
 export function buildLendMarketPosition(params: SubmitLendMarketParams): LendPosition {
   const id = params.editingPosition?.id ?? `lend-${params.tokenValue}-${Date.now()}`;
-  const apr = bestLendAPR / 100;
+  const apr = getBestLendAPR(params.tokenValue) / 100;
   return {
     id,
     assetImg: params.tokenLogo,
@@ -349,7 +395,7 @@ export function buildLendMarketPosition(params: SubmitLendMarketParams): LendPos
 
 export function buildBorrowLimitPosition(params: SubmitBorrowLimitParams): BorrowPosition {
   const id = params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`;
-  const apr = params.targetApr || (12 + Math.random() * 3) / 100;
+  const apr = params.targetApr;
   return {
     id,
     assetImg: params.tokenLogo,
@@ -370,7 +416,7 @@ export function buildBorrowLimitPosition(params: SubmitBorrowLimitParams): Borro
 
 export function buildBorrowMarketPosition(params: SubmitBorrowMarketParams): BorrowPosition {
   const id = params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`;
-  const apr = bestBorrowAPR / 100;
+  const apr = getBestBorrowAPR(params.tokenValue) / 100;
   return {
     id,
     assetImg: params.tokenLogo,
