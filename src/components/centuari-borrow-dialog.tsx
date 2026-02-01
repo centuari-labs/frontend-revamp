@@ -35,6 +35,7 @@ import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, ca
 import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
+import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 
 type ViewMode = "borrow" | "deposit-collateral";
 
@@ -62,6 +63,7 @@ export function CentuariBorrowDialog({
   const collateralViewRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const { getAccessToken } = usePrivy();
+  const { submitMarket, isPending } = useSubmitBorrow();
 
   // State for amount input
   const [amountToBorrow, setAmountToBorrow] = useState<string>("");
@@ -138,8 +140,7 @@ export function CentuariBorrowDialog({
     return {};
   });
 
-  // State for transaction processing
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -367,7 +368,6 @@ export function CentuariBorrowDialog({
       setViewMode("borrow");
       setAmountToBorrow("");
       setDisplayAmount("");
-      setIsProcessing(false);
       setShowSuccessDialog(false);
       // Clear selectedCollaterals when dialog closes
       setSelectedCollaterals([]);
@@ -426,126 +426,44 @@ export function CentuariBorrowDialog({
 
   const handleBorrow = async () => {
     if (viewMode === "borrow") {
-      // Validate amount
-      if (numericAmount <= 0) {
-        return;
-      }
+      if (numericAmount <= 0 || numericAmount > availableQuota) return;
+      if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
+      if (healthFactor < 1.0) return;
 
-      // Check if amount exceeds available quota
-      if (numericAmount > availableQuota) {
-        return;
-      }
-
-      // Check if collateral is selected
-      if (selectedCollaterals.length === 0) {
-        return;
-      }
-
-      // Check if portfolio has value
-      if (totalPortfolioValue === 0) {
-        return;
-      }
-
-      // Check health factor (should be >= 1.2 to be safe, >= 1.0 is critical)
-      if (healthFactor < 1.0) {
-        return;
-      }
-
-      // Start processing
-      setIsProcessing(true);
+      const borrowedToken = tokenList.find(
+        (t) =>
+          t.label.toUpperCase() === token_symbol?.toUpperCase() ||
+          t.value.toUpperCase() === token_symbol?.toUpperCase()
+      );
+      if (!borrowedToken) return;
 
       try {
-        // Simulate transaction processing delay (1.5 seconds)
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await getAccessToken();
 
-        // Get access token (for future API integration)
-        const accessToken = await getAccessToken();
-        console.log("Access Token:", accessToken);
+        await submitMarket({
+          tokenValue: borrowedToken.value,
+          tokenLogo: borrowedToken.logo,
+          tokenLabel: borrowedToken.label,
+          amount: numericAmount,
+          maturity: maturityDate,
+          collateralTokens: selectedCollaterals,
+        });
 
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Update total debt (add new borrow amount)
-        const updatedTotalDebt = totalDebt + numericAmount;
-        setTotalDebt(updatedTotalDebt);
-
-        // Create and save new borrow position
-        // Get token info for the borrowed token
-        const borrowedToken = tokenList.find(t =>
-          t.label.toUpperCase() === token_symbol.toUpperCase() ||
-          t.value.toUpperCase() === token_symbol.toUpperCase()
-        );
-
-        if (borrowedToken) {
-          const newPosition = {
-            id: `borrow-${borrowedToken.value}-${Date.now()}`,
-            assetImg: borrowedToken.logo,
-            assetName: borrowedToken.label,
-            amount: numericAmount,
-            apr: (3.5 + Math.random() * 2) / 100, // Random APR between 3.5% and 5.5% as decimal
-            type: "borrow" as const,
-            tokenValue: borrowedToken.value,
-            timestamp: Date.now(),
-            collateralTokens: selectedCollaterals, // Store which collaterals were used
-          };
-
-          // Get existing positions from localStorage
-          const existingPositions = (() => {
-            if (typeof window !== "undefined") {
-              const stored = localStorage.getItem("centuari_positions");
-              if (stored) {
-                try {
-                  return JSON.parse(stored);
-                } catch {
-                  return [];
-                }
-              }
-            }
-            return [];
-          })();
-
-          // Add new position
-          const updatedPositions = [...existingPositions, newPosition];
-
-          // Save to localStorage
-          if (typeof window !== "undefined") {
-            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-          }
-        }
-
-        // Store success data
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
-
-        // Reset amount input
         setAmountToBorrow("");
         setDisplayAmount("");
-
-        // Log transaction (simulating real transaction)
-        console.log(`Borrowed ${numericAmount} ${token_symbol}`);
-        console.log(`New total debt: ${formatCurrency(updatedTotalDebt)}`);
-        console.log(`Available quota: ${formatCurrency(maxBorrowCapacity - updatedTotalDebt)}`);
-        console.log(`Health Factor: ${healthFactor.toFixed(2)}`);
-
-        // Close main dialog and show success dialog
+        setSelectedCollaterals([]);
         setIsDialogOpen(false);
-        setIsProcessing(false);
         setShowSuccessDialog(true);
       } catch (error) {
         console.error("Transaction failed:", error);
-        setIsProcessing(false);
-        // In real app, show error dialog here
       }
     } else if (viewMode === "deposit-collateral") {
-      // Handle deposit logic here if needed
-      setIsProcessing(true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const accessToken = await getAccessToken();
-        console.log("Access Token:", accessToken);
-        setIsProcessing(false);
+        await getAccessToken();
+        // Deposit logic placeholder - no hook yet
       } catch (error) {
         console.error("Deposit failed:", error);
-        setIsProcessing(false);
       }
     }
   };
@@ -1078,7 +996,7 @@ export function CentuariBorrowDialog({
                 className="flex-1"
                 onClick={handleBorrow}
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   (viewMode === "borrow" &&
                     (numericAmount <= 0 ||
                       numericAmount > availableQuota ||
@@ -1087,7 +1005,7 @@ export function CentuariBorrowDialog({
                       healthFactor < 1.0))
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...

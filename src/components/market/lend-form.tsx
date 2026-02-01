@@ -5,11 +5,8 @@ import { CentuariInput } from "@/components/centuari-input";
 import { CentuariTooltip } from "@/components/centuari-tooltip";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { TransactionSummary } from "@/components/market/transaction-summary";
-import { MaturityToggle } from "@/components/maturity-toggle";
-import { SelectMaturity } from "@/components/select-maturity";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
@@ -23,14 +20,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, calculateFutureAmount } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
   formatMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
-import { tokenList as portfolioTokenList, defaultPortfolio } from "@/lib/portfolio-data";
+import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
+import { useSubmitLend } from "@/hooks/use-submit-lend";
+import type { LendPosition } from "@/types/positions";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import {
@@ -45,22 +44,6 @@ interface TokenOption {
   label: string;
 }
 
-interface LendPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "lend";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  orderType?: "limit" | "market";
-}
-
 interface LendFormProps {
   tokenList: TokenOption[];
   selectedToken?: TokenOption;
@@ -69,6 +52,8 @@ interface LendFormProps {
 }
 
 export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingPosition, onUpdate }: LendFormProps) {
+  const { submitLimit, submitMarket, isPending } = useSubmitLend();
+
   // State for limit order
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
@@ -163,8 +148,7 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
     }
   }, [editingPosition, tokenList]);
 
-  // State for processing and success
-  const [isProcessing, setIsProcessing] = useState(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [successTokenSymbol, setSuccessTokenSymbol] = useState<string>("");
@@ -229,267 +213,76 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const handleLimitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseFloat(limitAmount) || 0;
-    if (numericAmount <= 0 || isProcessing) return;
+    if (numericAmount <= 0 || isPending) return;
 
     const tokenInfo = getTokenInfo(selectedToken.value);
     if (!tokenInfo) return;
 
-    // Start processing
-    setIsProcessing(true);
-
     try {
-      // Simulate transaction processing delay (1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       const amountInUsd = numericAmount * tokenInfo.price;
       const targetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
-      const aprDecimal = targetAPRNumeric / 100; // Convert percentage to decimal
+      const aprDecimal = targetAPRNumeric / 100;
 
-      // Check if we're in edit mode
+      const result = await submitLimit({
+        tokenValue: selectedToken.value,
+        tokenLogo: selectedToken.logo,
+        tokenLabel: selectedToken.label,
+        amount: numericAmount,
+        amountInUsd,
+        targetApr: aprDecimal || (4.5 + Math.random() * 3) / 100,
+        maturity: limitMaturity,
+        editingPosition: editingPosition ?? undefined,
+      });
+
       if (editingPosition && onUpdate) {
-        // Update existing position
-        const updatedPosition: LendPosition = {
-          ...editingPosition,
-          assetImg: selectedToken.logo,
-          assetName: selectedToken.label,
-          amount: amountInUsd,
-          apr: aprDecimal || editingPosition.apr,
-          tokenValue: selectedToken.value,
-          tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-          maturity: limitMaturity,
-          orderType: "limit" as const,
-        };
-
-        // Update in localStorage
-        if (typeof window !== "undefined") {
-          const existingPositions = (() => {
-            const stored = localStorage.getItem("centuari_positions");
-            if (stored) {
-              try {
-                return JSON.parse(stored);
-              } catch {
-                return [];
-              }
-            }
-            return [];
-          })();
-
-          const updatedPositions = existingPositions.map((pos: LendPosition) =>
-            pos.id === editingPosition.id ? updatedPosition : pos
-          );
-          localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-          // Trigger storage event to notify other components
-          window.dispatchEvent(new Event("storage"));
-          window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-        }
-
-        onUpdate(updatedPosition);
-        setIsProcessing(false);
+        onUpdate(result);
         return;
       }
 
-      // Create new position
-      const newPosition = {
-        id: `lend-${selectedToken.value}-${Date.now()}`,
-        assetImg: selectedToken.logo,
-        assetName: selectedToken.label,
-        amount: amountInUsd,
-        apr: aprDecimal || (4.5 + Math.random() * 3) / 100, // Use target APR or random between 4.5% and 7.5%
-        type: "lend" as const,
-        tokenValue: selectedToken.value,
-        tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-        maturity: limitMaturity,
-        status: "pending" as const,
-        createdAt: formatDate(new Date()),
-        timestamp: Date.now(),
-        orderType: "limit" as const,
-      };
-
-      // Save to localStorage
-      if (typeof window !== "undefined") {
-        const existingPositions = (() => {
-          const stored = localStorage.getItem("centuari_positions");
-          if (stored) {
-            try {
-              return JSON.parse(stored);
-            } catch {
-              return [];
-            }
-          }
-          return [];
-        })();
-
-        const updatedPositions = [...existingPositions, newPosition];
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        // Update portfolio
-        const stored = localStorage.getItem("centuari_portfolio");
-        const portfolio = stored ? JSON.parse(stored) : defaultPortfolio;
-        const currentPortfolioValue = portfolio[selectedToken.value] || 0;
-        const newPortfolioValue = Math.max(0, currentPortfolioValue - amountInUsd);
-        portfolio[selectedToken.value] = newPortfolioValue;
-        localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-
-        // Update total supply
-        const storedSupply = localStorage.getItem("centuari_total_supply");
-        const totalSupply = storedSupply ? parseFloat(storedSupply) || 0 : 0;
-        localStorage.setItem("centuari_total_supply", (totalSupply + amountInUsd).toString());
-
-        // Store success data
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
-
-        // Reset form
-        setLimitAmount("");
-        setLimitDisplayAmount("");
-        setLimitTargetAPR("");
-
-        // Trigger storage event to notify other components
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-
-        // Show success dialog
-        setIsProcessing(false);
-        setShowSuccessDialog(true);
-      }
+      setSuccessAmount(formatNumberWithSeparator(numericAmount));
+      setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
+      setLimitAmount("");
+      setLimitDisplayAmount("");
+      setLimitTargetAPR("");
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
-      // In real app, show error dialog here
     }
   };
 
   const handleMarketSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseFloat(marketAmount) || 0;
-    if (numericAmount <= 0 || isProcessing) return;
+    if (numericAmount <= 0 || isPending) return;
 
     const tokenInfo = getTokenInfo(selectedToken.value);
     if (!tokenInfo) return;
 
-    // Start processing
-    setIsProcessing(true);
-
     try {
-      // Simulate transaction processing delay (1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       const amountInUsd = numericAmount * tokenInfo.price;
-      // Market APR is determined by market (random for now)
-      const aprDecimal = (4.5 + Math.random() * 3) / 100;
 
-      // Check if we're in edit mode
+      const result = await submitMarket({
+        tokenValue: selectedToken.value,
+        tokenLogo: selectedToken.logo,
+        tokenLabel: selectedToken.label,
+        amount: numericAmount,
+        amountInUsd,
+        maturity: marketMaturity,
+        editingPosition: editingPosition ?? undefined,
+      });
+
       if (editingPosition && onUpdate) {
-        // Update existing position
-        const updatedPosition: LendPosition = {
-          ...editingPosition,
-          assetImg: selectedToken.logo,
-          assetName: selectedToken.label,
-          amount: amountInUsd,
-          apr: aprDecimal,
-          tokenValue: selectedToken.value,
-          tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-          maturity: marketMaturity,
-          orderType: "market" as const,
-        };
-
-        // Update in localStorage
-        if (typeof window !== "undefined") {
-          const existingPositions = (() => {
-            const stored = localStorage.getItem("centuari_positions");
-            if (stored) {
-              try {
-                return JSON.parse(stored);
-              } catch {
-                return [];
-              }
-            }
-            return [];
-          })();
-
-          const updatedPositions = existingPositions.map((pos: LendPosition) =>
-            pos.id === editingPosition.id ? updatedPosition : pos
-          );
-          localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-          // Trigger storage event to notify other components
-          window.dispatchEvent(new Event("storage"));
-          window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-        }
-
-        onUpdate(updatedPosition);
-        setIsProcessing(false);
+        onUpdate(result);
         return;
       }
 
-      // Create new position
-      const newPosition = {
-        id: `lend-${selectedToken.value}-${Date.now()}`,
-        assetImg: selectedToken.logo,
-        assetName: selectedToken.label,
-        amount: amountInUsd,
-        apr: aprDecimal,
-        type: "lend" as const,
-        tokenValue: selectedToken.value,
-        tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-        maturity: marketMaturity,
-        status: "pending" as const,
-        createdAt: formatDate(new Date()),
-        timestamp: Date.now(),
-        orderType: "market" as const,
-      };
-
-      // Save to localStorage
-      if (typeof window !== "undefined") {
-        const existingPositions = (() => {
-          const stored = localStorage.getItem("centuari_positions");
-          if (stored) {
-            try {
-              return JSON.parse(stored);
-            } catch {
-              return [];
-            }
-          }
-          return [];
-        })();
-
-        const updatedPositions = [...existingPositions, newPosition];
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        // Update portfolio
-        const stored = localStorage.getItem("centuari_portfolio");
-        const portfolio = stored ? JSON.parse(stored) : defaultPortfolio;
-        const currentPortfolioValue = portfolio[selectedToken.value] || 0;
-        const newPortfolioValue = Math.max(0, currentPortfolioValue - amountInUsd);
-        portfolio[selectedToken.value] = newPortfolioValue;
-        localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-
-        // Update total supply
-        const storedSupply = localStorage.getItem("centuari_total_supply");
-        const totalSupply = storedSupply ? parseFloat(storedSupply) || 0 : 0;
-        localStorage.setItem("centuari_total_supply", (totalSupply + amountInUsd).toString());
-
-        // Store success data
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
-
-        // Reset form
-        setMarketAmount("");
-        setMarketDisplayAmount("");
-
-        // Trigger storage event to notify other components
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-
-        // Show success dialog
-        setIsProcessing(false);
-        setShowSuccessDialog(true);
-      }
+      setSuccessAmount(formatNumberWithSeparator(numericAmount));
+      setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
+      setMarketAmount("");
+      setMarketDisplayAmount("");
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
-      // In real app, show error dialog here
     }
   };
 
@@ -617,9 +410,9 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
               type="submit"
               variant="primary"
               className="w-full mt-3.5 md:shrink-0"
-              disabled={!limitAmount || parseFloat(limitAmount) <= 0 || isProcessing}
+              disabled={!limitAmount || parseFloat(limitAmount) <= 0 || isPending}
             >
-              {isProcessing ? (
+              {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing...
@@ -712,9 +505,9 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
               type="submit"
               variant="primary"
               className="w-full mt-3.5 md:shrink-0"
-              disabled={!marketAmount || parseFloat(marketAmount) <= 0 || isProcessing}
+              disabled={!marketAmount || parseFloat(marketAmount) <= 0 || isPending}
             >
-              {isProcessing ? (
+              {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing...

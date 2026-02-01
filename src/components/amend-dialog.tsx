@@ -12,42 +12,7 @@ import { Pencil } from "lucide-react";
 import { LendForm } from "./market/lend-form";
 import { BorrowForm } from "./market/borrow-form";
 import { OrderBookCard } from "./market/order-book";
-
-// Position interfaces
-interface LendPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "lend";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  orderType?: "limit" | "market";
-}
-
-interface BorrowPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "borrow";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  collateralTokens: string[];
-  orderType?: "limit" | "market";
-}
-
-type Position = LendPosition | BorrowPosition;
+import type { Position } from "@/types/positions";
 
 interface TokenOption {
   logo: string;

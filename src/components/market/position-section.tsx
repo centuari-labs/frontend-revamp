@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { CentuariTable } from "@/components/centuari-table";
+import { usePositions } from "@/hooks/use-positions";
+import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
+import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -62,40 +65,7 @@ const getTokenLogo = (tokenValue: string, assetImg?: string): string => {
   return "/tokens/usdc-icon.svg";
 };
 
-interface LendPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "lend";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  orderType?: "limit" | "market";
-}
-
-interface BorrowPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "borrow";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  collateralTokens: string[];
-  orderType?: "limit" | "market";
-}
-
-type Position = LendPosition | BorrowPosition;
+import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
 
 function PositionCard({
   position,
@@ -724,8 +694,10 @@ function BorrowPositionTable({
 
 export function PositionSection() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [positions, setPositions] = useState<Position[]>([]);
   const [activeTab, setActiveTab] = useState("open_orders");
+  const { openOrders, allTransactions } = usePositions();
+  const { update } = useUpdateOpenOrder();
+  const { deleteOrder } = useDeleteOpenOrder();
 
   const tabConfig = {
     open_orders: { label: "Open Orders", placeholder: "Search Open Orders" },
@@ -735,130 +707,30 @@ export function PositionSection() {
 
   const currentTabConfig = tabConfig[activeTab as keyof typeof tabConfig] ?? { label: "Position", placeholder: "Search Position..." };
 
-  const handleDelete = (id: string) => {
-    if (typeof window === "undefined") return;
-
-    const stored = localStorage.getItem("centuari_positions");
-    if (stored) {
-      try {
-        const allPositions: Position[] = JSON.parse(stored);
-        const updatedPositions = allPositions.filter((pos) => pos.id !== id);
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        setPositions(updatedPositions);
-
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-      } catch {
-        console.error("Failed to delete position");
-      }
-    }
+  const handleDelete = async (id: string) => {
+    await deleteOrder(id);
   };
 
-  const handleUpdate = (updatedPosition: Position) => {
-    if (typeof window === "undefined") return;
-
-    const stored = localStorage.getItem("centuari_positions");
-    if (stored) {
-      try {
-        const allPositions: Position[] = JSON.parse(stored);
-        const updatedPositions = allPositions.map((pos) =>
-          pos.id === updatedPosition.id ? updatedPosition : pos
-        );
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        setPositions(updatedPositions);
-
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-      } catch {
-        console.error("Failed to update position");
-      }
-    }
+  const handleUpdate = async (updatedPosition: Position) => {
+    await update(updatedPosition);
   };
 
-  useEffect(() => {
-    const loadPositions = () => {
-      if (typeof window === "undefined") return;
-
-      const stored = localStorage.getItem("centuari_positions");
-      if (stored) {
-        try {
-          const allPositions: Position[] = JSON.parse(stored)
-          setPositions((prevPositions) => {
-            const newPositionsStr = JSON.stringify(allPositions);
-            const currentPositionsStr = JSON.stringify(prevPositions);
-            if (newPositionsStr !== currentPositionsStr) {
-              return allPositions;
-            }
-            return prevPositions;
-          });
-        } catch {
-          setPositions((prevPositions) => {
-            if (prevPositions.length > 0) {
-              return [];
-            }
-            return prevPositions;
-          });
-        }
-      } else {
-        setPositions((prevPositions) => {
-          if (prevPositions.length > 0) {
-            return [];
-          }
-          return prevPositions;
-        });
-      }
-    };
-
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_positions");
-      if (stored) {
-        try {
-          const allPositions: Position[] = JSON.parse(stored)
-          setPositions(allPositions);
-        } catch {
-          setPositions([]);
-        }
-      } else {
-        setPositions([]);
-      }
-    }
-
-    const handleStorageChange = () => {
-      loadPositions();
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("centuari-positions-updated", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("centuari-positions-updated", handleStorageChange);
-    };
-  }, []);
+  const tabPositions = useMemo(() => {
+    if (activeTab === "open_orders") return openOrders;
+    if (activeTab === "active_position") return allTransactions;
+    return [...openOrders, ...allTransactions];
+  }, [activeTab, openOrders, allTransactions]);
 
   const filteredPositions = useMemo(() => {
-    let filtered = positions;
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (pos) =>
-          pos.tokenSymbol.toLowerCase().includes(query) ||
-          pos.assetName.toLowerCase().includes(query) ||
-          formatCurrency(pos.amount).toLowerCase().includes(query)
-      );
-    }
-
-    if (activeTab === "open_orders") {
-      filtered = filtered.filter((pos) => pos.status === "pending");
-    } else if (activeTab === "active_position") {
-      filtered = filtered.filter((pos) => pos.status === "success" || pos.status === "processing");
-    }
-
-    return filtered;
-  }, [positions, searchQuery, activeTab]);
+    if (!searchQuery) return tabPositions;
+    const query = searchQuery.toLowerCase();
+    return tabPositions.filter(
+      (pos) =>
+        pos.tokenSymbol?.toLowerCase().includes(query) ||
+        pos.assetName?.toLowerCase().includes(query) ||
+        formatCurrency(pos.amount).toLowerCase().includes(query)
+    );
+  }, [tabPositions, searchQuery]);
 
   return (
     <div className="mt-2 bg-white/5 rounded-md md:p-4">

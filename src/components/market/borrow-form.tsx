@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Link from "next/link";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
@@ -36,6 +36,8 @@ import {
   normalizeMaturity,
 } from "@/lib/maturity";
 import { tokenList as portfolioTokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
+import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
+import type { BorrowPosition } from "@/types/positions";
 import {
   Dialog,
   DialogContent,
@@ -49,23 +51,6 @@ interface TokenOption {
   label: string;
 }
 
-interface BorrowPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "borrow";
-  tokenValue: string;
-  tokenSymbol: string;
-  maturity: number;
-  status: "pending" | "processing" | "success" | "failed";
-  createdAt: string;
-  timestamp: number;
-  collateralTokens: string[];
-  orderType?: "limit" | "market";
-}
-
 interface BorrowFormProps {
   tokenList: TokenOption[];
   selectedToken?: TokenOption;
@@ -74,6 +59,8 @@ interface BorrowFormProps {
 }
 
 export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editingPosition, onUpdate }: BorrowFormProps) {
+  const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
+
   // State for selected token (use prop if provided, otherwise default to USDT)
   const [selectedToken, setSelectedToken] = useState<TokenOption>(() => {
     if (selectedTokenProp) {
@@ -207,8 +194,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
     return {};
   });
 
-  // State for transaction processing
-  const [isProcessing, setIsProcessing] = useState(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [successTokenSymbol, setSuccessTokenSymbol] = useState<string>("");
@@ -417,120 +403,41 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
     e.preventDefault();
     const numericAmount = parseFloat(limitAmount) || 0;
 
-    if (numericAmount <= 0 || isProcessing) return;
+    if (numericAmount <= 0 || isPending) return;
     if (numericAmount > limitAvailableQuota) return;
     if (limitSelectedCollaterals.length === 0) return;
     if (limitTotalPortfolioValue === 0) return;
     if (limitHealthFactor < 1.0) return;
 
-    setIsProcessing(true);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       const targetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
       const aprDecimal = targetAPRNumeric / 100;
 
-      // Check if we're in edit mode
+      const result = await submitLimit({
+        tokenValue: selectedToken.value,
+        tokenLogo: selectedToken.logo,
+        tokenLabel: selectedToken.label,
+        amount: numericAmount,
+        maturity: limitMaturity,
+        targetApr: aprDecimal || (12 + Math.random() * 3) / 100,
+        collateralTokens: limitSelectedCollaterals,
+        editingPosition: editingPosition ?? undefined,
+      });
+
       if (editingPosition && onUpdate) {
-        // Update existing position
-        const updatedPosition: BorrowPosition = {
-          ...editingPosition,
-          assetImg: selectedToken.logo,
-          assetName: selectedToken.label,
-          amount: numericAmount,
-          apr: aprDecimal || editingPosition.apr,
-          tokenValue: selectedToken.value,
-          tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-          maturity: limitMaturity,
-          collateralTokens: limitSelectedCollaterals,
-          orderType: "limit" as const,
-        };
-
-        // Update in localStorage
-        if (typeof window !== "undefined") {
-          const existingPositions = (() => {
-            const stored = localStorage.getItem("centuari_positions");
-            if (stored) {
-              try {
-                return JSON.parse(stored);
-              } catch {
-                return [];
-              }
-            }
-            return [];
-          })();
-
-          const updatedPositions = existingPositions.map((pos: BorrowPosition) =>
-            pos.id === editingPosition.id ? updatedPosition : pos
-          );
-          localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-          // Trigger storage event to notify other components
-          window.dispatchEvent(new Event("storage"));
-          window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-        }
-
-        onUpdate(updatedPosition);
-        setIsProcessing(false);
+        onUpdate(result);
         return;
       }
 
-      // Create new position
-      const newPosition = {
-        id: `borrow-${selectedToken.value}-${Date.now()}`,
-        assetImg: selectedToken.logo,
-        assetName: selectedToken.label,
-        amount: numericAmount,
-        apr: aprDecimal || (12 + Math.random() * 3) / 100, // Default 12-15% APR
-        type: "borrow" as const,
-        tokenValue: selectedToken.value,
-        tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-        maturity: limitMaturity,
-        status: "pending" as const,
-        createdAt: formatDate(new Date()),
-        timestamp: Date.now(),
-        collateralTokens: limitSelectedCollaterals,
-        orderType: "limit" as const,
-      };
-
-      if (typeof window !== "undefined") {
-        const existingPositions = (() => {
-          const stored = localStorage.getItem("centuari_positions");
-          if (stored) {
-            try {
-              return JSON.parse(stored);
-            } catch {
-              return [];
-            }
-          }
-          return [];
-        })();
-
-        const updatedPositions = [...existingPositions, newPosition];
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        const updatedTotalDebt = totalDebt + numericAmount;
-        setTotalDebt(updatedTotalDebt);
-        localStorage.setItem("centuari_total_debt", updatedTotalDebt.toString());
-
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
-
-        setLimitAmount("");
-        setLimitDisplayAmount("");
-        setLimitTargetAPR("");
-        setLimitSelectedCollaterals([]);
-
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-
-        setIsProcessing(false);
-        setShowSuccessDialog(true);
-      }
+      setSuccessAmount(formatNumberWithSeparator(numericAmount));
+      setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
+      setLimitAmount("");
+      setLimitDisplayAmount("");
+      setLimitTargetAPR("");
+      setLimitSelectedCollaterals([]);
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
     }
   };
 
@@ -538,119 +445,36 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
     e.preventDefault();
     const numericAmount = parseFloat(marketAmount) || 0;
 
-    if (numericAmount <= 0 || isProcessing) return;
+    if (numericAmount <= 0 || isPending) return;
     if (numericAmount > marketAvailableQuota) return;
     if (marketSelectedCollaterals.length === 0) return;
     if (marketTotalPortfolioValue === 0) return;
     if (marketHealthFactor < 1.0) return;
 
-    setIsProcessing(true);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await submitMarket({
+        tokenValue: selectedToken.value,
+        tokenLogo: selectedToken.logo,
+        tokenLabel: selectedToken.label,
+        amount: numericAmount,
+        maturity: marketMaturity,
+        collateralTokens: marketSelectedCollaterals,
+        editingPosition: editingPosition ?? undefined,
+      });
 
-      // Market APR is determined by market (random for now, typically 12-15%)
-      const aprDecimal = (12 + Math.random() * 3) / 100;
-
-      // Check if we're in edit mode
       if (editingPosition && onUpdate) {
-        // Update existing position
-        const updatedPosition: BorrowPosition = {
-          ...editingPosition,
-          assetImg: selectedToken.logo,
-          assetName: selectedToken.label,
-          amount: numericAmount,
-          apr: aprDecimal,
-          tokenValue: selectedToken.value,
-          tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-          maturity: marketMaturity,
-          collateralTokens: marketSelectedCollaterals,
-          orderType: "market" as const,
-        };
-
-        // Update in localStorage
-        if (typeof window !== "undefined") {
-          const existingPositions = (() => {
-            const stored = localStorage.getItem("centuari_positions");
-            if (stored) {
-              try {
-                return JSON.parse(stored);
-              } catch {
-                return [];
-              }
-            }
-            return [];
-          })();
-
-          const updatedPositions = existingPositions.map((pos: BorrowPosition) =>
-            pos.id === editingPosition.id ? updatedPosition : pos
-          );
-          localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-          // Trigger storage event to notify other components
-          window.dispatchEvent(new Event("storage"));
-          window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-        }
-
-        onUpdate(updatedPosition);
-        setIsProcessing(false);
+        onUpdate(result);
         return;
       }
 
-      // Create new position
-      const newPosition = {
-        id: `borrow-${selectedToken.value}-${Date.now()}`,
-        assetImg: selectedToken.logo,
-        assetName: selectedToken.label,
-        amount: numericAmount,
-        apr: aprDecimal,
-        type: "borrow" as const,
-        tokenValue: selectedToken.value,
-        tokenSymbol: selectedToken.label.toUpperCase().slice(0, 4),
-        maturity: marketMaturity,
-        status: "pending" as const,
-        createdAt: formatDate(new Date()),
-        timestamp: Date.now(),
-        collateralTokens: marketSelectedCollaterals,
-        orderType: "market" as const,
-      };
-
-      if (typeof window !== "undefined") {
-        const existingPositions = (() => {
-          const stored = localStorage.getItem("centuari_positions");
-          if (stored) {
-            try {
-              return JSON.parse(stored);
-            } catch {
-              return [];
-            }
-          }
-          return [];
-        })();
-
-        const updatedPositions = [...existingPositions, newPosition];
-        localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-
-        const updatedTotalDebt = totalDebt + numericAmount;
-        setTotalDebt(updatedTotalDebt);
-        localStorage.setItem("centuari_total_debt", updatedTotalDebt.toString());
-
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
-
-        setMarketAmount("");
-        setMarketDisplayAmount("");
-        setMarketSelectedCollaterals([]);
-
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-
-        setIsProcessing(false);
-        setShowSuccessDialog(true);
-      }
+      setSuccessAmount(formatNumberWithSeparator(numericAmount));
+      setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
+      setMarketAmount("");
+      setMarketDisplayAmount("");
+      setMarketSelectedCollaterals([]);
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
     }
   };
 
@@ -952,7 +776,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 variant="primary"
                 className="w-full mt-3.5 md:shrink-0"
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   limitNumericAmount <= 0 ||
                   limitNumericAmount > limitAvailableQuota ||
                   limitSelectedCollaterals.length === 0 ||
@@ -960,7 +784,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                   limitHealthFactor < 1.0
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
@@ -1182,7 +1006,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 variant="primary"
                 className="w-full mt-3.5 md:shrink-0"
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   marketNumericAmount <= 0 ||
                   marketNumericAmount > marketAvailableQuota ||
                   marketSelectedCollaterals.length === 0 ||
@@ -1190,7 +1014,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                   marketHealthFactor < 1.0
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...

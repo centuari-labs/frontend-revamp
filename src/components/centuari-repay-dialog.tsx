@@ -28,6 +28,7 @@ import {
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
+import { useRepay } from "@/hooks/use-repay";
 import HealthFactor from "./centuari-health-factor";
 
 interface CentuariRepayDialogProps {
@@ -53,13 +54,13 @@ export function CentuariRepayDialog({
 }: CentuariRepayDialogProps) {
   const reactId = useId();
   const { getAccessToken } = usePrivy();
+  const { repay, isPending } = useRepay();
 
   // State for amount input
   const [repayAmount, setRepayAmount] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("");
 
-  // State for transaction processing
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -219,19 +220,18 @@ export function CentuariRepayDialog({
 
   const handleDialogChange = (open: boolean) => {
     // Prevent closing if processing
-    if (isProcessing && !open) {
+    if (isPending && !open) {
       return;
     }
 
     // Prevent closing if button is being hovered
     if (!open && isHoveringRef.current) {
       setTimeout(() => {
-        if (!isHoveringRef.current && !isProcessing) {
+        if (!isHoveringRef.current && !isPending) {
           isDialogOpenRef.current = false;
           setIsDialogOpen(false);
           setRepayAmount("");
           setDisplayAmount("");
-          setIsProcessing(false);
           setShowSuccessDialog(false);
         }
       }, 100);
@@ -244,7 +244,6 @@ export function CentuariRepayDialog({
     if (!open) {
       setRepayAmount("");
       setDisplayAmount("");
-      setIsProcessing(false);
       setShowSuccessDialog(false);
     } else {
       // Load latest data when dialog opens
@@ -327,124 +326,30 @@ export function CentuariRepayDialog({
   }, []);
 
   const handleRepay = async () => {
-    // Validate amount
-    if (numericAmount <= 0) {
-      return;
-    }
+    if (numericAmount <= 0) return;
 
-    // Check if amount exceeds available balance (use futureAmount for actual payment)
     const availableInUsd = availableBalance * (token?.price || 1);
-    if (futureAmount > availableInUsd) {
-      return;
-    }
-
-    // Check if principal amount exceeds amount borrowed
-    if (numericAmount > amountBorrowed) {
-      return;
-    }
-
-    // Start processing
-    setIsProcessing(true);
+    if (futureAmount > availableInUsd) return;
+    if (numericAmount > amountBorrowed) return;
 
     try {
-      // Simulate transaction processing delay (1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await getAccessToken();
 
-      // Get access token (for future API integration)
-      const accessToken = await getAccessToken();
-      console.log("Access Token:", accessToken);
+      await repay({
+        positionId,
+        amount: numericAmount,
+        futureAmount,
+        tokenValue,
+      });
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Update position in localStorage (reduce by principal amount)
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_positions");
-        if (stored) {
-          try {
-            const positions = JSON.parse(stored);
-            const updatedPositions = positions
-              .map((pos: any) => {
-                if (pos.id === positionId) {
-                  // Update position amount (reduce by principal repay amount)
-                  const newAmount = Math.max(0, (pos.amount || 0) - numericAmount);
-
-                  // If amount becomes 0 or very small, remove the position
-                  if (newAmount < 0.01) {
-                    return null; // Mark for removal
-                  }
-
-                  return {
-                    ...pos,
-                    amount: newAmount,
-                  };
-                }
-                return pos;
-              })
-              .filter((pos: any) => pos !== null); // Remove null positions
-
-            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-          } catch (error) {
-            console.error("Error updating position:", error);
-          }
-        }
-      }
-
-      // Update total debt (reduce by principal amount, not future amount)
-      // The interest is already included in the debt calculation
-      const updatedTotalDebt = Math.max(0, totalDebt - numericAmount);
-      setTotalDebt(updatedTotalDebt);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("centuari_total_debt", updatedTotalDebt.toString());
-      }
-
-      // Update portfolio (reduce available balance by future amount - this is what user actually pays)
-      if (token && token.price > 0) {
-        const currentBalance = portfolio[tokenValue] || 0;
-        const newBalance = Math.max(0, currentBalance - futureAmount);
-
-        setPortfolio(prev => ({
-          ...prev,
-          [tokenValue]: newBalance,
-        }));
-
-        if (typeof window !== "undefined") {
-          const stored = localStorage.getItem("centuari_portfolio");
-          if (stored) {
-            try {
-              const portfolio = JSON.parse(stored);
-              portfolio[tokenValue] = newBalance;
-              localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-            } catch (error) {
-              console.error("Error updating portfolio:", error);
-            }
-          }
-        }
-      }
-
-      // Store success data (show future amount as that's what was actually paid)
       setSuccessAmount(formatNumberWithSeparator(futureAmount));
-
-      // Reset amount input
       setRepayAmount("");
       setDisplayAmount("");
-
-      // Log transaction
-      console.log(`Repaid ${futureAmount} ${token_symbol} (Principal: ${numericAmount}, Interest: ${futureAmount - numericAmount}) for position ${positionId}`);
-      console.log(`New total debt: ${formatCurrency(updatedTotalDebt)}`);
-
-      // Close main dialog and show success dialog
       setIsDialogOpen(false);
-      setIsProcessing(false);
       setShowSuccessDialog(true);
-
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess?.();
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
     }
   };
 
@@ -667,13 +572,13 @@ export function CentuariRepayDialog({
                 className="flex-1"
                 onClick={handleRepay}
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   numericAmount <= 0 ||
                   futureAmount > availableBalance * (token?.price || 1) ||
                   numericAmount > amountBorrowed
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...

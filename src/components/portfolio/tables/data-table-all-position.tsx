@@ -27,8 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
+import { usePositions } from "@/hooks/use-positions";
 import { CentuariSellPositionDialog } from "@/components/centuari-sell-position-dialog";
 import { CentuariRepayDialog } from "@/components/centuari-repay-dialog";
 
@@ -170,58 +170,17 @@ export const columns: ColumnDef<PositionProps>[] = [
 
 export function DataTableAllPosition() {
   const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
+  const { allTransactions } = usePositions();
 
-  // Single state to track positions data - simplified approach
-  const [positionsData, setPositionsData] = React.useState<string>("");
+  const borrowData: PositionProps[] = React.useMemo(
+    () => allTransactions.filter((pos) => pos.type === "borrow") as PositionProps[],
+    [allTransactions]
+  );
 
-  // Get positions from localStorage on mount and when positionsData changes
-  const getPositions = React.useCallback(() => {
-    if (typeof window === "undefined") return [];
-    const stored = localStorage.getItem("centuari_positions");
-    if (!stored) return [];
-    try {
-      const parsed = JSON.parse(stored) as PositionProps[];
-    } catch {
-      return [];
-    }
-  }, []);
-
-  // Listen for storage changes to update positions
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_positions");
-        if (stored) {
-          setPositionsData(stored);
-        }
-      }
-    };
-
-    // Listen for storage events (from other tabs)
-    window.addEventListener("storage", handleStorageChange);
-
-    // Also check periodically (for same-tab updates)
-    const interval = setInterval(handleStorageChange, 500);
-
-    // Initial load
-    handleStorageChange();
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Memoize borrow and lend data separately
-  const borrowData: PositionProps[] = React.useMemo(() => {
-    const allPositions = getPositions();
-    return allPositions?.filter((pos: PositionProps) => pos.type === "borrow") || [];
-  }, [positionsData, getPositions]);
-
-  const lendData: PositionProps[] = React.useMemo(() => {
-    const allPositions = getPositions();
-    return allPositions?.filter((pos: PositionProps) => pos.type === "lend") || [];
-  }, [positionsData, getPositions]);
+  const lendData: PositionProps[] = React.useMemo(
+    () => allTransactions.filter((pos) => pos.type === "lend") as PositionProps[],
+    [allTransactions]
+  );
 
   // Memoize currentData to prevent unnecessary re-renders
   const currentData = React.useMemo(() => {

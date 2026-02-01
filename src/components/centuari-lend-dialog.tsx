@@ -28,10 +28,11 @@ import { Label } from "./ui/label";
 import { MultiSelect } from "./ui/multi-select";
 import { SelectToken } from "./select-token";
 import Link from "next/link";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, formatDate, calculateFutureAmount } from "@/lib/utils";
+import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
 import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { Loader2 } from "lucide-react";
 import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
+import { useSubmitLend } from "@/hooks/use-submit-lend";
 
 type ViewMode = "lend" | "deposit-lend";
 
@@ -60,6 +61,7 @@ export function CentuariLendDialog({
 
   const reactId = useId();
   const { getAccessToken } = usePrivy();
+  const { submitMarket, isPending } = useSubmitLend();
 
   // State for amount input
   const [amountToLend, setAmountToLend] = useState<string>("");
@@ -142,8 +144,7 @@ export function CentuariLendDialog({
     }
   }, [portfolio, tokenValue]);
 
-  // State for transaction processing
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -194,7 +195,6 @@ export function CentuariLendDialog({
       setViewMode("lend");
       setAmountToLend("");
       setDisplayAmount("");
-      setIsProcessing(false);
       setShowSuccessDialog(false);
     }
   };
@@ -263,122 +263,38 @@ export function CentuariLendDialog({
 
   const handleLend = async () => {
     if (viewMode === "lend") {
-      // Validate amount
-      if (numericAmount <= 0) {
-        return;
-      }
+      if (numericAmount <= 0 || numericAmount > availableBalance) return;
 
-      // Check if amount exceeds available balance
-      if (numericAmount > availableBalance) {
-        return;
-      }
-
-      // Start processing
-      setIsProcessing(true);
+      const token = tokenList.find((t) => t.value === tokenValue);
+      if (!token || token.price <= 0) return;
 
       try {
-        // Simulate transaction processing delay (1.5 seconds)
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await getAccessToken();
 
-        // Get access token (for future API integration)
-        const accessToken = await getAccessToken();
-        console.log("Access Token:", accessToken);
+        const amountInUsd = numericAmount * token.price;
+        await submitMarket({
+          tokenValue,
+          tokenLogo: token.logo,
+          tokenLabel: token.label,
+          amount: numericAmount,
+          amountInUsd,
+          maturity: maturityDate,
+        });
 
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Reduce available balance
-        const newBalance = availableBalance - numericAmount;
-        setAvailableBalance(newBalance);
-
-        // Update portfolio in localStorage
-        const token = tokenList.find(t => t.value === tokenValue);
-        if (token && token.price > 0) {
-          const currentPortfolioValue = portfolio[tokenValue] || 0;
-          const amountInUsd = numericAmount * token.price;
-          const newPortfolioValue = Math.max(0, currentPortfolioValue - amountInUsd);
-
-          setPortfolio(prev => ({
-            ...prev,
-            [tokenValue]: newPortfolioValue,
-          }));
-
-          // Update total supply (add lent amount in USD)
-          const updatedTotalSupply = totalSupply + amountInUsd;
-          setTotalSupply(updatedTotalSupply);
-
-          // Create and save new lend position
-          const newPosition = {
-            id: `lend-${tokenValue}-${Date.now()}`,
-            assetImg: token.logo,
-            assetName: token.label,
-            amount: amountInUsd,
-            apr: (4.5 + Math.random() * 3) / 100, // Random APR between 4.5% and 7.5% as decimal (0.045 to 0.075)
-            type: "lend" as const,
-            tokenValue: tokenValue,
-            tokenSymbol: token_symbol,
-            maturity: maturityDate,
-            status: "pending" as const,
-            createdAt: formatDate(new Date()),
-            timestamp: Date.now(),
-            orderType: "limit" as const,
-          };
-
-          // Get existing positions from localStorage
-          const existingPositions = (() => {
-            if (typeof window !== "undefined") {
-              const stored = localStorage.getItem("centuari_positions");
-              if (stored) {
-                try {
-                  return JSON.parse(stored);
-                } catch {
-                  return [];
-                }
-              }
-            }
-            return [];
-          })();
-
-          // Add new position
-          const updatedPositions = [...existingPositions, newPosition];
-
-          // Save to localStorage
-          if (typeof window !== "undefined") {
-            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-          }
-        }
-
-        // Store success data
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
-
-        // Reset amount input
         setAmountToLend("");
         setDisplayAmount("");
-
-        // Log transaction (simulating real transaction)
-        console.log(`Lent ${numericAmount} ${token_symbol}`);
-        console.log(`New available balance: ${newBalance} ${token_symbol}`);
-
-        // Close main dialog and show success dialog
         setIsDialogOpen(false);
-        setIsProcessing(false);
         setShowSuccessDialog(true);
       } catch (error) {
         console.error("Transaction failed:", error);
-        setIsProcessing(false);
-        // In real app, show error dialog here
       }
     } else if (viewMode === "deposit-lend") {
-      // Handle deposit logic here if needed
-      setIsProcessing(true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const accessToken = await getAccessToken();
-        console.log("Access Token:", accessToken);
-        setIsProcessing(false);
+        await getAccessToken();
+        // Deposit logic placeholder - no hook yet
       } catch (error) {
         console.error("Deposit failed:", error);
-        setIsProcessing(false);
       }
     }
   };
@@ -732,12 +648,12 @@ export function CentuariLendDialog({
                 className="flex-1"
                 onClick={handleLend}
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   (viewMode === "lend" &&
                     (numericAmount <= 0 || numericAmount > availableBalance))
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...

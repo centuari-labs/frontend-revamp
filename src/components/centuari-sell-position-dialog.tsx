@@ -27,6 +27,7 @@ import {
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
+import { useWithdrawLendPosition } from "@/hooks/use-withdraw-lend-position";
 import { IcCreditCardUpload } from "./icons/ic-credit-card-upload";
 
 interface CentuariSellPositionDialogProps {
@@ -56,13 +57,22 @@ export function CentuariSellPositionDialog({
 }: CentuariSellPositionDialogProps) {
   const reactId = useId();
   const { getAccessToken } = usePrivy();
+  const { withdraw, isPending } = useWithdrawLendPosition();
+
+  const getTokenValue = () => {
+    const token = tokenList.find(
+      (t) =>
+        t.label.toUpperCase() === token_symbol?.toUpperCase() ||
+        t.value.toUpperCase() === token_symbol?.toUpperCase()
+    );
+    return token?.value ?? "usdc";
+  };
 
   // State for amount input
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("");
 
-  // State for transaction processing
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -120,7 +130,7 @@ export function CentuariSellPositionDialog({
 
   const handleDialogChange = (open: boolean) => {
     // Prevent closing if processing
-    if (isProcessing && !open) {
+    if (isPending && !open) {
       return;
     }
 
@@ -128,12 +138,11 @@ export function CentuariSellPositionDialog({
     if (!open && isHoveringRef.current) {
       // Use setTimeout to allow hover state to update
       setTimeout(() => {
-        if (!isHoveringRef.current && !isProcessing) {
+        if (!isHoveringRef.current && !isPending) {
           isDialogOpenRef.current = false;
           setIsDialogOpen(false);
           setWithdrawAmount("");
           setDisplayAmount("");
-          setIsProcessing(false);
           setShowSuccessDialog(false);
         }
       }, 100);
@@ -147,7 +156,6 @@ export function CentuariSellPositionDialog({
     if (!open) {
       setWithdrawAmount("");
       setDisplayAmount("");
-      setIsProcessing(false);
       setShowSuccessDialog(false);
     }
   };
@@ -164,123 +172,26 @@ export function CentuariSellPositionDialog({
   }, [showSuccessDialog]);
 
   const handleSell = async () => {
-    // Validate amount
-    if (numericAmount <= 0) {
-      return;
-    }
-
-    // Check if amount exceeds available funds
-    if (numericAmount > availableFunds) {
-      return;
-    }
-
-    // Start processing
-    setIsProcessing(true);
+    if (numericAmount <= 0) return;
+    if (numericAmount > availableFunds) return;
 
     try {
-      // Simulate transaction processing delay (1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await getAccessToken();
 
-      // Get access token (for future API integration)
-      const accessToken = await getAccessToken();
-      console.log("Access Token:", accessToken);
+      await withdraw({
+        positionId,
+        amount: numericAmount,
+        tokenValue: getTokenValue(),
+      });
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Update position in localStorage
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_positions");
-        if (stored) {
-          try {
-            const positions = JSON.parse(stored);
-            const updatedPositions = positions
-              .map((pos: any) => {
-                if (pos.id === positionId) {
-                  // Update position amount (reduce by withdraw amount)
-                  const newAmount = Math.max(0, (pos.amount || 0) - numericAmount);
-
-                  // If amount becomes 0 or very small, remove the position
-                  if (newAmount < 0.01) {
-                    return null; // Mark for removal
-                  }
-
-                  return {
-                    ...pos,
-                    amount: newAmount,
-                  };
-                }
-                return pos;
-              })
-              .filter((pos: any) => pos !== null); // Remove null positions
-
-            localStorage.setItem("centuari_positions", JSON.stringify(updatedPositions));
-          } catch (error) {
-            console.error("Error updating position:", error);
-          }
-        }
-      }
-
-      // Update portfolio (add withdrawn amount back to portfolio)
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_portfolio");
-        if (stored) {
-          try {
-            const portfolio = JSON.parse(stored);
-            // Find token in portfolio and add withdrawn amount
-            const token = tokenList.find(t =>
-              t.label.toUpperCase() === token_symbol.toUpperCase() ||
-              t.value.toUpperCase() === token_symbol.toUpperCase()
-            );
-
-            if (token) {
-              const currentValue = portfolio[token.value] || 0;
-              portfolio[token.value] = currentValue + numericAmount;
-              localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-            }
-          } catch (error) {
-            console.error("Error updating portfolio:", error);
-          }
-        }
-      }
-
-      // Update total supply (reduce by withdrawn amount for lend positions)
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_total_supply");
-        if (stored) {
-          try {
-            const currentSupply = parseFloat(stored) || 0;
-            const newSupply = Math.max(0, currentSupply - numericAmount);
-            localStorage.setItem("centuari_total_supply", newSupply.toString());
-          } catch (error) {
-            console.error("Error updating total supply:", error);
-          }
-        }
-      }
-
-      // Store success data
       setSuccessAmount(formatNumberWithSeparator(numericAmount));
-
-      // Reset amount input
       setWithdrawAmount("");
       setDisplayAmount("");
-
-      // Log transaction (simulating real transaction)
-      console.log(`Sold ${numericAmount} ${token_symbol} from position ${positionId}`);
-
-      // Close main dialog and show success dialog
       setIsDialogOpen(false);
-      setIsProcessing(false);
       setShowSuccessDialog(true);
-
-      // Call onSuccess callback if provided
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess?.();
     } catch (error) {
       console.error("Transaction failed:", error);
-      setIsProcessing(false);
-      // In real app, show error dialog here
     }
   };
 
@@ -457,12 +368,12 @@ export function CentuariSellPositionDialog({
                 className="flex-1"
                 onClick={handleSell}
                 disabled={
-                  isProcessing ||
+                  isPending ||
                   numericAmount <= 0 ||
                   numericAmount > availableFunds
                 }
               >
-                {isProcessing ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Processing...
