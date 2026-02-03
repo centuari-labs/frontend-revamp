@@ -24,6 +24,7 @@ import {
   parseNumberFromSeparator,
   formatCurrency,
   calculateFutureAmount,
+  calculateProfitAmount,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
@@ -36,6 +37,7 @@ interface CentuariSellPositionDialogProps {
   token_name: string;
   token_symbol: string;
   maturityDate?: number;
+  startDate?: number; // Position start as Unix timestamp (ms); when set, profit uses elapsed time
   availableFunds: number; // Available funds in USD (current position value)
   moneyDeposited: number; // Original deposit amount
   profitReturn: number; // Profit amount
@@ -49,6 +51,7 @@ export function CentuariSellPositionDialog({
   token_name,
   token_symbol,
   maturityDate,
+  startDate,
   availableFunds,
   moneyDeposited,
   profitReturn,
@@ -86,9 +89,12 @@ export function CentuariSellPositionDialog({
   // Withdraw Shares = the input amount
   const withdrawShares = numericAmount > 0 ? numericAmount : 0;
 
-  // Calculate proportional deposit for this withdrawal, then future amount (principal + interest)
+  // Calculate profit: elapsed (startDate → now) when startDate set, else future (now → maturity)
   const normalizedMaturity = normalizeMaturity(maturityDate);
-  const calculatedProfitReturn = calculateFutureAmount(withdrawShares, apr, new Date().getTime()) - withdrawShares;
+  const calculatedProfitReturn =
+    startDate != null
+      ? calculateProfitAmount(withdrawShares, apr, startDate)
+      : calculateFutureAmount(withdrawShares, apr, normalizedMaturity) - withdrawShares;
 
   // Total amount after withdraw = Withdraw Shares + Profit Return
   const totalAfterWithdraw = withdrawShares + calculatedProfitReturn;

@@ -141,6 +141,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_name={position.assetName}
               token_symbol={position.assetName}
               maturityDate={normalizeMaturity(position.maturity)}
+              startDate={position.timestamp}
               availableFunds={calculateFutureAmount(position.amount, (position.apr ?? 0) * 100, normalizeMaturity(position.maturity))}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}

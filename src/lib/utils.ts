@@ -229,3 +229,30 @@ export function calculateFutureAmount(
 
   return Number((amount + (amount * (aprPercent / 100) / 365 * days)).toFixed(2));
 }
+
+/**
+ * Calculate profit (interest only) over an elapsed period with simple interest.
+ * Formula: amount * rate% / 365 * (end date - start date in days)
+ *
+ * @param amount - Principal amount
+ * @param aprPercent - APR as percentage (e.g., 6.9 for 6.9%, 10 for 10%)
+ * @param startTimestamp - Start date as Unix timestamp (ms)
+ * @param endTimestamp - End date as Unix timestamp (ms); defaults to now when omitted
+ * @returns Profit (interest) amount, or 0 if invalid inputs or non-positive elapsed days
+ */
+export function calculateProfitAmount(
+  amount: number,
+  aprPercent: number,
+  startTimestamp: number,
+  endTimestamp?: number,
+): number {
+  if (amount <= 0 || aprPercent <= 0) return 0;
+
+  const startDateObj = new Date(startTimestamp);
+  const endDateObj = new Date(endTimestamp ?? Date.now());
+
+  const days = calculateDaysDifference(startDateObj, endDateObj);
+  if (days <= 0) return 0;
+
+  return Number((amount * (aprPercent / 100) / 365 * days).toFixed(2));
+}
