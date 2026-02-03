@@ -59,7 +59,7 @@ export function TransactionSummary({
       <div className="py-3 px-5 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5 flex flex-col justify-center">
         <div className="flex flex-row items-center justify-between gap-4 min-h-[2rem]">
           <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
-            In the future you'll get and pay{" "}
+            In the future you'll get{" "}
             <CentuariTooltip message="Coming Soon">
               <Info size={12} />
             </CentuariTooltip>{" "}

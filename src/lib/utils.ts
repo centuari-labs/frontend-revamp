@@ -227,5 +227,5 @@ export function calculateFutureAmount(
   const days = calculateDaysDifference(currentDate, maturityDateObj);
   if (days <= 0) return amount;
 
-  return amount + (amount * (aprPercent / 100) / 365 * days);
+  return Number((amount + (amount * (aprPercent / 100) / 365 * days)).toFixed(2));
 }

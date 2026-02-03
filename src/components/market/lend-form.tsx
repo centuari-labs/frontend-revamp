@@ -6,6 +6,7 @@ import { CentuariTooltip } from "@/components/centuari-tooltip";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { TransactionSummary } from "@/components/market/transaction-summary";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,6 +61,9 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
   const [limitDisplayAmount, setLimitDisplayAmount] = useState<string>("");
   const [limitMaturity, setLimitMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
   const [limitTargetAPR, setLimitTargetAPR] = useState<string>("");
+
+  // State for Auto Rollover (shared across Limit and Market tabs)
+  const [autoRollover, setAutoRollover] = useState<boolean>(true);
 
   // State for market order
   const [marketAmount, setMarketAmount] = useState<string>("");
@@ -402,6 +406,14 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                   </div>
                 </div>
               </div>
+              <div className="mt-5">
+                <Checkbox
+                  id="limit-auto-rollover"
+                  label="Auto Rollover"
+                  checked={autoRollover}
+                  onCheckedChange={setAutoRollover}
+                />
+              </div>
               <TransactionSummary
                 transactionFee={limitTransactionFee}
                 amountToPay={limitAmountToPay}
@@ -496,6 +508,14 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
                 >
                   APR is determined by the market
                 </CentuariTypography>
+              </div>
+              <div className="mt-5">
+                <Checkbox
+                  id="market-auto-rollover"
+                  label="Auto Rollover"
+                  checked={autoRollover}
+                  onCheckedChange={setAutoRollover}
+                />
               </div>
               <TransactionSummary
                 transactionFee={marketTransactionFee}

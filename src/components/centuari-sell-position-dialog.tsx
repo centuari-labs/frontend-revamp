@@ -87,11 +87,8 @@ export function CentuariSellPositionDialog({
   const withdrawShares = numericAmount > 0 ? numericAmount : 0;
 
   // Calculate proportional deposit for this withdrawal, then future amount (principal + interest)
-  const proportionalDeposit = availableFunds > 0 && numericAmount > 0
-    ? (numericAmount / availableFunds) * moneyDeposited
-    : 0;
   const normalizedMaturity = normalizeMaturity(maturityDate);
-  const calculatedProfitReturn = calculateFutureAmount(proportionalDeposit, apr, normalizedMaturity);
+  const calculatedProfitReturn = calculateFutureAmount(withdrawShares, apr, new Date().getTime()) - withdrawShares;
 
   // Total amount after withdraw = Withdraw Shares + Profit Return
   const totalAfterWithdraw = withdrawShares + calculatedProfitReturn;

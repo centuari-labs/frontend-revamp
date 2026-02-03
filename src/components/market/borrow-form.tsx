@@ -7,6 +7,7 @@ import HealthFactor from "@/components/centuari-health-factor";
 import { MaturityToggle } from "@/components/maturity-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -116,6 +117,9 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
   const [marketDisplayAmount, setMarketDisplayAmount] = useState<string>("");
   const [marketMaturity, setMarketMaturity] = useState<number>(() => getDefaultMaturityTimestamp());
   const [marketSelectedCollaterals, setMarketSelectedCollaterals] = useState<string[]>([]);
+
+  // State for Auto refinance (shared across Limit and Market tabs)
+  const [autoRefinance, setAutoRefinance] = useState<boolean>(true);
 
   // Ref for maturity select to calculate dynamic padding
   const maturitySelectRef = useRef<HTMLButtonElement | null>(null);
@@ -710,6 +714,14 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                     </div>
                   </div>
                 </div>
+                <div className="mt-5">
+                  <Checkbox
+                    id="limit-auto-refinance"
+                    label="Auto refinance"
+                    checked={autoRefinance}
+                    onCheckedChange={setAutoRefinance}
+                  />
+                </div>
                 <div>
                   <Label className="mb-2 mt-2.5">
                     Health Factor{" "}
@@ -938,6 +950,14 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                   <MaturityToggle
                     value={marketMaturity}
                     onValueChange={setMarketMaturity}
+                  />
+                </div>
+                <div className="mt-5">
+                  <Checkbox
+                    id="market-auto-refinance"
+                    label="Auto refinance"
+                    checked={autoRefinance}
+                    onCheckedChange={setAutoRefinance}
                   />
                 </div>
                 <div>

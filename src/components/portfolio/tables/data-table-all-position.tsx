@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { calculateFutureAmount, cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -141,7 +141,7 @@ export const columns: ColumnDef<PositionProps>[] = [
               token_name={position.assetName}
               token_symbol={position.assetName}
               maturityDate={normalizeMaturity(position.maturity)}
-              availableFunds={1100}
+              availableFunds={calculateFutureAmount(position.amount, (position.apr ?? 0) * 100, normalizeMaturity(position.maturity))}
               moneyDeposited={position.amount * 0.9}
               profitReturn={position.amount * 0.1}
               apr={(position.apr ?? 0) * 100}

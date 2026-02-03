@@ -498,12 +498,15 @@ export function CentuariLendDialog({
                           </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
-                          <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"} (0.01%)</p>
+                          <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="flex text-muted-foreground items-center gap-2">
                           Amount to Pay Now
+                          <CentuariTooltip message="Coming Soon">
+                            <Info size={12} />
+                          </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
                           <p>{numericAmount > 0 ? formatCurrency(amountToPay) : "$0.00"}</p>
@@ -514,7 +517,7 @@ export function CentuariLendDialog({
                     <div className="py-3 px-4 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          In the future you'll get and pay{" "}
+                          In the future you'll get{" "}
                           <CentuariTooltip message="Coming Soon">
                             <Info size={12} />
                           </CentuariTooltip>{" "}
