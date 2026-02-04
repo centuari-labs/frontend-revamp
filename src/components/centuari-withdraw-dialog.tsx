@@ -2,12 +2,12 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { gsap } from "gsap";
-import { ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -15,13 +15,11 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CentuariButton } from "./centuari-button";
-import { CentuariInput } from "./centuari-input";
-import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariTypography } from "./centuari-typography";
-import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { Button } from "./ui/button";
 import { IcCreditCardUploadCentuari } from "./icons/ic-credit-card-upload-centuari";
 import { SelectChain } from "./select-chain";
+import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { ChainValue, getChainByValue, getChainIcon } from "@/lib/chains";
 import { cn } from "@/lib/utils";
 
@@ -62,12 +60,17 @@ const availableTokens: Token[] = [
 type Step = "select-token" | "enter-amount";
 
 export function CentuariWithdrawDialog() {
+  const router = useRouter();
   const [selectedChain, setSelectedChain] = useState<ChainValue>("eth");
   const [step, setStep] = useState<Step>("select-token");
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const selectTokenViewRef = useRef<HTMLDivElement>(null);
   const enterAmountViewRef = useRef<HTMLDivElement>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successData, setSuccessData] = useState<boolean | null>(null);
 
   const { getAccessToken } = usePrivy();
 
@@ -81,12 +84,26 @@ export function CentuariWithdrawDialog() {
   };
 
   const handleDialogChange = (open: boolean) => {
-    if (!open) {
+    setDialogOpen(open);
+    if (!open && !successData) {
       setSelectedChain("eth");
       setStep("select-token");
       setSelectedToken(null);
+      setWithdrawAmount("");
+      setIsProcessing(false);
+      setShowSuccessDialog(false);
     }
   };
+
+  // Handle opening success dialog after withdraw dialog closes
+  useEffect(() => {
+    if (!dialogOpen && successData) {
+      const timer = setTimeout(() => {
+        setShowSuccessDialog(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [dialogOpen, successData]);
 
   // Animate in when step changes
   useEffect(() => {
@@ -132,13 +149,27 @@ export function CentuariWithdrawDialog() {
   }, [step]);
 
   const handleWithdraw = async () => {
-    const accessToken = await getAccessToken();
-    console.log("Access Token:", accessToken);
-    console.log("Withdrawing:", selectedToken);
+    if (isProcessing || !withdrawAmount) return;
+
+    setIsProcessing(true);
+    try {
+      const accessToken = await getAccessToken();
+      // TODO: Add actual withdraw API call using accessToken
+      // Simulate processing for now
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setSuccessData(true);
+      setDialogOpen(false);
+    } catch {
+      // Handle error - user can add toast/alert
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
-    <Dialog onOpenChange={handleDialogChange}>
+    <>
+    <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
       <DialogTrigger asChild>
         <Button variant="secondary" className="flex-1" size={"lg"}>
           Withdraw <IcCreditCardUploadCentuari />
@@ -261,14 +292,6 @@ export function CentuariWithdrawDialog() {
                   <div className="flex flex-col items-center justify-center gap-2">
                     {selectedToken && (
                       <>
-                        {/* <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-2">
-                          <Image
-                            src={selectedToken.icon}
-                            alt={selectedToken.name}
-                            width={32}
-                            height={32}
-                          />
-                        </div> */}
                         <CentuariTypography variant="h1">
                           Enter the amount you
                         </CentuariTypography>
@@ -380,12 +403,39 @@ export function CentuariWithdrawDialog() {
               variant={"primary"}
               className="flex-1"
               onClick={handleWithdraw}
+              disabled={isProcessing || !withdrawAmount}
             >
-              Confirm Withdrawal
+              {isProcessing ? (
+                <>
+                  Processing... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : (
+                "Confirm Withdrawal"
+              )}
             </CentuariButton>
           )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <TransactionSuccessDialog
+      open={showSuccessDialog}
+      onOpenChange={(open) => {
+        setShowSuccessDialog(open);
+        if (!open) {
+          setSuccessData(null);
+          setWithdrawAmount("");
+          setSelectedChain("eth");
+          setStep("select-token");
+          setSelectedToken(null);
+        }
+      }}
+      title="Withdrawal Complete"
+      description="Your funds have been successfully withdrawn and sent to your connected wallet."
+      primaryActionLabel="Start Earning"
+      onPrimaryAction={() => router.push("/")}
+      secondaryActionLabel="Done"
+    />
+    </>
   );
 }

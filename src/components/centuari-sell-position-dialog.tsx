@@ -30,6 +30,8 @@ import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
 import { useWithdrawLendPosition } from "@/hooks/use-withdraw-lend-position";
 import { IcCreditCardUpload } from "./icons/ic-credit-card-upload";
+import { TransactionSuccessDialog } from "./transaction-success-dialog";
+import { useRouter } from "next/navigation";
 
 interface CentuariSellPositionDialogProps {
   positionId: string;
@@ -59,8 +61,9 @@ export function CentuariSellPositionDialog({
   onSuccess,
 }: CentuariSellPositionDialogProps) {
   const reactId = useId();
+  const router = useRouter();
   const { getAccessToken } = usePrivy();
-  const { withdraw, isPending } = useWithdrawLendPosition();
+  const { withdraw, isPending, isSuccess, resetSuccess } = useWithdrawLendPosition();
 
   const getTokenValue = () => {
     const token = tokenList.find(
@@ -75,9 +78,6 @@ export function CentuariSellPositionDialog({
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("");
 
-  // State for success dialog
-  const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
-  const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const isDialogOpenRef = useRef<boolean>(false);
   const isHoveringRef = useRef<boolean>(false);
@@ -146,7 +146,6 @@ export function CentuariSellPositionDialog({
           setIsDialogOpen(false);
           setWithdrawAmount("");
           setDisplayAmount("");
-          setShowSuccessDialog(false);
         }
       }, 100);
       return;
@@ -159,20 +158,8 @@ export function CentuariSellPositionDialog({
     if (!open) {
       setWithdrawAmount("");
       setDisplayAmount("");
-      setShowSuccessDialog(false);
     }
   };
-
-  // Auto-close success dialog after 3 seconds
-  useEffect(() => {
-    if (showSuccessDialog) {
-      const timer = setTimeout(() => {
-        setShowSuccessDialog(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccessDialog]);
 
   const handleSell = async () => {
     if (numericAmount <= 0) return;
@@ -187,11 +174,9 @@ export function CentuariSellPositionDialog({
         tokenValue: getTokenValue(),
       });
 
-      setSuccessAmount(formatNumberWithSeparator(numericAmount));
       setWithdrawAmount("");
       setDisplayAmount("");
       setIsDialogOpen(false);
-      setShowSuccessDialog(true);
       onSuccess?.();
     } catch (error) {
       console.error("Transaction failed:", error);
@@ -390,42 +375,17 @@ export function CentuariSellPositionDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Success Dialog */}
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
-          <DialogHeader className="contents space-y-0 text-left">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
-              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
-              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
-            </div>
-            <div className="mt-6 px-6 flex items-center justify-center flex-col gap-4 pb-6">
-              <Image
-                src="/assets/tx-success.png"
-                alt="Success"
-                width={116}
-                height={124}
-              />
-              <CentuariTypography className="text-2xl font-semibold">
-                Withdraw Successful!
-              </CentuariTypography>
-              <CentuariTypography className="text-center text-muted-foreground">
-                {successAmount ? (
-                  <>
-                    You have successfully withdrawn {successAmount} {token_symbol} from
-                    your position.
-                  </>
-                ) : (
-                  <>Your {token_symbol} withdraw order has been completed successfully.</>
-                )}
-              </CentuariTypography>
-              <div className="flex items-center gap-2 text-muted-foreground mt-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Closing...</span>
-              </div>
-            </div>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+      <TransactionSuccessDialog
+        open={isSuccess}
+        onOpenChange={(open) => {
+          if (!open) resetSuccess();
+        }}
+        title="Withdrawal Complete"
+        description="Your funds have been successfully withdrawn and sent to your connected wallet."
+        primaryActionLabel="Start Earning"
+        onPrimaryAction={() => router.push("/")}
+        secondaryActionLabel="Done"
+      />
     </>
   );
 }

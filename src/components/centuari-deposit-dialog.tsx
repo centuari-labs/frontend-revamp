@@ -26,15 +26,17 @@ import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
 import { SelectToken } from "./select-token";
 import { SelectChain } from "./select-chain";
-import { CentuariDepositSuccessDialog } from "./centuari-deposit-success-dialog";
+import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
 } from "@/lib/utils";
 import { TokenValue, getTokenIcon } from "@/lib/tokens";
-import { ChainValue } from "@/lib/chains";
+import { ChainValue, getChainByValue } from "@/lib/chains";
+import { useRouter } from "next/navigation";
 
 export function CentuariDepositDialog() {
+  const router = useRouter();
   const [selectedChain, setSelectedChain] = useState<ChainValue>("eth");
   const [selectedToken, setSelectedToken] = useState<TokenValue>("usdt");
   const [depositAmount, setDepositAmount] = useState<string>(""); // Stored as numeric value (without separator)
@@ -47,6 +49,10 @@ export function CentuariDepositDialog() {
     amount: string;
     chain?: ChainValue;
   } | null>(null);
+
+  const depositSuccessDescription = successData
+    ? `You have successfully deposited ${successData.amount} ${successData.token.toUpperCase()}${successData.chain ? ` on ${getChainByValue(successData.chain)?.label}` : ""} to your vault.`
+    : "Your deposit has been completed successfully.";
 
   // Handle opening success dialog after deposit dialog closes
   useEffect(() => {
@@ -206,12 +212,11 @@ export function CentuariDepositDialog() {
         </DialogContent>
       </Dialog>
 
-      <CentuariDepositSuccessDialog
+      <TransactionSuccessDialog
         open={showSuccessDialog}
         onOpenChange={(open) => {
           setShowSuccessDialog(open);
           if (!open) {
-            // Reset everything when success dialog closes
             setDepositAmount("");
             setDisplayAmount("");
             setSelectedChain("eth");
@@ -219,9 +224,11 @@ export function CentuariDepositDialog() {
             setSuccessData(null);
           }
         }}
-        token={successData?.token || selectedToken}
-        amount={successData?.amount || displayAmount || depositAmount}
-        chain={successData?.chain ?? selectedChain}
+        title="Deposit Complete"
+        description={depositSuccessDescription}
+        primaryActionLabel="Start Earning"
+        onPrimaryAction={() => router.push("/")}
+        secondaryActionLabel="Done"
       />
     </>
   );
