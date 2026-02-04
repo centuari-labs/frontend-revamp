@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
@@ -33,6 +32,9 @@ import { IcCreditCardUpload } from "./icons/ic-credit-card-upload";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { useRouter } from "next/navigation";
 
+/** When provided, the parent shows the success dialog (avoids unmount before dialog shows). */
+export type WithdrawSuccessMessage = { title: string; description: string };
+
 interface CentuariSellPositionDialogProps {
   positionId: string;
   token_image: string;
@@ -45,6 +47,8 @@ interface CentuariSellPositionDialogProps {
   profitReturn: number; // Profit amount
   apr?: number; // APR as percentage (e.g., 10 for 10%)
   onSuccess?: () => void; // Callback after successful sell
+  /** When set, parent shows success dialog; use when row may unmount (e.g. full withdraw). */
+  onWithdrawComplete?: (message: WithdrawSuccessMessage) => void;
 }
 
 export function CentuariSellPositionDialog({
@@ -59,6 +63,7 @@ export function CentuariSellPositionDialog({
   profitReturn,
   apr = 10, // Default 10% APR
   onSuccess,
+  onWithdrawComplete,
 }: CentuariSellPositionDialogProps) {
   const reactId = useId();
   const router = useRouter();
@@ -177,7 +182,9 @@ export function CentuariSellPositionDialog({
       setWithdrawAmount("");
       setDisplayAmount("");
       setIsDialogOpen(false);
-      onSuccess?.();
+      // Do not call onSuccess here — it triggers refetch and can unmount this
+      // component before TransactionSuccessDialog can show. Call it when the
+      // user dismisses the success dialog instead.
     } catch (error) {
       console.error("Transaction failed:", error);
     }
@@ -378,10 +385,13 @@ export function CentuariSellPositionDialog({
       <TransactionSuccessDialog
         open={isSuccess}
         onOpenChange={(open) => {
-          if (!open) resetSuccess();
+          if (!open) {
+            resetSuccess();
+            onSuccess?.();
+          }
         }}
         title="Withdrawal Complete"
-        description="Your funds have been successfully withdrawn and sent to your connected wallet."
+        description="Your lend position have been successfully withdrawn"
         primaryActionLabel="Start Earning"
         onPrimaryAction={() => router.push("/")}
         secondaryActionLabel="Done"
