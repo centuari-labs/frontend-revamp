@@ -168,7 +168,7 @@ export default function PortfolioPage() {
             />
             <div className="relative z-10">
               <h1 className="text-2xl md:text-3xl font-semibold">
-                My Position
+                My Portofolio
               </h1>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row items-start md:items-center gap-6 md:gap-8 mt-6 md:mt-9 py-3.5">
                 <div>

@@ -29,8 +29,13 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { usePositions } from "@/hooks/use-positions";
-import { CentuariSellPositionDialog } from "@/components/centuari-sell-position-dialog";
+import {
+  CentuariSellPositionDialog,
+  type WithdrawSuccessMessage,
+} from "@/components/centuari-sell-position-dialog";
 import { CentuariRepayDialog } from "@/components/centuari-repay-dialog";
+import { TransactionSuccessDialog } from "@/components/transaction-success-dialog";
+import { useRouter } from "next/navigation";
 
 export type PositionProps = {
   id: string;
@@ -45,131 +50,10 @@ export type PositionProps = {
   maturity?: number;
 };
 
-export const columns: ColumnDef<PositionProps>[] = [
-  {
-    accessorKey: "assetName",
-    header: "Assets",
-    cell: ({ row }) => {
-      const asset = row.original;
-      return (
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
-            <Image
-              src={asset.assetImg}
-              alt={asset.assetName}
-              width={24}
-              height={24}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="font-medium text-white">{asset.assetName}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "amount",
-    header: "Amount",
-    cell: ({ row }) => {
-      const amount = row.original.amount;
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      }).format(amount);
-
-      const [main, cents] = formatted.split(".");
-
-      return (
-        <div className="font-medium text-white">
-          {main}
-          <span className="text-white/40">.{cents}</span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "apr",
-    header: "APR %",
-    cell: ({ row }) => {
-      const apr = row.original.apr ?? 0;
-      return (
-        <div className="text-white font-medium">
-          {((apr ?? 0) * 100).toFixed(2).replace(".", ",")}%
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "maturity",
-    header: "Maturity",
-    cell: ({ row }) => (
-      <div className="text-white font-medium">
-        {formatMaturityTimestamp(normalizeMaturity(row.original.maturity))}
-      </div>
-    ),
-  },
-  {
-    id: "action",
-    header: "Action",
-    cell: ({ row }) => {
-      const position = row.original;
-      const isBorrow = position.type === "borrow";
-
-      return (
-        <div className="flex items-center gap-4">
-          {isBorrow ? (
-            <CentuariRepayDialog
-              positionId={position.id}
-              token_image={position.assetImg}
-              token_name={position.assetName}
-              token_symbol={position.assetName}
-              amountBorrowed={position.amount}
-              apr={(position.apr ?? 0) * 100}
-              maturityDate={normalizeMaturity(position.maturity)}
-              onSuccess={() => {
-                // Trigger re-render to update positions
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new Event("storage"));
-                }
-              }}
-            />
-          ) : (
-            <CentuariSellPositionDialog
-              positionId={position.id}
-              token_image={position.assetImg}
-              token_name={position.assetName}
-              token_symbol={position.assetName}
-              maturityDate={normalizeMaturity(position.maturity)}
-              startDate={position.timestamp}
-              availableFunds={calculateFutureAmount(position.amount, (position.apr ?? 0) * 100, normalizeMaturity(position.maturity))}
-              moneyDeposited={position.amount * 0.9}
-              profitReturn={position.amount * 0.1}
-              apr={(position.apr ?? 0) * 100}
-              onSuccess={() => {
-                // Trigger re-render to update positions
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new Event("storage"));
-                }
-              }}
-            />
-          )}
-          <button
-            className="text-white/80 hover:text-white transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            type="button"
-          >
-            <Plus size={18} />
-          </button>
-        </div>
-      );
-    },
-  },
-];
-
 export function DataTableAllPosition() {
+  const router = useRouter();
+  const [withdrawSuccess, setWithdrawSuccess] =
+    React.useState<WithdrawSuccessMessage | null>(null);
   const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
   const { allTransactions } = usePositions();
 
@@ -196,6 +80,136 @@ export function DataTableAllPosition() {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const columns = React.useMemo<ColumnDef<PositionProps>[]>(
+    () => [
+      {
+        accessorKey: "assetName",
+        header: "Assets",
+        cell: ({ row }) => {
+          const asset = row.original;
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                <Image
+                  src={asset.assetImg}
+                  alt={asset.assetName}
+                  width={24}
+                  height={24}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="font-medium text-white">{asset.assetName}</span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "amount",
+        header: "Amount",
+        cell: ({ row }) => {
+          const amount = row.original.amount;
+          const formatted = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+          }).format(amount);
+
+          const [main, cents] = formatted.split(".");
+
+          return (
+            <div className="font-medium text-white">
+              {main}
+              <span className="text-white/40">.{cents}</span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "apr",
+        header: "APR %",
+        cell: ({ row }) => {
+          const apr = row.original.apr ?? 0;
+          return (
+            <div className="text-white font-medium">
+              {((apr ?? 0) * 100).toFixed(2).replace(".", ",")}%
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "maturity",
+        header: "Maturity",
+        cell: ({ row }) => (
+          <div className="text-white font-medium">
+            {formatMaturityTimestamp(normalizeMaturity(row.original.maturity))}
+          </div>
+        ),
+      },
+      {
+        id: "action",
+        header: "Action",
+        cell: ({ row }) => {
+          const position = row.original;
+          const isBorrow = position.type === "borrow";
+
+          return (
+            <div className="flex items-center gap-4">
+              {isBorrow ? (
+                <CentuariRepayDialog
+                  positionId={position.id}
+                  token_image={position.assetImg}
+                  token_name={position.assetName}
+                  token_symbol={position.assetName}
+                  amountBorrowed={position.amount}
+                  apr={(position.apr ?? 0) * 100}
+                  maturityDate={normalizeMaturity(position.maturity)}
+                  onSuccess={() => {
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new Event("storage"));
+                    }
+                  }}
+                />
+              ) : (
+                <CentuariSellPositionDialog
+                  positionId={position.id}
+                  token_image={position.assetImg}
+                  token_name={position.assetName}
+                  token_symbol={position.assetName}
+                  maturityDate={normalizeMaturity(position.maturity)}
+                  startDate={position.timestamp}
+                  availableFunds={calculateFutureAmount(
+                    position.amount,
+                    (position.apr ?? 0) * 100,
+                    normalizeMaturity(position.maturity)
+                  )}
+                  moneyDeposited={position.amount * 0.9}
+                  profitReturn={position.amount * 0.1}
+                  apr={(position.apr ?? 0) * 100}
+                  onWithdrawComplete={(message) => setWithdrawSuccess(message)}
+                  onSuccess={() => {
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new Event("storage"));
+                    }
+                  }}
+                />
+              )}
+              <button
+                className="text-white/80 hover:text-white transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+                type="button"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [setWithdrawSuccess]
+  );
 
   // Reset pagination to first page when tab changes
   React.useEffect(() => {
@@ -327,7 +341,11 @@ export function DataTableAllPosition() {
       <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
-            Page {currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0} of {Math.max(1, table.getPageCount() || 1)}
+            Page{" "}
+            {currentData.length > 0
+              ? table.getState().pagination.pageIndex + 1
+              : 0}{" "}
+            of {Math.max(1, table.getPageCount() || 1)}
           </span>
           <span className="text-white/20">•</span>
           <span className="text-white/40">
@@ -355,6 +373,22 @@ export function DataTableAllPosition() {
           </Button>
         </div>
       </div>
+      <TransactionSuccessDialog
+        open={!!withdrawSuccess}
+        onOpenChange={(open) => {
+          if (!open) {
+            setWithdrawSuccess(null);
+          }
+        }}
+        title={withdrawSuccess?.title ?? "Withdrawal Complete"}
+        description={
+          withdrawSuccess?.description ??
+          "Your lend position have been successfully withdrawn"
+        }
+        primaryActionLabel="Start Earning"
+        onPrimaryAction={() => router.push("/")}
+        secondaryActionLabel="Done"
+      />
     </div>
   );
 }

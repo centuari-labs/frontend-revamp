@@ -7,100 +7,193 @@ import { ArrowUp } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 
 type OrderRow = {
-  price: number;
   apr: number;
   amount: number;
-  side: "buy" | "sell";
+  side: "lend" | "borrow";
 };
 
-const formatPrice = (price: number): string => `$${price.toFixed(3)}`;
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
   amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
 
 // ===================== DATA =====================
-const sellOrders: OrderRow[] = [
-  { price: 1.005, apr: 0.0482, amount: 12000, side: "sell" },
-  { price: 1.004, apr: 0.048, amount: 8500, side: "sell" },
-  { price: 1.003, apr: 0.0477, amount: 15200, side: "sell" },
-  { price: 1.002, apr: 0.0475, amount: 10400, side: "sell" },
-  { price: 1.001, apr: 0.0473, amount: 6250, side: "sell" },
-  { price: 1.0, apr: 0.047, amount: 18900, side: "sell" },
-  { price: 0.999, apr: 0.0469, amount: 7200, side: "sell" },
+const borrowOrders: OrderRow[] = [
+  { apr: 0.0482, amount: 21000, side: "borrow" },
+  { apr: 0.048, amount: 18000, side: "borrow" },
+  { apr: 0.0477, amount: 15000, side: "borrow" },
+  { apr: 0.0475, amount: 12000, side: "borrow" },
+  { apr: 0.0473, amount: 9000, side: "borrow" },
+  { apr: 0.047, amount: 6500, side: "borrow" },
+  { apr: 0.0469, amount: 4500, side: "borrow" },
 ];
 
-const buyOrders: OrderRow[] = [
-  { price: 0.999, apr: 0.0468, amount: 14300, side: "buy" },
-  { price: 0.998, apr: 0.0465, amount: 10800, side: "buy" },
-  { price: 0.997, apr: 0.0462, amount: 19500, side: "buy" },
-  { price: 0.996, apr: 0.0459, amount: 12700, side: "buy" },
-  { price: 0.995, apr: 0.0455, amount: 17900, side: "buy" },
-  { price: 0.994, apr: 0.0453, amount: 9000, side: "buy" },
-  { price: 0.993, apr: 0.0451, amount: 7200, side: "buy" },
+const lendOrders: OrderRow[] = [
+  { apr: 0.0468, amount: 3500, side: "lend" },
+  { apr: 0.0465, amount: 5000, side: "lend" },
+  { apr: 0.0462, amount: 7000, side: "lend" },
+  { apr: 0.0459, amount: 9000, side: "lend" },
+  { apr: 0.0455, amount: 12000, side: "lend" },
+  { apr: 0.0453, amount: 15000, side: "lend" },
+  { apr: 0.0451, amount: 18000, side: "lend" },
 ];
 
 function withCumulative(rows: OrderRow[]) {
   let acc = 0;
-  return rows.map((r) => {
-    const prev = acc;
-    acc += r.amount;
-    return { row: r, cum: acc, prevCum: prev };
+  return rows.map((row) => {
+    acc += row.amount;
+    return { row, cum: acc };
   });
 }
+
 function sideMaxCumulative(rows: { cum: number }[]) {
   return Math.max(...rows.map((r) => r.cum), 1);
+}
+
+function randomizeOrder(order: OrderRow, side: OrderRow["side"]): OrderRow {
+  // Small APR delta so values wiggle realistically
+  const aprDelta = (Math.random() - 0.5) * 0.0008;
+  let nextApr = order.apr + aprDelta;
+
+  // Clamp APR to a plausible band
+  const minApr = side === "borrow" ? 0.0465 : 0.0445;
+  const maxApr = side === "borrow" ? 0.0495 : 0.0475;
+  nextApr = Math.min(Math.max(nextApr, minApr), maxApr);
+
+  // Slightly vary amounts
+  const factor = 0.97 + Math.random() * 0.06; // ~±3%
+  let nextAmount = Math.round(order.amount * factor);
+  nextAmount = Math.min(Math.max(nextAmount, 2500), 25000);
+
+  return {
+    ...order,
+    apr: nextApr,
+    amount: nextAmount,
+  };
+}
+
+function generateRandomOrder(
+  side: OrderRow["side"],
+  anchorApr?: number,
+): OrderRow {
+  const baseAprDefault = side === "borrow" ? 0.0478 : 0.0462;
+  const baseApr = anchorApr ?? baseAprDefault;
+  const jitter = (Math.random() - 0.5) * 0.0012;
+  let apr = baseApr + jitter;
+
+  const minApr = side === "borrow" ? 0.0465 : 0.0445;
+  const maxApr = side === "borrow" ? 0.0495 : 0.0475;
+  apr = Math.min(Math.max(apr, minApr), maxApr);
+
+  const amount =
+    5000 +
+    Math.round(Math.random() * (side === "borrow" ? 15000 : 13000));
+
+  return { apr, amount, side };
+}
+
+function updateOrders(
+  prev: OrderRow[],
+  side: OrderRow["side"],
+): OrderRow[] {
+  let updated = prev.map((o) => randomizeOrder(o, side));
+
+  // Occasionally inject a new order at the top and drop one at the bottom
+  if (Math.random() < 0.45) {
+    const bestApr =
+      side === "borrow"
+        ? Math.min(...updated.map((o) => o.apr))
+        : Math.max(...updated.map((o) => o.apr));
+    const fresh = generateRandomOrder(side, bestApr);
+
+    // For borrow, lowest APR (best for borrowers) should update first,
+    // so push new liquidity near the bottom; for lend, highest APR first,
+    // so push new liquidity near the top.
+    if (side === "borrow") {
+      updated = [...updated, fresh];
+    } else {
+      updated = [fresh, ...updated];
+    }
+
+    if (updated.length > prev.length) {
+      // Trim from the opposite side of where we inserted
+      if (side === "borrow") {
+        updated.shift();
+      } else {
+        updated.pop();
+      }
+    }
+  }
+
+  // Keep plausible ordering by APR per side (highest APR first)
+  updated.sort((a, b) => b.apr - a.apr);
+
+  // Give a bit more motion to the edge that should move "first":
+  // - Lend: highest APR row (index 0)
+  // - Borrow: lowest APR row (last index)
+  if (updated.length > 0) {
+    const edgeIndex = side === "borrow" ? updated.length - 1 : 0;
+    const edge = updated[edgeIndex];
+    const edgeAprDelta = (Math.random() - 0.5) * 0.0015;
+    let edgeApr = edge.apr + edgeAprDelta;
+    const minApr = side === "borrow" ? 0.0465 : 0.0445;
+    const maxApr = side === "borrow" ? 0.0495 : 0.0475;
+    edgeApr = Math.min(Math.max(edgeApr, minApr), maxApr);
+    const edgeAmountFactor = 0.95 + Math.random() * 0.15;
+    updated[edgeIndex] = {
+      ...edge,
+      apr: edgeApr,
+      amount: Math.round(edge.amount * edgeAmountFactor),
+    };
+  }
+
+  return updated;
 }
 
 const OrderRowView: React.FC<{
   order: OrderRow;
   maxAmount: number;
-  cum: number;
-  prevCum: number;
-  sideMaxCum: number;
-}> = ({ order, maxAmount, cum, prevCum, sideMaxCum }) => {
-  const isSell = order.side === "sell";
-  const cumPct = (cum / sideMaxCum) * 100;
+}> = ({ order, maxAmount }) => {
+  const isBorrow = order.side === "borrow";
+  const widthPct =
+    maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
 
-  const cumRef = React.useRef<HTMLDivElement>(null);
+  const barRef = React.useRef<HTMLDivElement>(null);
 
   React.useLayoutEffect(() => {
-    if (!cumRef.current) return;
-    gsap.to(cumRef.current, {
-      width: `${cumPct}%`,
+    if (!barRef.current) return;
+    gsap.to(barRef.current, {
+      width: `${widthPct}%`,
       duration: 0.6,
       ease: "power3.out",
     });
-  }, [cumPct]);
+  }, [widthPct]);
 
   return (
     <div className="relative grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
-      {/* Depth background full row (align ke kanan/kiri tergantung side) */}
+      {/* Per-row liquidity bar (no cumulative) */}
       <div
-        ref={cumRef}
-        className={`absolute inset-y-0 right-0 ${
-          isSell ? "bg-[rgba(255,59,68,0.15)]" : "bg-[rgba(61,229,122,0.15)]"
+        ref={barRef}
+        className={`absolute inset-y-0 ${
+          isBorrow
+            ? "right-0 bg-[rgba(255,59,68,0.15)]"
+            : "right-0 bg-[rgba(61,229,122,0.15)]"
         }`}
         style={{ width: "0%" }}
       />
 
-      {/* Price */}
+      {/* APR */}
       <div
-        className={`col-span-4 font-semibold tracking-tight z-10 ${
-          isSell ? "text-[#ff5b5b]" : "text-[#3de57a]"
+        className={`col-span-6 font-semibold tracking-tight z-10 ${
+          isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
         }`}
       >
-        {formatPrice(order.price)}
-      </div>
-
-      {/* APR */}
-      <div className="col-span-4 text-center text-white/90 z-10">
         {formatAPR(order.apr)}
       </div>
 
       {/* Amount */}
       <div
-        className={`col-span-4 text-right font-semibold tracking-tight pr-2 z-10 ${
-          isSell ? "text-[#ffd6d6]" : "text-white/80"
+        className={`col-span-6 text-right font-semibold tracking-tight pr-2 z-10 ${
+          isBorrow ? "text-[#ffd6d6]" : "text-white/80"
         }`}
       >
         {formatAmount(order.amount)}
@@ -109,22 +202,15 @@ const OrderRowView: React.FC<{
   );
 };
 
-const OrderTable: React.FC<{ orders: OrderRow[]; maxAmount: number }> = ({
-  orders,
-  maxAmount,
-}) => {
-  const cumRows = withCumulative(orders);
-  const sideMax = sideMaxCumulative(cumRows);
+const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
+  const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
   return (
     <ScrollArea className="space-y-0.5 h-[160px]">
-      {cumRows.map(({ row, cum, prevCum }, i) => (
+      {orders.map((row, i) => (
         <OrderRowView
           key={i}
           order={row}
-          maxAmount={maxAmount}
-          cum={cum}
-          prevCum={prevCum}
-          sideMaxCum={sideMax}
+          maxAmount={sideMaxAmount}
         />
       ))}
     </ScrollArea>
@@ -134,23 +220,23 @@ const OrderTable: React.FC<{ orders: OrderRow[]; maxAmount: number }> = ({
 const RecentTradeTable: React.FC = () => {
   // Dummy data for recent trades
   const recentTrades = [
-    { time: "11:42:35", type: "Buy", amount: 5000, apr: 0.047 },
-    { time: "11:42:36", type: "Sell", amount: 3000, apr: 0.048 },
-    { time: "11:42:37", type: "Buy", amount: 7000, apr: 0.0465 },
-    { time: "11:42:38", type: "Sell", amount: 4000, apr: 0.049 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
+    { time: "11:42:35", type: "Lend", amount: 5000, apr: 0.047 },
+    { time: "11:42:36", type: "Borrow", amount: 3000, apr: 0.048 },
+    { time: "11:42:37", type: "Lend", amount: 7000, apr: 0.0465 },
+    { time: "11:42:38", type: "Borrow", amount: 4000, apr: 0.049 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
+    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
   ];
 
   return (
@@ -165,7 +251,7 @@ const RecentTradeTable: React.FC = () => {
           </div>
           <div
             className={`col-span-3 text-center font-semibold z-10 ${
-              trade.type === "Buy" ? "text-[#3de57a]" : "text-[#ff5b5b]"
+              trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
             }`}
           >
             {trade.type}
@@ -183,40 +269,61 @@ const RecentTradeTable: React.FC = () => {
 };
 
 const OrderBookContent: React.FC = () => {
-  const allOrders = [...sellOrders, ...buyOrders];
+  const [borrowState, setBorrowState] = React.useState(borrowOrders);
+  const [lendState, setLendState] = React.useState(lendOrders);
+
+  const allOrders = [...borrowState, ...lendState];
   const maxAmount = Math.max(...allOrders.map((o) => o.amount));
 
-  const midPrice = 1.0;
-  const spread = 0.001;
+  const topBorrowApr = borrowState[borrowState.length - 1]?.apr;
+  const topLendApr = lendState[0]?.apr;
+  const midApr =
+    topBorrowApr != null && topLendApr != null
+      ? (topBorrowApr + topLendApr) / 2
+      : undefined;
+  const spreadApr =
+    topBorrowApr != null && topLendApr != null
+      ? Math.abs(topBorrowApr - topLendApr)
+      : undefined;
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setBorrowState((prev) => updateOrders(prev, "borrow"));
+      setLendState((prev) => updateOrders(prev, "lend"));
+    }, 1100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
       <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm">
-        <div className="col-span-4 text-white/80 text-start font-semibold">
-          Price
-        </div>
-        <div className="col-span-4 text-white/80 font-semibold text-center">
+        <div className="col-span-6 text-white/80 text-start font-semibold">
           APR
         </div>
-        <div className="col-span-4 text-white/80 font-semibold text-right">
+        <div className="col-span-6 text-white/80 font-semibold text-right">
           Amount
         </div>
       </div>
 
-      {/* SELL */}
-      <OrderTable orders={sellOrders} maxAmount={maxAmount} />
+      {/* BORROW */}
+      <OrderTable orders={borrowState} />
 
-      {/* MID */}
-      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
-        <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
-          <ArrowUp color="#3de57a" size={16} />
-          <span>${midPrice.toFixed(1)}</span>
+      {/* MID APR */}
+      {midApr != null && spreadApr != null && (
+        <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
+          <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
+            <ArrowUp color="#3de57a" size={16} />
+            <span>{formatAPR(midApr)}</span>
+          </div>
+          <div className="text-white/70 text-xs sm:text-sm">
+            Spread : {(spreadApr * 100).toFixed(2)}%
+          </div>
         </div>
-        <div className="text-white/70">Spread : ${spread.toFixed(3)}</div>
-      </div>
+      )}
 
-      {/* BUY */}
-      <OrderTable orders={buyOrders} maxAmount={maxAmount} />
+      {/* LEND */}
+      <OrderTable orders={lendState} />
     </>
   );
 };

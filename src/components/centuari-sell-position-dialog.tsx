@@ -179,6 +179,15 @@ export function CentuariSellPositionDialog({
         tokenValue: getTokenValue(),
       });
 
+      // If a parent wants to handle the success dialog (e.g. table row may unmount),
+      // notify it with a message so it can show a stable dialog outside this row.
+      if (onWithdrawComplete) {
+        onWithdrawComplete({
+          title: "Withdrawal Complete",
+          description: "Your lend position have been successfully withdrawn",
+        });
+      }
+
       setWithdrawAmount("");
       setDisplayAmount("");
       setIsDialogOpen(false);
@@ -382,20 +391,22 @@ export function CentuariSellPositionDialog({
         </DialogContent>
       </Dialog>
 
-      <TransactionSuccessDialog
-        open={isSuccess}
-        onOpenChange={(open) => {
-          if (!open) {
-            resetSuccess();
-            onSuccess?.();
-          }
-        }}
-        title="Withdrawal Complete"
-        description="Your lend position have been successfully withdrawn"
-        primaryActionLabel="Start Earning"
-        onPrimaryAction={() => router.push("/")}
-        secondaryActionLabel="Done"
-      />
+      {!onWithdrawComplete && (
+        <TransactionSuccessDialog
+          open={isSuccess}
+          onOpenChange={(open) => {
+            if (!open) {
+              resetSuccess();
+              onSuccess?.();
+            }
+          }}
+          title="Withdrawal Complete"
+          description="Your lend position have been successfully withdrawn"
+          primaryActionLabel="Start Earning"
+          onPrimaryAction={() => router.push("/")}
+          secondaryActionLabel="Done"
+        />
+      )}
     </>
   );
 }
