@@ -13,14 +13,16 @@ function ScrollArea({
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative overflow-hidden", className)}
+      className={cn("group/scroll-area relative", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
+        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1 !overflow-x-hidden"
       >
-        {children}
+        <div>
+          {children}
+        </div>
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
       <ScrollAreaPrimitive.Corner />
@@ -38,15 +40,15 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "flex touch-none select-none transition-colors",
+        "flex -mr-2 touch-none select-none transition-colors",
         orientation === "vertical" &&
-          "h-full w-2.5 border-l border-l-transparent p-px",
+          "absolute top-0 bottom-0 right-0 w-1.5 p-px",
         orientation === "horizontal" &&
-          "h-2.5 flex-col border-t border-t-transparent p-px",
-        // Force scrollbar to always be visible when content overflows
-        // Remove fade-out animation and keep scrollbar visible for better UX
-        "[&[data-state='visible']]:opacity-100 [&[data-state='visible']]:animate-none",
-        // Ensure scrollbar stays visible (no auto-hide)
+          "h-1.5 flex-col border-t border-t-transparent p-px",
+        // Auto-hide: invisible by default, show on hover/scroll
+        "opacity-0 transition-opacity duration-300",
+        "group-hover/scroll-area:opacity-100",
+        "[&[data-state='visible']]:opacity-100",
         "[&[data-state='visible']]:pointer-events-auto",
         className
       )}
@@ -54,7 +56,7 @@ function ScrollBar({
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="bg-white/30 hover:bg-white/40 active:bg-white/50 relative flex-1 rounded-full transition-colors cursor-pointer"
+        className="bg-white/20 hover:bg-white/40 active:bg-white/50 relative flex-1 rounded-full transition-colors cursor-pointer"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );

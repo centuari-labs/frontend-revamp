@@ -23,13 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import Link from "next/link";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency } from "@/lib/utils";
+import { CollateralListDisplay } from "@/components/collateral-list-display";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
@@ -581,87 +576,12 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 <div className="mt-3">
                   <Label className="mb-2">Collateral</Label>
                   <div className="mt-1.5">
-                    {/* Custom Display for Selected Collaterals */}
                     {limitSelectedCollaterals.length > 0 ? (
-                      <div className="flex items-center justify-between gap-3 p-0.5 rounded-md border bg-white/5 hover:bg-white/5">
-                        <div className="flex items-center gap-2 flex-1 min-w-0 px-2">
-                          {/* Display max 4 token icons */}
-                          <div className="flex items-center -space-x-2">
-                            {limitSelectedCollaterals.slice(0, 4).map((tokenValue, index) => {
-                              const token = portfolioTokenList.find(t => t.value === tokenValue);
-                              if (!token) return null;
-                              return (
-                                <div
-                                  key={tokenValue}
-                                  className="relative"
-                                  style={{ zIndex: 10 - index }}
-                                >
-                                  <Image
-                                    src={token.logo}
-                                    alt={token.label}
-                                    width={24}
-                                    height={24}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Badge for remaining tokens */}
-                          {limitSelectedCollaterals.length > 4 && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors cursor-pointer"
-                                >
-                                  {limitSelectedCollaterals.length - 4 === 1
-                                    ? "+1 asset"
-                                    : `+${limitSelectedCollaterals.length - 4} assets`}
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-56 p-3 border-white/10">
-                                <div className="flex flex-col gap-2">
-                                  <p className="text-xs font-medium text-white/60 mb-1">Additional Assets:</p>
-                                  {limitSelectedCollaterals.slice(4).map((tokenValue) => {
-                                    const token = portfolioTokenList.find(t => t.value === tokenValue);
-                                    if (!token) return null;
-                                    return (
-                                      <div
-                                        key={tokenValue}
-                                        className="flex items-center gap-2 py-1"
-                                      >
-                                        <Image
-                                          src={token.logo}
-                                          alt={token.label}
-                                          width={20}
-                                          height={20}
-                                          className="rounded-full"
-                                        />
-                                        <span className="text-sm text-white">{token.label}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        </div>
-
-                        {/* Change Button */}
-                        <Link href="/portfolio">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="hover:underline hover:!bg-transparent hover:cursor-pointer"
-                          >
-                            Change
-                          </Button>
-                        </Link>
-                      </div>
+                      <CollateralListDisplay
+                        selectedCollaterals={limitSelectedCollaterals}
+                        tokenList={portfolioTokenList}
+                      />
                     ) : (
-                      /* MultiSelect for selecting when no collateral selected */
                       <MultiSelect
                         options={getAvailableCollaterals()}
                         onValueChange={(values) => setLimitSelectedCollaterals(values)}
@@ -849,87 +769,12 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                 <div className="mt-3">
                   <Label className="mb-2 mt-2.5">Collateral</Label>
                   <div className="mt-1.5">
-                    {/* Custom Display for Selected Collaterals */}
                     {marketSelectedCollaterals.length > 0 ? (
-                      <div className="flex items-center justify-between gap-3 p-0.5 rounded-md border bg-white/5 hover:bg-white/5">
-                        <div className="flex items-center gap-2 flex-1 min-w-0 px-2">
-                          {/* Display max 4 token icons */}
-                          <div className="flex items-center -space-x-2">
-                            {marketSelectedCollaterals.slice(0, 4).map((tokenValue, index) => {
-                              const token = portfolioTokenList.find(t => t.value === tokenValue);
-                              if (!token) return null;
-                              return (
-                                <div
-                                  key={tokenValue}
-                                  className="relative"
-                                  style={{ zIndex: 10 - index }}
-                                >
-                                  <Image
-                                    src={token.logo}
-                                    alt={token.label}
-                                    width={24}
-                                    height={24}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Badge for remaining tokens */}
-                          {marketSelectedCollaterals.length > 4 && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-center px-2.5 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors cursor-pointer"
-                                >
-                                  {marketSelectedCollaterals.length - 4 === 1
-                                    ? "+1 asset"
-                                    : `+${marketSelectedCollaterals.length - 4} assets`}
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-56 p-3 border-white/10">
-                                <div className="flex flex-col gap-2">
-                                  <p className="text-xs font-medium text-white/60 mb-1">Additional Assets:</p>
-                                  {marketSelectedCollaterals.slice(4).map((tokenValue) => {
-                                    const token = portfolioTokenList.find(t => t.value === tokenValue);
-                                    if (!token) return null;
-                                    return (
-                                      <div
-                                        key={tokenValue}
-                                        className="flex items-center gap-2 py-1"
-                                      >
-                                        <Image
-                                          src={token.logo}
-                                          alt={token.label}
-                                          width={20}
-                                          height={20}
-                                          className="rounded-full"
-                                        />
-                                        <span className="text-sm text-white">{token.label}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                        </div>
-
-                        {/* Change Button */}
-                        <Link href="/portfolio">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="hover:underline hover:!bg-transparent hover:cursor-pointer"
-                          >
-                            Change
-                          </Button>
-                        </Link>
-                      </div>
+                      <CollateralListDisplay
+                        selectedCollaterals={marketSelectedCollaterals}
+                        tokenList={portfolioTokenList}
+                      />
                     ) : (
-                      /* MultiSelect for selecting when no collateral selected */
                       <MultiSelect
                         options={getAvailableCollaterals()}
                         onValueChange={(values) => setMarketSelectedCollaterals(values)}
