@@ -14,7 +14,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { MultiSelect } from "../ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency } from "@/lib/utils";
 import { CollateralListDisplay } from "@/components/collateral-list-display";
+import { CollateralEmptyState } from "@/components/collateral-empty-state";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
@@ -582,13 +582,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                         tokenList={portfolioTokenList}
                       />
                     ) : (
-                      <MultiSelect
-                        options={getAvailableCollaterals()}
-                        onValueChange={(values) => setLimitSelectedCollaterals(values)}
-                        placeholder="Select Coins"
-                        variant="default"
-                        maxCount={4}
-                      />
+                      <CollateralEmptyState compact />
                     )}
                   </div>
                 </div>
@@ -775,13 +769,7 @@ export function BorrowForm({ tokenList, selectedToken: selectedTokenProp, editin
                         tokenList={portfolioTokenList}
                       />
                     ) : (
-                      <MultiSelect
-                        options={getAvailableCollaterals()}
-                        onValueChange={(values) => setMarketSelectedCollaterals(values)}
-                        placeholder="Select Coins"
-                        variant="default"
-                        maxCount={4}
-                      />
+                      <CollateralEmptyState compact />
                     )}
                   </div>
                 </div>

@@ -34,6 +34,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { tokenList, defaultPortfolio, getTokenSymbol } from "@/lib/portfolio-data";
+import {
+  UseAssetAsCollateralDialog,
+  type UseAssetAsCollateralDialogAsset,
+} from "@/components/use-asset-as-collateral-dialog";
 
 export type AssetProps = {
   id: string;
@@ -75,6 +79,10 @@ export function DataTableAssets() {
     }
     return defaultPortfolio;
   });
+
+  // Pending asset for collateral confirmation dialog
+  const [pendingCollateralAsset, setPendingCollateralAsset] =
+    React.useState<UseAssetAsCollateralDialogAsset | null>(null);
 
   // Collateral status - which assets are being used as collateral
   const [collateralStatus, setCollateralStatus] = React.useState<Record<string, boolean>>(() => {
@@ -170,6 +178,22 @@ export function DataTableAssets() {
         };
       });
   }, [portfolio, collateralStatus]);
+
+  // Handle collateral cell click: show confirmation when enabling, direct toggle when disabling
+  const handleCollateralCellClick = React.useCallback(
+    (asset: AssetProps) => {
+      if (asset.isCollateral) {
+        handleToggleCollateral(asset.tokenValue);
+      } else {
+        setPendingCollateralAsset({
+          logo: asset.assetImg,
+          label: asset.assetName,
+          tokenValue: asset.tokenValue,
+        });
+      }
+    },
+    [handleToggleCollateral]
+  );
 
   // Select all / deselect all collateral (toggle)
   const handleSelectAllCollateral = React.useCallback(() => {
@@ -321,7 +345,7 @@ export function DataTableAssets() {
           <div className="flex items-center gap-2 justify-end">
             <span className="text-white/40 text-sm">As Collateral</span>
             <div
-              onClick={() => handleToggleCollateral(asset.tokenValue)}
+              onClick={() => handleCollateralCellClick(asset)}
               className={cn(
                 "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 isCollateral
@@ -349,7 +373,7 @@ export function DataTableAssets() {
         );
       },
     },
-  ], [handleToggleCollateral, handleSelectAllCollateral, data]);
+  ], [handleCollateralCellClick, handleSelectAllCollateral, data]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -385,7 +409,19 @@ export function DataTableAssets() {
   });
 
   return (
-    <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+    <>
+      <UseAssetAsCollateralDialog
+        open={!!pendingCollateralAsset}
+        onOpenChange={(open) => !open && setPendingCollateralAsset(null)}
+        asset={pendingCollateralAsset}
+        onConfirm={() => {
+          if (pendingCollateralAsset) {
+            handleToggleCollateral(pendingCollateralAsset.tokenValue);
+            setPendingCollateralAsset(null);
+          }
+        }}
+      />
+      <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
       <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
       <div className="flex-1 overflow-y-auto overflow-x-auto">
         <Table className="min-w-[600px]">
@@ -484,5 +520,6 @@ export function DataTableAssets() {
         </div>
       </div>
     </div>
+    </>
   );
 }

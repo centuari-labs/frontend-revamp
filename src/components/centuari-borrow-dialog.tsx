@@ -34,6 +34,7 @@ import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { tokenList, defaultPortfolio, getLiquidationThreshold, TokenInfo } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { CollateralListDisplay } from "./collateral-list-display";
+import { CollateralEmptyState } from "./collateral-empty-state";
 
 type ViewMode = "borrow" | "deposit-collateral";
 
@@ -580,21 +581,7 @@ export function CentuariBorrowDialog({
                               tokenList={tokenList}
                             />
                           ) : (
-                            /* MultiSelect for selecting when no collateral selected */
-                            <MultiSelect
-                              options={tokenList.filter(token =>
-                                portfolio[token.value] &&
-                                portfolio[token.value] > 0 &&
-                                collateralStatus[token.value] === true
-                              )}
-                              onValueChange={handleCollateralChange}
-                              placeholder="Select Coins"
-                              variant="default"
-                              maxCount={4}
-                              hideSelectAll={true}
-                              defaultValue={selectedCollaterals}
-                              resetOnDefaultValueChange={true}
-                            />
+                            <CollateralEmptyState />
                           )}
                         </div>
                       </div>
