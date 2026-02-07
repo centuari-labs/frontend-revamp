@@ -365,7 +365,7 @@ export function CentuariLendDialog({
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/20 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+                  <div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/10 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
                     Go to{" "}
                     <Link href="/market" className="font-medium !underline">
                       Market View
