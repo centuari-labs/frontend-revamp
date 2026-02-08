@@ -240,31 +240,31 @@ const RecentTradeTable: React.FC = () => {
   ];
 
   return (
-    <ScrollArea className="space-y-0.5 h-[350px]">
+    <div className="space-y-0.5">
       {recentTrades.map((trade, i) => (
         <div
           key={i}
-          className="grid grid-cols-12 h-6 gap-6 items-center text-sm hover:bg-white/5 transition-colors"
+          className="grid grid-cols-12 h-6 gap-6 items-center text-sm hover:bg-white/5 transition-colors min-w-[320px]"
         >
-          <div className="col-span-3 text-start text-white/90">
+          <div className="col-span-3 text-start text-white/90 shrink-0">
             {trade.time}
           </div>
           <div
-            className={`col-span-3 text-center font-semibold z-10 ${
+            className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
               trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
             }`}
           >
             {trade.type}
           </div>
-          <div className="col-span-3 text-white/90 z-10">
+          <div className="col-span-3 text-right text-white/90 z-10 shrink-0">
             {formatAmount(trade.amount)}
           </div>
-          <div className="col-span-3 text-white/90 z-10">
+          <div className="col-span-3 text-white/90 text-right z-10 shrink-0">
             {formatAPR(trade.apr)}
           </div>
         </div>
       ))}
-    </ScrollArea>
+    </div>
   );
 };
 
@@ -330,24 +330,26 @@ const OrderBookContent: React.FC = () => {
 
 const RecentTradesContent: React.FC = () => {
   return (
-    <>
-      <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm">
-        <div className="col-span-3 text-white/80 font-semibold">
-          Time
+    <div className="overflow-auto max-h-[400px]">
+      <div className="min-w-max">
+        <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm min-w-[320px]">
+          <div className="col-span-3 text-white/80 font-semibold shrink-0">
+            Time
+          </div>
+          <div className="col-span-3 text-white/80 font-semibold shrink-0">
+            Type
+          </div>
+          <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+            Amount
+          </div>
+          <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+            APR
+          </div>
         </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          Type
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          Amount
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          APR
-        </div>
-      </div>
 
-      <RecentTradeTable />
-    </>
+        <RecentTradeTable />
+      </div>
+    </div>
   );
 };
 
