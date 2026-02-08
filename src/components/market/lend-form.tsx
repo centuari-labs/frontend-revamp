@@ -409,7 +409,14 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
               <div className="mt-5">
                 <Checkbox
                   id="limit-auto-rollover"
-                  label="Auto Rollover"
+                  label={
+                    <>
+                      Auto Rollover
+                      <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
+                        <Info size={16} className="ml-1 inline-block text-muted-foreground" />
+                      </CentuariTooltip>
+                    </>
+                  }
                   checked={autoRollover}
                   onCheckedChange={setAutoRollover}
                 />
@@ -512,7 +519,14 @@ export function LendForm({ tokenList, selectedToken: selectedTokenProp, editingP
               <div className="mt-5">
                 <Checkbox
                   id="market-auto-rollover"
-                  label="Auto Rollover"
+                  label={
+                    <>
+                      Auto Rollover
+                      <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
+                        <Info size={16} className="ml-1 inline-block text-muted-foreground" />
+                      </CentuariTooltip>
+                    </>
+                  }
                   checked={autoRollover}
                   onCheckedChange={setAutoRollover}
                 />

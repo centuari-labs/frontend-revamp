@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 export interface CheckboxProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "checked" | "onChange"> {
   id: string;
-  label: string;
+  label: React.ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
@@ -16,12 +16,12 @@ export interface CheckboxProps
 
 const CheckIcon = () => (
   <svg
-    width="8"
-    height="6"
+    width="10"
+    height="8"
     viewBox="0 0 10 8"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
-    className="shrink-0 text-primary-blue-base"
+    className="shrink-0 text-white"
     aria-hidden
   >
     <path
@@ -41,11 +41,11 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <label
           htmlFor={id}
           className={cn(
-            "relative inline-flex h-6 w-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-[6px] transition-colors",
-            "disabled:cursor-not-allowed disabled:opacity-50",
+            "relative inline-flex h-4 w-4 shrink-0 cursor-pointer select-none items-center justify-center rounded-[6px] transition-colors",
+            "disabled:cursor-not-allowed disabled:opacity-50 rounded-full",
             checked
-              ? "border-2 border-primary-blue-base bg-primary-blue-100"
-              : "border border-transparent bg-[#2C2C30]"
+              ? "bg-primary-blue-base"
+              : "border border-white/20 bg-transparent"
           )}
           aria-hidden
         >
@@ -60,17 +60,13 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             aria-checked={checked}
             {...props}
           />
-          {/* Inner circle: always perfectly centered */}
-          <span
-            className={cn(
-              "absolute top-1/2 left-1/2 flex h-4 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-colors [&_svg]:block",
-              checked ? "bg-white" : "border border-[#A0A0A0] bg-transparent"
-            )}
-          >
-            {checked && <CheckIcon />}
-          </span>
+          {checked && (
+            <span className="absolute inset-0 flex items-center justify-center [&_svg]:block">
+              <CheckIcon />
+            </span>
+          )}
         </label>
-        <Label htmlFor={id} className="cursor-pointer text-sm text-foreground font-normal">
+        <Label htmlFor={id} className="cursor-pointer text-sm text-white font-normal">
           {label}
         </Label>
       </div>
