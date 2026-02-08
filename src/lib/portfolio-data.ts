@@ -105,7 +105,7 @@ export const tokenList: TokenInfo[] = [
   {
     logo: "/tokens/nvda-icon.svg",
     value: "nvdaon",
-    label: "NVIDIA",
+    label: "NVIDIA (Ondo Tokenized)",
     ltv: 0.75,
     price: 150,
     liquidationThreshold: 0.80,
@@ -114,7 +114,7 @@ export const tokenList: TokenInfo[] = [
   {
     logo: "/tokens/centuari-appl.png",
     value: "aaplon",
-    label: "Apple",
+    label: "Apple (Ondo Tokenized)",
     ltv: 0.75,
     price: 230,
     liquidationThreshold: 0.80,
@@ -123,7 +123,7 @@ export const tokenList: TokenInfo[] = [
   {
     logo: "/tokens/centuari-tlton.png",
     value: "tlton",
-    label: "iShares Treasury Bond ETF",
+    label: "iShares 20+ Year Treasury Bond ETF (Ondo Tokenized)",
     ltv: 0.75,
     price: 95,
     liquidationThreshold: 0.80,
@@ -132,7 +132,7 @@ export const tokenList: TokenInfo[] = [
   {
     logo: "/tokens/centuari-slvon.png",
     value: "slvon",
-    label: "iShares Silver Trust",
+    label: "iShares Silver Trust (Ondo Tokenized)",
     ltv: 0.75,
     price: 28,
     liquidationThreshold: 0.80,
@@ -152,7 +152,7 @@ export const defaultPortfolio: Record<string, number> = {
   idrx: 5000,  // IDRX value $5k
   nvdaon: 30000, // NVIDIA value $30k
   aaplon: 23000, // Apple (Ondo Tokenized) value ~$23k
-  tlton: 15000, // iShares TLTon value $15k
+  tlton: 15000, // TLTon value $15k
   slvon: 14000, // iShares Silver Trust value $14k
 };
 
@@ -177,7 +177,7 @@ export function getTokenSymbol(label: string): string {
     "Centuari": "CENT",
     "NVIDIA": "NVDAon",
     "Apple": "AAPLon",
-    "iShares": "TLTon",
+    "TLTon": "TLTon",
     "iShares Silver Trust": "SLVOn",
   };
   return symbolMap[label] || label.toUpperCase().slice(0, 4);

@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { tokenList, defaultPortfolio, getTokenSymbol } from "@/lib/portfolio-data";
+import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 import {
   UseAssetAsCollateralDialog,
   type UseAssetAsCollateralDialogAsset,
@@ -205,12 +205,12 @@ export function DataTableAssets() {
           id: `${token.value}-${index}`,
           assetImg: token.logo,
           assetName: token.label,
-          assetSymbol: getTokenSymbol(token.label),
+          assetSymbol: token.value,
           walletBalance,
           amountInUsd,
           idleAssetYield,
           isCollateral,
-          tokenValue: token.value, // Add token value
+          tokenValue: token.value,
         };
       });
   }, [portfolio, collateralStatus]);
@@ -298,7 +298,7 @@ export function DataTableAssets() {
                 maximumFractionDigits: 2,
               })}
             </span>
-            <span className="text-white/40">{asset.assetSymbol}</span>
+            <span className="text-white/40">{asset.assetSymbol.toUpperCase()}</span>
           </div>
         );
       },
