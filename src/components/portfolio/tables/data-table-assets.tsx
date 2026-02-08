@@ -38,6 +38,7 @@ import {
   UseAssetAsCollateralDialog,
   type UseAssetAsCollateralDialogAsset,
 } from "@/components/use-asset-as-collateral-dialog";
+import { UseAllAssetsAsCollateralDialog } from "@/components/use-all-assets-as-collateral-dialog";
 
 export type AssetProps = {
   id: string;
@@ -83,6 +84,10 @@ export function DataTableAssets() {
   // Pending asset for collateral confirmation dialog
   const [pendingCollateralAsset, setPendingCollateralAsset] =
     React.useState<UseAssetAsCollateralDialogAsset | null>(null);
+
+  // Dialog for "use all assets as collateral" confirmation
+  const [showUseAllCollateralDialog, setShowUseAllCollateralDialog] =
+    React.useState(false);
 
   // Collateral status - which assets are being used as collateral
   const [collateralStatus, setCollateralStatus] = React.useState<Record<string, boolean>>(() => {
@@ -211,6 +216,17 @@ export function DataTableAssets() {
     });
   }, [data]);
 
+  // Collateral header click: open confirmation when enabling all, direct toggle when disabling all
+  const handleCollateralHeaderClick = React.useCallback(() => {
+    if (data.length === 0) return;
+    const allSelected = data.every((d) => d.isCollateral);
+    if (allSelected) {
+      handleSelectAllCollateral();
+    } else {
+      setShowUseAllCollateralDialog(true);
+    }
+  }, [data, handleSelectAllCollateral]);
+
   // Columns definition with toggle handler
   const columns: ColumnDef<AssetProps>[] = React.useMemo(() => [
     {
@@ -310,7 +326,7 @@ export function DataTableAssets() {
               tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
-                handleSelectAllCollateral();
+                handleCollateralHeaderClick();
               }}
               className={cn(
                 "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
@@ -373,7 +389,7 @@ export function DataTableAssets() {
         );
       },
     },
-  ], [handleCollateralCellClick, handleSelectAllCollateral, data]);
+  ], [handleCollateralCellClick, handleCollateralHeaderClick, data]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -419,6 +435,15 @@ export function DataTableAssets() {
             handleToggleCollateral(pendingCollateralAsset.tokenValue);
             setPendingCollateralAsset(null);
           }
+        }}
+      />
+      <UseAllAssetsAsCollateralDialog
+        open={showUseAllCollateralDialog}
+        onOpenChange={setShowUseAllCollateralDialog}
+        assets={data.map((d) => ({ logo: d.assetImg, label: d.assetName }))}
+        onConfirm={() => {
+          handleSelectAllCollateral();
+          setShowUseAllCollateralDialog(false);
         }}
       />
       <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
