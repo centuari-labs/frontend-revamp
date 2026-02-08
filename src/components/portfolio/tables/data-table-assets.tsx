@@ -307,7 +307,7 @@ export function DataTableAssets() {
         const [main, cents] = formatted.split(".");
 
         return (
-          <div className="font-medium text-center text-white">
+          <div className="font-medium text-center text-success-base">
             {main}
             <span className="text-white/40">.{cents}</span>
           </div>
