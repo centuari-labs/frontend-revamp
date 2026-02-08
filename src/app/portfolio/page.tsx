@@ -45,10 +45,19 @@ export default function PortfolioPage() {
             parsed.xaut = parsed.aave;
             delete parsed.aave;
           }
-          // Add NVDA if it doesn't exist (migration for new token)
-          if (!parsed.nvda && defaultPortfolio.nvda) {
-            parsed.nvda = defaultPortfolio.nvda;
+          // Migrate old nvda key to nvdaon (NVIDIA token)
+          if (parsed.nvda !== undefined && parsed.nvdaon === undefined) {
+            parsed.nvdaon = parsed.nvda;
+            delete parsed.nvda;
           }
+          // Add NVDA (nvdaon) if it doesn't exist
+          if (parsed.nvdaon === undefined && defaultPortfolio.nvdaon !== undefined) {
+            parsed.nvdaon = defaultPortfolio.nvdaon;
+          }
+          // Add AAPLon, TLTon, SLVOn if they don't exist
+          if (parsed.aaplon === undefined && defaultPortfolio.aaplon !== undefined) parsed.aaplon = defaultPortfolio.aaplon;
+          if (parsed.tlton === undefined && defaultPortfolio.tlton !== undefined) parsed.tlton = defaultPortfolio.tlton;
+          if ((parsed.slvon === undefined || parsed.slvon === 0) && defaultPortfolio.slvon !== undefined) parsed.slvon = defaultPortfolio.slvon;
           // Save updated portfolio back to localStorage
           localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
           return parsed;

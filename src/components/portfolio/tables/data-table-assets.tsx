@@ -66,9 +66,26 @@ export function DataTableAssets() {
             parsed.xaut = parsed.aave;
             delete parsed.aave;
           }
-          // Add NVDA if it doesn't exist (migration for new token)
-          if (!parsed.nvda && defaultPortfolio.nvda) {
-            parsed.nvda = defaultPortfolio.nvda;
+          // Migrate old nvda key to nvdaon (NVIDIA token)
+          if (parsed.nvda !== undefined && parsed.nvdaon === undefined) {
+            parsed.nvdaon = parsed.nvda;
+            delete parsed.nvda;
+          }
+          // Add NVDA (nvdaon) if it doesn't exist
+          if (parsed.nvdaon === undefined && defaultPortfolio.nvdaon !== undefined) {
+            parsed.nvdaon = defaultPortfolio.nvdaon;
+          }
+          // Add AAPLon (Apple Ondo Tokenized) if it doesn't exist
+          if (!parsed.aaplon && defaultPortfolio.aaplon !== undefined) {
+            parsed.aaplon = defaultPortfolio.aaplon;
+          }
+          // Add TLTon (iShares) if it doesn't exist
+          if (!parsed.tlton && defaultPortfolio.tlton !== undefined) {
+            parsed.tlton = defaultPortfolio.tlton;
+          }
+          // Add SLVOn (iShares Silver Trust) if missing or zero
+          if ((parsed.slvon === undefined || parsed.slvon === 0) && defaultPortfolio.slvon !== undefined) {
+            parsed.slvon = defaultPortfolio.slvon;
           }
           // Save updated portfolio back to localStorage
           localStorage.setItem("centuari_portfolio", JSON.stringify(parsed));
@@ -111,24 +128,38 @@ export function DataTableAssets() {
     return {};
   });
 
+  // Refs to avoid unnecessary state updates (which reset table pagination)
+  const lastPortfolioRef = React.useRef<string>("");
+  const lastCollateralRef = React.useRef<string>("");
+
   // Sync portfolio from localStorage on mount and when it changes
   React.useEffect(() => {
     const handleStorageChange = () => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("centuari_portfolio");
-        if (stored) {
+        if (stored && stored !== lastPortfolioRef.current) {
+          lastPortfolioRef.current = stored;
           try {
             setPortfolio(JSON.parse(stored));
           } catch { }
         }
         const storedCollateral = localStorage.getItem("centuari_collateral");
-        if (storedCollateral) {
+        if (storedCollateral && storedCollateral !== lastCollateralRef.current) {
+          lastCollateralRef.current = storedCollateral;
           try {
             setCollateralStatus(JSON.parse(storedCollateral));
           } catch { }
         }
       }
     };
+
+    // Set initial refs so we don't trigger update on first interval tick
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("centuari_portfolio");
+      if (stored) lastPortfolioRef.current = stored;
+      const storedCollateral = localStorage.getItem("centuari_collateral");
+      if (storedCollateral) lastCollateralRef.current = storedCollateral;
+    }
 
     // Listen for storage changes (from other tabs/components)
     window.addEventListener("storage", handleStorageChange);
