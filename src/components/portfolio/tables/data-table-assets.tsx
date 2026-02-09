@@ -39,6 +39,7 @@ import {
   type UseAssetAsCollateralDialogAsset,
 } from "@/components/use-asset-as-collateral-dialog";
 import { UseAllAssetsAsCollateralDialog } from "@/components/use-all-assets-as-collateral-dialog";
+import { CentuariTooltip } from "@/components/centuari-tooltip";
 
 export type AssetProps = {
   id: string;
@@ -266,8 +267,8 @@ export function DataTableAssets() {
       cell: ({ row }) => {
         const asset = row.original;
         return (
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
               <Image
                 src={asset.assetImg}
                 alt={asset.assetName}
@@ -280,7 +281,13 @@ export function DataTableAssets() {
                 }}
               />
             </div>
-            <span className="font-medium text-white">{asset.assetName}</span>
+            <CentuariTooltip message={asset.assetName}>
+              <span className="font-medium text-white">
+                {asset.assetName.length > 8
+                  ? `${asset.assetName.slice(0, 8)}...`
+                  : asset.assetName}
+              </span>
+            </CentuariTooltip>
           </div>
         );
       },
