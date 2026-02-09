@@ -195,11 +195,11 @@ export default function CentuariNavbar() {
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
         <div className="px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
-            <div className="flex items-center gap-6 bg-black/5 px-3 md:px-5 py-1 rounded-lg md:rounded-xl border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center gap-6 bg-black/5 px-2 py-1 rounded-lg md:rounded-xl border border-white/10 backdrop-blur-sm">
               <img
                 src="/centuari-logo.png"
                 alt="Logo"
-                className="w-6 h-6 md:w-8 md:h-8"
+                className="w-6 h-6 md:w-8 md:h-8 ml-2"
               />
 
               <div className="hidden md:flex items-center space-x-2 relative">
