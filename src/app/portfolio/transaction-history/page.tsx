@@ -1,6 +1,7 @@
 import { CentuariCalender } from "@/components/centuari-calender";
 import { DataTableHistory } from "@/components/transaction-history/tables/data-table-history";
 import { TransactionHistoryHeader } from "@/components/transaction-history/tables/transaction-history-header";
+import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -21,8 +22,7 @@ import { ArrowLeftRight, Calendar, ChevronDown, Flag } from "lucide-react";
 
 export default function TransactionHistoryPage() {
   return (
-    <div className="relative w-full mt-14">
-      <div className="w-full max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-4">
+    <PageContainer innerClassName="2xl:min-h-0">
         <TransactionHistoryHeader />
         <div className="bg-white/5 rounded-lg p-4 md:p-6">
           <Tabs defaultValue="transaction_history" className="w-full">
@@ -123,7 +123,6 @@ export default function TransactionHistoryPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

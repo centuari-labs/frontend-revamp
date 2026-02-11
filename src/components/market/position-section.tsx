@@ -24,47 +24,12 @@ import {
 } from "@tanstack/react-table";
 import { Edit2, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { formatCurrency } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
-
-const tokenList = [
-  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/xsgd-icon.png", value: "xsgd", label: "XSGD" },
-  { logo: "/tokens/idrx-icon.png", value: "idrx", label: "IDRX" },
-];
-
-// Helper function to get correct token logo path
-const getTokenLogo = (tokenValue: string, assetImg?: string): string => {
-  const tokenLogoMap: Record<string, string> = {
-    usdc: "/tokens/usdc-icon.svg",
-    xsgd: "/tokens/xsgd-icon.png",
-    idrx: "/tokens/idrx-icon.png",
-    usdt: "/tokens/centuari-usdt.png",
-    btc: "/tokens/btc-icon.svg",
-    eth: "/tokens/eth-icon.svg",
-    sol: "/tokens/sol-icon.svg",
-    link: "/tokens/chainlink-icon.svg",
-    xaut: "/tokens/xaut-icon.png",
-    arb: "/tokens/centuari-arbitrum.png",
-    dai: "/tokens/centuari-dai.png",
-    centuari: "/tokens/centuari-centuari.png",
-  };
-
-  const mappedLogo = tokenLogoMap[tokenValue.toLowerCase()];
-  if (mappedLogo) {
-    return mappedLogo;
-  }
-
-  if (assetImg && assetImg.startsWith("/")) {
-    return assetImg;
-  }
-
-  return "/tokens/usdc-icon.svg";
-};
-
 import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
 
 function PositionCard({
@@ -133,7 +98,7 @@ function PositionCard({
       <div className="flex gap-2 justify-end">
         <AmendDialog
           position={position}
-          tokenList={tokenList}
+          tokenList={MARKET_TOKEN_LIST}
           onUpdate={onUpdate}
           trigger={
             <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
@@ -233,7 +198,7 @@ function LendPositionTable({
           <div className="flex items-center gap-2">
             <AmendDialog
               position={row.original}
-              tokenList={tokenList}
+              tokenList={MARKET_TOKEN_LIST}
               onUpdate={onUpdate ? (pos) => onUpdate(pos as LendPosition) : undefined}
               trigger={
                 <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
@@ -409,7 +374,7 @@ function UnifiedPositionTable({
           <div className="flex items-center gap-2">
             <AmendDialog
               position={row.original}
-              tokenList={tokenList}
+              tokenList={MARKET_TOKEN_LIST}
               onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
               trigger={
                 <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
@@ -605,7 +570,7 @@ function BorrowPositionTable({
           <div className="flex items-center gap-2">
             <AmendDialog
               position={row.original}
-              tokenList={tokenList}
+              tokenList={MARKET_TOKEN_LIST}
               onUpdate={onUpdate ? (pos) => onUpdate(pos as BorrowPosition) : undefined}
               trigger={
                 <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">

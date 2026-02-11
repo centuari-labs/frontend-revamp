@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId, useRef } from "react";
+import { useState, useId, useRef } from "react";
 import {
   Dialog,
   DialogClose,
@@ -25,6 +25,7 @@ import {
   parseNumberFromSeparator,
   formatCurrency,
   calculateFutureAmount,
+  getHealthFactorPercentage,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
@@ -71,61 +72,9 @@ export function CentuariRepayDialog({
   const isHoveringRef = useRef<boolean>(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Get token value from symbol
-  const getTokenValue = (symbol: string): string => {
-    const token = tokenList.find(t =>
-      t.label.toUpperCase() === symbol.toUpperCase() ||
-      t.value.toUpperCase() === symbol.toUpperCase()
-    );
-    return token?.value || symbol.toLowerCase();
-  };
+  const tokenValue = getTokenValueFromList(tokenList, token_symbol);
 
-  const tokenValue = getTokenValue(token_symbol);
-
-  // State for portfolio - sync with localStorage
-  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_portfolio");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return defaultPortfolio;
-        }
-      }
-    }
-    return defaultPortfolio;
-  });
-
-  // State for total debt
-  const [totalDebt, setTotalDebt] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_total_debt");
-      if (stored) {
-        try {
-          return parseFloat(stored) || 0;
-        } catch {
-          return 0;
-        }
-      }
-    }
-    return 0;
-  });
-
-  // State for collateral status
-  const [collateralStatus, setCollateralStatus] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_collateral");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return {};
-        }
-      }
-    }
-    return {};
-  });
+  const { portfolio, totalDebt, collateralStatus } = usePortfolioFromStorage();
 
   // Get available balance from portfolio for the token
   const token = tokenList.find(t => t.value === tokenValue);
@@ -173,18 +122,14 @@ export function CentuariRepayDialog({
     ? Math.min((totalPortfolioValue * weightedLT) / newTotalDebt, 10)
     : totalPortfolioValue > 0 ? 999 : 0; // If debt is 0, health factor is very high
 
-  // Convert health factor to percentage for display
-  const getHealthFactorPercentage = (hf: number): number => {
-    if (hf <= 0 || isNaN(hf)) return 0;
-    if (hf >= 2.5) return 100;
-    if (hf >= 1.5) return 75 + ((hf - 1.5) / 1.0) * 25;
-    if (hf >= 1.2) return 50 + ((hf - 1.2) / 0.3) * 25;
-    if (hf >= 1.0) return 25 + ((hf - 1.0) / 0.2) * 25;
-    return (hf / 1.0) * 25;
-  };
-
-  const currentHealthFactorPercentage = getHealthFactorPercentage(currentHealthFactor);
-  const newHealthFactorPercentage = getHealthFactorPercentage(newHealthFactor);
+  const currentHealthFactorPercentage =
+    currentHealthFactor <= 0 || isNaN(currentHealthFactor)
+      ? 0
+      : getHealthFactorPercentage(currentHealthFactor);
+  const newHealthFactorPercentage =
+    newHealthFactor <= 0 || isNaN(newHealthFactor)
+      ? 0
+      : getHealthFactorPercentage(newHealthFactor);
 
   // Format APR with comma as decimal separator
   const formattedAPR = apr.toFixed(1).replace(".", ",") + "%";
@@ -195,22 +140,12 @@ export function CentuariRepayDialog({
   // Format available balance
   const formattedAvailableBalance = formatCurrency(availableBalance * (token?.price || 1));
 
-  // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-
-    // Remove $ prefix and any other non-numeric characters except decimal point
-    const cleanValue = inputValue.replace(/^\$/, "").replace(/[^\d.]/g, "");
-
-    // Parse to get clean numeric value
-    const numericValue = parseNumberFromSeparator(cleanValue);
-
-    // Format for display with thousand separators
-    const formattedValue = formatNumberWithSeparator(numericValue);
-
-    // Update both states
-    setRepayAmount(numericValue);
-    setDisplayAmount(formattedValue);
+    const cleanValue = e.target.value.replace(/^\$/, "");
+    handleNumberInputChange(cleanValue, (display, numeric) => {
+      setDisplayAmount(display);
+      setRepayAmount(numeric);
+    });
   };
 
   // Handle Max button - set amount to minimum of available balance or amount borrowed
@@ -248,74 +183,8 @@ export function CentuariRepayDialog({
       setRepayAmount("");
       setDisplayAmount("");
       setShowSuccessDialog(false);
-    } else {
-      // Load latest data when dialog opens
-      if (typeof window !== "undefined") {
-        const storedPortfolio = localStorage.getItem("centuari_portfolio");
-        if (storedPortfolio) {
-          try {
-            setPortfolio(JSON.parse(storedPortfolio));
-          } catch { }
-        }
-
-        const storedDebt = localStorage.getItem("centuari_total_debt");
-        if (storedDebt) {
-          try {
-            const parsed = parseFloat(storedDebt);
-            if (!isNaN(parsed)) {
-              setTotalDebt(parsed);
-            }
-          } catch { }
-        }
-
-        const storedCollateral = localStorage.getItem("centuari_collateral");
-        if (storedCollateral) {
-          try {
-            setCollateralStatus(JSON.parse(storedCollateral));
-          } catch { }
-        }
-      }
     }
   };
-
-  // Sync portfolio, debt, and collateral from localStorage (listen for changes)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (typeof window !== "undefined") {
-        const storedPortfolio = localStorage.getItem("centuari_portfolio");
-        if (storedPortfolio) {
-          try {
-            setPortfolio(JSON.parse(storedPortfolio));
-          } catch { }
-        }
-
-        const storedDebt = localStorage.getItem("centuari_total_debt");
-        if (storedDebt) {
-          try {
-            const parsed = parseFloat(storedDebt);
-            if (!isNaN(parsed)) {
-              setTotalDebt(parsed);
-            }
-          } catch { }
-        }
-
-        const storedCollateral = localStorage.getItem("centuari_collateral");
-        if (storedCollateral) {
-          try {
-            setCollateralStatus(JSON.parse(storedCollateral));
-          } catch { }
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    const interval = setInterval(handleStorageChange, 500);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
 
   const handleRepay = async () => {
     if (numericAmount <= 0) return;
@@ -343,16 +212,6 @@ export function CentuariRepayDialog({
     } catch (error) {
       console.error("Transaction failed:", error);
     }
-  };
-
-  // Get health factor status text
-  const getHealthFactorStatus = (hf: number): string => {
-    if (hf <= 0 || isNaN(hf)) return "Safe";
-    if (hf >= 2.5) return "Excellent";
-    if (hf >= 1.5) return "Good";
-    if (hf >= 1.2) return "Warning";
-    if (hf >= 1.0) return "Critical";
-    return "Danger";
   };
 
   const healthFactorChange = newHealthFactor - currentHealthFactor;
@@ -516,22 +375,17 @@ export function CentuariRepayDialog({
                         </Label>
                         <Badge
                           variant={
-                            newHealthFactor <= 0 || isNaN(newHealthFactor)
+                            (numericAmount > 0 ? newHealthFactor : currentHealthFactor) <= 0 ||
+                            isNaN(numericAmount > 0 ? newHealthFactor : currentHealthFactor)
                               ? "default"
-                              : newHealthFactor >= 2.5
-                                ? "success"
-                                : newHealthFactor >= 1.5
-                                  ? "default"
-                                  : newHealthFactor >= 1.2
-                                    ? "warning"
-                                    : newHealthFactor >= 1.0
-                                      ? "warning"
-                                      : "destructive"
+                              : getHealthFactorDisplayStatus(
+                                  numericAmount > 0 ? newHealthFactor : currentHealthFactor,
+                                ).variant
                           }
                         >
                           {numericAmount > 0
-                            ? `${healthFactorChangeText} - ${getHealthFactorStatus(newHealthFactor)}`
-                            : `${currentHealthFactor.toFixed(2)} - ${getHealthFactorStatus(currentHealthFactor)}`}
+                            ? `${healthFactorChangeText} - ${getHealthFactorDisplayStatus(newHealthFactor).status}`
+                            : `${currentHealthFactor.toFixed(2)} - ${getHealthFactorDisplayStatus(currentHealthFactor).status}`}
                         </Badge>
                       </div>
                       <div className="border border-white/5 rounded-lg mt-2">

@@ -21,6 +21,7 @@ import {
   getBestBorrowAPRDisplay,
   getCollateralFactorDisplay,
 } from "@/lib/positions-adapter.mock";
+import { getTokenSlug, randomIntInRange } from "@/lib/utils";
 
 export const CentuariTokenCard = ({
   token_image,
@@ -41,12 +42,7 @@ export const CentuariTokenCard = ({
     collateralFactor: getCollateralFactorDisplay(token_symbol),
   };
 
-  // Generate random vault total for each token card (between 50,000 and 500,000)
-  const [vaultTotal] = useState(() => {
-    const min = 50000;
-    const max = 500000;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  });
+  const [vaultTotal] = useState(() => randomIntInRange(50000, 500000));
 
   return (
     <Card
@@ -115,21 +111,7 @@ export const CentuariTokenCard = ({
         </div>
         <Button
           className="w-full flex items-center justify-center mt-3 md:mt-4 gap-2 text-xs md:text-sm bg-transparent hover:bg-transparent text-white"
-          onClick={() => {
-            // Map token symbol to token value for market page
-            const tokenValueMap: Record<string, string> = {
-              "USDC": "usdc",
-              "XSGD": "xsgd",
-              "IDRX": "idrx",
-              "USDT": "usdt",
-              "SOL": "sol",
-              "BTC": "btc",
-              "ETH": "eth",
-              "LINK": "link",
-            };
-            const tokenValue = tokenValueMap[token_symbol.toUpperCase()] || "usdc";
-            router.push(`/market?token=${tokenValue}`);
-          }}
+          onClick={() => router.push(`/market?token=${getTokenSlug(token_symbol)}`)}
         >
           <span
             className="relative flex items-center gap-2 group hover:after:w-full after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-white after:w-0 after:transition-all after:duration-300"

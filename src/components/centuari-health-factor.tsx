@@ -3,15 +3,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import Image from "next/image";
+import { getHealthFactorPercentage } from "@/lib/utils";
 
 interface HealthFactorProps {
   targetValue?: number;
   healthFactor?: number; // Actual health factor value (e.g., 4.60)
 }
 
-export default function HealthFactor({ 
-  targetValue: propTargetValue, 
-  healthFactor 
+export default function HealthFactor({
+  targetValue: propTargetValue,
+  healthFactor,
 }: HealthFactorProps = {}) {
   // Initialize as 0 (empty) if no value provided
   const [targetValue, setTargetValue] = useState(propTargetValue ?? 0);
@@ -22,48 +23,9 @@ export default function HealthFactor({
   const glowRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef({ value: 0 });
 
-  // Health Factor to percentage mapping based on thresholds:
-  // - HF >= 2.5: Excellent (100%)
-  // - HF >= 1.5: Good (75-100%)
-  // - HF >= 1.2: Warning (50-75%)
-  // - HF >= 1.0: Critical (25-50%)
-  // - HF < 1.0: Danger (0-25%)
   const getHFPercentage = (hf: number | undefined): number => {
     if (!hf || hf <= 0) return 0;
-    
-    // HF >= 2.5: Excellent (100%)
-    if (hf >= 2.5) {
-      return 100;
-    }
-    
-    // HF >= 1.5: Good (75-100%)
-    // Linear interpolation: 75% at HF=1.5, 100% at HF=2.5
-    if (hf >= 1.5) {
-      const range = 2.5 - 1.5; // 1.0
-      const progress = (hf - 1.5) / range; // 0 to 1
-      return 75 + progress * 25; // 75% to 100%
-    }
-    
-    // HF >= 1.2: Warning (50-75%)
-    // Linear interpolation: 50% at HF=1.2, 75% at HF=1.5
-    if (hf >= 1.2) {
-      const range = 1.5 - 1.2; // 0.3
-      const progress = (hf - 1.2) / range; // 0 to 1
-      return 50 + progress * 25; // 50% to 75%
-    }
-    
-    // HF >= 1.0: Critical (25-50%)
-    // Linear interpolation: 25% at HF=1.0, 50% at HF=1.2
-    if (hf >= 1.0) {
-      const range = 1.2 - 1.0; // 0.2
-      const progress = (hf - 1.0) / range; // 0 to 1
-      return 25 + progress * 25; // 25% to 50%
-    }
-    
-    // HF < 1.0: Danger (0-25%)
-    // Linear interpolation: 0% at HF=0, 25% at HF=1.0
-    const progress = hf / 1.0; // 0 to 1
-    return progress * 25; // 0% to 25%
+    return getHealthFactorPercentage(hf);
   };
 
   // Determine segment based on health factor value with accurate colors

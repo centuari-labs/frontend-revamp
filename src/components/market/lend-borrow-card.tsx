@@ -3,12 +3,7 @@
 import { LendForm } from "@/components/market/lend-form";
 import { BorrowForm } from "@/components/market/borrow-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface TokenOption {
-  logo: string;
-  value: string;
-  label: string;
-}
+import type { TokenOption } from "@/types";
 
 interface LendBorrowCardProps {
   tokenList: TokenOption[];

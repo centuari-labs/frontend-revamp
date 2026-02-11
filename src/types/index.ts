@@ -6,4 +6,11 @@ export interface IconProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
 }
 
+/** Token option for market dropdowns (logo, value, label). */
+export interface TokenOption {
+  logo: string;
+  value: string;
+  label: string;
+}
+
 export * from "./positions";

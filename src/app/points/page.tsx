@@ -7,6 +7,7 @@ import { SubmitProofDialog } from "@/components/leaderboard/dialogs/submit-proof
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import PointsBadge from "@/components/leaderboard/point-badge";
 import { TierEmblem } from "@/components/tier-emblem";
+import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,7 @@ export default function PointsPage() {
   } satisfies ChartConfig;
 
   return (
-    <div className="relative w-full mt-14 2xl:mt-16">
-      <div className="w-full max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-4 2xl:min-h-[calc(100vh-6rem)] flex flex-col">
+    <PageContainer className="mt-14 2xl:mt-16" innerClassName="flex flex-col">
         <h1 className="mt-8 text-2xl sm:text-3xl 2xl:text-4xl font-semibold inline-block">
           Points
         </h1>
@@ -259,7 +259,6 @@ export default function PointsPage() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

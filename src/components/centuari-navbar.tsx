@@ -13,11 +13,17 @@ import { CentuariConnectWallet } from "./centuari-connect-wallet";
 import { CentuariWithdrawDialog } from "./centuari-withdraw-dialog";
 import { CentuariDepositDialog } from "./centuari-deposit-dialog";
 import { CentuariLoginDialog } from "./centuari-login-dialog";
+import { isPathActive, isMacPlatform } from "@/lib/utils";
 
 interface NavItem {
   name: string;
   href: string;
 }
+
+const NAV_PATH_ALIASES: Record<string, string[]> = {
+  "/": ["/", "/market"],
+  "/portfolio": ["/portfolio", "/portfolio/transaction-history"],
+};
 
 const NAV_ITEMS: readonly NavItem[] = [
   { name: "Earn & Borrow", href: "/" },
@@ -52,17 +58,8 @@ export default function CentuariNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const isNavItemActive = (item: NavItem): boolean => {
-    if (item.href === "/") {
-      return pathname === "/market" || pathname === "/";
-    } else if (item.href === "/portfolio") {
-      return (
-        pathname === "/portfolio" ||
-        pathname === "/portfolio/transaction-history"
-      );
-    }
-    return pathname === item.href;
-  };
+  const isNavItemActive = (item: NavItem): boolean =>
+    isPathActive(pathname, item.href, NAV_PATH_ALIASES);
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -168,9 +165,8 @@ export default function CentuariNavbar() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
       const key = event.key.toLowerCase();
-      const hotkey = (isMac ? event.metaKey : event.ctrlKey) && key === "k";
+      const hotkey = (isMacPlatform() ? event.metaKey : event.ctrlKey) && key === "k";
 
       if (hotkey && inputRef.current) {
         event.preventDefault();

@@ -10,12 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { LendForm } from "@/components/market/lend-form";
 import { BorrowForm } from "@/components/market/borrow-form";
-
-interface TokenOption {
-  logo: string;
-  value: string;
-  label: string;
-}
+import type { TokenOption } from "@/types";
 
 interface MobileLendBorrowButtonsProps {
   tokenList: TokenOption[];
