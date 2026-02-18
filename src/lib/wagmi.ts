@@ -1,15 +1,9 @@
-import { createConfig, http, injected } from "wagmi";
-import { base } from "wagmi/chains";
+import { createConfig } from "@privy-io/wagmi";
+import { base } from "viem/chains";
+import { http } from "wagmi";
 
 export const wagmiConfig = createConfig({
-	chains: [{
-    id: base.id,
-    name: base.name,
-    nativeCurrency: base.nativeCurrency,
-    rpcUrls: base.rpcUrls,
-    blockExplorers: base.blockExplorers,
-  }],
-	connectors: [injected()],
+	chains: [base],
 	transports: {
 		[base.id]: http(),
 	},

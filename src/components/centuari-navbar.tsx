@@ -2,17 +2,18 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
-import { Menu, Search, SeparatorVertical, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useDisconnect } from "wagmi";
+
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
-import { CentuariConnectWallet } from "./centuari-connect-wallet";
+
 import { CentuariWithdrawDialog } from "./centuari-withdraw-dialog";
 import { CentuariDepositDialog } from "./centuari-deposit-dialog";
 import { CentuariLoginDialog } from "./centuari-login-dialog";
+import { CentuariUserMenu } from "./centuari-user-menu";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
 
 interface NavItem {
@@ -39,8 +40,7 @@ export default function CentuariNavbar() {
 
   const pathname = usePathname();
 
-  const { authenticated, logout } = usePrivy();
-  const { disconnect } = useDisconnect();
+  const { authenticated } = usePrivy();
 
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
@@ -274,16 +274,7 @@ export default function CentuariNavbar() {
               )}
 
               {authenticated ? (
-                <CentuariButton
-                  size={"lg"}
-                  variant="primary"
-                  onClick={() => {
-                    logout();
-                    disconnect();
-                  }}
-                >
-                  Logout
-                </CentuariButton>
+                <CentuariUserMenu />
               ) : (
                 <CentuariLoginDialog
                   open={isLoginDialogOpen}
@@ -358,18 +349,10 @@ export default function CentuariNavbar() {
                 </Link>
               ))}
               <div className="pt-2">
-                <a href="#login" className="block">
-                  {authenticated ? (
-                    <CentuariButton
-                      variant="primary"
-                      onClick={() => {
-                        logout();
-                        disconnect();
-                      }}
-                    >
-                      Logout
-                    </CentuariButton>
-                  ) : (
+                {authenticated ? (
+                  <CentuariUserMenu />
+                ) : (
+                  <a href="#login" className="block">
                     <CentuariButton
                       variant="primary"
                       className="w-full"
@@ -380,8 +363,8 @@ export default function CentuariNavbar() {
                     >
                       Connect Wallet
                     </CentuariButton>
-                  )}
-                </a>
+                  </a>
+                )}
               </div>
             </div>
           </div>

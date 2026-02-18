@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatAddress(address: string, chars = 4): string {
+  return `${address.slice(0, chars + 2)}..${address.slice(-chars)}`;
+}
+
 export function formatCurrency(value: number, decimalPlaces: number = 3) {
   // Handle very small values (less than 0.01) with more decimal places
   if (value > 0 && value < 0.01) {

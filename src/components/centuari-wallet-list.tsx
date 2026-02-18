@@ -1,12 +1,11 @@
 "use client";
 
 import {
-  type BaseConnectedWalletType,
-  useActiveWallet,
   useLoginWithSiwe,
   usePrivy,
   useWallets,
 } from "@privy-io/react-auth";
+import { useSetActiveWallet } from "@privy-io/wagmi";
 import { Search, X } from "lucide-react";
 import { useEffect, useId } from "react";
 import {
@@ -24,7 +23,7 @@ export function CentuariWalletList() {
   const id = useId();
   const { connectAsync } = useConnect();
   const chainId = useChainId();
-  const { setActiveWallet } = useActiveWallet();
+  const { setActiveWallet } = useSetActiveWallet();
   const { address: wagmiAddress, isConnected } = useConnection();
   const { wallets } = useWallets();
   const { authenticated } = usePrivy();
@@ -40,7 +39,7 @@ export function CentuariWalletList() {
         (wallet) => wallet.address === activeWallet
       );
 
-      await setActiveWallet(walletInPrivy as BaseConnectedWalletType);
+      await setActiveWallet(walletInPrivy!);
 
       const message = await generateSiweMessage({
         address: walletInPrivy?.address as string,

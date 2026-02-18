@@ -26,9 +26,13 @@ import {
   formatCurrency,
   calculateFutureAmount,
   getHealthFactorPercentage,
+  handleNumberInputChange,
+  getHealthFactorDisplayStatus,
+  getTokenValueFromList,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
+import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
 import { useRepay } from "@/hooks/use-repay";
 import HealthFactor from "./centuari-health-factor";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
