@@ -24,11 +24,13 @@ interface NavItem {
 const NAV_PATH_ALIASES: Record<string, string[]> = {
   "/": ["/", "/market"],
   "/portfolio": ["/portfolio", "/portfolio/transaction-history"],
+  "/faucet": ["/faucet"],
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
   { name: "Earn & Borrow", href: "/" },
   { name: "Portfolio", href: "/portfolio" },
+  { name: "Faucet", href: "/faucet" },
   // { name: "Points", href: "/points" },
 ] as const;
 
