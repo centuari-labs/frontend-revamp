@@ -40,4 +40,4 @@ COPY --from=builder /app/next.config.ts ./next.config.ts
 ENV NODE_ENV=production
 EXPOSE 3200
 
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start", "-p", "3200"]
