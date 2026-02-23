@@ -13,7 +13,7 @@ export const Provider = ({ children }: { children: React.ReactNode }) => {
 		<PrivyProvider
 			appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
 			config={{
-				loginMethods: ["email", "google", "apple", "twitter"],
+				loginMethods: ["email", "google", "twitter"],
 				appearance: {
 					theme: "dark",
 				},

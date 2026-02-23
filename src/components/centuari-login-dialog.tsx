@@ -3,20 +3,10 @@
 import {
   useLoginWithEmail,
   useLoginWithOAuth,
-  useLoginWithSiwe,
   usePrivy,
-  useWallets,
 } from "@privy-io/react-auth";
-import { useSetActiveWallet } from "@privy-io/wagmi";
 import { ArrowLeft, Mail } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import {
-  type Connector,
-  useChainId,
-  useConnect,
-  useConnection,
-  useConnectors,
-} from "wagmi";
 import {
   Dialog,
   DialogContent,
@@ -54,13 +44,7 @@ export function CentuariLoginDialog({
   onOpenChange?: (open: boolean) => void;
 }) {
   const id = useId();
-  const { connectAsync } = useConnect();
-  const chainId = useChainId();
-  const { setActiveWallet } = useSetActiveWallet();
-  const { address: wagmiAddress, isConnected } = useConnection();
-  const { wallets } = useWallets();
   const { authenticated } = usePrivy();
-  const { generateSiweMessage, loginWithSiwe } = useLoginWithSiwe();
   const [view, setView] = useState<"login" | "otp" | "wallet">("login");
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -88,8 +72,6 @@ export function CentuariLoginDialog({
     },
   });
 
-  const connectors = useConnectors();
-
   // Initialize form with react-hook-form and zod validation
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailFormSchema),
@@ -97,45 +79,6 @@ export function CentuariLoginDialog({
       email: "",
     },
   });
-
-  const handleLogin = async (connector: Connector) => {
-    connectAsync({ connector, chainId }).then(async (result) => {
-      const activeWallet = result.accounts[0];
-
-      const walletInPrivy = wallets.find(
-        (wallet) => wallet.address === activeWallet
-      );
-
-      await setActiveWallet(walletInPrivy!);
-
-      const message = await generateSiweMessage({
-        address: walletInPrivy?.address as string,
-        chainId: `eip155:${chainId}`,
-      });
-
-      const signature = (await walletInPrivy?.sign(message)) as string;
-      await loginWithSiwe({ signature, message });
-    });
-  };
-
-  const connectPrivy = async () => {
-    const walletInPrivy = wallets.find(
-      (wallet) => wallet.address === wagmiAddress
-    );
-
-    if (!walletInPrivy) {
-      console.error("Wallet not found in Privy wallets");
-      return;
-    }
-
-    const message = await generateSiweMessage({
-      address: walletInPrivy?.address as string,
-      chainId: `eip155:${chainId}`,
-    });
-
-    const signature = (await walletInPrivy?.sign(message)) as string;
-    await loginWithSiwe({ signature, message });
-  };
 
   // Step 1: Send OTP code to email
   const handleEmailSubmit = async (values: EmailFormValues) => {
@@ -223,7 +166,7 @@ export function CentuariLoginDialog({
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "twitter" | "apple") => {
+  const handleSocialLogin = async (provider: "google" | "twitter") => {
     try {
       setOauthError(null);
       await initOAuth({ provider });
@@ -352,20 +295,6 @@ export function CentuariLoginDialog({
                   <Image
                     src="/icons/x.svg"
                     alt="X"
-                    width={16}
-                    height={16}
-                    className="bg-white h-4 w-4 rounded-full p-0.5"
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin("apple")}
-                  disabled={loading}
-                  className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Image
-                    src="/icons/apple.svg"
-                    alt="Apple"
                     width={16}
                     height={16}
                     className="bg-white h-4 w-4 rounded-full p-0.5"
