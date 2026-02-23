@@ -1,85 +1,68 @@
 /** biome-ignore-all lint/performance/noImgElement: <explanation> */
 "use client";
 
-import * as React from "react";
-import {
-  useLoginWithSiwe,
-  usePrivy,
-  useWallets,
-} from "@privy-io/react-auth";
-import { useSetActiveWallet } from "@privy-io/wagmi";
+import { useLoginWithSiwe } from "@privy-io/react-auth";
 import { ArrowLeft, Search, X } from "lucide-react";
-import { useEffect, useId } from "react";
-import {
-  type Connector,
-  useChainId,
-  useConnect,
-  useConnection,
-  useConnectors,
-} from "wagmi";
-import { CentuariButton } from "./centuari-button";
+import { useId, useState } from "react";
+import { getAddress } from "viem";
 import { CentuariInput } from "./centuari-input";
 import { CentuariTypography } from "./centuari-typography";
 import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
+import {
+  useDetectedWallets,
+  type DetectedWallet,
+} from "@/hooks/use-detected-wallets";
 
 export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
   const id = useId();
-  const { connectAsync } = useConnect();
-  const chainId = useChainId();
-  const { setActiveWallet } = useSetActiveWallet();
-  const { address: wagmiAddress, isConnected } = useConnection();
-  const { wallets } = useWallets();
-  const { authenticated } = usePrivy();
   const { generateSiweMessage, loginWithSiwe } = useLoginWithSiwe();
+  const detectedWallets = useDetectedWallets();
+  const [connecting, setConnecting] = useState<string | null>(null);
 
-  const connectors = useConnectors();
+  const handleWalletLogin = async (wallet: DetectedWallet) => {
+    try {
+      setConnecting(wallet.info.rdns);
 
-  const handleLogin = async (connector: Connector) => {
-    connectAsync({ connector, chainId }).then(async (result) => {
-      const activeWallet = result.accounts[0];
+      // Request accounts from the wallet provider
+      const accounts = (await wallet.provider.request({
+        method: "eth_requestAccounts",
+      })) as string[];
+      const rawAddress = accounts[0];
 
-      const walletInPrivy = wallets.find(
-        (wallet) => wallet.address === activeWallet
-      );
+      if (!rawAddress) {
+        throw new Error("No account returned from wallet");
+      }
 
-      await setActiveWallet(walletInPrivy!);
+      // EIP-55 checksum required by SIWE spec
+      const address = getAddress(rawAddress);
 
+      // Get chain ID from the wallet itself (not wagmi default)
+      const chainIdHex = (await wallet.provider.request({
+        method: "eth_chainId",
+      })) as string;
+      const chainId = Number.parseInt(chainIdHex, 16);
+
+      // Generate SIWE message via Privy
       const message = await generateSiweMessage({
-        address: walletInPrivy?.address as string,
+        address,
         chainId: `eip155:${chainId}`,
       });
 
-      const signature = (await walletInPrivy?.sign(message)) as string;
+      // Sign with the wallet provider directly
+      const signature = (await wallet.provider.request({
+        method: "personal_sign",
+        params: [message, address],
+      })) as string;
+
+      // Complete Privy login
       await loginWithSiwe({ signature, message });
-    });
-  };
-
-  const connectPrivy = async () => {
-    const walletInPrivy = wallets.find(
-      (wallet) => wallet.address === wagmiAddress
-    );
-
-    if (!walletInPrivy) {
-      console.error("Wallet not found in Privy wallets");
-      return;
+    } catch (err) {
+      console.error(`Wallet login error (${wallet.info.name}):`, err);
+    } finally {
+      setConnecting(null);
     }
-
-    const message = await generateSiweMessage({
-      address: walletInPrivy?.address as string,
-      chainId: `eip155:${chainId}`,
-    });
-
-    const signature = (await walletInPrivy?.sign(message)) as string;
-    await loginWithSiwe({ signature, message });
   };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (!authenticated && wagmiAddress && isConnected) {
-      connectPrivy();
-    }
-  }, [wagmiAddress, authenticated, isConnected]);
 
   return (
     <div className="flex flex-col gap-0 sm:max-w-md">
@@ -105,43 +88,33 @@ export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
         </CentuariTypography>
         <ScrollArea className="bg-white/5 h-48 md:h-72 border rounded-md border-white/5 mt-2">
           <div className="flex flex-col py-1.5 gap-2">
-            {/* <button
-								type="button"
-								key={`wallet-option-${id}`}
-								onClick={handleLogin}
-								className="px-3 py-1.5 hover:bg-white/10 cursor-pointer flex items-center gap-4"
-							>
-								<div className="bg-white rounded-lg h-8 w-8 flex items-center justify-center">
-									<Image
-										src={"/assets/rabby.png"}
-										alt="MetaMask"
-										width={24}
-										height={24}
-									/>
-								</div>
-								<CentuariTypography className="text-white">
-									Rabby Wallet
-								</CentuariTypography>
-							</button> */}
-            {connectors
-              .filter((connector) => connector.id !== "injected")
-              .map((connector) => {
-                return (
-                  <button
-                    type="button"
-                    key={`wallet-option-${connector.id}`}
-                    onClick={() => handleLogin(connector)}
-                    className="px-3 py-1.5 hover:bg-white/10 cursor-pointer flex items-center gap-4"
-                  >
-                    <div className=" rounded-lg h-8 w-8 flex items-center justify-center">
-                      <img src={connector.icon || ""} alt={connector.name} />
-                    </div>
-                    <CentuariTypography className="text-white">
-                      {connector.name}
-                    </CentuariTypography>
-                  </button>
-                );
-              })}
+            {detectedWallets.map((wallet) => (
+              <button
+                type="button"
+                key={`wallet-option-${wallet.info.rdns}`}
+                onClick={() => handleWalletLogin(wallet)}
+                disabled={connecting !== null}
+                className="px-3 py-1.5 hover:bg-white/10 cursor-pointer flex items-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="rounded-lg h-8 w-8 flex items-center justify-center">
+                  <img
+                    src={wallet.info.icon}
+                    alt={wallet.info.name}
+                    className="h-8 w-8 rounded-lg"
+                  />
+                </div>
+                <CentuariTypography className="text-white">
+                  {connecting === wallet.info.rdns
+                    ? `Connecting ${wallet.info.name}...`
+                    : wallet.info.name}
+                </CentuariTypography>
+              </button>
+            ))}
+            {detectedWallets.length === 0 && (
+              <CentuariTypography className="text-sm text-muted-foreground px-3 py-4 text-center">
+                No wallet extensions detected. Please install a wallet like Rabby or MetaMask.
+              </CentuariTypography>
+            )}
           </div>
         </ScrollArea>
         <CentuariTypography className="text-sm text-center text-muted-foreground mt-4">
