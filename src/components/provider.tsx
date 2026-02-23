@@ -1,14 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { wagmiConfig } from "@/lib/wagmi";
 import { EmbeddedWalletGuard } from "./embedded-wallet-guard";
 
-const queryClient = new QueryClient();
-
 export const Provider = ({ children }: { children: React.ReactNode }) => {
+	const [queryClient] = useState(() => new QueryClient());
+
 	return (
 		<PrivyProvider
 			appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}

@@ -5,58 +5,76 @@ import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-c
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { CurrencyValue } from "@/components/currency-value";
 import { StatRow } from "@/components/stat-row";
+import { useMarketData } from "@/hooks/use-market-data";
+import { USE_MOCK } from "@/lib/use-mock";
 import Image from "next/image";
 
 export function HomeHeader() {
-  const totalBalance = 521000000; // 521M
-  const activeLoans = 248000000; // 248M
+	const { data: marketData, isLoading } = useMarketData();
 
-  return (
-    <div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
-      {/* Desktop dot-world background - hidden on mobile */}
-      <div className="hidden md:block absolute top-0 right-0 w-[621px] h-[240px] overflow-hidden">
-        <Image
-          src="/assets/centuari-home-header.png"
-          alt="centuari-home-header"
-          fill
-          className="object-cover z-50 object-right"
-        />
-      </div>
+	const totalBalance =
+		!USE_MOCK && marketData
+			? Number(marketData.total_deposit)
+			: 521000000;
+	const activeLoans =
+		!USE_MOCK && marketData
+			? Number(marketData.active_loans)
+			: 248000000;
 
-      {/* Header Text - centered on mobile, left-aligned on desktop */}
-      <div className="text-center md:text-left w-full">
-        <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-          Hi William!,
-        </CentuariTypography>
-        <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
-          Welcome To Centuari
-        </CentuariTypography>
-      </div>
+	return (
+		<div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
+			{/* Desktop dot-world background - hidden on mobile */}
+			<div className="hidden md:block absolute top-0 right-0 w-[621px] h-[240px] overflow-hidden">
+				<Image
+					src="/assets/centuari-home-header.png"
+					alt="centuari-home-header"
+					fill
+					className="object-cover z-50 object-right"
+				/>
+			</div>
 
-      {/* Balance Cards - 2 column grid on mobile, horizontal on desktop */}
-      <div id="tour-home-header" className="w-full md:w-auto">
-        <StatRow
-          items={[
-            {
-              id: "tour-total-balance",
-              icon: <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />,
-              label: "Total Deposits",
-              value: <CurrencyValue value={totalBalance} decimalPlaces={0} />,
-            },
-            {
-              id: "tour-active-loans",
-              icon: (
-                <IcPieChartColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
-              ),
-              label: "Active Loans",
-              value: <CurrencyValue value={activeLoans} decimalPlaces={0} />,
-            },
-          ]}
-          showSeparator
-          layout="grid"
-          statCardVariant="centered"
-        />
-      </div>
-    </div>
-  );
+			{/* Header Text - centered on mobile, left-aligned on desktop */}
+			<div className="text-center md:text-left w-full">
+				<CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
+					Hi William!,
+				</CentuariTypography>
+				<CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
+					Welcome To Centuari
+				</CentuariTypography>
+			</div>
+
+			{/* Balance Cards - 2 column grid on mobile, horizontal on desktop */}
+			<div id="tour-home-header" className="w-full md:w-auto">
+				<StatRow
+					items={[
+						{
+							id: "tour-total-balance",
+							icon: <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />,
+							label: "Total Deposits",
+							value: isLoading && !USE_MOCK ? (
+								<span className="text-white/50">Loading...</span>
+							) : (
+								<CurrencyValue value={totalBalance} decimalPlaces={0} />
+							),
+						},
+						{
+							id: "tour-active-loans",
+							icon: (
+								<IcPieChartColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
+							),
+							label: "Active Loans",
+							value: isLoading && !USE_MOCK ? (
+								<span className="text-white/50">Loading...</span>
+							) : (
+								<CurrencyValue value={activeLoans} decimalPlaces={0} />
+							),
+						},
+					]}
+					showSeparator
+					layout="grid"
+					statCardVariant="centered"
+				/>
+			</div>
+		</div>
+	);
 }
