@@ -1,10 +1,10 @@
 import { createConfig } from "@privy-io/wagmi";
-import { base } from "viem/chains";
+import { arbitrum } from "viem/chains";
 import { http } from "wagmi";
 
 export const wagmiConfig = createConfig({
-	chains: [base],
+	chains: [arbitrum],
 	transports: {
-		[base.id]: http(),
+		[arbitrum.id]: http(),
 	},
 });

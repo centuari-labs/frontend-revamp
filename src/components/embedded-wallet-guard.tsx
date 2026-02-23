@@ -4,6 +4,7 @@ import { useCreateWallet, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSetActiveWallet } from "@privy-io/wagmi";
 import { useEffect, useRef } from "react";
 import { useSyncAccount } from "@/hooks/use-sync-account";
+import { useWalletDisconnectListener } from "@/hooks/use-wallet-disconnect-listener";
 
 export function EmbeddedWalletGuard({
 	children,
@@ -15,6 +16,7 @@ export function EmbeddedWalletGuard({
 	const isCreating = useRef(false);
 
 	useSyncAccount();
+	useWalletDisconnectListener();
 
 	// Create embedded wallet if user is authenticated via social login but has none
 	useEffect(() => {
