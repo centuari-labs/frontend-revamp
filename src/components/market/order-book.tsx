@@ -5,149 +5,11 @@ import { gsap } from "gsap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ArrowUp } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
-
-type OrderRow = {
-  apr: number;
-  amount: number;
-  side: "lend" | "borrow";
-};
+import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
 
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
   amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
-
-// ===================== DATA =====================
-const borrowOrders: OrderRow[] = [
-  { apr: 0.0482, amount: 21000, side: "borrow" },
-  { apr: 0.048, amount: 18000, side: "borrow" },
-  { apr: 0.0477, amount: 15000, side: "borrow" },
-  { apr: 0.0475, amount: 12000, side: "borrow" },
-  { apr: 0.0473, amount: 9000, side: "borrow" },
-  { apr: 0.047, amount: 6500, side: "borrow" },
-  { apr: 0.0469, amount: 4500, side: "borrow" },
-];
-
-const lendOrders: OrderRow[] = [
-  { apr: 0.0468, amount: 3500, side: "lend" },
-  { apr: 0.0465, amount: 5000, side: "lend" },
-  { apr: 0.0462, amount: 7000, side: "lend" },
-  { apr: 0.0459, amount: 9000, side: "lend" },
-  { apr: 0.0455, amount: 12000, side: "lend" },
-  { apr: 0.0453, amount: 15000, side: "lend" },
-  { apr: 0.0451, amount: 18000, side: "lend" },
-];
-
-function withCumulative(rows: OrderRow[]) {
-  let acc = 0;
-  return rows.map((row) => {
-    acc += row.amount;
-    return { row, cum: acc };
-  });
-}
-
-function sideMaxCumulative(rows: { cum: number }[]) {
-  return Math.max(...rows.map((r) => r.cum), 1);
-}
-
-function randomizeOrder(order: OrderRow, side: OrderRow["side"]): OrderRow {
-  // Small APR delta so values wiggle realistically
-  const aprDelta = (Math.random() - 0.5) * 0.0008;
-  let nextApr = order.apr + aprDelta;
-
-  // Clamp APR to a plausible band
-  const minApr = side === "borrow" ? 0.0465 : 0.0445;
-  const maxApr = side === "borrow" ? 0.0495 : 0.0475;
-  nextApr = Math.min(Math.max(nextApr, minApr), maxApr);
-
-  // Slightly vary amounts
-  const factor = 0.97 + Math.random() * 0.06; // ~±3%
-  let nextAmount = Math.round(order.amount * factor);
-  nextAmount = Math.min(Math.max(nextAmount, 2500), 25000);
-
-  return {
-    ...order,
-    apr: nextApr,
-    amount: nextAmount,
-  };
-}
-
-function generateRandomOrder(
-  side: OrderRow["side"],
-  anchorApr?: number,
-): OrderRow {
-  const baseAprDefault = side === "borrow" ? 0.0478 : 0.0462;
-  const baseApr = anchorApr ?? baseAprDefault;
-  const jitter = (Math.random() - 0.5) * 0.0012;
-  let apr = baseApr + jitter;
-
-  const minApr = side === "borrow" ? 0.0465 : 0.0445;
-  const maxApr = side === "borrow" ? 0.0495 : 0.0475;
-  apr = Math.min(Math.max(apr, minApr), maxApr);
-
-  const amount =
-    5000 +
-    Math.round(Math.random() * (side === "borrow" ? 15000 : 13000));
-
-  return { apr, amount, side };
-}
-
-function updateOrders(
-  prev: OrderRow[],
-  side: OrderRow["side"],
-): OrderRow[] {
-  let updated = prev.map((o) => randomizeOrder(o, side));
-
-  // Occasionally inject a new order at the top and drop one at the bottom
-  if (Math.random() < 0.45) {
-    const bestApr =
-      side === "borrow"
-        ? Math.min(...updated.map((o) => o.apr))
-        : Math.max(...updated.map((o) => o.apr));
-    const fresh = generateRandomOrder(side, bestApr);
-
-    // For borrow, lowest APR (best for borrowers) should update first,
-    // so push new liquidity near the bottom; for lend, highest APR first,
-    // so push new liquidity near the top.
-    if (side === "borrow") {
-      updated = [...updated, fresh];
-    } else {
-      updated = [fresh, ...updated];
-    }
-
-    if (updated.length > prev.length) {
-      // Trim from the opposite side of where we inserted
-      if (side === "borrow") {
-        updated.shift();
-      } else {
-        updated.pop();
-      }
-    }
-  }
-
-  // Keep plausible ordering by APR per side (highest APR first)
-  updated.sort((a, b) => b.apr - a.apr);
-
-  // Give a bit more motion to the edge that should move "first":
-  // - Lend: highest APR row (index 0)
-  // - Borrow: lowest APR row (last index)
-  if (updated.length > 0) {
-    const edgeIndex = side === "borrow" ? updated.length - 1 : 0;
-    const edge = updated[edgeIndex];
-    const edgeAprDelta = (Math.random() - 0.5) * 0.0015;
-    let edgeApr = edge.apr + edgeAprDelta;
-    const minApr = side === "borrow" ? 0.0465 : 0.0445;
-    const maxApr = side === "borrow" ? 0.0495 : 0.0475;
-    edgeApr = Math.min(Math.max(edgeApr, minApr), maxApr);
-    const edgeAmountFactor = 0.95 + Math.random() * 0.15;
-    updated[edgeIndex] = {
-      ...edge,
-      apr: edgeApr,
-      amount: Math.round(edge.amount * edgeAmountFactor),
-    };
-  }
-
-  return updated;
-}
 
 const OrderRowView: React.FC<{
   order: OrderRow;
@@ -268,15 +130,14 @@ const RecentTradeTable: React.FC = () => {
   );
 };
 
-const OrderBookContent: React.FC = () => {
-  const [borrowState, setBorrowState] = React.useState(borrowOrders);
-  const [lendState, setLendState] = React.useState(lendOrders);
+const OrderBookContent: React.FC<{
+  loanToken?: string;
+  decimals?: number;
+}> = ({ loanToken, decimals }) => {
+  const { borrowOrders, lendOrders } = useOrderbook({ loanToken, decimals });
 
-  const allOrders = [...borrowState, ...lendState];
-  const maxAmount = Math.max(...allOrders.map((o) => o.amount));
-
-  const topBorrowApr = borrowState[borrowState.length - 1]?.apr;
-  const topLendApr = lendState[0]?.apr;
+  const topBorrowApr = borrowOrders[borrowOrders.length - 1]?.apr;
+  const topLendApr = lendOrders[0]?.apr;
   const midApr =
     topBorrowApr != null && topLendApr != null
       ? (topBorrowApr + topLendApr) / 2
@@ -285,15 +146,6 @@ const OrderBookContent: React.FC = () => {
     topBorrowApr != null && topLendApr != null
       ? Math.abs(topBorrowApr - topLendApr)
       : undefined;
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setBorrowState((prev) => updateOrders(prev, "borrow"));
-      setLendState((prev) => updateOrders(prev, "lend"));
-    }, 1100);
-
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <>
@@ -307,7 +159,7 @@ const OrderBookContent: React.FC = () => {
       </div>
 
       {/* BORROW */}
-      <OrderTable orders={borrowState} />
+      <OrderTable orders={borrowOrders} />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (
@@ -323,7 +175,7 @@ const OrderBookContent: React.FC = () => {
       )}
 
       {/* LEND */}
-      <OrderTable orders={lendState} />
+      <OrderTable orders={lendOrders} />
     </>
   );
 };
@@ -353,8 +205,14 @@ const RecentTradesContent: React.FC = () => {
   );
 };
 
-export const OrderBookCard: React.FC<{ height?: string }> = ({
+export const OrderBookCard: React.FC<{
+  height?: string;
+  loanToken?: string;
+  decimals?: number;
+}> = ({
   height = "auto",
+  loanToken,
+  decimals,
 }) => (
   <div
     className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]"
@@ -377,7 +235,7 @@ export const OrderBookCard: React.FC<{ height?: string }> = ({
       </TabsList>
 
       <TabsContent value="orderbook">
-        <OrderBookContent />
+        <OrderBookContent loanToken={loanToken} decimals={decimals} />
       </TabsContent>
 
       <TabsContent value="trades">
