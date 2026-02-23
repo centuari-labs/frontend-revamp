@@ -223,7 +223,7 @@ export function CentuariLoginDialog({
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "twitter" | "apple") => {
+  const handleSocialLogin = async (provider: "google" | "twitter") => {
     try {
       setOauthError(null);
       await initOAuth({ provider });
@@ -352,20 +352,6 @@ export function CentuariLoginDialog({
                   <Image
                     src="/icons/x.svg"
                     alt="X"
-                    width={16}
-                    height={16}
-                    className="bg-white h-4 w-4 rounded-full p-0.5"
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin("apple")}
-                  disabled={loading}
-                  className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Image
-                    src="/icons/apple.svg"
-                    alt="Apple"
                     width={16}
                     height={16}
                     className="bg-white h-4 w-4 rounded-full p-0.5"
