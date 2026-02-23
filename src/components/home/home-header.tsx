@@ -5,11 +5,11 @@ import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-c
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { CurrencyValue } from "@/components/currency-value";
 import { StatRow } from "@/components/stat-row";
+import { useMarketData } from "@/hooks/use-market-data";
 import Image from "next/image";
 
 export function HomeHeader() {
-  const totalBalance = 521000000; // 521M
-  const activeLoans = 248000000; // 248M
+  const { totalDeposit, activeLoans } = useMarketData();
 
   return (
     <div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
@@ -41,7 +41,7 @@ export function HomeHeader() {
               id: "tour-total-balance",
               icon: <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />,
               label: "Total Deposits",
-              value: <CurrencyValue value={totalBalance} decimalPlaces={0} />,
+              value: <CurrencyValue value={totalDeposit} decimalPlaces={0} />,
             },
             {
               id: "tour-active-loans",

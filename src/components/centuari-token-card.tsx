@@ -16,11 +16,6 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
-import {
-  getBestLendAPRDisplay,
-  getBestBorrowAPRDisplay,
-  getCollateralFactorDisplay,
-} from "@/lib/positions-adapter.mock";
 import { getTokenSlug, randomIntInRange } from "@/lib/utils";
 
 export const CentuariTokenCard = ({
@@ -28,18 +23,24 @@ export const CentuariTokenCard = ({
   token_name,
   token_symbol,
   id,
+  borrow_rate,
+  lend_rate,
+  collateral_factor,
 }: {
   token_image: string;
   token_name: string;
   token_symbol: string;
   id: number;
+  borrow_rate: number;
+  lend_rate: number;
+  collateral_factor: number;
 }) => {
   const router = useRouter();
 
   const rates = {
-    borrowAPR: getBestBorrowAPRDisplay(token_symbol),
-    lendAPR: getBestLendAPRDisplay(token_symbol),
-    collateralFactor: getCollateralFactorDisplay(token_symbol),
+    borrowAPR: `${borrow_rate}%`,
+    lendAPR: `${lend_rate}%`,
+    collateralFactor: `${collateral_factor}%`,
   };
 
   const [vaultTotal] = useState(() => randomIntInRange(50000, 500000));
