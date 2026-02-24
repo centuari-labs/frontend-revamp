@@ -169,13 +169,13 @@ export function useOrderbook(options?: {
 			setLendOrders(levelsToRows(data.lend, "lend", decimals));
 		};
 
-		socket.on("connect", onConnect);
-		socket.on("disconnect", onDisconnect);
-		socket.on("orderbook-update", onUpdate);
-
 		if (socket.connected) {
 			setIsConnected(true);
 		}
+
+		socket.on("connect", onConnect);
+		socket.on("disconnect", onDisconnect);
+		socket.on("orderbook-update", onUpdate);
 
 		socket.emit("subscribe-orderbook", { loanToken });
 		subscribedRef.current = loanToken;
