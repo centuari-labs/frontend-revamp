@@ -155,10 +155,6 @@ export function useOrderbook(options?: {
 
 		const socket = getSocket();
 
-		if (!socket.connected) {
-			socket.connect();
-		}
-
 		const onConnect = () => setIsConnected(true);
 		const onDisconnect = () => setIsConnected(false);
 
