@@ -16,14 +16,26 @@ function resolveWsUrl(): string {
 }
 
 let socket: Socket | null = null;
+let refCount = 0;
 
-export function getSocket(): Socket {
+export function acquireSocket(): Socket {
 	if (!socket) {
 		const url = resolveWsUrl();
 		socket = io(url, {
 			autoConnect: true,
 			transports: ["websocket"],
 		});
+	} else if (!socket.connected) {
+		socket.connect();
 	}
+	refCount++;
 	return socket;
+}
+
+export function releaseSocket(): void {
+	refCount = Math.max(0, refCount - 1);
+	if (refCount === 0 && socket) {
+		socket.disconnect();
+		socket = null;
+	}
 }
