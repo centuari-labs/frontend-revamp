@@ -159,12 +159,18 @@ export function useOrderbook(options?: {
 			return;
 		}
 
-		const socket = acquireSocket();
+		// Clear stale data immediately when the market changes
+		setBorrowOrders([]);
+		setLendOrders([]);
+
+		const socket = getSocket();
 
 		const onConnect = () => setIsConnected(true);
 		const onDisconnect = () => setIsConnected(false);
 
 		const onUpdate = (data: OrderbookUpdate) => {
+			// Ignore updates that belong to a different market
+			if (data.loanToken !== loanToken) return;
 			setBorrowOrders(levelsToRows(data.borrow, "borrow", decimals));
 			setLendOrders(levelsToRows(data.lend, "lend", decimals));
 		};
