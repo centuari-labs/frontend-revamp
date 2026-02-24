@@ -9,6 +9,7 @@ import { MobileLendBorrowButtons } from "@/components/market/mobile-lend-borrow-
 import { PageContainer } from "@/components/page-container";
 import { MARKET_TOKEN_LIST } from "@/lib/tokens";
 import { getSelectedTokenFromParams } from "@/lib/utils";
+import { useMarketData } from "@/hooks/use-market-data";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
@@ -19,6 +20,13 @@ export default function Page() {
     () => getSelectedTokenFromParams(MARKET_TOKEN_LIST, searchParams.get("token"), "usdc"),
     [searchParams],
   );
+
+  const { markets } = useMarketData();
+  const activeMarket = useMemo(
+    () => markets.find((m) => m.asset.symbol.toLowerCase() === selectedToken.value),
+    [markets, selectedToken.value],
+  );
+
   return (
     <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
         <MarketHeader selectedToken={selectedToken} />
@@ -27,7 +35,19 @@ export default function Page() {
           <APRHistoryCard />
 
           <div className="col-span-1">
-            <OrderBookCard height="500px" />
+            {activeMarket ? (
+              <OrderBookCard
+                height="500px"
+                loanToken={activeMarket.asset.token_address}
+                decimals={activeMarket.asset.decimals}
+              />
+            ) : (
+              <div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+                {markets.length === 0
+                  ? "Loading market data..."
+                  : "Market data unavailable for the selected token."}
+              </div>
+            )}
           </div>
 
           <LendBorrowCard tokenList={MARKET_TOKEN_LIST} selectedToken={selectedToken} />
