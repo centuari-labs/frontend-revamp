@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import { useWallets } from "@privy-io/react-auth";
-import { arbitrum } from "viem/chains";
 import { AlertTriangle } from "lucide-react";
+import { useCallback, useState } from "react";
+import { arbitrum } from "viem/chains";
 
 const ARBITRUM_CAIP2 = `eip155:${arbitrum.id}`;
 

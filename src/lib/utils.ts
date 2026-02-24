@@ -31,6 +31,33 @@ export function formatCurrency(value: number, decimalPlaces: number = 3) {
   return formatted;
 }
 
+export function formatCompactCurrency(
+  value: number,
+  decimalPlaces: number = 2,
+): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  const tiers: [number, string][] = [
+    [1e12, "T"],
+    [1e9, "B"],
+    [1e6, "M"],
+  ];
+
+  for (const [threshold, suffix] of tiers) {
+    if (abs >= threshold) {
+      const scaled = Math.abs(value / threshold);
+      const formatted = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }).format(scaled);
+      return `${sign}$${formatted}${suffix}`;
+    }
+  }
+
+  return formatCurrency(value, decimalPlaces);
+}
+
 /**
  * Returns { integer, decimal } so UI can style decimal part (e.g. muted).
  * Uses formatCurrency internally.
@@ -376,7 +403,7 @@ export function generateRandomAPR(min: number = 5, max: number = 12): string {
   const roundedValue = Math.round(randomValue * 10) / 10; // Round to 1 decimal place
 
   // Format with comma as decimal separator (matching existing format "7,2%")
-  return roundedValue.toFixed(1).replace(".", ",") + "%";
+  return `${roundedValue.toFixed(1).replace(".", ",")}%`;
 }
 
 /**
@@ -429,7 +456,7 @@ export function parseDateString(dateString: string): Date | null {
     };
 
     const month = monthMap[monthStr];
-    if (month === undefined || isNaN(day) || isNaN(year)) return null;
+    if (month === undefined || Number.isNaN(day) || Number.isNaN(year)) return null;
 
     return new Date(year, month, day);
   } catch {

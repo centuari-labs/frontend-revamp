@@ -1,10 +1,11 @@
 "use client";
 
-import { cn, formatCurrencyParts } from "@/lib/utils";
+import { cn, formatCompactCurrency, formatCurrencyParts } from "@/lib/utils";
 
 export interface CurrencyValueProps {
   value: number;
   decimalPlaces?: number;
+  compact?: boolean;
   className?: string;
   decimalClassName?: string;
 }
@@ -12,9 +13,18 @@ export interface CurrencyValueProps {
 export function CurrencyValue({
   value,
   decimalPlaces = 3,
+  compact = false,
   className,
   decimalClassName = "text-[#2B2F37]",
 }: CurrencyValueProps) {
+  if (compact && Math.abs(value) >= 1e6) {
+    return (
+      <span className={cn(className)}>
+        {formatCompactCurrency(value, decimalPlaces)}
+      </span>
+    );
+  }
+
   const parts = formatCurrencyParts(value, decimalPlaces);
 
   return (

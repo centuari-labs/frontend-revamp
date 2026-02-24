@@ -1,8 +1,8 @@
 "use client";
 
 import { PrivyProvider } from "@privy-io/react-auth";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "@privy-io/wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { EmbeddedWalletGuard } from "./embedded-wallet-guard";
 import { WrongNetworkBanner } from "./wrong-network-banner";
