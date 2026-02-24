@@ -36,11 +36,17 @@ export default function Page() {
 
           <div className="col-span-1">
             {activeMarket ? (
-              <OrderBookCard
-                height="500px"
-                loanToken={activeMarket.asset.token_address}
-                decimals={activeMarket.asset.decimals}
-              />
+              activeMarket.asset.decimals != null ? (
+                <OrderBookCard
+                  height="500px"
+                  loanToken={activeMarket.asset.token_address}
+                  decimals={activeMarket.asset.decimals}
+                />
+              ) : (
+                <div role="alert" aria-live="polite" className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+                  Order book unavailable: token decimals are not provided for the selected market.
+                </div>
+              )
             ) : (
               <div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
                 {markets.length === 0

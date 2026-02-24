@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { isAddress } from "viem";
 import { USE_MOCK } from "@/lib/use-mock";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
@@ -138,7 +138,7 @@ export function useOrderbook(options?: {
 	const [borrowOrders, setBorrowOrders] = useState<OrderRow[]>(MOCK_BORROW);
 	const [lendOrders, setLendOrders] = useState<OrderRow[]>(MOCK_LEND);
 	const [isConnected, setIsConnected] = useState(false);
-	const subscribedRef = useRef<string | null>(null);
+	const [connectionError, setConnectionError] = useState<string | null>(null);
 
 	// Mock mode: randomize on interval
 	useEffect(() => {
@@ -165,8 +165,15 @@ export function useOrderbook(options?: {
 
 		const socket = getSocket();
 
-		const onConnect = () => setIsConnected(true);
+		const onConnect = () => {
+			setIsConnected(true);
+			setConnectionError(null);
+		};
 		const onDisconnect = () => setIsConnected(false);
+		const onConnectError = (err: Error) => {
+			setIsConnected(false);
+			setConnectionError(err.message || "WebSocket connection failed");
+		};
 
 		const onUpdate = (data: OrderbookUpdate) => {
 			// Ignore updates that belong to a different market
@@ -177,6 +184,7 @@ export function useOrderbook(options?: {
 
 		socket.on("connect", onConnect);
 		socket.on("disconnect", onDisconnect);
+		socket.on("connect_error", onConnectError);
 		socket.on("orderbook-update", onUpdate);
 
 		if (socket.connected) {
@@ -184,17 +192,16 @@ export function useOrderbook(options?: {
 		}
 
 		socket.emit("subscribe-orderbook", { loanToken });
-		subscribedRef.current = loanToken;
 
 		return () => {
 			socket.emit("unsubscribe-orderbook", { loanToken });
 			socket.off("connect", onConnect);
 			socket.off("disconnect", onDisconnect);
+			socket.off("connect_error", onConnectError);
 			socket.off("orderbook-update", onUpdate);
-			subscribedRef.current = null;
 			releaseSocket();
 		};
 	}, [loanToken, decimals]);
 
-	return { borrowOrders, lendOrders, isConnected };
+	return { borrowOrders, lendOrders, isConnected, connectionError };
 }
