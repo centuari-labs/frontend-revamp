@@ -163,7 +163,7 @@ export function useOrderbook(options?: {
 		setBorrowOrders([]);
 		setLendOrders([]);
 
-		const socket = getSocket();
+		const socket = acquireSocket();
 
 		const onConnect = () => setIsConnected(true);
 		const onDisconnect = () => setIsConnected(false);

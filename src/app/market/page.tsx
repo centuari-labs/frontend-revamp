@@ -39,7 +39,7 @@ export default function Page() {
               <OrderBookCard
                 height="500px"
                 loanToken={activeMarket.asset.token_address}
-                decimals={activeMarket.asset.decimals}
+                decimals={activeMarket.asset.decimals ?? undefined}
               />
             ) : (
               <div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">

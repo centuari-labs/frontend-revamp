@@ -10,7 +10,7 @@ import { useMarketData } from "@/hooks/use-market-data";
 import { useAccountName } from "@/hooks/use-account-name";
 
 export function HomeHeader() {
-  const { totalDeposit, activeLoans } = useMarketData();
+  const { totalDeposit, activeLoans, isLoading } = useMarketData();
   const name = useAccountName();
 
   return (
@@ -43,7 +43,7 @@ export function HomeHeader() {
               id: "tour-total-balance",
               icon: <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />,
               label: "Total Deposits",
-              value: <CurrencyValue value={totalDeposit} decimalPlaces={2} compact />,
+              value: isLoading ? <span className="animate-pulse text-muted-foreground">--</span> : <CurrencyValue value={totalDeposit} decimalPlaces={2} compact />,
             },
             {
               id: "tour-active-loans",
@@ -51,7 +51,7 @@ export function HomeHeader() {
                 <IcPieChartColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
               ),
               label: "Active Loans",
-              value: <CurrencyValue value={activeLoans} decimalPlaces={2} compact />,
+              value: isLoading ? <span className="animate-pulse text-muted-foreground">--</span> : <CurrencyValue value={activeLoans} decimalPlaces={2} compact />,
             },
           ]}
           showSeparator
