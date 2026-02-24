@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { isAddress } from "viem";
 import { USE_MOCK } from "@/lib/use-mock";
-import { getSocket } from "@/lib/socket";
+import { acquireSocket, releaseSocket } from "@/lib/socket";
 
 export type OrderRow = {
 	apr: number;
@@ -159,7 +159,7 @@ export function useOrderbook(options?: {
 			return;
 		}
 
-		const socket = getSocket();
+		const socket = acquireSocket();
 
 		const onConnect = () => setIsConnected(true);
 		const onDisconnect = () => setIsConnected(false);
@@ -186,6 +186,7 @@ export function useOrderbook(options?: {
 			socket.off("disconnect", onDisconnect);
 			socket.off("orderbook-update", onUpdate);
 			subscribedRef.current = null;
+			releaseSocket();
 		};
 	}, [loanToken, decimals]);
 
