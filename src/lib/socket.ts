@@ -2,12 +2,14 @@ import { io, type Socket } from "socket.io-client";
 
 function resolveWsUrl(): string {
 	if (process.env.NEXT_PUBLIC_WS_URL) {
-		return process.env.NEXT_PUBLIC_WS_URL;
+		// Socket.IO needs an HTTP(S) URL — it upgrades to WebSocket internally.
+		return process.env.NEXT_PUBLIC_WS_URL
+			.replace(/^ws:/, "http:")
+			.replace(/^wss:/, "https:");
 	}
 
 	if (typeof window !== "undefined") {
-		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-		return `${protocol}//${window.location.host}`;
+		return `${window.location.protocol}//${window.location.host}`;
 	}
 
 	throw new Error(
