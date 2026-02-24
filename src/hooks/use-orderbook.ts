@@ -133,7 +133,7 @@ export function useOrderbook(options?: {
 	loanToken?: string;
 	decimals?: number;
 }) {
-	const { loanToken, decimals = 6 } = options ?? {};
+	const { loanToken, decimals } = options ?? {};
 
 	const [borrowOrders, setBorrowOrders] = useState<OrderRow[]>(MOCK_BORROW);
 	const [lendOrders, setLendOrders] = useState<OrderRow[]>(MOCK_LEND);
@@ -159,14 +159,22 @@ export function useOrderbook(options?: {
 			return;
 		}
 
+		if (decimals == null) {
+			console.warn(
+				"[useOrderbook] decimals not provided for loanToken:",
+				loanToken,
+				"- amount calculations may be incorrect. Ensure the API returns the correct decimals for this token.",
+			);
+		}
+
 		const socket = getSocket();
 
 		const onConnect = () => setIsConnected(true);
 		const onDisconnect = () => setIsConnected(false);
 
 		const onUpdate = (data: OrderbookUpdate) => {
-			setBorrowOrders(levelsToRows(data.borrow, "borrow", decimals));
-			setLendOrders(levelsToRows(data.lend, "lend", decimals));
+			setBorrowOrders(levelsToRows(data.borrow, "borrow", decimals ?? 6));
+			setLendOrders(levelsToRows(data.lend, "lend", decimals ?? 6));
 		};
 
 		socket.on("connect", onConnect);
