@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { isAddress } from "viem";
 import { USE_MOCK } from "@/lib/use-mock";
 import { getSocket } from "@/lib/socket";
 
@@ -152,6 +153,11 @@ export function useOrderbook(options?: {
 	// WebSocket mode
 	useEffect(() => {
 		if (USE_MOCK || !loanToken) return;
+
+		if (!isAddress(loanToken)) {
+			console.warn("[useOrderbook] Invalid loanToken address:", loanToken);
+			return;
+		}
 
 		const socket = getSocket();
 
