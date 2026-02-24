@@ -35,11 +35,19 @@ export default function Page() {
           <APRHistoryCard />
 
           <div className="col-span-1">
-            <OrderBookCard
-              height="500px"
-              loanToken={activeMarket?.asset.token_address}
-              decimals={activeMarket?.asset.decimals ?? undefined}
-            />
+            {activeMarket ? (
+              <OrderBookCard
+                height="500px"
+                loanToken={activeMarket.asset.token_address}
+                decimals={activeMarket.asset.decimals}
+              />
+            ) : (
+              <div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+                {markets.length === 0
+                  ? "Loading market data..."
+                  : "Market data unavailable for the selected token."}
+              </div>
+            )}
           </div>
 
           <LendBorrowCard tokenList={MARKET_TOKEN_LIST} selectedToken={selectedToken} />
