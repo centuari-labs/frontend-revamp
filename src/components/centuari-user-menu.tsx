@@ -8,10 +8,12 @@ import {
   Link2,
   LogOut,
   ArrowLeft,
+  Loader2,
   Pencil,
   Plus,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
+import { updateAccountName } from "@/lib/api";
 import { useDisconnect, useBalance, useConnection } from "wagmi";
 import { formatUnits } from "viem";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -59,7 +61,7 @@ function getDefaultUsername(
 
 export function CentuariUserMenu() {
   const id = useId();
-  const { user, logout } = usePrivy();
+  const { user, logout, getAccessToken } = usePrivy();
   const { disconnect } = useDisconnect();
   const { wallets } = useWallets();
   const { address: wagmiAddress } = useConnection();
@@ -69,6 +71,7 @@ export function CentuariUserMenu() {
   const [username, setUsername] = useState("");
   const [editValue, setEditValue] = useState("");
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Derive wallet address: prefer embedded wallet, fallback to wagmi
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
@@ -104,13 +107,25 @@ export function CentuariUserMenu() {
     setTimeout(() => setCopied(false), 2000);
   }, [walletAddress]);
 
-  const handleSaveUsername = useCallback(() => {
+  const handleSaveUsername = useCallback(async () => {
     const trimmed = editValue.trim();
     if (!trimmed) return;
-    localStorage.setItem(LS_USERNAME_KEY, trimmed);
-    setUsername(trimmed);
-    setView("main");
-  }, [editValue]);
+    setSaving(true);
+    try {
+      const token = await getAccessToken();
+      if (token) {
+        await updateAccountName(trimmed, token);
+      }
+      localStorage.setItem(LS_USERNAME_KEY, trimmed);
+      window.dispatchEvent(new Event("centuari_username_changed"));
+      setUsername(trimmed);
+      setView("main");
+    } catch (err) {
+      console.error("Failed to update name:", err);
+    } finally {
+      setSaving(false);
+    }
+  }, [editValue, getAccessToken]);
 
   const handleLogout = useCallback(() => {
     setOpen(false);
@@ -260,9 +275,16 @@ export function CentuariUserMenu() {
               variant="primary"
               className="w-full mt-4"
               onClick={handleSaveUsername}
-              disabled={!editValue.trim()}
+              disabled={!editValue.trim() || saving}
             >
-              Save Changes
+              {saving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving…
+                </span>
+              ) : (
+                "Save Changes"
+              )}
             </CentuariButton>
           </div>
         )}

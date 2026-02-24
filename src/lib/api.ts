@@ -24,3 +24,22 @@ export interface MarketResponse {
 export function getMarket(): Promise<MarketResponse> {
 	return apiClient<MarketResponse>("/market");
 }
+
+export interface AccountResponse {
+	id: string;
+	privy_user_id: string;
+	user_wallet: string;
+	name: string | null;
+	created_at: string;
+}
+
+export function updateAccountName(
+	name: string,
+	token: string,
+): Promise<AccountResponse> {
+	return apiClient<AccountResponse>("/auth/name", {
+		method: "PATCH",
+		body: { name },
+		token,
+	});
+}

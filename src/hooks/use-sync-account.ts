@@ -3,6 +3,9 @@
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
+import type { AccountResponse } from "@/lib/api";
+
+const LS_USERNAME_KEY = "centuari_username";
 
 export function useSyncAccount() {
 	const { authenticated, ready, getAccessToken } = usePrivy();
@@ -21,9 +24,17 @@ export function useSyncAccount() {
 
 		getAccessToken().then((token) => {
 			if (!token) return;
-			apiClient("/auth/login", { method: "POST", token }).catch((err) => {
-				console.error("Failed to sync account:", err);
-			});
+			apiClient<AccountResponse>("/auth/login", { method: "POST", token })
+				.then((account) => {
+					const storedName = localStorage.getItem(LS_USERNAME_KEY);
+					if (!storedName && account.name) {
+						localStorage.setItem(LS_USERNAME_KEY, account.name);
+						window.dispatchEvent(new Event("centuari_username_changed"));
+					}
+				})
+				.catch((err) => {
+					console.error("Failed to sync account:", err);
+				});
 		});
 	}, [ready, authenticated, wallets, getAccessToken]);
 
