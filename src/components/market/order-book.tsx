@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ArrowUp } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
+import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
 
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
@@ -79,31 +80,18 @@ const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
   );
 };
 
-const RecentTradeTable: React.FC = () => {
-  // Dummy data for recent trades
-  const recentTrades = [
-    { time: "11:42:35", type: "Lend", amount: 5000, apr: 0.047 },
-    { time: "11:42:36", type: "Borrow", amount: 3000, apr: 0.048 },
-    { time: "11:42:37", type: "Lend", amount: 7000, apr: 0.0465 },
-    { time: "11:42:38", type: "Borrow", amount: 4000, apr: 0.049 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Lend", amount: 6000, apr: 0.0458 },
-  ];
+const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
+  if (trades.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-20 text-sm text-white/40">
+        No recent trades
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-0.5">
-      {recentTrades.map((trade, i) => (
+      {trades.map((trade, i) => (
         <div
           key={i}
           className="grid grid-cols-12 h-6 gap-6 items-center text-sm hover:bg-white/5 transition-colors min-w-[320px]"
@@ -131,11 +119,9 @@ const RecentTradeTable: React.FC = () => {
 };
 
 const OrderBookContent: React.FC<{
-  loanToken?: string;
-  decimals?: number;
-}> = ({ loanToken, decimals }) => {
-  const { borrowOrders, lendOrders } = useOrderbook({ loanToken, decimals });
-
+  borrowOrders: OrderRow[];
+  lendOrders: OrderRow[];
+}> = ({ borrowOrders, lendOrders }) => {
   const topBorrowApr = borrowOrders[borrowOrders.length - 1]?.apr;
   const topLendApr = lendOrders[0]?.apr;
   const midApr =
@@ -180,30 +166,30 @@ const OrderBookContent: React.FC<{
   );
 };
 
-const RecentTradesContent: React.FC = () => {
-  return (
-    <div className="overflow-auto max-h-[400px]">
-      <div className="min-w-max">
-        <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm min-w-[320px]">
-          <div className="col-span-3 text-white/80 font-semibold shrink-0">
-            Time
-          </div>
-          <div className="col-span-3 text-white/80 font-semibold shrink-0">
-            Type
-          </div>
-          <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
-            Amount
-          </div>
-          <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
-            APR
-          </div>
+const RecentTradesContent: React.FC<{
+  trades: TradeRow[];
+}> = ({ trades }) => (
+  <div className="overflow-auto max-h-[400px]">
+    <div className="min-w-max">
+      <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm min-w-[320px]">
+        <div className="col-span-3 text-white/80 font-semibold shrink-0">
+          Time
         </div>
-
-        <RecentTradeTable />
+        <div className="col-span-3 text-white/80 font-semibold shrink-0">
+          Type
+        </div>
+        <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+          Amount
+        </div>
+        <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+          APR
+        </div>
       </div>
+
+      <RecentTradeTable trades={trades} />
     </div>
-  );
-};
+  </div>
+);
 
 export const OrderBookCard: React.FC<{
   height?: string;
@@ -213,34 +199,39 @@ export const OrderBookCard: React.FC<{
   height = "auto",
   loanToken,
   decimals,
-}) => (
-  <div
-    className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]"
-    style={{ height }}
-  >
-    <Tabs defaultValue="orderbook" className="w-full">
-      <TabsList className="bg-white/5 w-full">
-        <TabsTrigger
-          value="orderbook"
-          className="data-[state=active]:!border-none"
-        >
-          Order Book
-        </TabsTrigger>
-        <TabsTrigger
-          value="trades"
-          className="data-[state=active]:!border-none"
-        >
-          Recent Trades
-        </TabsTrigger>
-      </TabsList>
+}) => {
+  const { borrowOrders, lendOrders } = useOrderbook({ loanToken, decimals });
+  const { trades } = useRecentTrades({ loanToken, decimals });
 
-      <TabsContent value="orderbook">
-        <OrderBookContent loanToken={loanToken} decimals={decimals} />
-      </TabsContent>
+  return (
+    <div
+      className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]"
+      style={{ height }}
+    >
+      <Tabs defaultValue="orderbook" className="w-full">
+        <TabsList className="bg-white/5 w-full">
+          <TabsTrigger
+            value="orderbook"
+            className="data-[state=active]:!border-none"
+          >
+            Order Book
+          </TabsTrigger>
+          <TabsTrigger
+            value="trades"
+            className="data-[state=active]:!border-none"
+          >
+            Recent Trades
+          </TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="trades">
-        <RecentTradesContent />
-      </TabsContent>
-    </Tabs>
-  </div>
-);
+        <TabsContent value="orderbook">
+          <OrderBookContent borrowOrders={borrowOrders} lendOrders={lendOrders} />
+        </TabsContent>
+
+        <TabsContent value="trades">
+          <RecentTradesContent trades={trades} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
