@@ -84,17 +84,7 @@ export function formatCurrencyParts(
  * @returns Slug for ?token= query (e.g. "usdc"), fallback "usdc"
  */
 export function getTokenSlug(symbol: string): string {
-  const map: Record<string, string> = {
-    USDC: "usdc",
-    XSGD: "xsgd",
-    IDRX: "idrx",
-    USDT: "usdt",
-    SOL: "sol",
-    BTC: "btc",
-    ETH: "eth",
-    LINK: "link",
-  };
-  return map[symbol.toUpperCase()] ?? "usdc";
+  return symbol.toLowerCase();
 }
 
 /**

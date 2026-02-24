@@ -7,7 +7,7 @@ import { LendBorrowCard } from "@/components/market/lend-borrow-card";
 import { PositionSection } from "@/components/market/position-section";
 import { MobileLendBorrowButtons } from "@/components/market/mobile-lend-borrow-buttons";
 import { PageContainer } from "@/components/page-container";
-import { MARKET_TOKEN_LIST } from "@/lib/tokens";
+import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { getSelectedTokenFromParams } from "@/lib/utils";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useSearchParams } from "next/navigation";
@@ -15,13 +15,25 @@ import { useMemo } from "react";
 
 export default function Page() {
   const searchParams = useSearchParams();
+  const { markets } = useMarketData();
 
-  const selectedToken = useMemo(
-    () => getSelectedTokenFromParams(MARKET_TOKEN_LIST, searchParams.get("token"), "usdc"),
-    [searchParams],
+  const tokenList = useMemo(
+    () => {
+      if (markets.length === 0) return MARKET_TOKEN_LIST;
+      return markets.map((m) => ({
+        logo: getTokenLogo(m.asset.symbol.toLowerCase(), m.asset.image_url ?? undefined),
+        value: m.asset.symbol.toLowerCase(),
+        label: m.asset.symbol,
+      }));
+    },
+    [markets],
   );
 
-  const { markets } = useMarketData();
+  const selectedToken = useMemo(
+    () => getSelectedTokenFromParams(tokenList, searchParams.get("token"), "usdc"),
+    [tokenList, searchParams],
+  );
+
   const activeMarket = useMemo(
     () => markets.find((m) => m.asset.symbol.toLowerCase() === selectedToken.value),
     [markets, selectedToken.value],
@@ -50,12 +62,12 @@ export default function Page() {
             )}
           </div>
 
-          <LendBorrowCard tokenList={MARKET_TOKEN_LIST} selectedToken={selectedToken} />
+          <LendBorrowCard tokenList={tokenList} selectedToken={selectedToken} />
         </div>
 
         <PositionSection />
 
-      <MobileLendBorrowButtons tokenList={MARKET_TOKEN_LIST} selectedToken={selectedToken} />
+      <MobileLendBorrowButtons tokenList={tokenList} selectedToken={selectedToken} />
     </PageContainer>
   );
 }
