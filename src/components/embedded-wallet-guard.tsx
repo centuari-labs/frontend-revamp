@@ -30,9 +30,8 @@ export function EmbeddedWalletGuard({
 
 		// Only create if user has no embedded wallet (social login users)
 		isCreating.current = true;
-		createWallet().catch((err) => {
-			// Wallet may already exist or creation not needed
-			console.warn("Could not create embedded wallet:", err);
+		createWallet().catch(() => {
+			// Wallet may already exist — safe to ignore
 		});
 	}, [ready, authenticated, wallets, createWallet]);
 
