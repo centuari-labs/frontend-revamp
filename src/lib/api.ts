@@ -9,8 +9,14 @@ export interface MarketAsset {
 	token_address: string;
 }
 
+export interface MarketItemMarket {
+	market_id: string | null;
+	maturity: number | null; // Unix seconds
+}
+
 export interface MarketItem {
 	asset: MarketAsset;
+	market: MarketItemMarket;
 	borrow_rate: number;
 	lend_rate: number;
 	collateral_factor: number;
@@ -41,6 +47,41 @@ export function updateAccountName(
 	return apiClient<AccountResponse>("/auth/name", {
 		method: "PATCH",
 		body: { name },
+		token,
+	});
+}
+
+// ─── Lend Limit Order ─────────────────────────────────────────────────
+
+export interface CreateLendLimitOrderDto {
+	assetId: string;
+	amount: string;
+	marketIds: string[];
+	rate: number;
+	autoRollover?: boolean;
+}
+
+export interface OrderResponseData {
+	orderId: string;
+	walletAddress: string;
+	assetId: string;
+	markets: { marketId: string; maturity: number }[];
+	status: string;
+	originalAmount: string;
+	settlementFeeAmount: string;
+	rate: number;
+	autoRollover: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export function createLendLimitOrder(
+	dto: CreateLendLimitOrderDto,
+	token: string,
+): Promise<OrderResponseData> {
+	return apiClient<OrderResponseData>("/orders/lend/limit", {
+		method: "POST",
+		body: dto,
 		token,
 	});
 }

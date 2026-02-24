@@ -58,6 +58,7 @@ export interface SubmitLendLimitParams {
   amountInUsd: number;
   targetApr: number;
   maturity: number;
+  autoRollover: boolean;
   editingPosition?: LendPosition;
 }
 

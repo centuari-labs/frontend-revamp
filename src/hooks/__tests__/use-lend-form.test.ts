@@ -3,6 +3,30 @@ import { renderHook, act } from "@testing-library/react";
 import { useLendForm } from "@/hooks/use-lend-form";
 import { makeLendPosition } from "@/__tests__/helpers/fixtures/positions";
 
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
+    authenticated: true,
+    ready: true,
+    getAccessToken: vi.fn(async () => "mock-token"),
+  })),
+}));
+
+vi.mock("@/hooks/use-market-data", () => ({
+  useMarketData: vi.fn(() => ({
+    markets: [],
+    totalDeposit: 0,
+    activeLoans: 0,
+    isLoading: false,
+    isError: false,
+  })),
+}));
+
+vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
+
+vi.mock("@/lib/positions-adapter.api", () => ({
+  submitLendLimitOrder: vi.fn(),
+}));
+
 // Mock all adapter functions
 vi.mock("@/lib/positions-adapter.mock", () => ({
   submitOpenOrder: vi.fn(async (pos) => pos),

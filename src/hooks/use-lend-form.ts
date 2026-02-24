@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import {
   formatNumberWithSeparator,
   calculateFutureAmount,
 } from "@/lib/utils";
+import { USE_MOCK } from "@/lib/use-mock";
 import { getBestLendAPR } from "@/lib/positions-adapter.mock";
 import {
   getDefaultMaturityTimestamp,
@@ -16,6 +18,7 @@ import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
+import { useMarketData } from "@/hooks/use-market-data";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -32,6 +35,8 @@ export function useLendForm({
   editingPosition,
   onUpdate,
 }: UseLendFormParams) {
+  const { getAccessToken } = usePrivy();
+  const { markets } = useMarketData();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -138,16 +143,21 @@ export function useLendForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const result = await submitLimit({
-          tokenValue: selectedToken.value,
-          tokenLogo: selectedToken.logo,
-          tokenLabel: selectedToken.label,
-          amount: numericAmount,
-          amountInUsd,
-          targetApr: aprDecimal || (4.5 + Math.random() * 3) / 100,
-          maturity: limitMaturity,
-          editingPosition: editingPosition ?? undefined,
-        });
+        const token = USE_MOCK ? undefined : await getAccessToken();
+        const result = await submitLimit(
+          {
+            tokenValue: selectedToken.value,
+            tokenLogo: selectedToken.logo,
+            tokenLabel: selectedToken.label,
+            amount: numericAmount,
+            amountInUsd,
+            targetApr: aprDecimal || (4.5 + Math.random() * 3) / 100,
+            maturity: limitMaturity,
+            autoRollover,
+            editingPosition: editingPosition ?? undefined,
+          },
+          USE_MOCK ? undefined : { token: token!, markets },
+        );
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -167,9 +177,12 @@ export function useLendForm({
       limitAmountInput,
       limitTargetAPR,
       limitMaturity,
+      autoRollover,
       isPending,
       selectedToken,
       getTokenInfo,
+      getAccessToken,
+      markets,
       submitLimit,
       editingPosition,
       onUpdate,

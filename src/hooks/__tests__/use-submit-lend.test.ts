@@ -3,6 +3,12 @@ import { renderHook, act } from "@testing-library/react";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { makeLendPosition } from "@/__tests__/helpers/fixtures/positions";
 
+vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
+
+vi.mock("@/lib/positions-adapter.api", () => ({
+  submitLendLimitOrder: vi.fn(),
+}));
+
 vi.mock("@/lib/positions-adapter.mock", () => ({
   submitOpenOrder: vi.fn(async (pos) => pos),
   submitFilledLendPosition: vi.fn(async (pos) => pos),
@@ -49,6 +55,7 @@ describe("useSubmitLend", () => {
         amountInUsd: 100,
         targetApr: 0.065,
         maturity: 1000,
+        autoRollover: true,
       });
     });
 
@@ -69,6 +76,7 @@ describe("useSubmitLend", () => {
         amountInUsd: 200,
         targetApr: 0.07,
         maturity: 1000,
+        autoRollover: true,
         editingPosition: existing,
       });
     });
