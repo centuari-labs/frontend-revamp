@@ -18,31 +18,20 @@ import type {
 
 // ─── ID Resolution ────────────────────────────────────────────────────
 
-export function resolveAssetId(
+export function resolveMarketForAsset(
 	tokenValue: string,
 	markets: MarketItem[],
-): string {
+): { assetId: string; marketId: string } {
 	const match = markets.find(
 		(m) => m.asset.symbol.toLowerCase() === tokenValue.toLowerCase(),
 	);
 	if (!match) {
 		throw new Error(`No asset found for token "${tokenValue}"`);
 	}
-	return match.asset.id;
-}
-
-export function resolveMarketId(
-	maturityMs: number,
-	markets: MarketItem[],
-): string {
-	const maturitySec = Math.floor(maturityMs / 1000);
-	const match = markets.find((m) => m.market.maturity === maturitySec);
-	if (!match || !match.market.market_id) {
-		throw new Error(
-			`No market found for maturity ${maturityMs} (${new Date(maturityMs).toISOString()})`,
-		);
+	if (!match.market.market_id) {
+		throw new Error(`No market available for token "${tokenValue}"`);
 	}
-	return match.market.market_id;
+	return { assetId: match.asset.id, marketId: match.market.market_id };
 }
 
 // ─── Conversions ──────────────────────────────────────────────────────
@@ -103,8 +92,7 @@ export async function submitLendLimitOrder(
 	markets: MarketItem[],
 	token: string,
 ): Promise<LendPosition> {
-	const assetId = resolveAssetId(params.tokenValue, markets);
-	const marketId = resolveMarketId(params.maturity, markets);
+	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
 
 	const dto = {
 		assetId,

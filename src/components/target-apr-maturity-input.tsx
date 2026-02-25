@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  getAvailableMaturityTimestamps,
   formatMaturityTimestamp,
 } from "@/lib/maturity";
 
@@ -21,6 +20,7 @@ export interface TargetAprMaturityInputProps {
   onChange: (value: string) => void;
   maturity: number;
   onMaturityChange: (ts: number) => void;
+  maturityOptions: number[];
   id?: string;
   placeholder?: string;
   label?: string;
@@ -31,6 +31,7 @@ export function TargetAprMaturityInput({
   onChange,
   maturity,
   onMaturityChange,
+  maturityOptions,
   id = "target-apr",
   placeholder = "12.5",
   label = "Target APR",
@@ -95,7 +96,7 @@ export function TargetAprMaturityInput({
             </SelectTrigger>
             <SelectContent className="bg-white/5 backdrop-blur-[140px]">
               <SelectGroup>
-                {getAvailableMaturityTimestamps().map((ts) => (
+                {maturityOptions.map((ts) => (
                   <SelectItem key={ts} value={ts.toString()}>
                     {formatMaturityTimestamp(ts)}
                   </SelectItem>

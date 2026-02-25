@@ -75,13 +75,22 @@ export interface OrderResponseData {
 	updatedAt: string;
 }
 
-export function createLendLimitOrder(
+interface OrderEnvelope {
+	statusCode: number;
+	data: OrderResponseData;
+}
+
+export async function createLendLimitOrder(
 	dto: CreateLendLimitOrderDto,
 	token: string,
 ): Promise<OrderResponseData> {
-	return apiClient<OrderResponseData>("/orders/lend/limit", {
+	// The backend controller returns { statusCode, data } and the
+	// ResponseInterceptor wraps it again, so apiClient unwraps the outer
+	// envelope and we unwrap the inner one here.
+	const envelope = await apiClient<OrderEnvelope>("/orders/lend/limit", {
 		method: "POST",
 		body: dto,
 		token,
 	});
+	return envelope.data;
 }

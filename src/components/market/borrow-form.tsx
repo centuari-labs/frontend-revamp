@@ -22,6 +22,7 @@ import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
+import { getAvailableMaturityTimestamps } from "@/lib/maturity";
 
 interface BorrowFormProps {
   tokenList: TokenOption[];
@@ -108,6 +109,7 @@ export function BorrowForm({
                     onChange={form.setLimitTargetAPR}
                     maturity={form.limitMaturity}
                     onMaturityChange={form.setLimitMaturity}
+                    maturityOptions={getAvailableMaturityTimestamps()}
                     placeholder="12.5"
                     label="Target APR"
                   />

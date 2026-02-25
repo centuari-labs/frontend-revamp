@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { usePrivy } from "@privy-io/react-auth";
 import {
   formatNumberWithSeparator,
   calculateFutureAmount,
@@ -14,13 +13,25 @@ import {
   formatMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
+import type { MarketItem } from "@/lib/api";
 import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { useMarketData } from "@/hooks/use-market-data";
+import { useAuthToken } from "@/hooks/use-auth-token";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
+
+function getMaturitiesFromMarkets(markets: MarketItem[]): number[] {
+  const seen = new Set<number>();
+  for (const m of markets) {
+    if (m.market.maturity != null) {
+      seen.add(m.market.maturity * 1000); // seconds → ms
+    }
+  }
+  return [...seen].sort((a, b) => a - b);
+}
 
 export interface UseLendFormParams {
   tokenList: TokenOption[];
@@ -35,7 +46,7 @@ export function useLendForm({
   editingPosition,
   onUpdate,
 }: UseLendFormParams) {
-  const { getAccessToken } = usePrivy();
+  const { getToken } = useAuthToken();
   const { markets } = useMarketData();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
@@ -47,6 +58,12 @@ export function useLendForm({
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
 
+  const availableMaturities = USE_MOCK || markets.length === 0
+    ? getAvailableMaturityTimestamps()
+    : getMaturitiesFromMarkets(markets);
+
+  const defaultMaturity = availableMaturities[0] ?? getDefaultMaturityTimestamp();
+
   const [limitMaturity, setLimitMaturity] = useState(() =>
     getDefaultMaturityTimestamp()
   );
@@ -54,6 +71,20 @@ export function useLendForm({
   const [marketMaturity, setMarketMaturity] = useState(() =>
     getDefaultMaturityTimestamp()
   );
+
+  // Sync default maturity when backend data loads
+  useEffect(() => {
+    if (!USE_MOCK && availableMaturities.length > 0) {
+      setLimitMaturity((prev) => {
+        const isLocal = !availableMaturities.includes(prev);
+        return isLocal ? availableMaturities[0] : prev;
+      });
+      setMarketMaturity((prev) => {
+        const isLocal = !availableMaturities.includes(prev);
+        return isLocal ? availableMaturities[0] : prev;
+      });
+    }
+  }, [availableMaturities]);
   const [autoRollover, setAutoRollover] = useState(true);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successAmount, setSuccessAmount] = useState("");
@@ -143,7 +174,7 @@ export function useLendForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = USE_MOCK ? undefined : await getAccessToken();
+        const token = USE_MOCK ? undefined : await getToken();
         const result = await submitLimit(
           {
             tokenValue: selectedToken.value,
@@ -181,7 +212,7 @@ export function useLendForm({
       isPending,
       selectedToken,
       getTokenInfo,
-      getAccessToken,
+      getToken,
       markets,
       submitLimit,
       editingPosition,
@@ -279,7 +310,7 @@ export function useLendForm({
     successAmount,
     successTokenSymbol,
     isPending,
-    getAvailableMaturityTimestamps,
+    availableMaturities,
     formatMaturityTimestamp,
   };
 }

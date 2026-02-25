@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  resolveAssetId,
-  resolveMarketId,
+  resolveMarketForAsset,
   aprToBasisPoints,
   normalizeOrderToLendPosition,
   submitLendLimitOrder,
@@ -66,40 +65,24 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ─── resolveAssetId ───────────────────────────────────────────────────
+// ─── resolveMarketForAsset ───────────────────────────────────────────
 
-describe("resolveAssetId", () => {
-  it("returns asset UUID for known token slug", () => {
-    expect(resolveAssetId("usdc", MARKETS)).toBe("asset-uuid-usdc");
+describe("resolveMarketForAsset", () => {
+  it("returns assetId and marketId for known token", () => {
+    expect(resolveMarketForAsset("usdc", MARKETS)).toEqual({
+      assetId: "asset-uuid-usdc",
+      marketId: "market-uuid-1",
+    });
   });
 
   it("is case-insensitive", () => {
-    expect(resolveAssetId("USDC", MARKETS)).toBe("asset-uuid-usdc");
-    expect(resolveAssetId("Xsgd", MARKETS)).toBe("asset-uuid-xsgd");
+    expect(resolveMarketForAsset("USDC", MARKETS).assetId).toBe("asset-uuid-usdc");
+    expect(resolveMarketForAsset("Xsgd", MARKETS).marketId).toBe("market-uuid-2");
   });
 
-  it("throws for unknown token slug", () => {
-    expect(() => resolveAssetId("unknown", MARKETS)).toThrow(
+  it("throws for unknown token", () => {
+    expect(() => resolveMarketForAsset("unknown", MARKETS)).toThrow(
       'No asset found for token "unknown"',
-    );
-  });
-});
-
-// ─── resolveMarketId ──────────────────────────────────────────────────
-
-describe("resolveMarketId", () => {
-  it("returns market UUID for matching maturity (ms → seconds)", () => {
-    // 1735689600 seconds = 1735689600000 ms
-    expect(resolveMarketId(1735689600000, MARKETS)).toBe("market-uuid-1");
-  });
-
-  it("returns correct market for second maturity", () => {
-    expect(resolveMarketId(1738368000000, MARKETS)).toBe("market-uuid-2");
-  });
-
-  it("throws for unknown maturity timestamp", () => {
-    expect(() => resolveMarketId(9999999999000, MARKETS)).toThrow(
-      "No market found for maturity",
     );
   });
 
@@ -110,8 +93,8 @@ describe("resolveMarketId", () => {
         market: { market_id: null, maturity: 1735689600 },
       },
     ];
-    expect(() => resolveMarketId(1735689600000, marketsWithNull)).toThrow(
-      "No market found for maturity",
+    expect(() => resolveMarketForAsset("usdc", marketsWithNull)).toThrow(
+      'No market available for token "usdc"',
     );
   });
 });
@@ -255,16 +238,6 @@ describe("submitLendLimitOrder", () => {
         "token",
       ),
     ).rejects.toThrow('No asset found for token "unknown"');
-  });
-
-  it("throws when maturity has no matching market", async () => {
-    await expect(
-      submitLendLimitOrder(
-        { ...baseParams, maturity: 9999999999000 },
-        MARKETS,
-        "token",
-      ),
-    ).rejects.toThrow("No market found for maturity");
   });
 
   it("propagates API errors", async () => {

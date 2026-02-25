@@ -3,11 +3,9 @@ import { renderHook, act } from "@testing-library/react";
 import { useLendForm } from "@/hooks/use-lend-form";
 import { makeLendPosition } from "@/__tests__/helpers/fixtures/positions";
 
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: vi.fn(() => ({
-    authenticated: true,
-    ready: true,
-    getAccessToken: vi.fn(async () => "mock-token"),
+vi.mock("@/hooks/use-auth-token", () => ({
+  useAuthToken: vi.fn(() => ({
+    getToken: vi.fn(async () => "mock-token"),
   })),
 }));
 

@@ -91,6 +91,7 @@ export function LendForm({
                   onChange={form.setLimitTargetAPR}
                   maturity={form.limitMaturity}
                   onMaturityChange={form.setLimitMaturity}
+                  maturityOptions={form.availableMaturities}
                   placeholder="12.5"
                   label="Target APR"
                 />
@@ -185,7 +186,7 @@ export function LendForm({
                   </CentuariTooltip>
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-                  {form.getAvailableMaturityTimestamps().map((ts) => (
+                  {form.availableMaturities.map((ts) => (
                     <Button
                       key={ts}
                       type="button"
