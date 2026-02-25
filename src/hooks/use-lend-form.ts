@@ -20,6 +20,7 @@ import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { useMyAssets } from "@/hooks/use-my-assets";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -48,6 +49,7 @@ export function useLendForm({
 }: UseLendFormParams) {
   const { getToken } = useAuthToken();
   const { markets } = useMarketData();
+  const { assets } = useMyAssets();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -95,6 +97,13 @@ export function useLendForm({
   }, []);
 
   const getAvailableBalance = useCallback((): number => {
+    if (!USE_MOCK) {
+      const match = assets.find(
+        (a) => a.symbol.toLowerCase() === selectedToken.value,
+      );
+      return match?.walletBalance ?? 0;
+    }
+
     if (typeof window === "undefined") return 1000;
     const stored = localStorage.getItem("centuari_portfolio");
     if (stored) {
@@ -110,7 +119,7 @@ export function useLendForm({
       }
     }
     return 1000;
-  }, [selectedToken.value, getTokenInfo]);
+  }, [selectedToken.value, getTokenInfo, assets]);
 
   useEffect(() => {
     if (!editingPosition) return;

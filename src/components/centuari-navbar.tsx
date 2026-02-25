@@ -167,6 +167,7 @@ export default function CentuariNavbar() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.key) return;
       const key = event.key.toLowerCase();
       const hotkey = (isMacPlatform() ? event.metaKey : event.ctrlKey) && key === "k";
 

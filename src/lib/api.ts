@@ -80,6 +80,33 @@ interface OrderEnvelope {
 	data: OrderResponseData;
 }
 
+// ─── My Assets (Portfolio) ───────────────────────────────────────────
+
+export interface MyAssetItem {
+	symbol: string;
+	name: string;
+	walletBalance: number;
+	amountInUsd: number;
+	isCollateral: boolean;
+	imageUrl: string | null;
+}
+
+export interface MyAssetsResponse {
+	data: MyAssetItem[];
+	page: number;
+	limit: number;
+	totalData: number;
+	totalPages: number;
+}
+
+export function getMyAssets(token: string): Promise<MyAssetsResponse> {
+	return apiClient<MyAssetsResponse>("/portfolio/my-assets?limit=100", {
+		token,
+	});
+}
+
+// ─── Lend Limit Order ─────────────────────────────────────────────────
+
 export async function createLendLimitOrder(
 	dto: CreateLendLimitOrderDto,
 	token: string,
