@@ -11,10 +11,6 @@ vi.mock("@/lib/socket", () => ({
 
 vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 
-vi.mock("viem", () => ({
-  isAddress: vi.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
-}));
-
 beforeEach(() => {
   vi.useFakeTimers();
   mockSocket = createMockSocket();
@@ -93,23 +89,20 @@ describe("useRecentTrades (WS mode)", () => {
       acquireSocket: vi.fn(() => mockSocket),
       releaseSocket: vi.fn(),
     }));
-    vi.doMock("viem", () => ({
-      isAddress: vi.fn(() => true),
-    }));
     const { useRecentTrades } = await import("@/hooks/use-recent-trades");
-    const token = "0x" + "a".repeat(40);
+    const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
     const { result } = renderHook(() =>
-      useRecentTrades({ loanToken: token, decimals: 6 }),
+      useRecentTrades({ assetId, decimals: 6 }),
     );
 
     expect(mockSocket.emit).toHaveBeenCalledWith("subscribe-recent-trades", {
-      loanToken: token,
+      assetId,
     });
 
     act(() => {
       mockSocket._simulateEvent("recent-trade", {
-        loanToken: token,
+        assetId,
         side: "LEND",
         amount: "5000000",
         rate: 450,
@@ -130,20 +123,17 @@ describe("useRecentTrades (WS mode)", () => {
       acquireSocket: vi.fn(() => mockSocket),
       releaseSocket: vi.fn(),
     }));
-    vi.doMock("viem", () => ({
-      isAddress: vi.fn(() => true),
-    }));
     const { useRecentTrades } = await import("@/hooks/use-recent-trades");
-    const token = "0x" + "a".repeat(40);
+    const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
     const { result } = renderHook(() =>
-      useRecentTrades({ loanToken: token }),
+      useRecentTrades({ assetId }),
     );
 
     act(() => {
       mockSocket._simulateEvent("recent-trades-snapshot", [
-        { loanToken: token, side: "BORROW", amount: "1000000", rate: 500, timestamp: Date.now() },
-        { loanToken: token, side: "LEND", amount: "2000000", rate: 450, timestamp: Date.now() },
+        { assetId, side: "BORROW", amount: "1000000", rate: 500, timestamp: Date.now() },
+        { assetId, side: "LEND", amount: "2000000", rate: 450, timestamp: Date.now() },
       ]);
     });
 

@@ -12,11 +12,6 @@ vi.mock("@/lib/socket", () => ({
 // Default: USE_MOCK = true
 vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 
-// Mock viem's isAddress
-vi.mock("viem", () => ({
-  isAddress: vi.fn((addr: string) => addr.startsWith("0x") && addr.length === 42),
-}));
-
 beforeEach(() => {
   vi.useFakeTimers();
   mockSocket = createMockSocket();
@@ -74,23 +69,20 @@ describe("useOrderbook (WS mode)", () => {
     vi.doMock("@/lib/use-mock", () => ({ USE_MOCK: true }));
   });
 
-  it("subscribes to orderbook with valid loanToken", async () => {
+  it("subscribes to orderbook with valid assetId", async () => {
     vi.resetModules();
     vi.doMock("@/lib/use-mock", () => ({ USE_MOCK: false }));
     vi.doMock("@/lib/socket", () => ({
       acquireSocket: vi.fn(() => mockSocket),
       releaseSocket: vi.fn(),
     }));
-    vi.doMock("viem", () => ({
-      isAddress: vi.fn(() => true),
-    }));
     const { useOrderbook } = await import("@/hooks/use-orderbook");
-    const token = "0x" + "a".repeat(40);
+    const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-    renderHook(() => useOrderbook({ loanToken: token }));
+    renderHook(() => useOrderbook({ assetId }));
 
     expect(mockSocket.emit).toHaveBeenCalledWith("subscribe-orderbook", {
-      loanToken: token,
+      assetId,
     });
   });
 
@@ -101,19 +93,16 @@ describe("useOrderbook (WS mode)", () => {
       acquireSocket: vi.fn(() => mockSocket),
       releaseSocket: vi.fn(),
     }));
-    vi.doMock("viem", () => ({
-      isAddress: vi.fn(() => true),
-    }));
     const { useOrderbook } = await import("@/hooks/use-orderbook");
-    const token = "0x" + "a".repeat(40);
+    const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
     const { result } = renderHook(() =>
-      useOrderbook({ loanToken: token, decimals: 6 }),
+      useOrderbook({ assetId, decimals: 6 }),
     );
 
     act(() => {
       mockSocket._simulateEvent("orderbook-update", {
-        loanToken: token,
+        assetId,
         lend: [{ rate: 450, amount: "1000000", orders: 1 }],
         borrow: [{ rate: 500, amount: "2000000", orders: 2 }],
         timestamp: Date.now(),
@@ -134,17 +123,14 @@ describe("useOrderbook (WS mode)", () => {
       acquireSocket: vi.fn(() => mockSocket),
       releaseSocket: vi.fn(),
     }));
-    vi.doMock("viem", () => ({
-      isAddress: vi.fn(() => true),
-    }));
     const { useOrderbook } = await import("@/hooks/use-orderbook");
-    const token = "0x" + "a".repeat(40);
+    const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-    const { result } = renderHook(() => useOrderbook({ loanToken: token }));
+    const { result } = renderHook(() => useOrderbook({ assetId }));
 
     act(() => {
       mockSocket._simulateEvent("orderbook-update", {
-        loanToken: "0x" + "b".repeat(40),
+        assetId: "different-asset-id-0000-0000-000000000000",
         lend: [{ rate: 450, amount: "1000000", orders: 1 }],
         borrow: [],
         timestamp: Date.now(),

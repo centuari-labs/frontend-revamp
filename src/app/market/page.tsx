@@ -50,7 +50,7 @@ export default function Page() {
             {activeMarket ? (
               <OrderBookCard
                 height="500px"
-                loanToken={activeMarket.asset.token_address}
+                assetId={activeMarket.asset.id}
                 decimals={activeMarket.asset.decimals ?? undefined}
               />
             ) : (

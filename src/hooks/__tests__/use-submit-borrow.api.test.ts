@@ -35,7 +35,6 @@ const MARKETS: MarketItem[] = [
       symbol: "USDC",
       decimals: 6,
       image_url: null,
-      token_address: "0xA0b8...usdc",
     },
     market: { market_id: "market-uuid-1", maturity: 1735689600 },
     borrow_rate: 10.1,

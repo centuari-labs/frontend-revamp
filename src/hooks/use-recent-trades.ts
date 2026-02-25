@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { isAddress } from "viem";
 import { USE_MOCK } from "@/lib/use-mock";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
 
@@ -29,7 +28,7 @@ function generateMockTrade(): TradeRow {
 // ─── WebSocket types ─────────────────────────────────────────────────
 
 interface RecentTradeEvent {
-	loanToken: string;
+	assetId: string;
 	side: "LEND" | "BORROW";
 	amount: string;
 	rate: number;
@@ -54,10 +53,10 @@ function tradeEventToRow(
 const MAX_TRADES = 20;
 
 export function useRecentTrades(options?: {
-	loanToken?: string;
+	assetId?: string;
 	decimals?: number;
 }) {
-	const { loanToken, decimals = 6 } = options ?? {};
+	const { assetId, decimals = 6 } = options ?? {};
 
 	const [trades, setTrades] = useState<TradeRow[]>([]);
 	const [isConnected, setIsConnected] = useState(false);
@@ -84,15 +83,7 @@ export function useRecentTrades(options?: {
 
 	// WebSocket mode
 	useEffect(() => {
-		if (USE_MOCK || !loanToken) return;
-
-		if (!isAddress(loanToken)) {
-			console.warn(
-				"[useRecentTrades] Invalid loanToken address:",
-				loanToken,
-			);
-			return;
-		}
+		if (USE_MOCK || !assetId) return;
 
 		setTrades([]);
 
@@ -102,7 +93,7 @@ export function useRecentTrades(options?: {
 		const onDisconnect = () => setIsConnected(false);
 
 		const onTrade = (data: RecentTradeEvent) => {
-			if (data.loanToken !== loanToken) return;
+			if (data.assetId !== assetId) return;
 			prependTrade(tradeEventToRow(data, decimals));
 		};
 
@@ -119,17 +110,17 @@ export function useRecentTrades(options?: {
 			setIsConnected(true);
 		}
 
-		socket.emit("subscribe-recent-trades", { loanToken });
+		socket.emit("subscribe-recent-trades", { assetId });
 
 		return () => {
-			socket.emit("unsubscribe-recent-trades", { loanToken });
+			socket.emit("unsubscribe-recent-trades", { assetId });
 			socket.off("connect", onConnect);
 			socket.off("disconnect", onDisconnect);
 			socket.off("recent-trade", onTrade);
 			socket.off("recent-trades-snapshot", onSnapshot);
 			releaseSocket();
 		};
-	}, [loanToken, decimals, prependTrade]);
+	}, [assetId, decimals, prependTrade]);
 
 	return { trades, isConnected };
 }

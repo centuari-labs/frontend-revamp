@@ -193,15 +193,15 @@ const RecentTradesContent: React.FC<{
 
 export const OrderBookCard: React.FC<{
   height?: string;
-  loanToken?: string;
+  assetId?: string;
   decimals?: number;
 }> = ({
   height = "auto",
-  loanToken,
+  assetId,
   decimals,
 }) => {
-  const { borrowOrders, lendOrders } = useOrderbook({ loanToken, decimals });
-  const { trades } = useRecentTrades({ loanToken, decimals });
+  const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
+  const { trades } = useRecentTrades({ assetId, decimals });
 
   return (
     <div

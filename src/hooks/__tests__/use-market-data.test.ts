@@ -29,7 +29,7 @@ describe("useMarketData", () => {
       active_loans: "500000",
       markets: [
         {
-          asset: { id: "1", name: "USDC", symbol: "USDC", token_address: "0x123" },
+          asset: { id: "1", name: "USDC", symbol: "USDC" },
           market: { market_id: "m-1", maturity: 1735689600 },
           borrow_rate: 10.1,
           lend_rate: 6.5,

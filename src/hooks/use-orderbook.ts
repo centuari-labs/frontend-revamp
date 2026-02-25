@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { isAddress } from "viem";
 import { USE_MOCK } from "@/lib/use-mock";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
 
@@ -109,7 +108,7 @@ interface OrderbookLevel {
 }
 
 interface OrderbookUpdate {
-	loanToken: string;
+	assetId: string;
 	lend: OrderbookLevel[];
 	borrow: OrderbookLevel[];
 	timestamp: number;
@@ -130,10 +129,10 @@ function levelsToRows(
 // ─── Hook ────────────────────────────────────────────────────────────
 
 export function useOrderbook(options?: {
-	loanToken?: string;
+	assetId?: string;
 	decimals?: number;
 }) {
-	const { loanToken, decimals = 6 } = options ?? {};
+	const { assetId, decimals = 6 } = options ?? {};
 
 	const [borrowOrders, setBorrowOrders] = useState<OrderRow[]>(MOCK_BORROW);
 	const [lendOrders, setLendOrders] = useState<OrderRow[]>(MOCK_LEND);
@@ -152,12 +151,7 @@ export function useOrderbook(options?: {
 
 	// WebSocket mode
 	useEffect(() => {
-		if (USE_MOCK || !loanToken) return;
-
-		if (!isAddress(loanToken)) {
-			console.warn("[useOrderbook] Invalid loanToken address:", loanToken);
-			return;
-		}
+		if (USE_MOCK || !assetId) return;
 
 		// Clear stale data immediately when the market changes
 		setBorrowOrders([]);
@@ -170,7 +164,7 @@ export function useOrderbook(options?: {
 
 		const onUpdate = (data: OrderbookUpdate) => {
 			// Ignore updates that belong to a different market
-			if (data.loanToken !== loanToken) return;
+			if (data.assetId !== assetId) return;
 			setBorrowOrders(levelsToRows(data.borrow, "borrow", decimals));
 			setLendOrders(levelsToRows(data.lend, "lend", decimals));
 		};
@@ -183,18 +177,18 @@ export function useOrderbook(options?: {
 			setIsConnected(true);
 		}
 
-		socket.emit("subscribe-orderbook", { loanToken });
-		subscribedRef.current = loanToken;
+		socket.emit("subscribe-orderbook", { assetId });
+		subscribedRef.current = assetId;
 
 		return () => {
-			socket.emit("unsubscribe-orderbook", { loanToken });
+			socket.emit("unsubscribe-orderbook", { assetId });
 			socket.off("connect", onConnect);
 			socket.off("disconnect", onDisconnect);
 			socket.off("orderbook-update", onUpdate);
 			subscribedRef.current = null;
 			releaseSocket();
 		};
-	}, [loanToken, decimals]);
+	}, [assetId, decimals]);
 
 	return { borrowOrders, lendOrders, isConnected };
 }
