@@ -19,12 +19,14 @@ vi.mock("@/lib/positions-adapter.mock", () => ({
 
 vi.mock("@/lib/positions-adapter.api", () => ({
   submitLendLimitOrder: vi.fn(),
+  submitLendMarketOrder: vi.fn(),
 }));
 
-import { submitLendLimitOrder } from "@/lib/positions-adapter.api";
+import { submitLendLimitOrder, submitLendMarketOrder } from "@/lib/positions-adapter.api";
 import * as mockAdapter from "@/lib/positions-adapter.mock";
 
 const mockSubmitApi = vi.mocked(submitLendLimitOrder);
+const mockSubmitMarketApi = vi.mocked(submitLendMarketOrder);
 
 const MARKETS: MarketItem[] = [
   {
@@ -247,5 +249,105 @@ describe("useSubmitLend (API mode)", () => {
     expect(mockAdapter.submitOpenOrder).not.toHaveBeenCalled();
     expect(mockAdapter.buildLendLimitPosition).not.toHaveBeenCalled();
     expect(mockAdapter.updateOpenOrder).not.toHaveBeenCalled();
+  });
+});
+
+// ─── submitMarket (API mode) ─────────────────────────────────────────
+
+const API_MARKET_POSITION = makeLendPosition({
+  id: "api-market-order-456",
+  orderType: "market",
+});
+
+describe("useSubmitLend.submitMarket (API mode)", () => {
+  async function getHook() {
+    const { useSubmitLend } = await import("@/hooks/use-submit-lend");
+    return useSubmitLend;
+  }
+
+  const marketParams = {
+    tokenValue: "usdc",
+    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLabel: "USDC",
+    amount: 2000,
+    amountInUsd: 2000,
+    maturity: 1735689600000,
+  };
+
+  it("calls API adapter with params, token, and markets", async () => {
+    mockSubmitMarketApi.mockResolvedValue(API_MARKET_POSITION);
+    const useSubmitLend = await getHook();
+    const { result } = renderHook(() => useSubmitLend());
+
+    await act(async () => {
+      await result.current.submitMarket(marketParams, {
+        token: "jwt-market",
+        markets: MARKETS,
+      });
+    });
+
+    expect(mockSubmitMarketApi).toHaveBeenCalledWith(marketParams, MARKETS, "jwt-market");
+    expect(mockAdapter.buildLendMarketPosition).not.toHaveBeenCalled();
+  });
+
+  it("returns normalized LendPosition from API", async () => {
+    mockSubmitMarketApi.mockResolvedValue(API_MARKET_POSITION);
+    const useSubmitLend = await getHook();
+    const { result } = renderHook(() => useSubmitLend());
+
+    let returned: unknown;
+    await act(async () => {
+      returned = await result.current.submitMarket(marketParams, {
+        token: "jwt",
+        markets: MARKETS,
+      });
+    });
+
+    expect(returned).toBe(API_MARKET_POSITION);
+  });
+
+  it("throws when token is missing in API mode", async () => {
+    const useSubmitLend = await getHook();
+    const { result } = renderHook(() => useSubmitLend());
+
+    await expect(
+      act(async () => {
+        await result.current.submitMarket(marketParams);
+      }),
+    ).rejects.toThrow("Auth token and market data required");
+  });
+
+  it("propagates API adapter errors", async () => {
+    mockSubmitMarketApi.mockRejectedValue(new Error("API error: 500"));
+    const useSubmitLend = await getHook();
+    const { result } = renderHook(() => useSubmitLend());
+
+    await expect(
+      act(async () => {
+        await result.current.submitMarket(marketParams, {
+          token: "jwt",
+          markets: MARKETS,
+        });
+      }),
+    ).rejects.toThrow("API error: 500");
+
+    expect(result.current.isPending).toBe(false);
+  });
+
+  it("does not call mock adapter functions in API mode", async () => {
+    mockSubmitMarketApi.mockResolvedValue(API_MARKET_POSITION);
+    const useSubmitLend = await getHook();
+    const { result } = renderHook(() => useSubmitLend());
+
+    await act(async () => {
+      await result.current.submitMarket(marketParams, {
+        token: "jwt",
+        markets: MARKETS,
+      });
+    });
+
+    expect(mockAdapter.submitFilledLendPosition).not.toHaveBeenCalled();
+    expect(mockAdapter.buildLendMarketPosition).not.toHaveBeenCalled();
+    expect(mockAdapter.updateFilledPosition).not.toHaveBeenCalled();
   });
 });

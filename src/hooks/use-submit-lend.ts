@@ -10,7 +10,7 @@ import {
   buildLendLimitPosition,
   buildLendMarketPosition,
 } from "@/lib/positions-adapter.mock";
-import { submitLendLimitOrder } from "@/lib/positions-adapter.api";
+import { submitLendLimitOrder, submitLendMarketOrder } from "@/lib/positions-adapter.api";
 import type { MarketItem } from "@/lib/api";
 import type {
   LendPosition,
@@ -53,23 +53,35 @@ export function useSubmitLend() {
     [],
   );
 
-  const submitMarket = useCallback(async (params: SubmitLendMarketParams) => {
-    setIsPending(true);
-    try {
-      const position = buildLendMarketPosition(params);
-      if (params.editingPosition) {
-        await updateFilledPosition(position);
-        return position;
+  const submitMarket = useCallback(
+    async (params: SubmitLendMarketParams, options?: SubmitLimitOptions) => {
+      setIsPending(true);
+      try {
+        if (USE_MOCK) {
+          const position = buildLendMarketPosition(params);
+          if (params.editingPosition) {
+            await updateFilledPosition(position);
+            return position;
+          }
+          const result = await submitFilledLendPosition(position, {
+            amountInUsd: params.amountInUsd,
+            tokenValue: params.tokenValue,
+          });
+          return result;
+        }
+
+        // API mode
+        const { token, markets } = options ?? {};
+        if (!token || !markets) {
+          throw new Error("Auth token and market data required for API mode");
+        }
+        return await submitLendMarketOrder(params, markets, token);
+      } finally {
+        setIsPending(false);
       }
-      const result = await submitFilledLendPosition(position, {
-        amountInUsd: params.amountInUsd,
-        tokenValue: params.tokenValue,
-      });
-      return result;
-    } finally {
-      setIsPending(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   return {
     submitLimit,

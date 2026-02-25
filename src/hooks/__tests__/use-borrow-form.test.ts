@@ -3,6 +3,29 @@ import { renderHook, act } from "@testing-library/react";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import { makeBorrowPosition } from "@/__tests__/helpers/fixtures/positions";
 
+vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
+
+vi.mock("@/hooks/use-auth-token", () => ({
+  useAuthToken: vi.fn(() => ({
+    getToken: vi.fn(async () => "mock-token"),
+  })),
+}));
+
+vi.mock("@/hooks/use-market-data", () => ({
+  useMarketData: vi.fn(() => ({
+    markets: [],
+    totalDeposit: 0,
+    activeLoans: 0,
+    isLoading: false,
+    isError: false,
+  })),
+}));
+
+vi.mock("@/lib/positions-adapter.api", () => ({
+  submitBorrowLimitOrder: vi.fn(),
+  submitBorrowMarketOrder: vi.fn(),
+}));
+
 vi.mock("@/lib/positions-adapter.mock", () => ({
   submitOpenOrder: vi.fn(async (pos) => pos),
   submitFilledBorrowPosition: vi.fn(async (pos) => pos),

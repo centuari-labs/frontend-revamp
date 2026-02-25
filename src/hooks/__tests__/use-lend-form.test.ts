@@ -21,8 +21,17 @@ vi.mock("@/hooks/use-market-data", () => ({
 
 vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 
+vi.mock("@/hooks/use-my-assets", () => ({
+  useMyAssets: vi.fn(() => ({
+    assets: [],
+    isLoading: false,
+    isError: false,
+  })),
+}));
+
 vi.mock("@/lib/positions-adapter.api", () => ({
   submitLendLimitOrder: vi.fn(),
+  submitLendMarketOrder: vi.fn(),
 }));
 
 // Mock all adapter functions

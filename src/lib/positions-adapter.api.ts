@@ -5,15 +5,23 @@
 
 import {
 	createLendLimitOrder,
+	createLendMarketOrder,
+	createBorrowLimitOrder,
+	createBorrowMarketOrder,
 	type MarketItem,
 	type OrderResponseData,
 } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { getTokenLogo } from "@/lib/tokens";
 import type {
+	BorrowPosition,
 	LendPosition,
+	OrderType,
 	PositionStatus,
+	SubmitBorrowLimitParams,
+	SubmitBorrowMarketParams,
 	SubmitLendLimitParams,
+	SubmitLendMarketParams,
 } from "@/types/positions";
 
 // ─── ID Resolution ────────────────────────────────────────────────────
@@ -58,6 +66,7 @@ function mapStatus(backendStatus: string): PositionStatus {
 export function normalizeOrderToLendPosition(
 	order: OrderResponseData,
 	markets: MarketItem[],
+	orderType: OrderType = "limit",
 ): LendPosition {
 	// Reverse-lookup token symbol from assetId
 	const marketItem = markets.find(
@@ -81,7 +90,38 @@ export function normalizeOrderToLendPosition(
 		status: mapStatus(order.status),
 		createdAt: formatDate(new Date(order.createdAt)),
 		timestamp: Date.now(),
-		orderType: "limit",
+		orderType,
+	};
+}
+
+export function normalizeOrderToBorrowPosition(
+	order: OrderResponseData,
+	markets: MarketItem[],
+	orderType: OrderType = "limit",
+): BorrowPosition {
+	const marketItem = markets.find(
+		(m) => m.asset.id.toLowerCase() === order.assetId.toLowerCase(),
+	);
+	const tokenValue = marketItem?.asset.symbol.toLowerCase() ?? "unknown";
+	const tokenLabel = marketItem?.asset.symbol ?? "UNKNOWN";
+
+	const maturitySec = order.markets[0]?.maturity ?? 0;
+
+	return {
+		id: order.orderId,
+		assetImg: getTokenLogo(tokenValue),
+		assetName: tokenLabel,
+		amount: Number.parseFloat(order.originalAmount),
+		apr: order.rate / 100,
+		type: "borrow",
+		tokenValue,
+		tokenSymbol: tokenLabel,
+		maturity: maturitySec * 1000,
+		status: mapStatus(order.status),
+		createdAt: formatDate(new Date(order.createdAt)),
+		timestamp: Date.now(),
+		collateralTokens: [],
+		orderType,
 	};
 }
 
@@ -103,5 +143,57 @@ export async function submitLendLimitOrder(
 	};
 
 	const response = await createLendLimitOrder(dto, token);
-	return normalizeOrderToLendPosition(response, markets);
+	return normalizeOrderToLendPosition(response, markets, "limit");
+}
+
+export async function submitLendMarketOrder(
+	params: SubmitLendMarketParams,
+	markets: MarketItem[],
+	token: string,
+): Promise<LendPosition> {
+	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
+
+	const dto = {
+		assetId,
+		amount: String(params.amount),
+		marketIds: [marketId],
+	};
+
+	const response = await createLendMarketOrder(dto, token);
+	return normalizeOrderToLendPosition(response, markets, "market");
+}
+
+export async function submitBorrowLimitOrder(
+	params: SubmitBorrowLimitParams,
+	markets: MarketItem[],
+	token: string,
+): Promise<BorrowPosition> {
+	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
+
+	const dto = {
+		assetId,
+		amount: String(params.amount),
+		marketIds: [marketId],
+		rate: aprToBasisPoints(params.targetApr),
+	};
+
+	const response = await createBorrowLimitOrder(dto, token);
+	return normalizeOrderToBorrowPosition(response, markets, "limit");
+}
+
+export async function submitBorrowMarketOrder(
+	params: SubmitBorrowMarketParams,
+	markets: MarketItem[],
+	token: string,
+): Promise<BorrowPosition> {
+	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
+
+	const dto = {
+		assetId,
+		amount: String(params.amount),
+		marketIds: [marketId],
+	};
+
+	const response = await createBorrowMarketOrder(dto, token);
+	return normalizeOrderToBorrowPosition(response, markets, "market");
 }
