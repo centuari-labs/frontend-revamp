@@ -3,16 +3,31 @@ import {
   resolveMarketForAsset,
   aprToBasisPoints,
   normalizeOrderToLendPosition,
+  normalizeOrderToBorrowPosition,
   submitLendLimitOrder,
+  submitLendMarketOrder,
+  submitBorrowLimitOrder,
+  submitBorrowMarketOrder,
 } from "@/lib/positions-adapter.api";
 import type { MarketItem, OrderResponseData } from "@/lib/api";
 
 vi.mock("@/lib/api", () => ({
   createLendLimitOrder: vi.fn(),
+  createLendMarketOrder: vi.fn(),
+  createBorrowLimitOrder: vi.fn(),
+  createBorrowMarketOrder: vi.fn(),
 }));
 
-import { createLendLimitOrder } from "@/lib/api";
+import {
+  createLendLimitOrder,
+  createLendMarketOrder,
+  createBorrowLimitOrder,
+  createBorrowMarketOrder,
+} from "@/lib/api";
 const mockCreateOrder = vi.mocked(createLendLimitOrder);
+const mockCreateLendMarket = vi.mocked(createLendMarketOrder);
+const mockCreateBorrowLimit = vi.mocked(createBorrowLimitOrder);
+const mockCreateBorrowMarket = vi.mocked(createBorrowMarketOrder);
 
 // ─── Fixtures ─────────────────────────────────────────────────────────
 
@@ -52,6 +67,9 @@ const MOCK_RESPONSE: OrderResponseData = {
   walletAddress: "0xWallet",
   assetId: "asset-uuid-usdc",
   markets: [{ marketId: "market-uuid-1", maturity: 1735689600 }],
+  timestamp: 1740441600000,
+  side: "LEND",
+  type: "LIMIT",
   status: "OPEN",
   originalAmount: "1000",
   settlementFeeAmount: "0.1",
@@ -246,5 +264,221 @@ describe("submitLendLimitOrder", () => {
     await expect(
       submitLendLimitOrder(baseParams, MARKETS, "token"),
     ).rejects.toThrow("API error: 400 Bad Request");
+  });
+});
+
+// ─── normalizeOrderToLendPosition (market orderType) ─────────────────
+
+describe("normalizeOrderToLendPosition with orderType", () => {
+  it("defaults to limit when no orderType passed", () => {
+    const pos = normalizeOrderToLendPosition(MOCK_RESPONSE, MARKETS);
+    expect(pos.orderType).toBe("limit");
+  });
+
+  it("passes through market orderType", () => {
+    const pos = normalizeOrderToLendPosition(MOCK_RESPONSE, MARKETS, "market");
+    expect(pos.orderType).toBe("market");
+    expect(pos.type).toBe("lend");
+  });
+});
+
+// ─── normalizeOrderToBorrowPosition ──────────────────────────────────
+
+describe("normalizeOrderToBorrowPosition", () => {
+  const BORROW_RESPONSE: OrderResponseData = {
+    ...MOCK_RESPONSE,
+    side: "BORROW",
+    rate: 10.1,
+  };
+
+  it("maps all fields correctly", () => {
+    const position = normalizeOrderToBorrowPosition(BORROW_RESPONSE, MARKETS);
+
+    expect(position.id).toBe("order-123");
+    expect(position.type).toBe("borrow");
+    expect(position.orderType).toBe("limit");
+    expect(position.tokenValue).toBe("usdc");
+    expect(position.tokenSymbol).toBe("USDC");
+    expect(position.amount).toBe(1000);
+    expect(position.apr).toBeCloseTo(0.101, 4);
+    expect(position.maturity).toBe(1735689600000);
+    expect(position.status).toBe("pending");
+    expect(position.collateralTokens).toEqual([]);
+    expect(position.assetImg).toBe("/tokens/usdc-icon.svg");
+  });
+
+  it("accepts market orderType", () => {
+    const pos = normalizeOrderToBorrowPosition(BORROW_RESPONSE, MARKETS, "market");
+    expect(pos.orderType).toBe("market");
+    expect(pos.type).toBe("borrow");
+  });
+
+  it("maps all statuses correctly", () => {
+    expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "OPEN" }, MARKETS).status).toBe("pending");
+    expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "FILLED" }, MARKETS).status).toBe("success");
+    expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "CANCELLED" }, MARKETS).status).toBe("failed");
+    expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "PARTIALLY_FILLED" }, MARKETS).status).toBe("processing");
+  });
+
+  it("handles unknown assetId gracefully", () => {
+    const unknown = { ...BORROW_RESPONSE, assetId: "unknown-uuid" };
+    const pos = normalizeOrderToBorrowPosition(unknown, MARKETS);
+    expect(pos.tokenValue).toBe("unknown");
+  });
+});
+
+// ─── submitLendMarketOrder ───────────────────────────────────────────
+
+describe("submitLendMarketOrder", () => {
+  const baseParams = {
+    tokenValue: "usdc",
+    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLabel: "USDC",
+    amount: 1000,
+    amountInUsd: 1000,
+    maturity: 1735689600000,
+    editingPosition: undefined,
+  };
+
+  it("converts params to correct DTO (no rate) and calls createLendMarketOrder", async () => {
+    mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+
+    await submitLendMarketOrder(baseParams, MARKETS, "jwt-token");
+
+    expect(mockCreateLendMarket).toHaveBeenCalledWith(
+      {
+        assetId: "asset-uuid-usdc",
+        amount: "1000",
+        marketIds: ["market-uuid-1"],
+      },
+      "jwt-token",
+    );
+  });
+
+  it("returns a normalized LendPosition with orderType market", async () => {
+    mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+
+    const result = await submitLendMarketOrder(baseParams, MARKETS, "token");
+
+    expect(result.id).toBe("order-123");
+    expect(result.type).toBe("lend");
+    expect(result.orderType).toBe("market");
+  });
+
+  it("throws when token is not found in markets", async () => {
+    await expect(
+      submitLendMarketOrder({ ...baseParams, tokenValue: "unknown" }, MARKETS, "token"),
+    ).rejects.toThrow('No asset found for token "unknown"');
+  });
+
+  it("propagates API errors", async () => {
+    mockCreateLendMarket.mockRejectedValue(new Error("API error: 500"));
+
+    await expect(
+      submitLendMarketOrder(baseParams, MARKETS, "token"),
+    ).rejects.toThrow("API error: 500");
+  });
+});
+
+// ─── submitBorrowLimitOrder ──────────────────────────────────────────
+
+describe("submitBorrowLimitOrder", () => {
+  const baseParams = {
+    tokenValue: "usdc",
+    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLabel: "USDC",
+    amount: 500,
+    maturity: 1735689600000,
+    targetApr: 0.101,
+    collateralTokens: ["btc", "eth"],
+    editingPosition: undefined,
+  };
+
+  it("converts params to correct DTO with rate and calls createBorrowLimitOrder", async () => {
+    mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+
+    await submitBorrowLimitOrder(baseParams, MARKETS, "jwt-borrow");
+
+    expect(mockCreateBorrowLimit).toHaveBeenCalledWith(
+      {
+        assetId: "asset-uuid-usdc",
+        amount: "500",
+        marketIds: ["market-uuid-1"],
+        rate: 1010,
+      },
+      "jwt-borrow",
+    );
+  });
+
+  it("returns a normalized BorrowPosition", async () => {
+    mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+
+    const result = await submitBorrowLimitOrder(baseParams, MARKETS, "token");
+
+    expect(result.id).toBe("order-123");
+    expect(result.type).toBe("borrow");
+    expect(result.orderType).toBe("limit");
+    expect(result.collateralTokens).toEqual([]);
+  });
+
+  it("throws when token is not found in markets", async () => {
+    await expect(
+      submitBorrowLimitOrder({ ...baseParams, tokenValue: "unknown" }, MARKETS, "token"),
+    ).rejects.toThrow('No asset found for token "unknown"');
+  });
+
+  it("propagates API errors", async () => {
+    mockCreateBorrowLimit.mockRejectedValue(new Error("Health factor too low"));
+
+    await expect(
+      submitBorrowLimitOrder(baseParams, MARKETS, "token"),
+    ).rejects.toThrow("Health factor too low");
+  });
+});
+
+// ─── submitBorrowMarketOrder ─────────────────────────────────────────
+
+describe("submitBorrowMarketOrder", () => {
+  const baseParams = {
+    tokenValue: "usdc",
+    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLabel: "USDC",
+    amount: 500,
+    maturity: 1735689600000,
+    collateralTokens: ["btc"],
+    editingPosition: undefined,
+  };
+
+  it("converts params to correct DTO (no rate) and calls createBorrowMarketOrder", async () => {
+    mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+
+    await submitBorrowMarketOrder(baseParams, MARKETS, "jwt-borrow");
+
+    expect(mockCreateBorrowMarket).toHaveBeenCalledWith(
+      {
+        assetId: "asset-uuid-usdc",
+        amount: "500",
+        marketIds: ["market-uuid-1"],
+      },
+      "jwt-borrow",
+    );
+  });
+
+  it("returns a normalized BorrowPosition with orderType market", async () => {
+    mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+
+    const result = await submitBorrowMarketOrder(baseParams, MARKETS, "token");
+
+    expect(result.id).toBe("order-123");
+    expect(result.type).toBe("borrow");
+    expect(result.orderType).toBe("market");
+  });
+
+  it("propagates API errors", async () => {
+    mockCreateBorrowMarket.mockRejectedValue(new Error("API error: 400"));
+
+    await expect(
+      submitBorrowMarketOrder(baseParams, MARKETS, "token"),
+    ).rejects.toThrow("API error: 400");
   });
 });

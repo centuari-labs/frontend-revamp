@@ -6,12 +6,15 @@ import {
   getDefaultMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
+import { USE_MOCK } from "@/lib/use-mock";
 import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
 import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
+import { useAuthToken } from "@/hooks/use-auth-token";
+import { useMarketData } from "@/hooks/use-market-data";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -28,6 +31,8 @@ export function useBorrowForm({
   editingPosition,
   onUpdate,
 }: UseBorrowFormParams) {
+  const { getToken } = useAuthToken();
+  const { markets } = useMarketData();
   const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -144,16 +149,20 @@ export function useBorrowForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const result = await submitLimit({
-          tokenValue: selectedToken.value,
-          tokenLogo: selectedToken.logo,
-          tokenLabel: selectedToken.label,
-          amount: numericAmount,
-          maturity: limitMaturity,
-          targetApr: aprDecimal,
-          collateralTokens: limitSelectedCollaterals,
-          editingPosition: editingPosition ?? undefined,
-        });
+        const token = USE_MOCK ? undefined : await getToken();
+        const result = await submitLimit(
+          {
+            tokenValue: selectedToken.value,
+            tokenLogo: selectedToken.logo,
+            tokenLabel: selectedToken.label,
+            amount: numericAmount,
+            maturity: limitMaturity,
+            targetApr: aprDecimal,
+            collateralTokens: limitSelectedCollaterals,
+            editingPosition: editingPosition ?? undefined,
+          },
+          USE_MOCK ? undefined : { token: token!, markets },
+        );
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -178,6 +187,8 @@ export function useBorrowForm({
       limitCalcs,
       isPending,
       selectedToken,
+      getToken,
+      markets,
       submitLimit,
       editingPosition,
       onUpdate,
@@ -196,15 +207,19 @@ export function useBorrowForm({
       if (marketCalcs.healthFactor < 1.0) return;
 
       try {
-        const result = await submitMarket({
-          tokenValue: selectedToken.value,
-          tokenLogo: selectedToken.logo,
-          tokenLabel: selectedToken.label,
-          amount: numericAmount,
-          maturity: marketMaturity,
-          collateralTokens: marketSelectedCollaterals,
-          editingPosition: editingPosition ?? undefined,
-        });
+        const token = USE_MOCK ? undefined : await getToken();
+        const result = await submitMarket(
+          {
+            tokenValue: selectedToken.value,
+            tokenLogo: selectedToken.logo,
+            tokenLabel: selectedToken.label,
+            amount: numericAmount,
+            maturity: marketMaturity,
+            collateralTokens: marketSelectedCollaterals,
+            editingPosition: editingPosition ?? undefined,
+          },
+          USE_MOCK ? undefined : { token: token!, markets },
+        );
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -227,6 +242,8 @@ export function useBorrowForm({
       marketCalcs,
       isPending,
       selectedToken,
+      getToken,
+      markets,
       submitMarket,
       editingPosition,
       onUpdate,

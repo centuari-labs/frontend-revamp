@@ -66,6 +66,9 @@ export interface OrderResponseData {
 	walletAddress: string;
 	assetId: string;
 	markets: { marketId: string; maturity: number }[];
+	timestamp: number;
+	side: string;
+	type: string;
 	status: string;
 	originalAmount: string;
 	settlementFeeAmount: string;
@@ -115,6 +118,70 @@ export async function createLendLimitOrder(
 	// ResponseInterceptor wraps it again, so apiClient unwraps the outer
 	// envelope and we unwrap the inner one here.
 	const envelope = await apiClient<OrderEnvelope>("/orders/lend/limit", {
+		method: "POST",
+		body: dto,
+		token,
+	});
+	return envelope.data;
+}
+
+// ─── Lend Market Order ───────────────────────────────────────────────
+
+export interface CreateLendMarketOrderDto {
+	assetId: string;
+	amount: string;
+	marketIds: string[];
+	autoRollover?: boolean;
+}
+
+export async function createLendMarketOrder(
+	dto: CreateLendMarketOrderDto,
+	token: string,
+): Promise<OrderResponseData> {
+	const envelope = await apiClient<OrderEnvelope>("/orders/lend/market", {
+		method: "POST",
+		body: dto,
+		token,
+	});
+	return envelope.data;
+}
+
+// ─── Borrow Limit Order ──────────────────────────────────────────────
+
+export interface CreateBorrowLimitOrderDto {
+	assetId: string;
+	amount: string;
+	marketIds: string[];
+	rate: number;
+	autoRollover?: boolean;
+}
+
+export async function createBorrowLimitOrder(
+	dto: CreateBorrowLimitOrderDto,
+	token: string,
+): Promise<OrderResponseData> {
+	const envelope = await apiClient<OrderEnvelope>("/orders/borrow/limit", {
+		method: "POST",
+		body: dto,
+		token,
+	});
+	return envelope.data;
+}
+
+// ─── Borrow Market Order ─────────────────────────────────────────────
+
+export interface CreateBorrowMarketOrderDto {
+	assetId: string;
+	amount: string;
+	marketIds: string[];
+	autoRollover?: boolean;
+}
+
+export async function createBorrowMarketOrder(
+	dto: CreateBorrowMarketOrderDto,
+	token: string,
+): Promise<OrderResponseData> {
+	const envelope = await apiClient<OrderEnvelope>("/orders/borrow/market", {
 		method: "POST",
 		body: dto,
 		token,

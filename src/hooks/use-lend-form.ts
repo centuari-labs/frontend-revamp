@@ -241,15 +241,19 @@ export function useLendForm({
       try {
         const amountInUsd = numericAmount * tokenInfo.price;
 
-        const result = await submitMarket({
-          tokenValue: selectedToken.value,
-          tokenLogo: selectedToken.logo,
-          tokenLabel: selectedToken.label,
-          amount: numericAmount,
-          amountInUsd,
-          maturity: marketMaturity,
-          editingPosition: editingPosition ?? undefined,
-        });
+        const token = USE_MOCK ? undefined : await getToken();
+        const result = await submitMarket(
+          {
+            tokenValue: selectedToken.value,
+            tokenLogo: selectedToken.logo,
+            tokenLabel: selectedToken.label,
+            amount: numericAmount,
+            amountInUsd,
+            maturity: marketMaturity,
+            editingPosition: editingPosition ?? undefined,
+          },
+          USE_MOCK ? undefined : { token: token!, markets },
+        );
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -270,6 +274,8 @@ export function useLendForm({
       isPending,
       selectedToken,
       getTokenInfo,
+      getToken,
+      markets,
       submitMarket,
       editingPosition,
       onUpdate,
