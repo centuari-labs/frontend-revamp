@@ -57,13 +57,7 @@ describe("useMyAssets (API mode)", () => {
       },
     ];
 
-    mockGetMyAssets.mockResolvedValue({
-      data: mockAssets,
-      page: 1,
-      limit: 100,
-      totalData: 2,
-      totalPages: 1,
-    });
+    mockGetMyAssets.mockResolvedValue(mockAssets);
 
     const useMyAssets = await getHook();
     const { result } = renderHookWithProviders(() => useMyAssets());
@@ -78,13 +72,7 @@ describe("useMyAssets (API mode)", () => {
   });
 
   it("passes auth token to getMyAssets", async () => {
-    mockGetMyAssets.mockResolvedValue({
-      data: [],
-      page: 1,
-      limit: 100,
-      totalData: 0,
-      totalPages: 0,
-    });
+    mockGetMyAssets.mockResolvedValue([]);
 
     const useMyAssets = await getHook();
     renderHookWithProviders(() => useMyAssets());

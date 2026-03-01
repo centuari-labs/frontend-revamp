@@ -21,7 +21,7 @@ export function useMyAssets() {
   });
 
   return {
-    assets: query.data?.data ?? [],
+    assets: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
   };

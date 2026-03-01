@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { CentuariButton } from "@/components/centuari-button";
 import { FAUCET_CATEGORIES, FAUCET_TOKENS } from "@/lib/faucet-tokens";
 import { FaucetTokenCard } from "./faucet-token-card";
+import { useFaucetDrip } from "@/hooks/use-faucet-drip";
 
 export function FaucetTokenGrid() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState("all");
+  const { requestDrip, status, error, reset } = useFaucetDrip();
 
   const filteredTokens = useMemo(() => {
     if (activeCategory === "all") return FAUCET_TOKENS;
@@ -27,6 +29,24 @@ export function FaucetTokenGrid() {
       return next;
     });
   };
+
+  const handleRequestDrip = async () => {
+    const tokens = Array.from(selectedTokens);
+    const result = await requestDrip(tokens);
+    if (result) {
+      setSelectedTokens(new Set());
+    }
+  };
+
+  // Auto-reset success/error status after 3 seconds
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      const timer = setTimeout(reset, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [status, reset]);
+
+  const isLoading = status === "loading";
 
   return (
     <div className="mt-6 pb-28">
@@ -62,25 +82,66 @@ export function FaucetTokenGrid() {
       </div>
 
       {/* Sticky bottom bar */}
-      {selectedTokens.size > 0 && (
+      {(selectedTokens.size > 0 || status === "success" || status === "error") && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6">
-          <div className="bg-primary-blue-100/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40">
+          <div className={cn(
+            "backdrop-blur-xl border rounded-2xl shadow-2xl shadow-black/40",
+            status === "success"
+              ? "bg-emerald-900/80 border-emerald-500/30"
+              : status === "error"
+                ? "bg-red-900/80 border-red-500/30"
+                : "bg-primary-blue-100/80 border-white/10"
+          )}>
             <div className="px-6 py-4 flex items-center justify-between">
               <div>
-                <CentuariTypography variant="title-md" className="font-semibold">
-                  {selectedTokens.size} Asset{selectedTokens.size > 1 ? "s" : ""}{" "}
-                  Selected
-                </CentuariTypography>
-                <CentuariTypography
-                  variant="subheading-sm"
-                  className="text-white/40 uppercase tracking-wider"
-                >
-                  Ready to Drip
-                </CentuariTypography>
+                {status === "success" ? (
+                  <>
+                    <CentuariTypography variant="title-md" className="font-semibold">
+                      Tokens Dripped Successfully
+                    </CentuariTypography>
+                    <CentuariTypography
+                      variant="subheading-sm"
+                      className="text-emerald-300/60 uppercase tracking-wider"
+                    >
+                      Check your wallet
+                    </CentuariTypography>
+                  </>
+                ) : status === "error" ? (
+                  <>
+                    <CentuariTypography variant="title-md" className="font-semibold">
+                      Drip Failed
+                    </CentuariTypography>
+                    <CentuariTypography
+                      variant="subheading-sm"
+                      className="text-red-300/60 uppercase tracking-wider"
+                    >
+                      {error ?? "Something went wrong"}
+                    </CentuariTypography>
+                  </>
+                ) : (
+                  <>
+                    <CentuariTypography variant="title-md" className="font-semibold">
+                      {selectedTokens.size} Asset{selectedTokens.size > 1 ? "s" : ""}{" "}
+                      Selected
+                    </CentuariTypography>
+                    <CentuariTypography
+                      variant="subheading-sm"
+                      className="text-white/40 uppercase tracking-wider"
+                    >
+                      Ready to Drip
+                    </CentuariTypography>
+                  </>
+                )}
               </div>
-              <CentuariButton variant="primary">
-                Request Drip &rarr;
-              </CentuariButton>
+              {status !== "success" && status !== "error" && (
+                <CentuariButton
+                  variant="primary"
+                  onClick={handleRequestDrip}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Requesting..." : "Request Drip \u2192"}
+                </CentuariButton>
+              )}
             </div>
           </div>
         </div>

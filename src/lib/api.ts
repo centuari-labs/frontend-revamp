@@ -101,8 +101,8 @@ export interface MyAssetsResponse {
 	totalPages: number;
 }
 
-export function getMyAssets(token: string): Promise<MyAssetsResponse> {
-	return apiClient<MyAssetsResponse>("/portfolio/my-assets?limit=100", {
+export function getMyAssets(token: string): Promise<MyAssetItem[]> {
+	return apiClient<MyAssetItem[]>("/portfolio/my-assets?limit=100", {
 		token,
 	});
 }
@@ -186,4 +186,31 @@ export async function createBorrowMarketOrder(
 		token,
 	});
 	return envelope.data;
+}
+
+// ─── Faucet ─────────────────────────────────────────────────────────
+
+export interface FaucetTokenResult {
+	tokenAddress: string;
+	amount: string;
+}
+
+export interface FaucetResponse {
+	chainId: number;
+	recipientAddress: string;
+	transactionHash: string;
+	blockNumber: string;
+	status: string;
+	results: FaucetTokenResult[];
+}
+
+export function requestFaucetTokens(
+	chainId: number,
+	recipientAddress: string,
+	tokens: string[],
+): Promise<FaucetResponse> {
+	return apiClient<FaucetResponse>("/faucet/request-tokens", {
+		method: "POST",
+		body: { chainId, recipientAddress, token: tokens },
+	});
 }

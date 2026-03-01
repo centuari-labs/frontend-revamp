@@ -1,10 +1,10 @@
 import { createConfig } from "@privy-io/wagmi";
-import { arbitrum } from "viem/chains";
-import { http } from "wagmi";
+import { http, type Transport } from "wagmi";
+import { ACTIVE_CHAIN } from "./chain-config";
 
 export const wagmiConfig = createConfig({
-	chains: [arbitrum],
+	chains: [ACTIVE_CHAIN],
 	transports: {
-		[arbitrum.id]: http(),
-	},
+		[ACTIVE_CHAIN.id]: http(),
+	} as Record<number, Transport>,
 });

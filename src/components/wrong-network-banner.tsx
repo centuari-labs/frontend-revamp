@@ -3,9 +3,9 @@
 import { useWallets } from "@privy-io/react-auth";
 import { AlertTriangle } from "lucide-react";
 import { useCallback, useState } from "react";
-import { arbitrum } from "viem/chains";
+import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
 
-const ARBITRUM_CAIP2 = `eip155:${arbitrum.id}`;
+const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 export function WrongNetworkBanner() {
 	const { wallets } = useWallets();
@@ -17,16 +17,16 @@ export function WrongNetworkBanner() {
 	);
 
 	// Check if the external wallet is on the wrong chain
-	// Privy wallet chainId is in CAIP-2 format: "eip155:42161"
+	// Privy wallet chainId is in CAIP-2 format: "eip155:<chainId>"
 	const isWrongNetwork =
 		externalWallet != null &&
-		externalWallet.chainId !== ARBITRUM_CAIP2;
+		externalWallet.chainId !== EXPECTED_CAIP2;
 
 	const handleSwitch = useCallback(async () => {
 		if (!externalWallet) return;
 		setSwitching(true);
 		try {
-			await externalWallet.switchChain(arbitrum.id);
+			await externalWallet.switchChain(ACTIVE_CHAIN.id);
 		} catch {
 			// User rejected or switch failed — keep banner visible
 		} finally {
@@ -46,7 +46,7 @@ export function WrongNetworkBanner() {
 				<h2 className="text-lg font-semibold text-white">Wrong Network</h2>
 				<p className="text-sm text-white/70">
 					Centuari only supports{" "}
-					<span className="font-medium text-white">Arbitrum</span>. Please
+					<span className="font-medium text-white">{ACTIVE_CHAIN_LABEL}</span>. Please
 					switch your wallet network to continue.
 				</p>
 				<button
@@ -55,7 +55,7 @@ export function WrongNetworkBanner() {
 					disabled={switching}
 					className="mt-2 rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
 				>
-					{switching ? "Switching..." : "Switch to Arbitrum"}
+					{switching ? "Switching..." : `Switch to ${ACTIVE_CHAIN_LABEL}`}
 				</button>
 			</div>
 		</div>
