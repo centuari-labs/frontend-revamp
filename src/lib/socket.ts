@@ -19,8 +19,13 @@ function resolveWsUrl(): string {
 
 let socket: Socket | null = null;
 let refCount = 0;
+let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function acquireSocket(): Socket {
+	if (disconnectTimer) {
+		clearTimeout(disconnectTimer);
+		disconnectTimer = null;
+	}
 	if (!socket) {
 		const url = resolveWsUrl();
 		socket = io(url, {
@@ -37,7 +42,13 @@ export function acquireSocket(): Socket {
 export function releaseSocket(): void {
 	refCount = Math.max(0, refCount - 1);
 	if (refCount === 0 && socket) {
-		socket.disconnect();
-		socket = null;
+		// Delay disconnect so React Strict Mode remounts can reclaim the socket
+		disconnectTimer = setTimeout(() => {
+			if (refCount === 0 && socket) {
+				socket.disconnect();
+				socket = null;
+			}
+			disconnectTimer = null;
+		}, 1000);
 	}
 }
