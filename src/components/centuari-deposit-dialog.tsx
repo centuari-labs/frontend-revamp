@@ -1,63 +1,77 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { gsap } from "gsap";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
-import { Info, ArrowLeft, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
-import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariInput } from "./centuari-input";
-import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { MaturityToggle } from "./maturity-toggle";
-import { Label } from "./ui/label";
-import { SelectSingleToken } from "./select-single-token";
-import HealthFactor from "./centuari-health-factor";
-import { Badge } from "./ui/badge";
-import { CentuariAlert } from "./centuari-alert";
-import { SelectToken } from "./select-token";
-import { SelectChain } from "./select-chain";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
 } from "@/lib/utils";
-import { TokenValue, getTokenIcon } from "@/lib/tokens";
-import { ChainValue, getChainByValue } from "@/lib/chains";
+import { getTokenLogo } from "@/lib/tokens";
 import { useRouter } from "next/navigation";
+import { useDeposit } from "@/hooks/use-deposit";
+import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useDepositBalance } from "@/hooks/use-deposit-balance";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "./ui/label";
 
 export function CentuariDepositDialog() {
   const router = useRouter();
-  const [selectedChain, setSelectedChain] = useState<ChainValue>("eth");
-  const [selectedToken, setSelectedToken] = useState<TokenValue>("usdt");
-  const [depositAmount, setDepositAmount] = useState<string>(""); // Stored as numeric value (without separator)
-  const [displayAmount, setDisplayAmount] = useState<string>(""); // Display value (with separator)
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { deposit, status: depositStatus, error: depositError, reset: resetDeposit } = useDeposit();
+  const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
+
+  const [selectedTokenId, setSelectedTokenId] = useState<string>("");
+  const [depositAmount, setDepositAmount] = useState<string>("");
+  const [displayAmount, setDisplayAmount] = useState<string>("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [successData, setSuccessData] = useState<{
-    token: TokenValue;
+    symbol: string;
     amount: string;
-    chain?: ChainValue;
+    txHash: string;
   } | null>(null);
 
+  const selectedToken = useMemo(
+    () => tokens?.find((t) => t.id === selectedTokenId),
+    [tokens, selectedTokenId],
+  );
+
+  // Auto-select first token when tokens load
+  useEffect(() => {
+    if (tokens && tokens.length > 0 && !selectedTokenId) {
+      setSelectedTokenId(tokens[0].id);
+    }
+  }, [tokens, selectedTokenId]);
+
+  const { data: balanceData } = useDepositBalance(selectedTokenId || undefined);
+
+  const isProcessing = depositStatus === "loading";
+
   const depositSuccessDescription = successData
-    ? `You have successfully deposited ${successData.amount} ${successData.token.toUpperCase()}${successData.chain ? ` on ${getChainByValue(successData.chain)?.label}` : ""} to your vault.`
+    ? `You have successfully deposited ${successData.amount} ${successData.symbol} to your vault.`
     : "Your deposit has been completed successfully.";
 
   // Handle opening success dialog after deposit dialog closes
   useEffect(() => {
     if (!dialogOpen && successData) {
-      // Wait for deposit dialog to close completely, then open success dialog
       const timer = setTimeout(() => {
         setShowSuccessDialog(true);
       }, 300);
@@ -65,62 +79,66 @@ export function CentuariDepositDialog() {
     }
   }, [dialogOpen, successData]);
 
-  // Reset form when dialog closes
   const handleDialogChange = (open: boolean) => {
     setDialogOpen(open);
     if (!open && !successData) {
-      // Normal close - reset everything (only if not a successful deposit)
       setDepositAmount("");
       setDisplayAmount("");
-      setSelectedChain("eth");
-      setSelectedToken("usdt");
-      setIsProcessing(false);
-      setShowSuccessDialog(false);
+      setSelectedTokenId(tokens?.[0]?.id ?? "");
+      resetDeposit();
     }
   };
 
-  // Handle amount input change with separator formatting
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    
-    // Parse to get clean numeric value
     const numericValue = parseNumberFromSeparator(inputValue);
-    
-    // Format for display
     const formattedValue = formatNumberWithSeparator(numericValue);
-    
-    // Update both states
     setDepositAmount(numericValue);
     setDisplayAmount(formattedValue);
   };
 
-  // Simulate deposit function
-  const handleDeposit = async () => {
-    if (!depositAmount || isProcessing) return;
-
-    setIsProcessing(true);
-
-    // Simulate deposit delay (1-2 seconds)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Store success data before closing deposit dialog
-    const success = {
-      token: selectedToken,
-      amount: displayAmount || depositAmount,
-      chain: selectedChain,
-    };
-    
-    setSuccessData(success);
-    setIsProcessing(false);
-    setDialogOpen(false); // Close deposit dialog, useEffect will handle opening success dialog
+  const handleMaxClick = () => {
+    if (balanceData?.formattedBalance) {
+      const balance = balanceData.formattedBalance;
+      setDepositAmount(balance);
+      setDisplayAmount(formatNumberWithSeparator(balance));
+    }
   };
+
+  const handleDeposit = async () => {
+    if (!depositAmount || !selectedTokenId || isProcessing) return;
+
+    const result = await deposit(selectedTokenId, depositAmount);
+
+    if (result) {
+      setSuccessData({
+        symbol: selectedToken?.symbol ?? "",
+        amount: displayAmount || depositAmount,
+        txHash: result.transactionHash,
+      });
+      setDialogOpen(false);
+    }
+  };
+
+  // Validate: amount must not exceed balance
+  const amountExceedsBalance = useMemo(() => {
+    if (!depositAmount || !balanceData?.formattedBalance) return false;
+    return Number.parseFloat(depositAmount) > Number.parseFloat(balanceData.formattedBalance);
+  }, [depositAmount, balanceData]);
+
+  const isSubmitDisabled =
+    isProcessing || !depositAmount || !selectedTokenId || amountExceedsBalance;
+
+  const tokenIcon = selectedToken
+    ? getTokenLogo(selectedToken.symbol, selectedToken.imageUrl ?? undefined)
+    : "/tokens/usdc-icon.svg";
 
   const TokenIcon = () => (
     <Image
-      src={getTokenIcon(selectedToken)}
+      src={tokenIcon}
       width={16}
       height={16}
-      alt={selectedToken.toUpperCase()}
+      alt={selectedToken?.symbol ?? "token"}
     />
   );
 
@@ -163,18 +181,33 @@ export function CentuariDepositDialog() {
                   handleDeposit();
                 }}
               >
-                <SelectChain
-                  value={selectedChain}
-                  onValueChange={(value) =>
-                    setSelectedChain(value as ChainValue)
-                  }
-                />
-                <SelectToken
-                  value={selectedToken}
-                  onValueChange={(value) =>
-                    setSelectedToken(value as TokenValue)
-                  }
-                />
+                <div className="w-full space-y-2 mt-3.5">
+                  <Label>Select Token</Label>
+                  <Select
+                    value={selectedTokenId}
+                    onValueChange={setSelectedTokenId}
+                    disabled={tokensLoading}
+                  >
+                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                      <SelectValue placeholder={tokensLoading ? "Loading..." : "Select Token"} />
+                    </SelectTrigger>
+                    <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                      <SelectGroup>
+                        {tokens?.map((token) => (
+                          <SelectItem key={token.id} value={token.id}>
+                            <Image
+                              src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
+                              width={16}
+                              height={16}
+                              alt={token.symbol}
+                            />
+                            {token.symbol}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <CentuariInput
                   id="amount"
                   label="Deposit Amount"
@@ -188,7 +221,31 @@ export function CentuariDepositDialog() {
                   disabled={isProcessing}
                   type="text"
                   inputMode="decimal"
+                  balanceText={
+                    balanceData ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        Balance: {Number.parseFloat(balanceData.formattedBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken?.symbol ?? ""}
+                        <button
+                          type="button"
+                          onClick={handleMaxClick}
+                          className="text-primary-blue-base hover:underline font-medium ml-1"
+                        >
+                          Max
+                        </button>
+                      </span>
+                    ) : null
+                  }
                 />
+                {amountExceedsBalance && (
+                  <p className="text-xs text-red-400 mt-1">
+                    Amount exceeds available balance
+                  </p>
+                )}
+                {depositError && (
+                  <p className="text-xs text-red-400 mt-1">
+                    {depositError}
+                  </p>
+                )}
               </form>
             </div>
           </DialogHeader>
@@ -198,7 +255,7 @@ export function CentuariDepositDialog() {
               variant="primary"
               className="flex-1"
               onClick={handleDeposit}
-              disabled={isProcessing || !depositAmount}
+              disabled={isSubmitDisabled}
             >
               {isProcessing ? (
                 <>
@@ -219,9 +276,9 @@ export function CentuariDepositDialog() {
           if (!open) {
             setDepositAmount("");
             setDisplayAmount("");
-            setSelectedChain("eth");
-            setSelectedToken("usdt");
+            setSelectedTokenId(tokens?.[0]?.id ?? "");
             setSuccessData(null);
+            resetDeposit();
           }
         }}
         title="Deposit Complete"

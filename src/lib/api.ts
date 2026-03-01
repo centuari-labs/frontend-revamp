@@ -214,3 +214,50 @@ export function requestFaucetTokens(
 		body: { chainId, recipientAddress, token: tokens },
 	});
 }
+
+// ─── Deposit ──────────────────────────────────────────────────────────
+
+export interface DepositToken {
+	id: string;
+	symbol: string;
+	name: string;
+	tokenAddress: string;
+	decimals: number | null;
+	imageUrl: string | null;
+	chainId: number | null;
+}
+
+export interface DepositResponse {
+	transactionHash: string;
+	status: string;
+}
+
+export interface BalanceResponse {
+	balance: string;
+	formattedBalance: string;
+	decimals: number | null;
+	symbol: string;
+}
+
+export function getDepositTokens(token: string): Promise<DepositToken[]> {
+	return apiClient<DepositToken[]>("/deposit/tokens", { token });
+}
+
+export function getDepositBalance(
+	assetId: string,
+	token: string,
+): Promise<BalanceResponse> {
+	return apiClient<BalanceResponse>(`/deposit/balance/${assetId}`, { token });
+}
+
+export function submitDeposit(
+	assetId: string,
+	amount: string,
+	token: string,
+): Promise<DepositResponse> {
+	return apiClient<DepositResponse>("/deposit", {
+		method: "POST",
+		body: { assetId, amount },
+		token,
+	});
+}
