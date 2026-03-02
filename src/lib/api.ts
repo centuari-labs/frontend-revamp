@@ -82,6 +82,85 @@ interface OrderEnvelope {
 	data: OrderResponseData;
 }
 
+// ─── My Portfolio ───────────────────────────────────────────────────
+
+export interface PortfolioAllocation {
+	availableBalanceUsd: number;
+	suppliedAssetsUsd: number;
+	borrowedAssetsUsd: number;
+	availableBalancePct: number;
+	suppliedAssetsPct: number;
+	borrowedAssetsPct: number;
+}
+
+export interface MyPortfolioResponse {
+	totalDeposit: number;
+	allTimeReturn: number;
+	netAPY: number;
+	allocation: PortfolioAllocation;
+}
+
+export function getMyPortfolio(token: string): Promise<MyPortfolioResponse> {
+	return apiClient<MyPortfolioResponse>("/portfolio/my-portfolio", { token });
+}
+
+// ─── Lend & Borrow Assets ───────────────────────────────────────────
+
+export interface LendBorrowAssetsResponse {
+	suppliedAssets: number;
+	borrowedAssets: number;
+	healthFactor: number;
+}
+
+export function getLendBorrowAssets(
+	token: string,
+): Promise<LendBorrowAssetsResponse> {
+	return apiClient<LendBorrowAssetsResponse>(
+		"/portfolio/lend-borrow-assets",
+		{ token },
+	);
+}
+
+// ─── My Positions ───────────────────────────────────────────────────
+
+export interface MyPositionItem {
+	id: string;
+	symbol: string;
+	name: string;
+	walletBalance: number;
+	amountInUsd: number;
+	isCollateral: boolean;
+	imageUrl: string | null;
+	side: "LEND" | "BORROW";
+	maturity: number | null;
+}
+
+export function getMyPositions(
+	token: string,
+	type?: "LEND" | "BORROW",
+): Promise<MyPositionItem[]> {
+	const params = new URLSearchParams({ limit: "100" });
+	if (type) params.set("type", type);
+	return apiClient<MyPositionItem[]>(
+		`/portfolio/my-position?${params.toString()}`,
+		{ token },
+	);
+}
+
+// ─── Set Asset As Collateral ────────────────────────────────────────
+
+export function setAssetAsCollateral(
+	assetIds: string[],
+	isCollateral: boolean,
+	token: string,
+): Promise<void> {
+	return apiClient<void>("/portfolio/is-collateral", {
+		method: "PUT",
+		body: { assetIds, isCollateral },
+		token,
+	});
+}
+
 // ─── My Assets (Portfolio) ───────────────────────────────────────────
 
 export interface MyAssetItem {

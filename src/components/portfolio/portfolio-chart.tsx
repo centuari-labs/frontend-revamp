@@ -11,7 +11,14 @@ import {
 
 export const description = "A donut chart with text";
 
-const chartData = [
+interface PortfolioChartProps {
+  availableBalance?: number;
+  suppliedAssets?: number;
+  borrowedAssets?: number;
+  totalValue?: number;
+}
+
+const defaultChartData = [
   { name: "segment1", visitors: 630, fill: "#2A4AC2" },
   { name: "segment2", visitors: 250, fill: "#AAC7F9" },
   { name: "segment3", visitors: 150, fill: "#4F8FFD" },
@@ -22,23 +29,35 @@ const chartConfig = {
     label: "Value",
   },
   segment1: {
-    label: "Segment 1",
+    label: "Available Balance",
     color: "#2A4AC2",
   },
   segment2: {
-    label: "Segment 2",
+    label: "Supplied Assets",
     color: "#AAC7F9",
   },
   segment3: {
-    label: "Segment 3",
+    label: "Borrowed Assets",
     color: "#4F8FFD",
   },
 } satisfies ChartConfig;
 
-export function PortfolioChart() {
-  const totalVisitors = React.useMemo(() => {
+export function PortfolioChart({ availableBalance, suppliedAssets, borrowedAssets, totalValue }: PortfolioChartProps = {}) {
+  const chartData = React.useMemo(() => {
+    if (availableBalance !== undefined && suppliedAssets !== undefined && borrowedAssets !== undefined) {
+      return [
+        { name: "segment1", visitors: availableBalance, fill: "#2A4AC2" },
+        { name: "segment2", visitors: suppliedAssets, fill: "#AAC7F9" },
+        { name: "segment3", visitors: borrowedAssets, fill: "#4F8FFD" },
+      ];
+    }
+    return defaultChartData;
+  }, [availableBalance, suppliedAssets, borrowedAssets]);
+
+  const total = React.useMemo(() => {
+    if (totalValue !== undefined) return totalValue;
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  }, [totalValue, chartData]);
 
   return (
     <div className="relative flex items-center justify-center w-full max-w-[280px] mx-auto">
@@ -80,7 +99,7 @@ export function PortfolioChart() {
                         y={viewBox.cy}
                         className="fill-foreground text-xl font-bold"
                       >
-                        $40,000.00
+                        {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(total)}
                       </tspan>
                       <tspan
                         x={viewBox.cx}

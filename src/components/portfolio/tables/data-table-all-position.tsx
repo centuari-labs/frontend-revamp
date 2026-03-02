@@ -50,21 +50,27 @@ export type PositionProps = {
   maturity?: number;
 };
 
-export function DataTableAllPosition() {
+interface DataTableAllPositionProps {
+  positions?: PositionProps[];
+}
+
+export function DataTableAllPosition({ positions: externalPositions }: DataTableAllPositionProps = {}) {
   const router = useRouter();
   const [withdrawSuccess, setWithdrawSuccess] =
     React.useState<WithdrawSuccessMessage | null>(null);
   const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
   const { allTransactions } = usePositions();
 
+  const allData = externalPositions ?? allTransactions;
+
   const borrowData: PositionProps[] = React.useMemo(
-    () => allTransactions.filter((pos) => pos.type === "borrow") as PositionProps[],
-    [allTransactions]
+    () => allData.filter((pos) => pos.type === "borrow") as PositionProps[],
+    [allData]
   );
 
   const lendData: PositionProps[] = React.useMemo(
-    () => allTransactions.filter((pos) => pos.type === "lend") as PositionProps[],
-    [allTransactions]
+    () => allData.filter((pos) => pos.type === "lend") as PositionProps[],
+    [allData]
   );
 
   // Memoize currentData to prevent unnecessary re-renders

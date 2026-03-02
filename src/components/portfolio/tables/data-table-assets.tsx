@@ -53,9 +53,15 @@ export type AssetProps = {
   tokenValue: string; // Add token value to identify which token this is
 };
 
-export function DataTableAssets() {
-  // Portfolio state - sync with borrow dialog
+interface DataTableAssetsProps {
+  assets?: AssetProps[];
+  onToggleCollateral?: (assetId: string, isCollateral: boolean) => void;
+}
+
+export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: DataTableAssetsProps = {}) {
+  // Portfolio state - sync with borrow dialog (mock mode only)
   const [portfolio, setPortfolio] = React.useState<Record<string, number>>(() => {
+    if (externalAssets) return {};
     // Try to get from localStorage, fallback to default
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("centuari_portfolio");
@@ -133,8 +139,10 @@ export function DataTableAssets() {
   const lastPortfolioRef = React.useRef<string>("");
   const lastCollateralRef = React.useRef<string>("");
 
-  // Sync portfolio from localStorage on mount and when it changes
+  // Sync portfolio from localStorage on mount and when it changes (mock mode only)
   React.useEffect(() => {
+    if (externalAssets) return;
+
     const handleStorageChange = () => {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("centuari_portfolio");
@@ -172,10 +180,16 @@ export function DataTableAssets() {
       window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
-  }, []);
+  }, [externalAssets]);
 
   // Handle collateral toggle
   const handleToggleCollateral = React.useCallback((tokenValue: string) => {
+    if (onToggleCollateral) {
+      // API mode: find the current collateral state and toggle
+      const current = externalAssets?.find((a) => a.id === tokenValue || a.tokenValue === tokenValue);
+      onToggleCollateral(tokenValue, !current?.isCollateral);
+      return;
+    }
     setCollateralStatus((prev) => {
       const newStatus = {
         ...prev,
@@ -189,10 +203,12 @@ export function DataTableAssets() {
 
       return newStatus;
     });
-  }, []);
+  }, [onToggleCollateral, externalAssets]);
 
   // Transform portfolio data to AssetProps format (before columns so header can use it)
   const data: AssetProps[] = React.useMemo(() => {
+    if (externalAssets) return externalAssets;
+
     const marketAPR = 0.06; // Fixed market APR of 6.0%
     return tokenList
       .filter(token => portfolio[token.value] && portfolio[token.value] > 0)
@@ -214,7 +230,7 @@ export function DataTableAssets() {
           tokenValue: token.value,
         };
       });
-  }, [portfolio, collateralStatus]);
+  }, [externalAssets, portfolio, collateralStatus]);
 
   // Handle collateral cell click: show confirmation when enabling, direct toggle when disabling
   const handleCollateralCellClick = React.useCallback(

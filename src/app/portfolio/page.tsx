@@ -1,37 +1,16 @@
 "use client";
 
-import { CentuariCalender } from "@/components/centuari-calender";
-import { CentuariTable } from "@/components/centuari-table";
 import { PortfolioChart } from "@/components/portfolio/portfolio-chart";
-import { PortfolioHeader } from "@/components/portfolio/portfolio-header";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { ArrowLeftRight, Calendar, CalendarRange, Flag } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CentuariTypography } from "@/components/centuari-typography";
 import LendBorrowChart from "@/components/portfolio/lend-borrow-chart";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { CurrencyValue } from "@/components/currency-value";
 import { PageContainer } from "@/components/page-container";
-import { DataTableAssets } from "@/components/portfolio/tables/data-table-assets";
-import { DataTableAllPosition } from "@/components/portfolio/tables/data-table-all-position";
+import { DataTableAssets, type AssetProps } from "@/components/portfolio/tables/data-table-assets";
+import { DataTableAllPosition, type PositionProps } from "@/components/portfolio/tables/data-table-all-position";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { defaultPortfolio } from "@/lib/portfolio-data";
 import {
   getHealthFactorStatus,
@@ -40,27 +19,39 @@ import {
   migratePortfolioFromStorage,
   toPercent,
 } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { USE_MOCK } from "@/lib/use-mock";
+import { useMyPortfolio } from "@/hooks/use-my-portfolio";
+import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";
+import { useMyPositions } from "@/hooks/use-my-positions";
+import { useMyAssets } from "@/hooks/use-my-assets";
+import { useSetCollateral } from "@/hooks/use-set-collateral";
 
 export default function PortfolioPage() {
+  // ─── Mock mode state (localStorage) ────────────────────────────────
   const [portfolio, setPortfolio] = useState<Record<string, number>>(() =>
-    getLocalStorageJson("centuari_portfolio", defaultPortfolio, (p) => {
-      const m = migratePortfolioFromStorage(p, defaultPortfolio);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("centuari_portfolio", JSON.stringify(m));
-      }
-      return m;
-    }),
+    USE_MOCK
+      ? getLocalStorageJson("centuari_portfolio", defaultPortfolio, (p) => {
+          const m = migratePortfolioFromStorage(p, defaultPortfolio);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("centuari_portfolio", JSON.stringify(m));
+          }
+          return m;
+        })
+      : {},
   );
 
   const [totalDebt, setTotalDebt] = useState<number>(() =>
-    getLocalStorageNumber("centuari_total_debt", 0),
+    USE_MOCK ? getLocalStorageNumber("centuari_total_debt", 0) : 0,
   );
 
   const [totalSupply, setTotalSupply] = useState<number>(() =>
-    getLocalStorageNumber("centuari_total_supply", 0),
+    USE_MOCK ? getLocalStorageNumber("centuari_total_supply", 0) : 0,
   );
 
   useEffect(() => {
+    if (!USE_MOCK) return;
+
     const handleStorageChange = () => {
       setPortfolio(
         getLocalStorageJson("centuari_portfolio", defaultPortfolio),
@@ -78,16 +69,93 @@ export default function PortfolioPage() {
     };
   }, []);
 
-  const totalPortfolioValue = Object.values(portfolio).reduce((sum, value) => sum + value, 0);
-  const totalBalance = totalPortfolioValue + totalSupply - totalDebt;
+  // ─── API mode hooks ────────────────────────────────────────────────
+  const { portfolio: apiPortfolio } = useMyPortfolio();
+  const { lendBorrow } = useLendBorrowAssets();
+  const { positions: apiPositions } = useMyPositions();
+  const { assets: apiAssets } = useMyAssets();
+  const setCollateralMutation = useSetCollateral();
 
-  const availableBalancePercent = toPercent(totalPortfolioValue, totalBalance);
-  const suppliedPercent = toPercent(totalSupply, totalBalance);
-  const borrowedPercent = toPercent(totalDebt, totalBalance);
+  // ─── Derived values ────────────────────────────────────────────────
+  const totalBalance = USE_MOCK
+    ? Object.values(portfolio).reduce((sum, v) => sum + v, 0) + totalSupply - totalDebt
+    : (apiPortfolio?.totalDeposit ?? 0);
 
-  const healthFactor =
-    totalDebt > 0 ? (totalPortfolioValue / totalDebt).toFixed(2) : "0.00";
-  const healthFactorStatus = getHealthFactorStatus(parseFloat(healthFactor));
+  const allTimeReturn = USE_MOCK
+    ? totalSupply
+    : (apiPortfolio?.allTimeReturn ?? 0);
+
+  const netAPR = USE_MOCK
+    ? 6.9
+    : (apiPortfolio?.netAPY ?? 0);
+
+  const availableBalancePercent = USE_MOCK
+    ? toPercent(Object.values(portfolio).reduce((sum, v) => sum + v, 0), Object.values(portfolio).reduce((sum, v) => sum + v, 0) + totalSupply - totalDebt)
+    : (apiPortfolio?.allocation.availableBalancePct ?? 0);
+
+  const suppliedPercent = USE_MOCK
+    ? toPercent(totalSupply, Object.values(portfolio).reduce((sum, v) => sum + v, 0) + totalSupply - totalDebt)
+    : (apiPortfolio?.allocation.suppliedAssetsPct ?? 0);
+
+  const borrowedPercent = USE_MOCK
+    ? toPercent(totalDebt, Object.values(portfolio).reduce((sum, v) => sum + v, 0) + totalSupply - totalDebt)
+    : (apiPortfolio?.allocation.borrowedAssetsPct ?? 0);
+
+  const suppliedAssetsUsd = USE_MOCK ? totalSupply : (lendBorrow?.suppliedAssets ?? 0);
+  const borrowedAssetsUsd = USE_MOCK ? totalDebt : (lendBorrow?.borrowedAssets ?? 0);
+
+  const healthFactorValue = USE_MOCK
+    ? (totalDebt > 0 ? Object.values(portfolio).reduce((sum, v) => sum + v, 0) / totalDebt : 0)
+    : (lendBorrow?.healthFactor ?? 0);
+  const healthFactor = healthFactorValue.toFixed(2);
+  const healthFactorStatus = getHealthFactorStatus(healthFactorValue);
+
+  // ─── Map API assets → DataTableAssets props ────────────────────────
+  const assetTableData: AssetProps[] | undefined = useMemo(() => {
+    if (USE_MOCK) return undefined;
+    return apiAssets.map((a) => ({
+      id: a.symbol,
+      assetImg: a.imageUrl ?? "/tokens/default-token.svg",
+      assetName: a.name,
+      assetSymbol: a.symbol,
+      walletBalance: a.walletBalance,
+      amountInUsd: a.amountInUsd,
+      idleAssetYield: a.amountInUsd * 0.06,
+      isCollateral: a.isCollateral,
+      tokenValue: a.symbol,
+    }));
+  }, [apiAssets]);
+
+  const handleToggleCollateral = useMemo(() => {
+    if (USE_MOCK) return undefined;
+    return (assetId: string, isCollateral: boolean) => {
+      setCollateralMutation.mutate({ assetIds: [assetId], isCollateral });
+    };
+  }, [setCollateralMutation]);
+
+  // ─── Map API positions → DataTableAllPosition props ────────────────
+  const positionTableData: PositionProps[] | undefined = useMemo(() => {
+    if (USE_MOCK) return undefined;
+    return apiPositions.map((p) => ({
+      id: p.id,
+      assetImg: p.imageUrl ?? "/tokens/default-token.svg",
+      assetName: p.name,
+      amount: p.amountInUsd,
+      apr: 0,
+      type: p.side.toLowerCase() as "lend" | "borrow",
+      maturity: p.maturity ?? undefined,
+    }));
+  }, [apiPositions]);
+
+  // ─── Chart props (API mode) ────────────────────────────────────────
+  const chartProps = USE_MOCK
+    ? {}
+    : {
+        availableBalance: apiPortfolio?.allocation.availableBalanceUsd ?? 0,
+        suppliedAssets: apiPortfolio?.allocation.suppliedAssetsUsd ?? 0,
+        borrowedAssets: apiPortfolio?.allocation.borrowedAssetsUsd ?? 0,
+        totalValue: apiPortfolio?.totalDeposit ?? 0,
+      };
 
   return (
     <PageContainer>
@@ -131,7 +199,7 @@ export default function PortfolioPage() {
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
                     <CurrencyValue
-                      value={totalSupply}
+                      value={allTimeReturn}
                       decimalPlaces={2}
                       decimalClassName="text-white"
                     />
@@ -149,7 +217,7 @@ export default function PortfolioPage() {
                     Net APR
                   </CentuariTypography>
                   <CentuariTypography className="text-xl md:text-2xl font-semibold mt-1">
-                    6.9%
+                    {netAPR.toFixed(1)}%
                   </CentuariTypography>
                 </div>
               </div>
@@ -202,7 +270,7 @@ export default function PortfolioPage() {
               </div>
               {/* Chart Section */}
               <div className="flex-shrink-0 w-full sm:w-[220px] flex justify-center">
-                <PortfolioChart />
+                <PortfolioChart {...chartProps} />
               </div>
             </div>
           </div>
@@ -215,7 +283,7 @@ export default function PortfolioPage() {
                 <div className="space-y-1.5">
                   <p className="text-sm">Supplied Assets</p>
                   <span className="text-2xl font-semibold">
-                    <CurrencyValue value={totalSupply} decimalPlaces={2} />
+                    <CurrencyValue value={suppliedAssetsUsd} decimalPlaces={2} />
                   </span>
                 </div>
                 <Image
@@ -228,7 +296,7 @@ export default function PortfolioPage() {
                 <div className="space-y-1.5">
                   <p className="text-sm">Borrowed Assets</p>
                   <span className="text-2xl font-semibold">
-                    <CurrencyValue value={totalDebt} decimalPlaces={2} />
+                    <CurrencyValue value={borrowedAssetsUsd} decimalPlaces={2} />
                   </span>
                 </div>
                 <Image
@@ -261,10 +329,10 @@ export default function PortfolioPage() {
         </div>
         <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-3">
           <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
-            <DataTableAssets />
+            <DataTableAssets assets={assetTableData} onToggleCollateral={handleToggleCollateral} />
           </div>
           <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
-            <DataTableAllPosition />
+            <DataTableAllPosition positions={positionTableData} />
           </div>
         </div>
     </PageContainer>
