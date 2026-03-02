@@ -37,7 +37,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
-ENV NODE_ENV=production
 EXPOSE 3200
 
 CMD ["pnpm", "start", "-p", "3200"]
