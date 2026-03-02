@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { USE_MOCK } from "@/lib/use-mock";
 import {
   submitOpenOrder,
@@ -25,6 +26,7 @@ export interface SubmitLimitOptions {
 
 export function useSubmitLend() {
   const [isPending, setIsPending] = useState(false);
+  const queryClient = useQueryClient();
 
   const submitLimit = useCallback(
     async (params: SubmitLendLimitParams, options?: SubmitLimitOptions) => {
@@ -45,12 +47,15 @@ export function useSubmitLend() {
         if (!token || !markets) {
           throw new Error("Auth token and market data required for API mode");
         }
-        return await submitLendLimitOrder(params, markets, token);
+        const result = await submitLendLimitOrder(params, markets, token);
+        // Refresh locked amounts so available balance updates immediately
+        queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
+        return result;
       } finally {
         setIsPending(false);
       }
     },
-    [],
+    [queryClient],
   );
 
   const submitMarket = useCallback(
@@ -75,12 +80,14 @@ export function useSubmitLend() {
         if (!token || !markets) {
           throw new Error("Auth token and market data required for API mode");
         }
-        return await submitLendMarketOrder(params, markets, token);
+        const result = await submitLendMarketOrder(params, markets, token);
+        queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
+        return result;
       } finally {
         setIsPending(false);
       }
     },
-    [],
+    [queryClient],
   );
 
   return {
