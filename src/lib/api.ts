@@ -171,6 +171,8 @@ export interface MyAssetItem {
 	amountInUsd: number;
 	isCollateral: boolean;
 	imageUrl: string | null;
+	ltv: number;
+	liquidationThreshold: number;
 }
 
 export interface MyAssetsResponse {

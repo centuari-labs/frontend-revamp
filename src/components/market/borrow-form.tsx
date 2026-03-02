@@ -21,7 +21,6 @@ import { CollateralEmptyState } from "@/components/collateral-empty-state";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
-import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { getAvailableMaturityTimestamps } from "@/lib/maturity";
 
 interface BorrowFormProps {
@@ -95,7 +94,7 @@ export function BorrowForm({
                     {form.limitSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.limitSelectedCollaterals}
-                        tokenList={portfolioTokenList}
+                        tokenList={form.collateralTokenList}
                       />
                     ) : (
                       <CollateralEmptyState compact />
@@ -251,7 +250,7 @@ export function BorrowForm({
                     {form.marketSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.marketSelectedCollaterals}
-                        tokenList={portfolioTokenList}
+                        tokenList={form.collateralTokenList}
                       />
                     ) : (
                       <CollateralEmptyState compact />

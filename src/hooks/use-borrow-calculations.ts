@@ -3,7 +3,7 @@
 import { useMemo, useCallback } from "react";
 import { getHealthFactorPercentage } from "@/lib/utils";
 import {
-  tokenList as portfolioTokenList,
+  type TokenInfo,
   getLiquidationThreshold,
 } from "@/lib/portfolio-data";
 
@@ -11,7 +11,8 @@ export function useBorrowCalculations(
   portfolio: Record<string, number>,
   totalDebt: number,
   amount: number,
-  selectedCollaterals: string[]
+  selectedCollaterals: string[],
+  tokenList: TokenInfo[]
 ) {
   const calculateHealthFactor = useCallback(
     (amt: number, collaterals: string[]): number => {
@@ -26,7 +27,7 @@ export function useBorrowCalculations(
 
       const weightedLT =
         collaterals.reduce((sum, collateralValue) => {
-          const token = portfolioTokenList.find(
+          const token = tokenList.find(
             (t) => t.value === collateralValue
           );
           const portfolioValue = portfolio[collateralValue] || 0;
@@ -41,7 +42,7 @@ export function useBorrowCalculations(
       const healthFactor = (totalPortfolioValue * weightedLT) / newTotalDebt;
       return Math.min(healthFactor, 10);
     },
-    [portfolio, totalDebt]
+    [portfolio, totalDebt, tokenList]
   );
 
   const totalPortfolioValue = useMemo(
@@ -59,7 +60,7 @@ export function useBorrowCalculations(
       return 0.85;
     return (
       selectedCollaterals.reduce((sum, collateralValue) => {
-        const token = portfolioTokenList.find(
+        const token = tokenList.find(
           (t) => t.value === collateralValue
         );
         const portfolioValue = portfolio[collateralValue] || 0;
@@ -69,7 +70,7 @@ export function useBorrowCalculations(
         return sum;
       }, 0) / totalPortfolioValue
     );
-  }, [portfolio, selectedCollaterals, totalPortfolioValue]);
+  }, [portfolio, selectedCollaterals, totalPortfolioValue, tokenList]);
 
   const maxBorrowCapacity = totalPortfolioValue * weightedLTV;
   const availableQuota = Math.max(0, maxBorrowCapacity - totalDebt);
@@ -89,7 +90,7 @@ export function useBorrowCalculations(
       if (collaterals.length === 0 || totalPV === 0) return 0;
       const weightedLT =
         collaterals.reduce((sum, collateralValue) => {
-          const token = portfolioTokenList.find(
+          const token = tokenList.find(
             (t) => t.value === collateralValue
           );
           const portfolioValue = portfolio[collateralValue] || 0;
@@ -101,7 +102,7 @@ export function useBorrowCalculations(
         }, 0) / totalPV;
       return weightedLT;
     },
-    [portfolio]
+    [portfolio, tokenList]
   );
 
   return {
