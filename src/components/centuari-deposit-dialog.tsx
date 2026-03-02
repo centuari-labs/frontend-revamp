@@ -185,6 +185,28 @@ export function CentuariDepositDialog() {
                 }}
               >
                 <div className="w-full space-y-2 mt-3.5">
+                  <Label>Select Chain</Label>
+                  <Select value="arbitrum-sepolia" disabled>
+                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                      <SelectGroup>
+                        <SelectItem value="arbitrum-sepolia">
+                          <img
+                            src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                            alt="Arbitrum Sepolia"
+                            width={16}
+                            height={16}
+                            className="size-4 rounded-full object-cover"
+                          />
+                          Arbitrum Sepolia
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full space-y-2 mt-3.5">
                   <Label>Select Token</Label>
                   <Select
                     value={selectedTokenId}
