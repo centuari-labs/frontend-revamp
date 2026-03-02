@@ -63,7 +63,10 @@ export function CentuariDepositDialog() {
 
   const { data: balanceData } = useDepositBalance(selectedTokenId || undefined);
 
-  const isProcessing = depositStatus === "loading";
+  const isProcessing =
+    depositStatus === "pendingApproval" ||
+    depositStatus === "pendingConfirmation" ||
+    depositStatus === "verifying";
 
   const depositSuccessDescription = successData
     ? `You have successfully deposited ${successData.amount} ${successData.symbol} to your vault.`
@@ -108,7 +111,7 @@ export function CentuariDepositDialog() {
   const handleDeposit = async () => {
     if (!depositAmount || !selectedTokenId || isProcessing) return;
 
-    const result = await deposit(selectedTokenId, depositAmount);
+    const result = await deposit(selectedTokenId, depositAmount, selectedToken);
 
     if (result) {
       setSuccessData({
@@ -257,9 +260,17 @@ export function CentuariDepositDialog() {
               onClick={handleDeposit}
               disabled={isSubmitDisabled}
             >
-              {isProcessing ? (
+              {depositStatus === "pendingApproval" ? (
                 <>
-                  Processing... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "pendingConfirmation" ? (
+                <>
+                  Confirming transaction... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "verifying" ? (
+                <>
+                  Verifying deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                 </>
               ) : (
                 "Confirm Deposit"
