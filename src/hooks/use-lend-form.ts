@@ -20,7 +20,7 @@ import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
+import { useMyAssets } from "@/hooks/use-my-assets";
 import { useOpenLendAmounts } from "@/hooks/use-open-lend-amounts";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
@@ -57,7 +57,7 @@ export function useLendForm({
     "usdc"
   );
 
-  const { balance: onChainBalance } = useOnChainBalance(selectedToken.value);
+  const { assets: myAssets } = useMyAssets();
   const { data: openLendAmounts } = useOpenLendAmounts();
 
   // Resolve the asset ID for the selected token from market data
@@ -67,6 +67,14 @@ export function useLendForm({
     );
     return market?.asset.id;
   }, [markets, selectedToken.value]);
+
+  // Portfolio balance for the selected token (from backend)
+  const portfolioBalance = useMemo(() => {
+    const asset = myAssets.find(
+      (a) => a.symbol.toLowerCase() === selectedToken.value.toLowerCase(),
+    );
+    return asset?.walletBalance ?? 0;
+  }, [myAssets, selectedToken.value]);
 
   // Amount locked in open lend orders for the selected token
   const lockedAmount = useMemo(() => {
@@ -115,7 +123,7 @@ export function useLendForm({
 
   const getAvailableBalance = useCallback((): number => {
     if (!USE_MOCK) {
-      return Math.max(0, onChainBalance - lockedAmount);
+      return Math.max(0, portfolioBalance - lockedAmount);
     }
 
     if (typeof window === "undefined") return 1000;
@@ -133,7 +141,7 @@ export function useLendForm({
       }
     }
     return 1000;
-  }, [selectedToken.value, getTokenInfo, onChainBalance, lockedAmount]);
+  }, [selectedToken.value, getTokenInfo, portfolioBalance, lockedAmount]);
 
   useEffect(() => {
     if (!editingPosition) return;
