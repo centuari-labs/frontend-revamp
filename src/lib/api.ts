@@ -6,7 +6,6 @@ export interface MarketAsset {
 	symbol: string;
 	decimals?: number | null;
 	image_url?: string | null;
-	token_address?: string | null;
 }
 
 export interface MarketItemMarket {

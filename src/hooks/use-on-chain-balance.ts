@@ -3,25 +3,21 @@
 import { useAccount, useReadContract } from "wagmi";
 import { formatUnits, erc20Abi } from "viem";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
-import { useMarketData } from "@/hooks/use-market-data";
 import { useMemo } from "react";
 
 /**
  * Reads the on-chain ERC20 balance for a given token symbol
  * using the connected wallet address.
  *
- * Looks up the token address from both deposit tokens (collateral)
- * and market data (loan tokens) so it works for any supported token.
+ * Looks up the token address from deposit tokens.
  */
 export function useOnChainBalance(tokenSymbol: string) {
 	const { address } = useAccount();
 	const { data: depositTokens } = useDepositTokens();
-	const { markets } = useMarketData();
 
 	const resolved = useMemo(() => {
 		const sym = tokenSymbol.toLowerCase();
 
-		// 1. Check deposit tokens (collateral tokens)
 		const depositToken = depositTokens?.find(
 			(t) => t.symbol.toLowerCase() === sym,
 		);
@@ -32,19 +28,8 @@ export function useOnChainBalance(tokenSymbol: string) {
 			};
 		}
 
-		// 2. Check market data (loan tokens like USDC, USDT, etc.)
-		const marketAsset = markets.find(
-			(m) => m.asset.symbol.toLowerCase() === sym,
-		);
-		if (marketAsset?.asset.token_address) {
-			return {
-				tokenAddress: marketAsset.asset.token_address as `0x${string}`,
-				decimals: marketAsset.asset.decimals ?? 18,
-			};
-		}
-
 		return null;
-	}, [depositTokens, markets, tokenSymbol]);
+	}, [depositTokens, tokenSymbol]);
 
 	const tokenAddress = resolved?.tokenAddress;
 	const decimals = resolved?.decimals ?? 18;
