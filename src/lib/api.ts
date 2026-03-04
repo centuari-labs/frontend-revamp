@@ -356,15 +356,3 @@ export function submitDeposit(
 	});
 }
 
-export function verifyDeposit(
-	txHash: string,
-	assetId: string,
-	amount: string,
-	token: string,
-): Promise<DepositResponse> {
-	return apiClient<DepositResponse>("/deposit/verify", {
-		method: "POST",
-		body: { txHash, assetId, amount },
-		token,
-	});
-}
