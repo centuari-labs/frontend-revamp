@@ -63,7 +63,12 @@ export function CentuariDepositDialog() {
 
   const { data: balanceData } = useDepositBalance(selectedTokenId || undefined);
 
-  const isProcessing = depositStatus === "loading";
+  const isProcessing =
+    depositStatus === "checkingAllowance" ||
+    depositStatus === "approving" ||
+    depositStatus === "waitingApproval" ||
+    depositStatus === "depositing" ||
+    depositStatus === "confirming";
 
   const depositSuccessDescription = successData
     ? `You have successfully deposited ${successData.amount} ${successData.symbol} to your vault.`
@@ -108,7 +113,7 @@ export function CentuariDepositDialog() {
   const handleDeposit = async () => {
     if (!depositAmount || !selectedTokenId || isProcessing) return;
 
-    const result = await deposit(selectedTokenId, depositAmount);
+    const result = await deposit(selectedTokenId, depositAmount, selectedToken);
 
     if (result) {
       setSuccessData({
@@ -150,7 +155,11 @@ export function CentuariDepositDialog() {
             Deposit <Plus size={16} />
           </Button>
         </DialogTrigger>
-        <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:zoom-in-0! data-[state=open]:duration-600">
+        <DialogContent
+          className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:zoom-in-0! data-[state=open]:duration-600"
+          onInteractOutside={(e) => { if (isProcessing) e.preventDefault(); }}
+          onEscapeKeyDown={(e) => { if (isProcessing) e.preventDefault(); }}
+        >
           <DialogHeader className="contents space-y-0 text-left">
             <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
               <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
@@ -181,6 +190,28 @@ export function CentuariDepositDialog() {
                   handleDeposit();
                 }}
               >
+                <div className="w-full space-y-2 mt-3.5">
+                  <Label>Select Chain</Label>
+                  <Select value="arbitrum-sepolia" disabled>
+                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                      <SelectGroup>
+                        <SelectItem value="arbitrum-sepolia">
+                          <img
+                            src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                            alt="Arbitrum Sepolia"
+                            width={16}
+                            height={16}
+                            className="size-4 rounded-full object-cover"
+                          />
+                          Arbitrum Sepolia
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="w-full space-y-2 mt-3.5">
                   <Label>Select Token</Label>
                   <Select
@@ -257,9 +288,25 @@ export function CentuariDepositDialog() {
               onClick={handleDeposit}
               disabled={isSubmitDisabled}
             >
-              {isProcessing ? (
+              {depositStatus === "checkingAllowance" ? (
                 <>
-                  Processing... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  Checking allowance... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "approving" ? (
+                <>
+                  Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "waitingApproval" ? (
+                <>
+                  Waiting for approval... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "depositing" ? (
+                <>
+                  Confirm deposit in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                </>
+              ) : depositStatus === "confirming" ? (
+                <>
+                  Confirming deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                 </>
               ) : (
                 "Confirm Deposit"

@@ -170,6 +170,8 @@ export interface MyAssetItem {
 	amountInUsd: number;
 	isCollateral: boolean;
 	imageUrl: string | null;
+	ltv: number;
+	liquidationThreshold: number;
 }
 
 export interface MyAssetsResponse {
@@ -267,6 +269,19 @@ export async function createBorrowMarketOrder(
 	return envelope.data;
 }
 
+// ─── Open Order Locked Amounts ───────────────────────────────────────
+
+export interface OpenLendAmount {
+	assetId: string;
+	lockedAmount: string;
+}
+
+export function getOpenLendAmounts(
+	token: string,
+): Promise<OpenLendAmount[]> {
+	return apiClient<OpenLendAmount[]>("/orders/open-amounts", { token });
+}
+
 // ─── Faucet ─────────────────────────────────────────────────────────
 
 export interface FaucetTokenResult {
@@ -340,3 +355,4 @@ export function submitDeposit(
 		token,
 	});
 }
+

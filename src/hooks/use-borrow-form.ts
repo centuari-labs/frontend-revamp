@@ -7,11 +7,10 @@ import {
   normalizeMaturity,
 } from "@/lib/maturity";
 import { USE_MOCK } from "@/lib/use-mock";
-import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
-import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
+import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
 import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMarketData } from "@/hooks/use-market-data";
@@ -39,7 +38,7 @@ export function useBorrowForm({
     selectedTokenProp,
     "usdt"
   );
-  const { portfolio, totalDebt, collateralStatus } = usePortfolioFromStorage();
+  const { portfolio, totalDebt, collateralStatus, collateralTokenList, isLoading: portfolioLoading } = useBorrowPortfolioData();
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -69,13 +68,15 @@ export function useBorrowForm({
     portfolio,
     totalDebt,
     limitNumericAmount,
-    limitSelectedCollaterals
+    limitSelectedCollaterals,
+    collateralTokenList
   );
   const marketCalcs = useBorrowCalculations(
     portfolio,
     totalDebt,
     marketNumericAmount,
-    marketSelectedCollaterals
+    marketSelectedCollaterals,
+    collateralTokenList
   );
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export function useBorrowForm({
   useEffect(() => {
     if (editingPosition) return;
 
-    const autoSelected = portfolioTokenList
+    const autoSelected = collateralTokenList
       .filter(
         (token) =>
           portfolio[token.value] &&
@@ -127,6 +128,7 @@ export function useBorrowForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     collateralStatus,
+    collateralTokenList,
     portfolio,
     editingPosition,
     limitSelectedCollaterals.length,
@@ -265,6 +267,8 @@ export function useBorrowForm({
     portfolio,
     totalDebt,
     collateralStatus,
+    collateralTokenList,
+    portfolioLoading,
     limitAmount: limitAmountInput.amount,
     limitDisplayAmount: limitAmountInput.displayAmount,
     limitMaturity,

@@ -1,63 +1,142 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { USE_MOCK } from "@/lib/use-mock";
-import { submitDeposit, type DepositResponse } from "@/lib/api";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { useWriteContract, usePublicClient, useAccount } from "wagmi";
+import { parseUnits, erc20Abi, maxUint256 } from "viem";
+import { treasuryAbi } from "@/../abis/treasury";
+import type { DepositToken } from "@/lib/api";
 
-export type DepositStatus = "idle" | "loading" | "success" | "error";
+const TREASURY_ADDRESS =
+	"0x122ea513fE68d78CdAD06F982237B1b67a335439" as const;
+
+export type DepositStatus =
+	| "idle"
+	| "checkingAllowance"
+	| "approving"
+	| "waitingApproval"
+	| "depositing"
+	| "confirming"
+	| "success"
+	| "error";
+
+interface DepositResult {
+	transactionHash: string;
+	status: string;
+}
 
 export function useDeposit() {
-	const { getToken } = useAuthToken();
+	const { address } = useAccount();
+	const publicClient = usePublicClient();
+	const { writeContractAsync } = useWriteContract();
 	const [status, setStatus] = useState<DepositStatus>("idle");
 	const [error, setError] = useState<string | null>(null);
-	const [data, setData] = useState<DepositResponse | null>(null);
 
 	const deposit = useCallback(
 		async (
-			assetId: string,
+			_assetId: string,
 			amount: string,
-		): Promise<DepositResponse | null> => {
-			setStatus("loading");
+			token?: DepositToken,
+		): Promise<DepositResult | null> => {
+			setStatus("checkingAllowance");
 			setError(null);
 
 			try {
-				if (USE_MOCK) {
-					await new Promise((r) => setTimeout(r, 1500));
-					const mock: DepositResponse = {
-						transactionHash: `0x${"0".repeat(64)}`,
-						status: "submitted",
-					};
-					setData(mock);
-					setStatus("success");
-					return mock;
+				if (!address) {
+					throw new Error("Wallet not connected");
 				}
 
-				const jwt = await getToken();
-				if (!jwt) {
-					throw new Error("Not authenticated");
+				if (!publicClient) {
+					throw new Error("Public client not available");
 				}
 
-				const result = await submitDeposit(assetId, amount, jwt);
-				setData(result);
+				if (!token) {
+					throw new Error("Token info is required for deposits");
+				}
+
+				const decimals = token.decimals ?? 18;
+				const tokenAddress = token.tokenAddress as `0x${string}`;
+				const depositAmount = parseUnits(amount, decimals);
+
+				// Step 1: Check current allowance
+				const currentAllowance = await publicClient.readContract({
+					address: tokenAddress,
+					abi: erc20Abi,
+					functionName: "allowance",
+					args: [address, TREASURY_ADDRESS],
+				});
+
+				// Step 2: Approve if needed (unlimited)
+				if (currentAllowance < depositAmount) {
+					setStatus("approving");
+					const approveTxHash = await writeContractAsync({
+						address: tokenAddress,
+						abi: erc20Abi,
+						functionName: "approve",
+						args: [TREASURY_ADDRESS, maxUint256],
+					});
+
+					setStatus("waitingApproval");
+					const approveReceipt =
+						await publicClient.waitForTransactionReceipt({
+							hash: approveTxHash,
+							timeout: 60_000,
+						});
+
+					if (approveReceipt.status === "reverted") {
+						throw new Error("Approve transaction reverted on-chain");
+					}
+				}
+
+				// Step 3: Call Treasury.deposit
+				setStatus("depositing");
+				const depositTxHash = await writeContractAsync({
+					address: TREASURY_ADDRESS,
+					abi: treasuryAbi,
+					functionName: "deposit",
+					args: [tokenAddress, depositAmount],
+				});
+
+				// Step 4: Wait for deposit confirmation
+				setStatus("confirming");
+				const depositReceipt =
+					await publicClient.waitForTransactionReceipt({
+						hash: depositTxHash,
+						timeout: 60_000,
+					});
+
+				if (depositReceipt.status === "reverted") {
+					throw new Error("Deposit transaction reverted on-chain");
+				}
+
 				setStatus("success");
-				return result;
+				return {
+					transactionHash: depositTxHash,
+					status: "confirmed",
+				};
 			} catch (err) {
 				const message =
 					err instanceof Error ? err.message : "Deposit failed";
-				setError(message);
+
+				const isUserRejection =
+					message.includes("User rejected") ||
+					message.includes("user rejected") ||
+					message.includes("User denied") ||
+					message.includes("ACTION_REJECTED");
+
+				setError(
+					isUserRejection ? "Transaction was rejected" : message,
+				);
 				setStatus("error");
 				return null;
 			}
 		},
-		[getToken],
+		[address, publicClient, writeContractAsync],
 	);
 
 	const reset = useCallback(() => {
 		setStatus("idle");
 		setError(null);
-		setData(null);
 	}, []);
 
-	return { deposit, status, error, data, reset };
+	return { deposit, status, error, reset };
 }
