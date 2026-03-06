@@ -39,6 +39,7 @@ export function useFaucetDrip() {
 				}
 
 				const wallet =
+					wallets.find((w) => w.walletClientType !== "privy") ??
 					wallets.find((w) => w.walletClientType === "privy") ??
 					wallets[0];
 				if (!wallet?.address) {

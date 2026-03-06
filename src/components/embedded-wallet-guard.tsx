@@ -35,16 +35,20 @@ export function EmbeddedWalletGuard({
 		});
 	}, [ready, authenticated, wallets, createWallet]);
 
-	// Set embedded wallet as active when it becomes available
+	// Prefer external wallet for on-chain interactions, fallback to embedded
 	useEffect(() => {
 		if (!ready || !authenticated) return;
 
+		const externalWallet = wallets.find(
+			(w) => w.walletClientType !== "privy",
+		);
 		const embeddedWallet = wallets.find(
 			(w) => w.walletClientType === "privy",
 		);
 
-		if (embeddedWallet) {
-			setActiveWallet(embeddedWallet);
+		const activeWallet = externalWallet ?? embeddedWallet;
+		if (activeWallet) {
+			setActiveWallet(activeWallet);
 		}
 	}, [ready, authenticated, wallets, setActiveWallet]);
 
