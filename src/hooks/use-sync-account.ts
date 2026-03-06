@@ -17,10 +17,10 @@ export function useSyncAccount() {
 	useEffect(() => {
 		if (!ready || !authenticated || hasSynced.current) return;
 
-		const embeddedWallet = wallets.find(
-			(w) => w.walletClientType === "privy",
-		);
-		if (!embeddedWallet) return;
+		// Any wallet is sufficient to trigger sync — prefer external, fallback to embedded
+		const wallet = wallets.find((w) => w.walletClientType !== "privy")
+			?? wallets.find((w) => w.walletClientType === "privy");
+		if (!wallet) return;
 
 		hasSynced.current = true;
 

@@ -73,10 +73,11 @@ export function CentuariUserMenu() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Derive wallet address: prefer embedded wallet, fallback to wagmi
+  // Derive wallet address: prefer external wallet, fallback to embedded
+  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
   const walletAddress =
-    embeddedWallet?.address ?? wagmiAddress ?? "";
+    externalWallet?.address ?? embeddedWallet?.address ?? wagmiAddress ?? "";
 
   const { data: balanceData } = useBalance({
     address: walletAddress as `0x${string}` | undefined,
