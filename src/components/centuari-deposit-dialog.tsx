@@ -22,7 +22,7 @@ import { getTokenLogo } from "@/lib/tokens";
 import { useRouter } from "next/navigation";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
-import { useDepositBalance } from "@/hooks/use-deposit-balance";
+import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
 import {
   Select,
   SelectContent,
@@ -61,7 +61,7 @@ export function CentuariDepositDialog() {
     }
   }, [tokens, selectedTokenId]);
 
-  const { data: balanceData } = useDepositBalance(selectedTokenId || undefined);
+  const { balance: onChainBalance, isLoading: balanceLoading } = useOnChainBalance(selectedToken?.symbol ?? "");
 
   const isProcessing =
     depositStatus === "checkingAllowance" ||
@@ -103,8 +103,8 @@ export function CentuariDepositDialog() {
   };
 
   const handleMaxClick = () => {
-    if (balanceData?.formattedBalance) {
-      const balance = balanceData.formattedBalance;
+    if (onChainBalance > 0) {
+      const balance = String(onChainBalance);
       setDepositAmount(balance);
       setDisplayAmount(formatNumberWithSeparator(balance));
     }
@@ -127,9 +127,9 @@ export function CentuariDepositDialog() {
 
   // Validate: amount must not exceed balance
   const amountExceedsBalance = useMemo(() => {
-    if (!depositAmount || !balanceData?.formattedBalance) return false;
-    return Number.parseFloat(depositAmount) > Number.parseFloat(balanceData.formattedBalance);
-  }, [depositAmount, balanceData]);
+    if (!depositAmount || onChainBalance <= 0) return false;
+    return Number.parseFloat(depositAmount) > onChainBalance;
+  }, [depositAmount, onChainBalance]);
 
   const isSubmitDisabled =
     isProcessing || !depositAmount || !selectedTokenId || amountExceedsBalance;
@@ -253,9 +253,9 @@ export function CentuariDepositDialog() {
                   type="text"
                   inputMode="decimal"
                   balanceText={
-                    balanceData ? (
+                    !balanceLoading && onChainBalance != null ? (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        Balance: {Number.parseFloat(balanceData.formattedBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken?.symbol ?? ""}
+                        Balance: {onChainBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken?.symbol ?? ""}
                         <button
                           type="button"
                           onClick={handleMaxClick}
