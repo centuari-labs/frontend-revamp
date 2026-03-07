@@ -23,16 +23,18 @@ import HealthFactor from "./centuari-health-factor";
 import { Badge } from "./ui/badge";
 import { CentuariAlert } from "./centuari-alert";
 import { SelectToken } from "./select-token";
-import { MultiSelect } from "./ui/multi-select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
 import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { tokenList, defaultPortfolio, getLiquidationThreshold, TokenInfo } from "@/lib/portfolio-data";
+import { getLiquidationThreshold } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
+import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
+import { useMarketData } from "@/hooks/use-market-data";
+import { useAuthToken } from "@/hooks/use-auth-token";
+import { useQueryClient } from "@tanstack/react-query";
 import { CollateralListDisplay } from "./collateral-list-display";
 import { CollateralEmptyState } from "./collateral-empty-state";
 
@@ -62,134 +64,35 @@ export function CentuariBorrowDialog({
   const collateralViewRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const router = useRouter();
-  const { getAccessToken } = usePrivy();
   const { submitMarket, isPending } = useSubmitBorrow();
+  const { getToken } = useAuthToken();
+  const { markets } = useMarketData();
+  const queryClient = useQueryClient();
+
+  // Bridge hook: reads localStorage in mock mode, API in real mode
+  const {
+    portfolio,
+    totalDebt,
+    collateralStatus,
+    collateralTokenList,
+    isLoading: dataLoading,
+  } = useBorrowDialogData();
 
   // State for amount input
   const [amountToBorrow, setAmountToBorrow] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // State for collateral selection (only select, no amount input)
-  // This is for selecting which tokens to use for THIS borrow, NOT for "As Collateral" checkbox
-  // Should start empty and user selects manually
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
-
-  // State for portfolio (dummy data - in real app from API/state)
-  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
-    // Load from localStorage if available; merge with defaultPortfolio so new tokens (e.g. XSGD, IDRX) get default balances
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_portfolio");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Migrate old AAVE data to XAUT if exists
-          if (parsed.aave && !parsed.xaut) {
-            parsed.xaut = parsed.aave;
-            delete parsed.aave;
-          }
-          // Merge with defaultPortfolio so missing keys (e.g. xsgd, idrx) get defaults
-          const merged = { ...defaultPortfolio, ...parsed };
-          localStorage.setItem("centuari_portfolio", JSON.stringify(merged));
-          return merged;
-        } catch {
-          return defaultPortfolio;
-        }
-      }
-    }
-    return defaultPortfolio;
-  });
-
-  // State for total debt (all borrows combined)
-  // Default to a realistic debt amount that allows various health factor statuses
-  // With default portfolio ~$200k, default debt of $80k allows HF to vary:
-  // - Small borrows -> Good/Warning status
-  // - Medium borrows -> Critical status  
-  // - Large borrows -> Danger status
-  const [totalDebt, setTotalDebt] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_total_debt");
-      if (stored) {
-        try {
-          const parsed = parseFloat(stored);
-          // Use stored value if it's valid and > 0; otherwise use default for realistic HF scenarios
-          // This ensures users see various HF statuses instead of always Excellent
-          return !isNaN(parsed) && parsed > 0 ? parsed : 80000;
-        } catch {
-          return 80000; // Default: $80k debt for realistic HF scenarios
-        }
-      }
-    }
-    return 80000; // Default: $80k debt for realistic HF scenarios
-  });
-
-  // State for collateral status (which tokens are marked as collateral)
-  const [collateralStatus, setCollateralStatus] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_collateral");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return {};
-        }
-      }
-    }
-    return {};
-  });
 
   // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
-  // Sync portfolio to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-    }
-  }, [portfolio]);
-
-  // Do NOT sync selectedCollaterals to collateralStatus
-  // collateralStatus is controlled by "As Collateral" checkbox in portfolio, not by MultiSelect
-
-  // Sync total debt to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("centuari_total_debt", totalDebt.toString());
-    }
-  }, [totalDebt]);
-
-  // Do NOT auto-sync selectedCollaterals with collateralStatus
-  // selectedCollaterals is for selecting tokens for THIS borrow (user selects manually)
-  // collateralStatus is for determining which tokens CAN be used as collateral (from "As Collateral" checkbox)
-
-  // Sync collateral status from localStorage (listen for changes)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_collateral");
-        if (stored) {
-          try {
-            const collateralStatusData = JSON.parse(stored);
-            setCollateralStatus(collateralStatusData);
-          } catch {
-            // If parsing fails, keep current state
-          }
-        }
-      }
-    };
-
-    // Listen for storage changes (from other tabs/components)
-    window.addEventListener("storage", handleStorageChange);
-
-    // Also check periodically (for same-tab updates)
-    const interval = setInterval(handleStorageChange, 500);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []); // Only run once on mount
+  // Note: portfolio, totalDebt, and collateralStatus are now managed by useBorrowDialogData hook
+  // In mock mode: reads from localStorage; in API mode: fetches from backend
 
   // Parse Lend APR and Borrow APR from format "6,5%" to number (6.5)
   const parseAPR = (aprString: string): number => {
@@ -224,7 +127,7 @@ export function CentuariBorrowDialog({
   // Calculate weighted LTV (average LTV of selected collaterals)
   const weightedLTV = selectedCollaterals.length > 0 && totalPortfolioValue > 0
     ? selectedCollaterals.reduce((sum, collateralValue) => {
-      const token = tokenList.find(t => t.value === collateralValue);
+      const token = collateralTokenList.find(t => t.value === collateralValue);
       const portfolioValue = portfolio[collateralValue] || 0;
       if (token && portfolioValue > 0) {
         return sum + (token.ltv * portfolioValue);
@@ -236,7 +139,7 @@ export function CentuariBorrowDialog({
   // Calculate weighted Liquidation Threshold (average LT of selected collaterals)
   const weightedLT = selectedCollaterals.length > 0 && totalPortfolioValue > 0
     ? selectedCollaterals.reduce((sum, collateralValue) => {
-      const token = tokenList.find(t => t.value === collateralValue);
+      const token = collateralTokenList.find(t => t.value === collateralValue);
       const portfolioValue = portfolio[collateralValue] || 0;
       if (token && portfolioValue > 0) {
         const lt = getLiquidationThreshold(token);
@@ -333,40 +236,23 @@ export function CentuariBorrowDialog({
   const handleDialogChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (open) {
-      // Load collateralStatus from localStorage when dialog opens
-      // This determines which tokens CAN be used as collateral (from "As Collateral" checkbox)
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem("centuari_collateral");
-        if (stored) {
-          try {
-            const collateralStatusData = JSON.parse(stored);
-            setCollateralStatus(collateralStatusData);
+      // Auto-select all tokens that are marked as collateral and have balance
+      const autoSelected = collateralTokenList
+        .filter(token =>
+          portfolio[token.value] &&
+          portfolio[token.value] > 0 &&
+          collateralStatus[token.value] === true
+        )
+        .map(token => token.value);
 
-            // Auto-select all tokens that are set as collateral
-            const autoSelected = tokenList
-              .filter(token =>
-                portfolio[token.value] &&
-                portfolio[token.value] > 0 &&
-                collateralStatusData[token.value] === true
-              )
-              .map(token => token.value);
-
-            setSelectedCollaterals(autoSelected);
-          } catch {
-            // If parsing fails, keep current state
-            setSelectedCollaterals([]);
-          }
-        } else {
-          // No collateral status, reset to empty
-          setSelectedCollaterals([]);
-        }
-      }
+      setSelectedCollaterals(autoSelected);
+      setSubmitError(null);
     } else {
       setViewMode("borrow");
       setAmountToBorrow("");
       setDisplayAmount("");
       setShowSuccessDialog(false);
-      // Clear selectedCollaterals when dialog closes
+      setSubmitError(null);
       setSelectedCollaterals([]);
     }
   };
@@ -416,24 +302,29 @@ export function CentuariBorrowDialog({
       if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
       if (healthFactor < 1.0) return;
 
-      const borrowedToken = tokenList.find(
-        (t) =>
-          t.label.toUpperCase() === token_symbol?.toUpperCase() ||
-          t.value.toUpperCase() === token_symbol?.toUpperCase()
-      );
-      if (!borrowedToken) return;
+      setSubmitError(null);
 
       try {
-        await getAccessToken();
+        const authToken = await getToken();
 
-        await submitMarket({
-          tokenValue: borrowedToken.value,
-          tokenLogo: borrowedToken.logo,
-          tokenLabel: borrowedToken.label,
-          amount: numericAmount,
-          maturity: maturityDate,
-          collateralTokens: selectedCollaterals,
-        });
+        await submitMarket(
+          {
+            tokenValue: token_symbol.toLowerCase(),
+            tokenLogo: token_image,
+            tokenLabel: token_name,
+            amount: numericAmount,
+            maturity: maturityDate,
+            collateralTokens: selectedCollaterals,
+          },
+          authToken && markets.length > 0
+            ? { token: authToken, markets }
+            : undefined,
+        );
+
+        // Invalidate portfolio-related queries so balances refresh
+        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
 
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
         setAmountToBorrow("");
@@ -442,15 +333,11 @@ export function CentuariBorrowDialog({
         setIsDialogOpen(false);
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message = error instanceof Error ? error.message : "Transaction failed. Please try again.";
+        setSubmitError(message);
       }
     } else if (viewMode === "deposit-collateral") {
-      try {
-        await getAccessToken();
-        // Deposit logic placeholder - no hook yet
-      } catch (error) {
-        console.error("Deposit failed:", error);
-      }
+      // Deposit logic placeholder - not yet implemented
     }
   };
 
@@ -578,7 +465,7 @@ export function CentuariBorrowDialog({
                           {selectedCollaterals.length > 0 ? (
                             <CollateralListDisplay
                               selectedCollaterals={selectedCollaterals}
-                              tokenList={tokenList}
+                              tokenList={collateralTokenList}
                             />
                           ) : (
                             <CollateralEmptyState />
@@ -726,6 +613,15 @@ export function CentuariBorrowDialog({
                           </div>
                         </div>
                       </div>
+
+                      {submitError && (
+                        <CentuariAlert
+                          variant="destructive"
+                          text="Transaction failed"
+                          description={submitError}
+                          className="mt-3"
+                        />
+                      )}
 
                       <div className="bg-white/5 py-3 px-4 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
                         <div className="flex items-center justify-between border-b border-dashed pb-2">
@@ -894,6 +790,7 @@ export function CentuariBorrowDialog({
                 onClick={handleBorrow}
                 disabled={
                   isPending ||
+                  dataLoading ||
                   (viewMode === "borrow" &&
                     (numericAmount <= 0 ||
                       numericAmount > availableQuota ||
@@ -902,10 +799,10 @@ export function CentuariBorrowDialog({
                       healthFactor < 1.0))
                 }
               >
-                {isPending ? (
+                {isPending || dataLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    {dataLoading ? "Loading..." : "Processing..."}
                   </>
                 ) : viewMode === "borrow" ? (
                   "Confirm Borrow"

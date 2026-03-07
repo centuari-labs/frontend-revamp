@@ -1,6 +1,5 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
 import { gsap } from "gsap";
 import { ArrowLeft, Info } from "lucide-react";
 import Image from "next/image";
@@ -28,8 +27,11 @@ import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
 import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
 import { Loader2 } from "lucide-react";
-import { tokenList, defaultPortfolio } from "@/lib/portfolio-data";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
+import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
+import { useMarketData } from "@/hooks/use-market-data";
+import { useAuthToken } from "@/hooks/use-auth-token";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ViewMode = "lend" | "deposit-lend";
 
@@ -58,90 +60,24 @@ export function CentuariLendDialog({
 
   const reactId = useId();
   const router = useRouter();
-  const { getAccessToken } = usePrivy();
   const { submitMarket, isPending } = useSubmitLend();
+  const { getToken } = useAuthToken();
+  const { markets } = useMarketData();
+  const queryClient = useQueryClient();
+
+  // Bridge hook: reads localStorage in mock mode, API in real mode
+  const {
+    availableBalance,
+    tokenPrice,
+    isLoading: dataLoading,
+  } = useLendDialogData(token_symbol);
 
   // State for amount input
   const [amountToLend, setAmountToLend] = useState<string>("");
   const [displayAmount, setDisplayAmount] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Get token value from symbol (e.g., "USDT" -> "usdt")
-  const getTokenValue = (symbol: string): string => {
-    const token = tokenList.find(t =>
-      t.label.toUpperCase() === symbol.toUpperCase() ||
-      t.value.toUpperCase() === symbol.toUpperCase()
-    );
-    return token?.value || symbol.toLowerCase();
-  };
-
-  const tokenValue = getTokenValue(token_symbol);
-
-  // State for portfolio - sync with localStorage; merge with defaultPortfolio so new tokens (e.g. XSGD, IDRX) get default balances
-  const [portfolio, setPortfolio] = useState<Record<string, number>>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_portfolio");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          return { ...defaultPortfolio, ...parsed };
-        } catch {
-          return defaultPortfolio;
-        }
-      }
-    }
-    return defaultPortfolio;
-  });
-
-  // State for available balance - derived from portfolio
-  const [availableBalance, setAvailableBalance] = useState<number>(() => {
-    // Get from portfolio, or use default
-    const token = tokenList.find(t => t.value === tokenValue);
-    if (token) {
-      const portfolioValue = portfolio[tokenValue] || 0;
-      // Convert USD value to token amount
-      return token.price > 0 ? portfolioValue / token.price : 1000;
-    }
-    return 1000;
-  });
-
-  // State for total supply (all lends combined)
-  const [totalSupply, setTotalSupply] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("centuari_total_supply");
-      if (stored) {
-        try {
-          return parseFloat(stored) || 0;
-        } catch {
-          return 0;
-        }
-      }
-    }
-    return 0;
-  });
-
-  // Sync portfolio to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("centuari_portfolio", JSON.stringify(portfolio));
-    }
-  }, [portfolio]);
-
-  // Sync total supply to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("centuari_total_supply", totalSupply.toString());
-    }
-  }, [totalSupply]);
-
-  // Update available balance when portfolio changes
-  useEffect(() => {
-    const token = tokenList.find(t => t.value === tokenValue);
-    if (token) {
-      const portfolioValue = portfolio[tokenValue] || 0;
-      const newBalance = token.price > 0 ? portfolioValue / token.price : 0;
-      setAvailableBalance(newBalance);
-    }
-  }, [portfolio, tokenValue]);
+  const tokenValue = token_symbol.toLowerCase();
 
   // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
@@ -195,6 +131,7 @@ export function CentuariLendDialog({
       setAmountToLend("");
       setDisplayAmount("");
       setShowSuccessDialog(false);
+      setSubmitError(null);
     }
   };
 
@@ -252,22 +189,32 @@ export function CentuariLendDialog({
   const handleLend = async () => {
     if (viewMode === "lend") {
       if (numericAmount <= 0 || numericAmount > availableBalance) return;
+      if (tokenPrice <= 0) return;
 
-      const token = tokenList.find((t) => t.value === tokenValue);
-      if (!token || token.price <= 0) return;
+      setSubmitError(null);
 
       try {
-        await getAccessToken();
+        const authToken = await getToken();
+        const amountInUsd = numericAmount * tokenPrice;
 
-        const amountInUsd = numericAmount * token.price;
-        await submitMarket({
-          tokenValue,
-          tokenLogo: token.logo,
-          tokenLabel: token.label,
-          amount: numericAmount,
-          amountInUsd,
-          maturity: maturityDate,
-        });
+        await submitMarket(
+          {
+            tokenValue,
+            tokenLogo: token_image,
+            tokenLabel: token_name,
+            amount: numericAmount,
+            amountInUsd,
+            maturity: maturityDate,
+          },
+          authToken && markets.length > 0
+            ? { token: authToken, markets }
+            : undefined,
+        );
+
+        // Invalidate portfolio-related queries so balances refresh
+        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
 
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
         setAmountToLend("");
@@ -275,15 +222,11 @@ export function CentuariLendDialog({
         setIsDialogOpen(false);
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message = error instanceof Error ? error.message : "Transaction failed. Please try again.";
+        setSubmitError(message);
       }
     } else if (viewMode === "deposit-lend") {
-      try {
-        await getAccessToken();
-        // Deposit logic placeholder - no hook yet
-      } catch (error) {
-        console.error("Deposit failed:", error);
-      }
+      // Deposit logic placeholder - not yet implemented
     }
   };
 
@@ -397,7 +340,7 @@ export function CentuariLendDialog({
                           Max
                         </Button>
                       }
-                      balanceText={`${token_symbol} ${formatNumberWithSeparator(availableBalance)}`}
+                      balanceText={dataLoading ? "Loading..." : `${token_symbol} ${formatNumberWithSeparator(availableBalance)}`}
                       value={displayAmount}
                       onChange={handleAmountChange}
                     />
@@ -418,6 +361,15 @@ export function CentuariLendDialog({
                             Deposit
                           </Button>
                         }
+                      />
+                    )}
+
+                    {submitError && (
+                      <CentuariAlert
+                        variant="destructive"
+                        text="Transaction failed"
+                        description={submitError}
+                        className="mt-1.5"
                       />
                     )}
 
@@ -640,14 +592,15 @@ export function CentuariLendDialog({
                 onClick={handleLend}
                 disabled={
                   isPending ||
+                  dataLoading ||
                   (viewMode === "lend" &&
                     (numericAmount <= 0 || numericAmount > availableBalance))
                 }
               >
-                {isPending ? (
+                {isPending || dataLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    {dataLoading ? "Loading..." : "Processing..."}
                   </>
                 ) : viewMode === "lend" ? (
                   "Confirm Lend"
