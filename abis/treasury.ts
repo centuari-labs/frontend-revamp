@@ -373,6 +373,11 @@ export const treasuryAbi = [
         "internalType": "address"
       },
       {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
         "name": "amount",
         "type": "uint256",
         "internalType": "uint256"
