@@ -164,6 +164,7 @@ export function setAssetAsCollateral(
 // ─── My Assets (Portfolio) ───────────────────────────────────────────
 
 export interface MyAssetItem {
+	assetId: string;
 	symbol: string;
 	name: string;
 	walletBalance: number;
@@ -350,6 +351,25 @@ export function submitDeposit(
 	token: string,
 ): Promise<DepositResponse> {
 	return apiClient<DepositResponse>("/deposit", {
+		method: "POST",
+		body: { assetId, amount },
+		token,
+	});
+}
+
+// ─── Withdraw ─────────────────────────────────────────────────────────
+
+export interface WithdrawResponse {
+	txHash: string;
+	status: string;
+}
+
+export function submitWithdraw(
+	assetId: string,
+	amount: string,
+	token: string,
+): Promise<WithdrawResponse> {
+	return apiClient<WithdrawResponse>("/withdraw", {
 		method: "POST",
 		body: { assetId, amount },
 		token,
