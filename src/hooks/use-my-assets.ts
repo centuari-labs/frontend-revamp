@@ -16,7 +16,6 @@ export function useMyAssets() {
       return getMyAssets(token);
     },
     staleTime: 10_000,
-    refetchInterval: 15_000,
     enabled: !USE_MOCK,
   });
 
