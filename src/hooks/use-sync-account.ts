@@ -2,6 +2,7 @@
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useEffect, useRef } from "react";
+import { useDisconnect } from "wagmi";
 import { apiClient } from "@/lib/api-client";
 import type { AccountResponse } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
@@ -9,9 +10,10 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 const LS_USERNAME_KEY = "centuari_username";
 
 export function useSyncAccount() {
-	const { authenticated, ready } = usePrivy();
+	const { authenticated, ready, logout } = usePrivy();
 	const { wallets } = useWallets();
 	const { getToken } = useAuthToken();
+	const { disconnect } = useDisconnect();
 	const hasSynced = useRef(false);
 
 	useEffect(() => {
@@ -36,9 +38,13 @@ export function useSyncAccount() {
 				})
 				.catch((err) => {
 					console.error("Failed to sync account:", err);
+					hasSynced.current = false;
+					logout();
+					disconnect();
+					localStorage.removeItem(LS_USERNAME_KEY);
 				});
 		});
-	}, [ready, authenticated, wallets, getToken]);
+	}, [ready, authenticated, wallets, getToken, logout, disconnect]);
 
 	// Reset when user logs out
 	useEffect(() => {
