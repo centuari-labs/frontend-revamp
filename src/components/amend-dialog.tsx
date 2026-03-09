@@ -28,12 +28,12 @@ interface AmendDialogProps {
 }
 
 const defaultTokenList: TokenOption[] = [
-  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/btc-icon.svg", value: "btc", label: "Bitcoin" },
   { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
   { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
   { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
+  { logo: "/tokens/usdt-icon.svg", value: "usdt", label: "USDT" },
   { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
   { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari" },
 ];

@@ -7,12 +7,12 @@ import type { TokenOption } from "@/types";
 export function useTokenFromList(
   tokenList: TokenOption[],
   selectedTokenProp?: TokenOption,
-  defaultSlug: string = "usdc"
+  defaultSlug: string = "usdc",
 ) {
   const defaultToken =
     getDefaultTokenFromList(tokenList, defaultSlug) ??
     ({
-      logo: defaultSlug === "usdt" ? "/tokens/centuari-usdt.png" : "/tokens/usdc-icon.svg",
+      logo: "/tokens/usdc-icon.svg",
       value: defaultSlug,
       label: defaultSlug.toUpperCase(),
     } as TokenOption);

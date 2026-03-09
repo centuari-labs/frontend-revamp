@@ -20,7 +20,7 @@ const TOKEN_LOGO_MAP: Record<string, string> = {
   usdc: "/tokens/usdc-icon.svg",
   xsgd: "/tokens/xsgd-icon.png",
   idrx: "/tokens/idrx-icon.png",
-  usdt: "/tokens/centuari-usdt.png",
+  usdt: "/tokens/usdt-icon.svg",
   btc: "/tokens/btc-icon.svg",
   eth: "/tokens/eth-icon.svg",
   sol: "/tokens/sol-icon.svg",
@@ -33,11 +33,11 @@ const TOKEN_LOGO_MAP: Record<string, string> = {
 
 const DEFAULT_LOGO = "/tokens/usdc-icon.svg";
 
-/** Get token logo path by value; use assetImg if provided and starts with /. */
+/** Get token logo path by value; prefer backend-provided assetImg when available. */
 export function getTokenLogo(tokenValue: string, assetImg?: string): string {
+  if (assetImg && assetImg.startsWith("/")) return assetImg;
   const mapped = TOKEN_LOGO_MAP[tokenValue.toLowerCase()];
   if (mapped) return mapped;
-  if (assetImg && assetImg.startsWith("/")) return assetImg;
   return DEFAULT_LOGO;
 }
 
