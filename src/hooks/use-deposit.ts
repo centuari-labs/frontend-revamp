@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useWriteContract, usePublicClient, useAccount } from "wagmi";
-import { parseUnits, erc20Abi, maxUint256 } from "viem";
+import { parseUnits, erc20Abi } from "viem";
 import { treasuryAbi } from "@/../abis/treasury";
 import type { DepositToken } from "@/lib/api";
 
@@ -65,14 +65,14 @@ export function useDeposit() {
 					args: [address, TREASURY_ADDRESS],
 				});
 
-				// Step 2: Approve if needed (unlimited)
+				// Step 2: Approve if needed (exact amount)
 				if (currentAllowance < depositAmount) {
 					setStatus("approving");
 					const approveTxHash = await writeContractAsync({
 						address: tokenAddress,
 						abi: erc20Abi,
 						functionName: "approve",
-						args: [TREASURY_ADDRESS, maxUint256],
+						args: [TREASURY_ADDRESS, depositAmount],
 					});
 
 					setStatus("waitingApproval");
