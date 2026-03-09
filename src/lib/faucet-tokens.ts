@@ -23,5 +23,8 @@ export const FAUCET_TOKENS: FaucetToken[] = [
   { value: "eth", label: "ETH", icon: "/tokens/eth-icon.svg", dripAmount: 10 },
   { value: "usdt", label: "USDT", icon: "/tokens/usdt-icon.svg", dripAmount: 5000 },
   { value: "xaut", label: "XAUT", icon: "/tokens/xaut-icon.png", dripAmount: 5 },
-  { value: "nvda", label: "NVDA", icon: "/tokens/nvda-icon.svg", dripAmount: 100 },
+  { value: "nvda", label: "NVDAon", icon: "/tokens/nvda-icon.svg", dripAmount: 1000 },
+  { value: "aaplon", label: "AAPLon", icon: "/tokens/aaplon-icon.png", dripAmount: 1000 },
+  { value: "slvon", label: "SLVon", icon: "/tokens/slvon-icon.png", dripAmount: 1000 },
+  { value: "tlton", label: "TLTon", icon: "/tokens/tlton-icon.png", dripAmount: 1000 },
 ];

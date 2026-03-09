@@ -8,26 +8,38 @@ import { FAUCET_TOKENS } from "@/lib/faucet-tokens";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useMarketData } from "@/hooks/use-market-data";
 import type { DepositToken } from "@/lib/api";
 
 export function FaucetTokenGrid() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const { requestDrip, status, error, reset } = useFaucetDrip();
   const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
+  const { markets, isLoading: isMarketLoading } = useMarketData();
 
   const tokens = useMemo(() => {
-    // Determine the base list: API data or the hardcoded fallback
-    const source = depositTokens && depositTokens.length > 0
-      ? depositTokens.map((t: DepositToken) => ({
+    // Determine the base list: API data, Market data, or the hardcoded fallback
+    let source: { symbol: string; tokenAddress: string; imageUrl?: string | null }[] = [];
+
+    if (depositTokens && depositTokens.length > 0) {
+      source = depositTokens.map((t: DepositToken) => ({
         symbol: t.symbol,
         tokenAddress: t.tokenAddress,
         imageUrl: t.imageUrl
-      }))
-      : FAUCET_TOKENS.map((t) => ({
+      }));
+    } else if (markets && markets.length > 0) {
+      source = markets.map((m) => ({
+        symbol: m.asset.symbol,
+        tokenAddress: m.asset.id, // asset.id usually is the address or unique identifier
+        imageUrl: m.asset.image_url
+      }));
+    } else {
+      source = FAUCET_TOKENS.map((t) => ({
         symbol: t.label,
         tokenAddress: "0x0000000000000000000000000000000000000000",
         imageUrl: t.icon
       }));
+    }
 
     return source.map((s) => {
       const config = FAUCET_TOKENS.find(ft => ft.label.toUpperCase() === s.symbol.toUpperCase());
@@ -39,7 +51,7 @@ export function FaucetTokenGrid() {
         dripAmount: config?.dripAmount || 1000,
       };
     });
-  }, [depositTokens]);
+  }, [depositTokens, markets]);
 
   const toggleToken = (value: string) => {
     setSelectedTokens((prev) => {
@@ -72,7 +84,7 @@ export function FaucetTokenGrid() {
     }
   }, [status, reset]);
 
-  const isLoading = status === "loading" || isTokensLoading;
+  const isLoading = status === "loading" || isTokensLoading || (isMarketLoading && (!depositTokens || depositTokens.length === 0));
 
   return (
     <div className="mt-6 pb-28">
