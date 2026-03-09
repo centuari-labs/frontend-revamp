@@ -1,22 +1,45 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { CentuariButton } from "@/components/centuari-button";
-import { FAUCET_CATEGORIES, FAUCET_TOKENS } from "@/lib/faucet-tokens";
+import { FAUCET_TOKENS } from "@/lib/faucet-tokens";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
+import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import type { DepositToken } from "@/lib/api";
 
 export function FaucetTokenGrid() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
-  const [activeCategory, setActiveCategory] = useState("all");
   const { requestDrip, status, error, reset } = useFaucetDrip();
+  const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
 
-  const filteredTokens = useMemo(() => {
-    if (activeCategory === "all") return FAUCET_TOKENS;
-    return FAUCET_TOKENS.filter((t) => t.category === activeCategory);
-  }, [activeCategory]);
+  const tokens = useMemo(() => {
+    // Determine the base list: API data or the hardcoded fallback
+    const source = depositTokens && depositTokens.length > 0
+      ? depositTokens.map((t: DepositToken) => ({
+        symbol: t.symbol,
+        tokenAddress: t.tokenAddress,
+        imageUrl: t.imageUrl
+      }))
+      : FAUCET_TOKENS.map((t) => ({
+        symbol: t.label,
+        tokenAddress: "0x0000000000000000000000000000000000000000",
+        imageUrl: t.icon
+      }));
+
+    return source.map((s) => {
+      const config = FAUCET_TOKENS.find(ft => ft.label.toUpperCase() === s.symbol.toUpperCase());
+      return {
+        value: s.symbol.toLowerCase(),
+        label: s.symbol,
+        icon: config?.icon || s.imageUrl || "/tokens/usdc-icon.svg",
+        tokenAddress: s.tokenAddress,
+        dripAmount: config?.dripAmount || 1000,
+      };
+    });
+  }, [depositTokens]);
 
   const toggleToken = (value: string) => {
     setSelectedTokens((prev) => {
@@ -31,8 +54,11 @@ export function FaucetTokenGrid() {
   };
 
   const handleRequestDrip = async () => {
-    const tokens = Array.from(selectedTokens);
-    const result = await requestDrip(tokens);
+    const selectedAddresses = tokens
+      .filter((t) => selectedTokens.has(t.value))
+      .map((t) => t.tokenAddress);
+
+    const result = await requestDrip(selectedAddresses);
     if (result) {
       setSelectedTokens(new Set());
     }
@@ -46,32 +72,13 @@ export function FaucetTokenGrid() {
     }
   }, [status, reset]);
 
-  const isLoading = status === "loading";
+  const isLoading = status === "loading" || isTokensLoading;
 
   return (
     <div className="mt-6 pb-28">
-      {/* Category filter tabs */}
-      <div className="flex items-center gap-1.5 p-1 bg-white/5 rounded-lg w-full md:w-fit overflow-x-auto scrollbar-none">
-        {FAUCET_CATEGORIES.map((cat) => (
-          <button
-            key={cat.value}
-            type="button"
-            onClick={() => setActiveCategory(cat.value)}
-            className={cn(
-              "flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200 text-center",
-              activeCategory === cat.value
-                ? "bg-white/10 text-white"
-                : "text-white/50 hover:text-white/80"
-            )}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
       {/* Token grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {filteredTokens.map((token) => (
+        {tokens.map((token) => (
           <FaucetTokenCard
             key={token.value}
             token={token}
@@ -139,7 +146,7 @@ export function FaucetTokenGrid() {
                   onClick={handleRequestDrip}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Requesting..." : "Request Drip \u2192"}
+                  {isLoading && status === "loading" ? "Requesting..." : "Request Drip \u2192"}
                 </CentuariButton>
               )}
             </div>
