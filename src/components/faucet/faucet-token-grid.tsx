@@ -4,54 +4,45 @@ import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { CentuariButton } from "@/components/centuari-button";
-import { FAUCET_TOKENS } from "@/lib/faucet-tokens";
+import { FaucetErrorPage } from "./faucet-error-page";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
-import { useMarketData } from "@/hooks/use-market-data";
 import type { DepositToken } from "@/lib/api";
+
+const DRIP_AMOUNTS: Record<string, number> = {
+  USDC: 5000,
+  IDRX: 10000000,
+  XSGD: 7000,
+  BTC: 1,
+  ETH: 5,
+  USDT: 5000,
+  XAUT: 5,
+  NVDAON: 100,
+  AAPLON: 100,
+  SLVON: 100,
+  TLTON: 100,
+};
 
 export function FaucetTokenGrid() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const { requestDrip, status, error, reset } = useFaucetDrip();
   const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
-  const { markets, isLoading: isMarketLoading } = useMarketData();
 
   const tokens = useMemo(() => {
-    // Determine the base list: API data, Market data, or the hardcoded fallback
-    let source: { symbol: string; tokenAddress: string; imageUrl?: string | null }[] = [];
+    if (!depositTokens || depositTokens.length === 0) return [];
 
-    if (depositTokens && depositTokens.length > 0) {
-      source = depositTokens.map((t: DepositToken) => ({
-        symbol: t.symbol,
-        tokenAddress: t.tokenAddress,
-        imageUrl: t.imageUrl
-      }));
-    } else if (markets && markets.length > 0) {
-      source = markets.map((m) => ({
-        symbol: m.asset.symbol,
-        tokenAddress: m.asset.id, // asset.id usually is the address or unique identifier
-        imageUrl: m.asset.image_url
-      }));
-    } else {
-      source = FAUCET_TOKENS.map((t) => ({
-        symbol: t.label,
-        tokenAddress: "0x0000000000000000000000000000000000000000",
-        imageUrl: t.icon
-      }));
-    }
-
-    return source.map((s) => {
-      const config = FAUCET_TOKENS.find(ft => ft.label.toUpperCase() === s.symbol.toUpperCase());
+    return depositTokens.map((t: DepositToken) => {
+      const symbol = t.symbol.toUpperCase();
       return {
-        value: s.symbol.toLowerCase(),
-        label: s.symbol,
-        icon: config?.icon || s.imageUrl || "/tokens/usdc-icon.svg",
-        tokenAddress: s.tokenAddress,
-        dripAmount: config?.dripAmount || 1000,
+        value: t.symbol.toLowerCase(),
+        label: t.symbol,
+        icon: t.imageUrl || "/tokens/usdc-icon.svg",
+        tokenAddress: t.tokenAddress,
+        dripAmount: DRIP_AMOUNTS[symbol] || 1000,
       };
     });
-  }, [depositTokens, markets]);
+  }, [depositTokens]);
 
   const toggleToken = (value: string) => {
     setSelectedTokens((prev) => {
@@ -84,7 +75,11 @@ export function FaucetTokenGrid() {
     }
   }, [status, reset]);
 
-  const isLoading = status === "loading" || isTokensLoading || (isMarketLoading && (!depositTokens || depositTokens.length === 0));
+  const isLoading = status === "loading" || isTokensLoading;
+
+  if (!isTokensLoading && (!depositTokens || depositTokens.length === 0)) {
+    return <FaucetErrorPage />;
+  }
 
   return (
     <div className="mt-6 pb-28">
