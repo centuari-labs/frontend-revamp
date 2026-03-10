@@ -364,7 +364,7 @@ export default function CentuariNavbar() {
                         setIsLoginDialogOpen(true);
                       }}
                     >
-                      Connect Wallet
+                      Login
                     </CentuariButton>
                   </a>
                 )}

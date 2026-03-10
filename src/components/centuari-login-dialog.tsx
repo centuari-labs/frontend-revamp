@@ -187,7 +187,7 @@ export function CentuariLoginDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <CentuariButton variant="primary" className="flex-1 w-full" size={"lg"}>
-          Connect Wallet
+          Login
         </CentuariButton>
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 z-[200]">
