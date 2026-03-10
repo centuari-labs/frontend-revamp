@@ -502,7 +502,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
       />
       <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
       <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
-      <div className="flex-1 overflow-y-auto overflow-x-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-auto max-h-[300px]">
         <Table className="min-w-[600px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -529,13 +529,13 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="h-[400px]">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-none hover:bg-white/5 transition-colors"
+                  className="border-none hover:bg-white/5 transition-colors h-8"
                 >
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell
@@ -558,7 +558,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-[400px] text-center"
                 >
                   No results.
                 </TableCell>

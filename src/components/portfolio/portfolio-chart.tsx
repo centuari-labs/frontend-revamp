@@ -45,6 +45,10 @@ const chartConfig = {
 export function PortfolioChart({ availableBalance, suppliedAssets, borrowedAssets, totalValue }: PortfolioChartProps = {}) {
   const chartData = React.useMemo(() => {
     if (availableBalance !== undefined && suppliedAssets !== undefined && borrowedAssets !== undefined) {
+      const hasData = availableBalance > 0 || suppliedAssets > 0 || borrowedAssets > 0;
+      if (!hasData) {
+        return [{ name: "segment1", visitors: 1, fill: "#ffffff10" }];
+      }
       return [
         { name: "segment1", visitors: availableBalance, fill: "#2A4AC2" },
         { name: "segment2", visitors: suppliedAssets, fill: "#AAC7F9" },

@@ -29,6 +29,7 @@ import { useSetCollateral } from "@/hooks/use-set-collateral";
 import { usePrivy } from "@privy-io/react-auth";
 import { CentuariLoginDialog } from "@/components/centuari-login-dialog";
 import { Lock } from "lucide-react";
+import { PortfolioPageSkeleton } from "@/components/portfolio/portfolio-skeleton";
 
 export default function PortfolioPage() {
   const { authenticated, ready } = usePrivy();
@@ -76,7 +77,7 @@ export default function PortfolioPage() {
   }, []);
 
   // ─── API mode hooks ────────────────────────────────────────────────
-  const { portfolio: apiPortfolio } = useMyPortfolio();
+  const { portfolio: apiPortfolio, isLoading } = useMyPortfolio();
   const { lendBorrow } = useLendBorrowAssets();
   const { positions: apiPositions } = useMyPositions();
   const { assets: apiAssets } = useMyAssets();
@@ -116,10 +117,58 @@ export default function PortfolioPage() {
   const healthFactor = healthFactorValue.toFixed(2);
   const healthFactorStatus = getHealthFactorStatus(healthFactorValue);
 
+  // ─── Dummy data for development ──────────────────────────────────
+  const dummyAssets: AssetProps[] = [
+    { id: "usdc", assetImg: "/tokens/usdc.svg", assetName: "USD Coin", assetSymbol: "USDC", walletBalance: 5200.50, amountInUsd: 5200.50, idleAssetYield: 312.03, isCollateral: true, tokenValue: "usdc" },
+    { id: "eth", assetImg: "/tokens/eth.svg", assetName: "Ethereum", assetSymbol: "ETH", walletBalance: 2.35, amountInUsd: 7520.00, idleAssetYield: 451.20, isCollateral: true, tokenValue: "eth" },
+    { id: "wbtc", assetImg: "/tokens/wbtc.svg", assetName: "Wrapped Bitcoin", assetSymbol: "WBTC", walletBalance: 0.15, amountInUsd: 9750.00, idleAssetYield: 585.00, isCollateral: false, tokenValue: "wbtc" },
+    { id: "usdt", assetImg: "/tokens/usdt.svg", assetName: "Tether", assetSymbol: "USDT", walletBalance: 3100.00, amountInUsd: 3100.00, idleAssetYield: 186.00, isCollateral: true, tokenValue: "usdt" },
+    { id: "dai", assetImg: "/tokens/dai.svg", assetName: "Dai", assetSymbol: "DAI", walletBalance: 4500.00, amountInUsd: 4500.00, idleAssetYield: 270.00, isCollateral: true, tokenValue: "dai" },
+    { id: "link", assetImg: "/tokens/link.svg", assetName: "Chainlink", assetSymbol: "LINK", walletBalance: 320.00, amountInUsd: 4480.00, idleAssetYield: 268.80, isCollateral: false, tokenValue: "link" },
+    { id: "uni", assetImg: "/tokens/uni.svg", assetName: "Uniswap", assetSymbol: "UNI", walletBalance: 450.00, amountInUsd: 3150.00, idleAssetYield: 189.00, isCollateral: false, tokenValue: "uni" },
+    { id: "aave", assetImg: "/tokens/aave.svg", assetName: "Aave", assetSymbol: "AAVE", walletBalance: 25.00, amountInUsd: 6250.00, idleAssetYield: 375.00, isCollateral: true, tokenValue: "aave" },
+    { id: "matic", assetImg: "/tokens/matic.svg", assetName: "Polygon", assetSymbol: "MATIC", walletBalance: 8500.00, amountInUsd: 5100.00, idleAssetYield: 306.00, isCollateral: true, tokenValue: "matic" },
+    { id: "arb", assetImg: "/tokens/arb.svg", assetName: "Arbitrum", assetSymbol: "ARB", walletBalance: 6200.00, amountInUsd: 4960.00, idleAssetYield: 297.60, isCollateral: false, tokenValue: "arb" },
+    { id: "op", assetImg: "/tokens/op.svg", assetName: "Optimism", assetSymbol: "OP", walletBalance: 3800.00, amountInUsd: 5700.00, idleAssetYield: 342.00, isCollateral: true, tokenValue: "op" },
+    { id: "sol", assetImg: "/tokens/sol.svg", assetName: "Solana", assetSymbol: "SOL", walletBalance: 42.00, amountInUsd: 6300.00, idleAssetYield: 378.00, isCollateral: false, tokenValue: "sol" },
+    { id: "avax", assetImg: "/tokens/avax.svg", assetName: "Avalanche", assetSymbol: "AVAX", walletBalance: 180.00, amountInUsd: 4320.00, idleAssetYield: 259.20, isCollateral: true, tokenValue: "avax" },
+    { id: "crv", assetImg: "/tokens/crv.svg", assetName: "Curve", assetSymbol: "CRV", walletBalance: 7500.00, amountInUsd: 3750.00, idleAssetYield: 225.00, isCollateral: false, tokenValue: "crv" },
+    { id: "mkr", assetImg: "/tokens/mkr.svg", assetName: "Maker", assetSymbol: "MKR", walletBalance: 2.80, amountInUsd: 8400.00, idleAssetYield: 504.00, isCollateral: true, tokenValue: "mkr" },
+    { id: "snx", assetImg: "/tokens/snx.svg", assetName: "Synthetix", assetSymbol: "SNX", walletBalance: 1500.00, amountInUsd: 3000.00, idleAssetYield: 180.00, isCollateral: false, tokenValue: "snx" },
+    { id: "comp", assetImg: "/tokens/comp.svg", assetName: "Compound", assetSymbol: "COMP", walletBalance: 55.00, amountInUsd: 2750.00, idleAssetYield: 165.00, isCollateral: true, tokenValue: "comp" },
+    { id: "ldo", assetImg: "/tokens/ldo.svg", assetName: "Lido DAO", assetSymbol: "LDO", walletBalance: 2200.00, amountInUsd: 4400.00, idleAssetYield: 264.00, isCollateral: false, tokenValue: "ldo" },
+    { id: "frax", assetImg: "/tokens/frax.svg", assetName: "Frax", assetSymbol: "FRAX", walletBalance: 6000.00, amountInUsd: 6000.00, idleAssetYield: 360.00, isCollateral: true, tokenValue: "frax" },
+    { id: "reth", assetImg: "/tokens/reth.svg", assetName: "Rocket Pool ETH", assetSymbol: "rETH", walletBalance: 1.80, amountInUsd: 5940.00, idleAssetYield: 356.40, isCollateral: true, tokenValue: "reth" },
+  ];
+
+  const now = Math.floor(Date.now() / 1000);
+  const dummyPositions: PositionProps[] = [
+    { id: "pos-1", assetImg: "/tokens/usdc.svg", assetName: "USDC", amount: 10000.00, apr: 0.065, type: "lend", maturity: now + 86400 * 90 },
+    { id: "pos-2", assetImg: "/tokens/eth.svg", assetName: "ETH", amount: 5000.00, apr: 0.045, type: "lend", maturity: now + 86400 * 180 },
+    { id: "pos-3", assetImg: "/tokens/wbtc.svg", assetName: "WBTC", amount: 3500.00, apr: 0.072, type: "borrow", maturity: now + 86400 * 60 },
+    { id: "pos-4", assetImg: "/tokens/usdt.svg", assetName: "USDT", amount: 8000.00, apr: 0.055, type: "borrow", maturity: now + 86400 * 120 },
+    { id: "pos-5", assetImg: "/tokens/dai.svg", assetName: "DAI", amount: 12000.00, apr: 0.058, type: "lend", maturity: now + 86400 * 45 },
+    { id: "pos-6", assetImg: "/tokens/link.svg", assetName: "LINK", amount: 4200.00, apr: 0.082, type: "borrow", maturity: now + 86400 * 30 },
+    { id: "pos-7", assetImg: "/tokens/uni.svg", assetName: "UNI", amount: 3000.00, apr: 0.038, type: "lend", maturity: now + 86400 * 150 },
+    { id: "pos-8", assetImg: "/tokens/aave.svg", assetName: "AAVE", amount: 6500.00, apr: 0.068, type: "borrow", maturity: now + 86400 * 75 },
+    { id: "pos-9", assetImg: "/tokens/matic.svg", assetName: "MATIC", amount: 2800.00, apr: 0.042, type: "lend", maturity: now + 86400 * 200 },
+    { id: "pos-10", assetImg: "/tokens/arb.svg", assetName: "ARB", amount: 4800.00, apr: 0.061, type: "borrow", maturity: now + 86400 * 100 },
+    { id: "pos-11", assetImg: "/tokens/op.svg", assetName: "OP", amount: 7200.00, apr: 0.052, type: "lend", maturity: now + 86400 * 60 },
+    { id: "pos-12", assetImg: "/tokens/sol.svg", assetName: "SOL", amount: 9100.00, apr: 0.075, type: "borrow", maturity: now + 86400 * 45 },
+    { id: "pos-13", assetImg: "/tokens/avax.svg", assetName: "AVAX", amount: 3300.00, apr: 0.048, type: "lend", maturity: now + 86400 * 120 },
+    { id: "pos-14", assetImg: "/tokens/crv.svg", assetName: "CRV", amount: 2500.00, apr: 0.085, type: "borrow", maturity: now + 86400 * 90 },
+    { id: "pos-15", assetImg: "/tokens/mkr.svg", assetName: "MKR", amount: 11000.00, apr: 0.056, type: "lend", maturity: now + 86400 * 240 },
+    { id: "pos-16", assetImg: "/tokens/snx.svg", assetName: "SNX", amount: 1800.00, apr: 0.078, type: "borrow", maturity: now + 86400 * 55 },
+    { id: "pos-17", assetImg: "/tokens/comp.svg", assetName: "COMP", amount: 4000.00, apr: 0.041, type: "lend", maturity: now + 86400 * 160 },
+    { id: "pos-18", assetImg: "/tokens/ldo.svg", assetName: "LDO", amount: 5500.00, apr: 0.069, type: "borrow", maturity: now + 86400 * 80 },
+    { id: "pos-19", assetImg: "/tokens/frax.svg", assetName: "FRAX", amount: 8500.00, apr: 0.047, type: "lend", maturity: now + 86400 * 110 },
+    { id: "pos-20", assetImg: "/tokens/reth.svg", assetName: "rETH", amount: 6800.00, apr: 0.063, type: "borrow", maturity: now + 86400 * 70 },
+  ];
+
   // ─── Map API assets → DataTableAssets props ────────────────────────
   const assetTableData: AssetProps[] | undefined = useMemo(() => {
     if (USE_MOCK) return undefined;
-    return apiAssets.map((a) => ({
+    const mapped = apiAssets.map((a) => ({
       id: a.symbol,
       assetImg: a.imageUrl ?? "/tokens/default-token.svg",
       assetName: a.name,
@@ -130,6 +179,7 @@ export default function PortfolioPage() {
       isCollateral: a.isCollateral,
       tokenValue: a.symbol,
     }));
+    return mapped;
   }, [apiAssets]);
 
   const handleToggleCollateral = useMemo(() => {
@@ -142,7 +192,7 @@ export default function PortfolioPage() {
   // ─── Map API positions → DataTableAllPosition props ────────────────
   const positionTableData: PositionProps[] | undefined = useMemo(() => {
     if (USE_MOCK) return undefined;
-    return apiPositions.map((p) => ({
+    const mapped = apiPositions.map((p) => ({
       id: p.id,
       assetImg: p.imageUrl ?? "/tokens/default-token.svg",
       assetName: p.name,
@@ -151,6 +201,7 @@ export default function PortfolioPage() {
       type: p.side.toLowerCase() as "lend" | "borrow",
       maturity: p.maturity ?? undefined,
     }));
+    return mapped;
   }, [apiPositions]);
 
   // ─── Chart props (API mode) ────────────────────────────────────────
@@ -163,9 +214,17 @@ export default function PortfolioPage() {
         totalValue: apiPortfolio?.totalDeposit ?? 0,
       };
 
+  // if (!USE_MOCK && isLoading) {
+  //   return (
+  //     <PageContainer>
+  //       <PortfolioPageSkeleton />
+  //     </PageContainer>
+  //   );
+  // }
+
   return (
     <PageContainer>
-        {ready && !authenticated && (
+        {/* {ready && !authenticated && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/5 backdrop-blur-xl">
             <div className="flex flex-col items-center gap-8 rounded-3xl border border-white/15 bg-white/5 px-14 py-14 text-center backdrop-blur-xl shadow-2xl shadow-black/20">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10">
@@ -182,7 +241,7 @@ export default function PortfolioPage() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
         {/* <PortfolioHeader /> */}
         <div className="mt-10 md:mt-20">
           <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white/5 border rounded-lg w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden">
@@ -352,10 +411,10 @@ export default function PortfolioPage() {
           </div>
         </div>
         <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-3">
-          <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
+          <div className="flex-1 min-h-[400px] min-w-0 overflow-x-auto">
             <DataTableAssets assets={assetTableData} onToggleCollateral={handleToggleCollateral} />
           </div>
-          <div className="flex-1 h-[400px] min-w-0 overflow-x-auto">
+          <div className="flex-1 min-h-[400px] min-w-0 overflow-x-auto">
             <DataTableAllPosition positions={positionTableData} />
           </div>
         </div>

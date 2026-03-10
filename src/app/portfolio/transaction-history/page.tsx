@@ -1,3 +1,5 @@
+"use client";
+
 import { CentuariCalender } from "@/components/centuari-calender";
 import { DataTableHistory } from "@/components/transaction-history/tables/data-table-history";
 import { TransactionHistoryHeader } from "@/components/transaction-history/tables/transaction-history-header";
@@ -19,8 +21,20 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeftRight, Calendar, ChevronDown, Flag } from "lucide-react";
+import { TransactionHistorySkeleton } from "@/components/transaction-history/transaction-history-skeleton";
+import { useMyPortfolio } from "@/hooks/use-my-portfolio";
 
 export default function TransactionHistoryPage() {
+  const { isLoading } = useMyPortfolio();
+
+  if (isLoading) {
+    return (
+      <PageContainer innerClassName="2xl:min-h-0">
+        <TransactionHistorySkeleton />
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer innerClassName="2xl:min-h-0">
         <TransactionHistoryHeader />

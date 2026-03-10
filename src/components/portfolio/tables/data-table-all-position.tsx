@@ -247,8 +247,8 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
   // PositionTable as memoized component to prevent recreation
   const PositionTable = React.useMemo(() => (
     <>
-      <div className="flex-1 overflow-y-auto overflow-x-auto">
-        <Table className="min-w-[700px]">
+      <div className="flex-1 overflow-y-auto overflow-x-auto max-h-[300px]">
+        <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-white/5 border-none">
@@ -274,13 +274,13 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="h-[400px]">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-none hover:bg-white/5 transition-colors"
+                  className="border-none hover:bg-white/5 transition-colors h-8"
                 >
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell
@@ -303,7 +303,7 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-[400px] text-center"
                 >
                   No results.
                 </TableCell>
