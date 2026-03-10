@@ -12,10 +12,11 @@ import { getSelectedTokenFromParams } from "@/lib/utils";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { MarketPageSkeleton } from "@/components/market/market-skeleton";
 
 export default function Page() {
   const searchParams = useSearchParams();
-  const { markets } = useMarketData();
+  const { markets, isLoading } = useMarketData();
 
   const tokenList = useMemo(
     () => {
@@ -38,6 +39,14 @@ export default function Page() {
     () => markets.find((m) => m.asset.symbol.toLowerCase() === selectedToken.value),
     [markets, selectedToken.value],
   );
+
+  if (isLoading) {
+    return (
+      <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
+        <MarketPageSkeleton />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
