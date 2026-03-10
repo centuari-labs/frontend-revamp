@@ -250,7 +250,7 @@ export default function CentuariNavbar() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <div className="relative group">
+              {/* <div className="relative group">
                 <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40 transition-colors group-focus-within:text-primary" />
                 <Input
                   ref={inputRef}
@@ -266,7 +266,7 @@ export default function CentuariNavbar() {
                     K
                   </kbd>
                 </div>
-              </div>
+              </div> */}
               {authenticated && (
                 <div className="border border-white/10 h-4 border-r-[0.5px]"></div>
               )}
