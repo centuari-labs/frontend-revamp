@@ -8,10 +8,13 @@ import { CurrencyValue } from "@/components/currency-value";
 import { StatRow } from "@/components/stat-row";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useAccountName } from "@/hooks/use-account-name";
+import { HomeHeaderSkeleton } from "./home-header-skeleton";
 
 export function HomeHeader() {
   const { totalDeposit, activeLoans, isLoading } = useMarketData();
   const name = useAccountName();
+
+  if (isLoading) return <HomeHeaderSkeleton />;
 
   return (
     <div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
@@ -43,7 +46,7 @@ export function HomeHeader() {
               id: "tour-total-balance",
               icon: <IcWalletColorCentuari className="w-8 h-8 md:w-6 md:h-6" />,
               label: "Total Deposits",
-              value: isLoading ? <span className="animate-pulse text-muted-foreground">--</span> : <CurrencyValue value={totalDeposit} decimalPlaces={2} compact />,
+              value: <CurrencyValue value={totalDeposit} decimalPlaces={2} compact />,
             },
             {
               id: "tour-active-loans",
@@ -51,7 +54,7 @@ export function HomeHeader() {
                 <IcPieChartColorCentuari className="w-8 h-8 md:w-6 md:h-6" />
               ),
               label: "Active Loans",
-              value: isLoading ? <span className="animate-pulse text-muted-foreground">--</span> : <CurrencyValue value={activeLoans} decimalPlaces={2} compact />,
+              value: <CurrencyValue value={activeLoans} decimalPlaces={2} compact />,
             },
           ]}
           showSeparator

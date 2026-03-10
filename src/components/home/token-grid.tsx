@@ -2,9 +2,12 @@
 
 import { CentuariTokenCard } from "@/components/centuari-token-card";
 import { useMarketData } from "@/hooks/use-market-data";
+import { TokenGridSkeleton } from "./token-grid-skeleton";
 
 export function TokenGrid() {
-  const { markets } = useMarketData();
+  const { markets, isLoading } = useMarketData();
+
+  if (isLoading) return <TokenGridSkeleton count={6} />;
 
   return (
     <div
