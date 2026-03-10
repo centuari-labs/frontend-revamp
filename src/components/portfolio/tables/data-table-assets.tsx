@@ -347,27 +347,27 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
         );
       },
     },
-    {
-      accessorKey: "idleAssetYield",
-      header: () => <p className="text-center">Idle Asset Yield</p>,
-      cell: ({ row }) => {
-        const yieldAmount = row.original.idleAssetYield;
-        const formatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 2,
-        }).format(yieldAmount);
+    // {
+    //   accessorKey: "idleAssetYield",
+    //   header: () => <p className="text-center">Idle Asset Yield</p>,
+    //   cell: ({ row }) => {
+    //     const yieldAmount = row.original.idleAssetYield;
+    //     const formatted = new Intl.NumberFormat("en-US", {
+    //       style: "currency",
+    //       currency: "USD",
+    //       minimumFractionDigits: 2,
+    //     }).format(yieldAmount);
 
-        const [main, cents] = formatted.split(".");
+    //     const [main, cents] = formatted.split(".");
 
-        return (
-          <div className="font-medium text-center text-success-base">
-            {main}
-            <span className="text-white/40">.{cents}</span>
-          </div>
-        );
-      },
-    },
+    //     return (
+    //       <div className="font-medium text-center text-success-base">
+    //         {main}
+    //         <span className="text-white/40">.{cents}</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "isCollateral",
       header: () => {
