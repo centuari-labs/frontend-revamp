@@ -19,6 +19,8 @@ ENV NEXT_DISABLE_ESLINT=1
 ENV NEXT_DISABLE_TYPECHECK=1
 ENV NEXT_PRIVATE_TURBOPACK=false
 
+RUN rm -f /pnpm-lock.yaml || true
+
 # Build the Next.js app
 RUN pnpm build
 
