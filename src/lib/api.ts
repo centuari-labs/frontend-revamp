@@ -334,7 +334,7 @@ export interface BalanceResponse {
 	symbol: string;
 }
 
-export function getDepositTokens(token: string): Promise<DepositToken[]> {
+export function getDepositTokens(token?: string): Promise<DepositToken[]> {
 	return apiClient<DepositToken[]>("/deposit/tokens", { token });
 }
 

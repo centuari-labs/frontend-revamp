@@ -1,19 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import type { FaucetToken } from "@/lib/faucet-tokens";
 
-const CATEGORY_LABELS: Record<FaucetToken["category"], string> = {
-  stablecoin: "Stablecoin",
-  crypto: "Crypto",
-  stock: "Stock",
-  commodity: "Commodity",
-};
-
 interface FaucetTokenCardProps {
-  token: FaucetToken;
+  token: {
+    value: string;
+    label: string;
+    icon: string;
+    tokenAddress: string;
+    dripAmount: number;
+  };
   selected: boolean;
   onToggle: (value: string) => void;
 }
@@ -23,12 +24,21 @@ export function FaucetTokenCard({
   selected,
   onToggle,
 }: FaucetTokenCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(token.tokenAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <button
       type="button"
       onClick={() => onToggle(token.value)}
       className={cn(
-        "relative w-full flex items-stretch rounded-xl border bg-primary-blue-100/5 transition-all duration-200 hover:bg-white/[0.03] text-left",
+        "relative w-full flex items-stretch rounded-xl border bg-primary-blue-100/5 transition-all duration-200 hover:bg-white/[0.03] text-left group",
         selected
           ? "border-primary-blue-base shadow-[0_0_12px_rgba(59,130,246,0.15)]"
           : "border-white/10"
@@ -79,9 +89,20 @@ export function FaucetTokenCard({
           <CentuariTypography variant="title-lg" className="font-semibold text-center">
             {token.label}
           </CentuariTypography>
-          <CentuariTypography variant="body-sm" className="text-white/40 text-center">
-            {CATEGORY_LABELS[token.category]}
-          </CentuariTypography>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 mx-auto mt-1 px-2 py-1 rounded-md hover:bg-white/5 transition-colors group/copy"
+          >
+            <CentuariTypography variant="subheading-sm" className="text-white/40 group-hover/copy:text-white/60 transition-colors">
+              {copied ? "Copied!" : "Copy Address"}
+            </CentuariTypography>
+            {copied ? (
+              <Check className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <Copy className="w-3 h-3 text-white/40 group-hover/copy:text-white/60" />
+            )}
+          </button>
         </div>
       </div>
 

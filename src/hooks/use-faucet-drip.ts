@@ -21,23 +21,6 @@ export function useFaucetDrip() {
 			setError(null);
 
 			try {
-				if (USE_MOCK) {
-					// Simulate a short delay for mock mode
-					await new Promise((r) => setTimeout(r, 1000));
-					setStatus("success");
-					return {
-						chainId: ACTIVE_CHAIN.id,
-						recipientAddress: "0xMock",
-						transactionHash: `0x${"0".repeat(64)}`,
-						blockNumber: "0",
-						status: "success",
-						results: tokenValues.map((t) => ({
-							tokenAddress: t,
-							amount: "1000000000000000000",
-						})),
-					};
-				}
-
 				const wallet =
 					wallets.find((w) => w.walletClientType !== "privy") ??
 					wallets.find((w) => w.walletClientType === "privy") ??
