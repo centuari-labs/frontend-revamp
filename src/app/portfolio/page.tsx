@@ -224,7 +224,7 @@ export default function PortfolioPage() {
 
   return (
     <PageContainer>
-        {/* {ready && !authenticated && (
+        {ready && !authenticated && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/5 backdrop-blur-xl">
             <div className="flex flex-col items-center gap-8 rounded-3xl border border-white/15 bg-white/5 px-14 py-14 text-center backdrop-blur-xl shadow-2xl shadow-black/20">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10">
@@ -241,7 +241,7 @@ export default function PortfolioPage() {
               </div>
             </div>
           </div>
-        )} */}
+        )}
         {/* <PortfolioHeader /> */}
         <div className="mt-10 md:mt-20">
           <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white/5 border rounded-lg w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden">
