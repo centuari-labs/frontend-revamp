@@ -7,7 +7,7 @@ import { treasuryAbi } from "@/../abis/treasury";
 import type { DepositToken } from "@/lib/api";
 
 const TREASURY_ADDRESS =
-	"0x122ea513fE68d78CdAD06F982237B1b67a335439" as const;
+	"0x1a200de79466617715c156926Fc4904814557A6c" as const;
 
 export type DepositStatus =
 	| "idle"
