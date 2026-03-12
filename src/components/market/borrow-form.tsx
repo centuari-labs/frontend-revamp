@@ -28,6 +28,7 @@ interface BorrowFormProps {
   selectedToken?: TokenOption;
   editingPosition?: BorrowPosition;
   onUpdate?: (updatedPosition: BorrowPosition) => void;
+  maturityOptions?: number[];
 }
 
 export function BorrowForm({
@@ -35,6 +36,7 @@ export function BorrowForm({
   selectedToken: selectedTokenProp,
   editingPosition,
   onUpdate,
+  maturityOptions,
 }: BorrowFormProps) {
   const form = useBorrowForm({
     tokenList,
@@ -108,7 +110,7 @@ export function BorrowForm({
                     onChange={form.setLimitTargetAPR}
                     maturity={form.limitMaturity}
                     onMaturityChange={form.setLimitMaturity}
-                    maturityOptions={getAvailableMaturityTimestamps()}
+                  maturityOptions={maturityOptions ?? getAvailableMaturityTimestamps()}
                     placeholder="12.5"
                     label="Target APR"
                   />
@@ -267,6 +269,7 @@ export function BorrowForm({
                   <MaturityToggle
                     value={form.marketMaturity}
                     onValueChange={form.setMarketMaturity}
+                    options={maturityOptions}
                   />
                 </div>
                 <div className="mt-5">

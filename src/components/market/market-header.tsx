@@ -17,9 +17,15 @@ type MarketToken = (typeof MARKET_TOKEN_LIST)[number];
 export interface MarketHeaderProps {
   /** When provided, used as single source of truth (e.g. from page). Otherwise derived from URL params. */
   selectedToken?: MarketToken;
+  totalDeposit?: number;
+  activeLoans?: number;
 }
 
-export function MarketHeader({ selectedToken: selectedTokenProp }: MarketHeaderProps = {}) {
+export function MarketHeader({
+  selectedToken: selectedTokenProp,
+  totalDeposit,
+  activeLoans,
+}: MarketHeaderProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -80,13 +86,13 @@ export function MarketHeader({ selectedToken: selectedTokenProp }: MarketHeaderP
           <StatCard
             icon={<IcWalletColorCentuari />}
             label="Total Deposits"
-            value={<CurrencyValue value={2340340.0} decimalPlaces={2} />}
+            value={<CurrencyValue value={totalDeposit ?? 0} decimalPlaces={2} />}
             variant="withIcon"
           />
           <StatCard
             icon={<IcPieChartColorCentuari />}
             label="Active Loans"
-            value={<CurrencyValue value={840340.0} decimalPlaces={2} />}
+            value={<CurrencyValue value={activeLoans ?? 0} decimalPlaces={2} />}
             variant="withIcon"
           />
         </div>

@@ -10,6 +10,7 @@ import { PageContainer } from "@/components/page-container";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { getSelectedTokenFromParams } from "@/lib/utils";
 import { useMarketData } from "@/hooks/use-market-data";
+import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MarketPageSkeleton } from "@/components/market/market-skeleton";
@@ -40,6 +41,17 @@ export default function Page() {
     [markets, selectedToken.value],
   );
 
+  const {
+    totalDeposit,
+    activeLoans,
+    upcomingMaturities,
+  } = useMarketDetail(activeMarket?.asset.id);
+
+  const maturityOptions = useMemo(
+    () => upcomingMaturities.map((m) => m.maturity),
+    [upcomingMaturities],
+  );
+
   if (isLoading) {
     return (
       <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
@@ -50,7 +62,11 @@ export default function Page() {
 
   return (
     <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
-        <MarketHeader selectedToken={selectedToken} />
+        <MarketHeader
+          selectedToken={selectedToken}
+          totalDeposit={totalDeposit}
+          activeLoans={activeLoans}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
           <APRHistoryCard />
@@ -71,7 +87,11 @@ export default function Page() {
             )}
           </div>
 
-          <LendBorrowCard tokenList={tokenList} selectedToken={selectedToken} />
+          <LendBorrowCard
+            tokenList={tokenList}
+            selectedToken={selectedToken}
+            maturityOptions={maturityOptions}
+          />
         </div>
 
         <PositionSection />

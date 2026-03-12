@@ -24,6 +24,7 @@ interface LendFormProps {
   selectedToken?: TokenOption;
   editingPosition?: LendPosition;
   onUpdate?: (updatedPosition: LendPosition) => void;
+  maturityOptions?: number[];
 }
 
 export function LendForm({
@@ -31,12 +32,14 @@ export function LendForm({
   selectedToken: selectedTokenProp,
   editingPosition,
   onUpdate,
+  maturityOptions,
 }: LendFormProps) {
   const form = useLendForm({
     tokenList,
     selectedTokenProp,
     editingPosition,
     onUpdate,
+    maturityOptions,
   });
 
   return (

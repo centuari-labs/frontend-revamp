@@ -27,8 +27,29 @@ export interface MarketResponse {
 	markets: MarketItem[];
 }
 
+export interface MarketDetailResponse {
+	asset: {
+		id: string;
+		name: string;
+		symbol: string;
+		decimals: number | null;
+		imageUrl: string | null;
+	};
+	collateral_factor: number;
+	total_deposit: string;
+	active_loans: string;
+	upcoming_maturities: {
+		market_id: string;
+		maturity: number;
+	}[];
+}
+
 export function getMarket(): Promise<MarketResponse> {
 	return apiClient<MarketResponse>("/market");
+}
+
+export function getMarketDetail(assetId: string): Promise<MarketDetailResponse> {
+	return apiClient<MarketDetailResponse>(`/market/${assetId}`);
 }
 
 export interface AccountResponse {

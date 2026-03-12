@@ -8,9 +8,14 @@ import type { TokenOption } from "@/types";
 interface LendBorrowCardProps {
   tokenList: TokenOption[];
   selectedToken?: TokenOption;
+  maturityOptions?: number[];
 }
 
-export function LendBorrowCard({ tokenList, selectedToken }: LendBorrowCardProps) {
+export function LendBorrowCard({
+  tokenList,
+  selectedToken,
+  maturityOptions,
+}: LendBorrowCardProps) {
   return (
     <div className="col-span-1 hidden md:block">
       <div className="bg-white/5 rounded-md h-auto md:h-[500px] md:flex md:flex-col">
@@ -34,11 +39,19 @@ export function LendBorrowCard({ tokenList, selectedToken }: LendBorrowCardProps
           </TabsList>
 
           <TabsContent value="lend" className="md:flex-1 md:min-h-0">
-            <LendForm tokenList={tokenList} selectedToken={selectedToken} />
+            <LendForm
+              tokenList={tokenList}
+              selectedToken={selectedToken}
+              maturityOptions={maturityOptions}
+            />
           </TabsContent>
 
           <TabsContent value="borrow" className="md:flex-1 md:min-h-0">
-            <BorrowForm tokenList={tokenList} selectedToken={selectedToken} />
+            <BorrowForm
+              tokenList={tokenList}
+              selectedToken={selectedToken}
+              maturityOptions={maturityOptions}
+            />
           </TabsContent>
         </Tabs>
       </div>

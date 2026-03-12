@@ -40,6 +40,7 @@ export interface UseLendFormParams {
   selectedTokenProp?: TokenOption;
   editingPosition?: LendPosition;
   onUpdate?: (updatedPosition: LendPosition) => void;
+  maturityOptions?: number[];
 }
 
 export function useLendForm({
@@ -47,6 +48,7 @@ export function useLendForm({
   selectedTokenProp,
   editingPosition,
   onUpdate,
+  maturityOptions,
 }: UseLendFormParams) {
   const { getToken } = useAuthToken();
   const { markets } = useMarketData();
@@ -85,19 +87,21 @@ export function useLendForm({
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
 
-  const availableMaturities = USE_MOCK || markets.length === 0
-    ? getAvailableMaturityTimestamps()
-    : getMaturitiesFromMarkets(markets);
+  const availableMaturities = useMemo(() => {
+    if (maturityOptions && maturityOptions.length > 0) {
+      return maturityOptions;
+    }
+    if (USE_MOCK || markets.length === 0) {
+      return getAvailableMaturityTimestamps();
+    }
+    return getMaturitiesFromMarkets(markets);
+  }, [maturityOptions, markets]);
 
   const defaultMaturity = availableMaturities[0] ?? getDefaultMaturityTimestamp();
 
-  const [limitMaturity, setLimitMaturity] = useState(() =>
-    getDefaultMaturityTimestamp()
-  );
+  const [limitMaturity, setLimitMaturity] = useState(defaultMaturity);
   const [limitTargetAPR, setLimitTargetAPR] = useState("");
-  const [marketMaturity, setMarketMaturity] = useState(() =>
-    getDefaultMaturityTimestamp()
-  );
+  const [marketMaturity, setMarketMaturity] = useState(defaultMaturity);
 
   // Sync default maturity when backend data loads
   useEffect(() => {

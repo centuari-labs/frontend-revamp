@@ -13,19 +13,24 @@ interface MaturityToggleProps {
   className?: string;
   value?: number;
   onValueChange?: (value: number) => void;
+  options?: number[];
 }
 
 export function MaturityToggle({
   className,
   value: valueProp,
   onValueChange: onValueChangeProp,
+  options: optionsProp,
 }: MaturityToggleProps) {
   const [internalValue, setInternalValue] = React.useState(() =>
     getDefaultMaturityTimestamp()
   );
 
   const value = valueProp !== undefined ? valueProp : internalValue;
-  const options = React.useMemo(() => getAvailableMaturityTimestamps(), []);
+  const options = React.useMemo(
+    () => optionsProp ?? getAvailableMaturityTimestamps(),
+    [optionsProp],
+  );
 
   const handleValueChange = (newValueStr: string) => {
     const ts = Number(newValueStr);
