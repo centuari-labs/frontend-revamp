@@ -6,8 +6,8 @@ import { parseUnits, erc20Abi } from "viem";
 import { treasuryAbi } from "@/../abis/treasury";
 import type { DepositToken } from "@/lib/api";
 
-const TREASURY_ADDRESS =
-	"0x1a200de79466617715c156926Fc4904814557A6c" as const;
+const TREASURY_ADDRESS = process.env
+	.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
 
 export type DepositStatus =
 	| "idle"
