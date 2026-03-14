@@ -119,10 +119,10 @@ export function useBorrowForm({
       )
       .map((token) => token.value);
 
-    if (limitSelectedCollaterals.length === 0) {
+    if (limitSelectedCollaterals.length === 0 && autoSelected.length > 0) {
       setLimitSelectedCollaterals(autoSelected);
     }
-    if (marketSelectedCollaterals.length === 0) {
+    if (marketSelectedCollaterals.length === 0 && autoSelected.length > 0) {
       setMarketSelectedCollaterals(autoSelected);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

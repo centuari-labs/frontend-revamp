@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyAssets, type MyAssetItem } from "@/lib/api";
 import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
+
+const EMPTY_ASSETS: MyAssetItem[] = [];
 
 export function useMyAssets() {
   const { getToken } = useAuthToken();
@@ -19,8 +22,10 @@ export function useMyAssets() {
     enabled: !USE_MOCK,
   });
 
+  const assets = useMemo(() => query.data ?? EMPTY_ASSETS, [query.data]);
+
   return {
-    assets: query.data ?? [],
+    assets,
     isLoading: query.isLoading,
     isError: query.isError,
   };
