@@ -34,6 +34,11 @@ import { PortfolioPageSkeleton } from "@/components/portfolio/portfolio-skeleton
 export default function PortfolioPage() {
   const { authenticated, ready } = usePrivy();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [assetsPage, setAssetsPage] = useState(1);
+  const ASSETS_PAGE_SIZE = 3;
+  const [positionsPage, setPositionsPage] = useState(1);
+  const [positionsTab, setPositionsTab] = useState<"lend" | "borrow">("lend");
+  const POSITIONS_PAGE_SIZE = 3;
 
   // ─── Mock mode state (localStorage) ────────────────────────────────
   const [portfolio, setPortfolio] = useState<Record<string, number>>(() =>
@@ -79,8 +84,8 @@ export default function PortfolioPage() {
   // ─── API mode hooks ────────────────────────────────────────────────
   const { portfolio: apiPortfolio, isLoading } = useMyPortfolio();
   const { lendBorrow } = useLendBorrowAssets();
-  const { positions: apiPositions } = useMyPositions();
-  const { assets: apiAssets } = useMyAssets();
+  const { positions: apiPositions, page: currentPositionsPage, totalData: positionsTotalData, totalPages: positionsTotalPages } = useMyPositions({ type: positionsTab.toUpperCase() as "LEND" | "BORROW", page: positionsPage, limit: POSITIONS_PAGE_SIZE });
+  const { assets: apiAssets, page: currentAssetsPage, totalData: assetsTotalData, totalPages: assetsTotalPages } = useMyAssets({ page: assetsPage, limit: ASSETS_PAGE_SIZE });
   const setCollateralMutation = useSetCollateral();
 
   // ─── Derived values ────────────────────────────────────────────────
@@ -169,7 +174,7 @@ export default function PortfolioPage() {
   const assetTableData: AssetProps[] | undefined = useMemo(() => {
     if (USE_MOCK) return undefined;
     const mapped = apiAssets.map((a) => ({
-      id: a.symbol,
+      id: a.assetId,
       assetImg: a.imageUrl ?? "/tokens/default-token.svg",
       assetName: a.name,
       assetSymbol: a.symbol,
@@ -177,15 +182,15 @@ export default function PortfolioPage() {
       amountInUsd: a.amountInUsd,
       idleAssetYield: a.amountInUsd * 0.06,
       isCollateral: a.isCollateral,
-      tokenValue: a.symbol,
+      tokenValue: a.assetId,
     }));
     return mapped;
   }, [apiAssets]);
 
   const handleToggleCollateral = useMemo(() => {
     if (USE_MOCK) return undefined;
-    return (assetId: string, isCollateral: boolean) => {
-      setCollateralMutation.mutate({ assetIds: [assetId], isCollateral });
+    return async (assetId: string, isCollateral: boolean) => {
+      await setCollateralMutation.mutateAsync({ assetIds: [assetId], isCollateral });
     };
   }, [setCollateralMutation]);
 
@@ -199,6 +204,7 @@ export default function PortfolioPage() {
       amount: p.amountInUsd,
       apr: 0,
       type: p.side.toLowerCase() as "lend" | "borrow",
+      tokenValue: p.symbol.toLowerCase(),
       maturity: p.maturity ?? undefined,
     }));
     return mapped;
@@ -214,13 +220,13 @@ export default function PortfolioPage() {
         totalValue: apiPortfolio?.totalDeposit ?? 0,
       };
 
-  // if (!USE_MOCK && isLoading) {
-  //   return (
-  //     <PageContainer>
-  //       <PortfolioPageSkeleton />
-  //     </PageContainer>
-  //   );
-  // }
+  if (!USE_MOCK && isLoading) {
+    return (
+      <PageContainer>
+        <PortfolioPageSkeleton />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -411,11 +417,27 @@ export default function PortfolioPage() {
           </div>
         </div>
         <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-3">
-          <div className="flex-1 min-h-[400px] min-w-0 overflow-x-auto">
-            <DataTableAssets assets={assetTableData} onToggleCollateral={handleToggleCollateral} />
+          <div className="flex-1 min-h-full md:min-h-[400px] min-w-0 overflow-x-auto">
+            <DataTableAssets
+              assets={assetTableData}
+              onToggleCollateral={handleToggleCollateral}
+              page={currentAssetsPage}
+              totalData={assetsTotalData}
+              totalPages={assetsTotalPages}
+              onPageChange={setAssetsPage}
+              pageSize={ASSETS_PAGE_SIZE}
+            />
           </div>
-          <div className="flex-1 min-h-[400px] min-w-0 overflow-x-auto">
-            <DataTableAllPosition positions={positionTableData} />
+          <div className="flex-1 min-h-full md:min-h-[400px] min-w-0 overflow-x-auto">
+            <DataTableAllPosition
+              positions={positionTableData}
+              page={currentPositionsPage}
+              totalData={positionsTotalData}
+              totalPages={positionsTotalPages}
+              onPageChange={setPositionsPage}
+              pageSize={POSITIONS_PAGE_SIZE}
+              onTabChange={(tab) => { setPositionsTab(tab); setPositionsPage(1); }}
+            />
           </div>
         </div>
     </PageContainer>

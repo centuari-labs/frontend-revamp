@@ -20,7 +20,7 @@ export interface LendDialogData {
 
 export function useLendDialogData(tokenSymbol: string): LendDialogData {
   const mock = usePortfolioFromStorage();
-  const { assets, isLoading: assetsLoading, isError } = useMyAssets();
+  const { assets, isLoading: assetsLoading, isError } = useMyAssets({ limit: 100 });
 
   return useMemo(() => {
     const tokenValue = tokenSymbol.toLowerCase();

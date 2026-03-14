@@ -59,7 +59,7 @@ export function useLendForm({
     "usdc"
   );
 
-  const { assets: myAssets } = useMyAssets();
+  const { assets: myAssets } = useMyAssets({ limit: 100 });
   const { data: openLendAmounts } = useOpenLendAmounts();
 
   // Resolve the asset ID for the selected token from market data

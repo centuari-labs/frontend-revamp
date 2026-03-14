@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { CentuariButton } from "@/components/centuari-button";
+import { CentuariLoginDialog } from "@/components/centuari-login-dialog";
 import { FaucetErrorPage } from "./faucet-error-page";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
@@ -25,7 +27,9 @@ const DRIP_AMOUNTS: Record<string, number> = {
 };
 
 export function FaucetTokenGrid() {
+  const { authenticated } = usePrivy();
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const { requestDrip, status, error, reset } = useFaucetDrip();
   const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
 
@@ -57,6 +61,11 @@ export function FaucetTokenGrid() {
   };
 
   const handleRequestDrip = async () => {
+    if (!authenticated) {
+      setLoginDialogOpen(true);
+      return;
+    }
+
     const selectedAddresses = tokens
       .filter((t) => selectedTokens.has(t.value))
       .map((t) => t.tokenAddress);
@@ -153,13 +162,22 @@ export function FaucetTokenGrid() {
                   onClick={handleRequestDrip}
                   disabled={isLoading}
                 >
-                  {isLoading && status === "loading" ? "Requesting..." : "Request Drip \u2192"}
+                  {!authenticated
+                    ? "Login to Request \u2192"
+                    : isLoading && status === "loading"
+                      ? "Requesting..."
+                      : "Request Drip \u2192"}
                 </CentuariButton>
               )}
             </div>
           </div>
         </div>
       )}
+      <CentuariLoginDialog
+        open={loginDialogOpen}
+        onOpenChange={setLoginDialogOpen}
+        showTrigger={false}
+      />
     </div>
   );
 }

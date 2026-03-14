@@ -3,6 +3,7 @@
 import { useCreateWallet, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useSetActiveWallet } from "@privy-io/wagmi";
 import { useEffect, useRef } from "react";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { useSyncAccount } from "@/hooks/use-sync-account";
 import { useWalletDisconnectListener } from "@/hooks/use-wallet-disconnect-listener";
 
@@ -36,6 +37,8 @@ export function EmbeddedWalletGuard({
 	}, [ready, authenticated, wallets, createWallet]);
 
 	// Prefer external wallet for on-chain interactions, fallback to embedded
+	// Also auto-switch external wallet to the correct chain
+	const hasSwitchedChain = useRef(false);
 	useEffect(() => {
 		if (!ready || !authenticated) return;
 
@@ -50,12 +53,25 @@ export function EmbeddedWalletGuard({
 		if (activeWallet) {
 			setActiveWallet(activeWallet);
 		}
+
+		// Auto-switch external wallet to the correct chain on connect
+		if (
+			externalWallet &&
+			externalWallet.chainId !== `eip155:${ACTIVE_CHAIN.id}` &&
+			!hasSwitchedChain.current
+		) {
+			hasSwitchedChain.current = true;
+			externalWallet.switchChain(ACTIVE_CHAIN.id).catch(() => {
+				// Switch failed (unsupported chain or user rejected) — WrongNetworkBanner will handle it
+			});
+		}
 	}, [ready, authenticated, wallets, setActiveWallet]);
 
 	// Reset when user logs out
 	useEffect(() => {
 		if (!authenticated) {
 			isCreating.current = false;
+			hasSwitchedChain.current = false;
 		}
 	}, [authenticated]);
 

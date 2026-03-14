@@ -39,9 +39,11 @@ type EmailFormValues = z.infer<typeof emailFormSchema>;
 export function CentuariLoginDialog({
   open,
   onOpenChange,
+  showTrigger = true,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
 }) {
   const id = useId();
   const { authenticated } = usePrivy();
@@ -185,11 +187,13 @@ export function CentuariLoginDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <CentuariButton variant="primary" className="flex-1 w-full" size={"lg"}>
-          Login
-        </CentuariButton>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <CentuariButton variant="primary" className="flex-1 w-full" size={"lg"}>
+            Login
+          </CentuariButton>
+        </DialogTrigger>
+      )}
       <DialogContent className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 z-[200]">
         <DialogHeader className="contents space-y-0 text-left">
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
