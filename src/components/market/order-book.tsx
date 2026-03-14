@@ -32,21 +32,21 @@ const OrderRowView: React.FC<{
   }, [widthPct]);
 
   return (
-    <div className="relative grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
-      {/* Per-row liquidity bar (no cumulative) */}
+    <div className="relative grid grid-cols-12 h-7 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
+      {/* Per-row liquidity bar — anchored left */}
       <div
         ref={barRef}
-        className={`absolute inset-y-0 ${
+        className={`absolute inset-y-0 left-0 ${
           isBorrow
-            ? "right-0 bg-[rgba(255,59,68,0.15)]"
-            : "right-0 bg-[rgba(61,229,122,0.15)]"
+            ? "bg-[rgba(255,59,68,0.18)]"
+            : "bg-[rgba(61,229,122,0.18)]"
         }`}
         style={{ width: "0%" }}
       />
 
       {/* APR */}
       <div
-        className={`col-span-6 font-semibold tracking-tight z-10 ${
+        className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
           isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
         }`}
       >
@@ -54,11 +54,7 @@ const OrderRowView: React.FC<{
       </div>
 
       {/* Amount */}
-      <div
-        className={`col-span-6 text-right font-semibold tracking-tight pr-2 z-10 ${
-          isBorrow ? "text-[#ffd6d6]" : "text-white/80"
-        }`}
-      >
+      <div className="col-span-6 text-right font-semibold tracking-tight pr-2 z-10 text-white/80">
         {formatAmount(order.amount)}
       </div>
     </div>
@@ -122,30 +118,38 @@ const OrderBookContent: React.FC<{
   borrowOrders: OrderRow[];
   lendOrders: OrderRow[];
 }> = ({ borrowOrders, lendOrders }) => {
-  const topBorrowApr = borrowOrders[borrowOrders.length - 1]?.apr;
-  const topLendApr = lendOrders[0]?.apr;
+  // Sort borrow: highest APR first (descending) — rate paling besar di atas
+  const sortedBorrow = [...borrowOrders].sort((a, b) => b.apr - a.apr);
+  // Sort lend: highest APR first (descending) — rate paling besar di atas
+  const sortedLend = [...lendOrders].sort((a, b) => b.apr - a.apr);
+
+  // Best borrow = lowest APR (bottom of borrow list)
+  const bestBorrowApr = sortedBorrow[sortedBorrow.length - 1]?.apr;
+  // Best lend = highest APR (top of lend list)
+  const bestLendApr = sortedLend[0]?.apr;
+
   const midApr =
-    topBorrowApr != null && topLendApr != null
-      ? (topBorrowApr + topLendApr) / 2
+    bestBorrowApr != null && bestLendApr != null
+      ? (bestBorrowApr + bestLendApr) / 2
       : undefined;
   const spreadApr =
-    topBorrowApr != null && topLendApr != null
-      ? Math.abs(topBorrowApr - topLendApr)
+    bestBorrowApr != null && bestLendApr != null
+      ? Math.abs(bestBorrowApr - bestLendApr)
       : undefined;
 
   return (
     <>
       <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm">
-        <div className="col-span-6 text-white/80 text-start font-semibold">
+        <div className="col-span-6 text-white/80 text-start font-semibold pl-2">
           APR
         </div>
-        <div className="col-span-6 text-white/80 font-semibold text-right">
+        <div className="col-span-6 text-white/80 font-semibold text-right pr-2">
           Amount
         </div>
       </div>
 
-      {/* BORROW */}
-      <OrderTable orders={borrowOrders} />
+      {/* BORROW — rate paling besar → kecil */}
+      <OrderTable orders={sortedBorrow} />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (
@@ -160,8 +164,8 @@ const OrderBookContent: React.FC<{
         </div>
       )}
 
-      {/* LEND */}
-      <OrderTable orders={lendOrders} />
+      {/* LEND — rate paling besar → kecil */}
+      <OrderTable orders={sortedLend} />
     </>
   );
 };

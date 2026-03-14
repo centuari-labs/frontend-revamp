@@ -70,22 +70,23 @@ function TableSkeleton({ title }: { title: string }) {
         <Skeleton className="h-5 w-32" />
       </div>
       <div className="bg-white/5 px-6 py-3">
-        <div className="flex gap-8">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-3 w-20" />
+        <div className="grid grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-3" />
           ))}
         </div>
       </div>
-      <div className="px-6 py-4 space-y-4">
+      <div className="px-6 py-4 space-y-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex gap-8 items-center">
+          <div key={i} className="grid grid-cols-5 gap-4 items-center">
             <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+              <Skeleton className="h-3 flex-1" />
             </div>
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-3 w-12" />
-            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3" />
+            <Skeleton className="h-3" />
+            <Skeleton className="h-3" />
+            <Skeleton className="h-3 w-2/3" />
           </div>
         ))}
       </div>

@@ -40,6 +40,7 @@ import {
 } from "@/components/use-asset-as-collateral-dialog";
 import { UseAllAssetsAsCollateralDialog } from "@/components/use-all-assets-as-collateral-dialog";
 import { CentuariTooltip } from "@/components/centuari-tooltip";
+import { toast } from "sonner";
 
 export type AssetProps = {
   id: string;
@@ -55,10 +56,16 @@ export type AssetProps = {
 
 interface DataTableAssetsProps {
   assets?: AssetProps[];
-  onToggleCollateral?: (assetId: string, isCollateral: boolean) => void;
+  onToggleCollateral?: (assetId: string, isCollateral: boolean) => Promise<void> | void;
+  // Server-side pagination
+  page?: number;
+  totalData?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
 }
 
-export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: DataTableAssetsProps = {}) {
+export function DataTableAssets({ assets: externalAssets, onToggleCollateral, page: serverPage, totalData, totalPages, onPageChange, pageSize = 10 }: DataTableAssetsProps = {}) {
   // Portfolio state - sync with borrow dialog (mock mode only)
   const [portfolio, setPortfolio] = React.useState<Record<string, number>>(() => {
     if (externalAssets) return {};
@@ -183,11 +190,11 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
   }, [externalAssets]);
 
   // Handle collateral toggle
-  const handleToggleCollateral = React.useCallback((tokenValue: string) => {
+  const handleToggleCollateral = React.useCallback(async (tokenValue: string) => {
     if (onToggleCollateral) {
       // API mode: find the current collateral state and toggle
       const current = externalAssets?.find((a) => a.id === tokenValue || a.tokenValue === tokenValue);
-      onToggleCollateral(tokenValue, !current?.isCollateral);
+      await onToggleCollateral(tokenValue, !current?.isCollateral);
       return;
     }
     setCollateralStatus((prev) => {
@@ -232,20 +239,17 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
       });
   }, [externalAssets, portfolio, collateralStatus]);
 
-  // Handle collateral cell click: show confirmation when enabling, direct toggle when disabling
+  // Handle collateral cell click: always show confirmation dialog
   const handleCollateralCellClick = React.useCallback(
     (asset: AssetProps) => {
-      if (asset.isCollateral) {
-        handleToggleCollateral(asset.tokenValue);
-      } else {
-        setPendingCollateralAsset({
-          logo: asset.assetImg,
-          label: asset.assetName,
-          tokenValue: asset.tokenValue,
-        });
-      }
+      setPendingCollateralAsset({
+        logo: asset.assetImg,
+        label: asset.assetName,
+        tokenValue: asset.tokenValue,
+        isCollateral: asset.isCollateral,
+      });
     },
-    [handleToggleCollateral]
+    []
   );
 
   // Select all / deselect all collateral (toggle)
@@ -452,9 +456,11 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const isServerPagination = !!onPageChange;
+
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize,
   });
 
   const table = useReactTable({
@@ -463,7 +469,9 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(isServerPagination
+      ? { manualPagination: true, pageCount: totalPages ?? -1 }
+      : { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -474,7 +482,9 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination,
+      pagination: isServerPagination
+        ? { pageIndex: (serverPage ?? 1) - 1, pageSize }
+        : pagination,
     },
   });
 
@@ -484,11 +494,15 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
         open={!!pendingCollateralAsset}
         onOpenChange={(open) => !open && setPendingCollateralAsset(null)}
         asset={pendingCollateralAsset}
-        onConfirm={() => {
-          if (pendingCollateralAsset) {
-            handleToggleCollateral(pendingCollateralAsset.tokenValue);
-            setPendingCollateralAsset(null);
+        onConfirm={async () => {
+          if (!pendingCollateralAsset) return;
+          try {
+            await handleToggleCollateral(pendingCollateralAsset.tokenValue);
+            toast.success("Collateral updated successfully");
+          } catch {
+            toast.error("Failed to update collateral");
           }
+          setPendingCollateralAsset(null);
         }}
       />
       <UseAllAssetsAsCollateralDialog
@@ -529,7 +543,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="h-[400px]">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -558,7 +572,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-[400px] text-center"
+                  className="h-[300px] text-center"
                 >
                   No results.
                 </TableCell>
@@ -570,11 +584,11 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
       <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+            Page {isServerPagination ? (serverPage ?? 1) : table.getState().pagination.pageIndex + 1} of {isServerPagination ? (totalPages ?? 1) : (table.getPageCount() || 1)}
           </span>
           <span className="text-white/20">•</span>
           <span className="text-white/40">
-            Showing {table.getRowModel().rows.length} of {data.length} Data
+            Showing {table.getRowModel().rows.length} of {isServerPagination ? (totalData ?? 0) : data.length} Data
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -582,8 +596,14 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => {
+              if (isServerPagination) {
+                onPageChange(Math.max(1, (serverPage ?? 1) - 1));
+              } else {
+                table.previousPage();
+              }
+            }}
+            disabled={isServerPagination ? (serverPage ?? 1) <= 1 : !table.getCanPreviousPage()}
           >
             <ArrowLeft size={16} className="text-white" />
           </Button>
@@ -591,8 +611,14 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral }: 
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => {
+              if (isServerPagination) {
+                onPageChange(Math.min((totalPages ?? 1), (serverPage ?? 1) + 1));
+              } else {
+                table.nextPage();
+              }
+            }}
+            disabled={isServerPagination ? (serverPage ?? 1) >= (totalPages ?? 1) : !table.getCanNextPage()}
           >
             <ArrowRight size={16} className="text-white" />
           </Button>

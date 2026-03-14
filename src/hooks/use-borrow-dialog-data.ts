@@ -21,7 +21,7 @@ export interface BorrowDialogData {
 
 export function useBorrowDialogData(): BorrowDialogData {
   const mock = usePortfolioFromStorage();
-  const { assets, isLoading: assetsLoading, isError: assetsError } = useMyAssets();
+  const { assets, isLoading: assetsLoading, isError: assetsError } = useMyAssets({ limit: 100 });
   const { lendBorrow, isLoading: lbLoading, isError: lbError } = useLendBorrowAssets();
 
   return useMemo(() => {

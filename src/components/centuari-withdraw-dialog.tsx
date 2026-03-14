@@ -39,7 +39,7 @@ export function CentuariWithdrawDialog() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  const { assets, isLoading: assetsLoading } = useMyAssets();
+  const { assets, isLoading: assetsLoading } = useMyAssets({ limit: 100 });
   const {
     withdraw,
     status: withdrawStatus,

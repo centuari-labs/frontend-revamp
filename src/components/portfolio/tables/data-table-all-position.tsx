@@ -15,6 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { calculateFutureAmount, cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
@@ -52,31 +53,37 @@ export type PositionProps = {
 
 interface DataTableAllPositionProps {
   positions?: PositionProps[];
+  // Server-side pagination
+  page?: number;
+  totalData?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onTabChange?: (tab: "lend" | "borrow") => void;
 }
 
-export function DataTableAllPosition({ positions: externalPositions }: DataTableAllPositionProps = {}) {
+export function DataTableAllPosition({
+  positions: externalPositions,
+  page: serverPage,
+  totalData,
+  totalPages,
+  onPageChange,
+  pageSize = 10,
+  onTabChange,
+}: DataTableAllPositionProps = {}) {
   const router = useRouter();
   const [withdrawSuccess, setWithdrawSuccess] =
     React.useState<WithdrawSuccessMessage | null>(null);
   const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
   const { allTransactions } = usePositions();
 
-  const allData = externalPositions ?? allTransactions;
+  const isServerPagination = !!onPageChange;
 
-  const borrowData: PositionProps[] = React.useMemo(
-    () => allData.filter((pos) => pos.type === "borrow") as PositionProps[],
-    [allData]
-  );
-
-  const lendData: PositionProps[] = React.useMemo(
-    () => allData.filter((pos) => pos.type === "lend") as PositionProps[],
-    [allData]
-  );
-
-  // Memoize currentData to prevent unnecessary re-renders
+  // Always filter by active tab — safety net even if API doesn't filter
   const currentData = React.useMemo(() => {
-    return activeTab === "borrow" ? borrowData : lendData;
-  }, [activeTab, borrowData, lendData]);
+    const allData = externalPositions ?? allTransactions;
+    return (allData as PositionProps[]).filter((pos) => pos.type === activeTab);
+  }, [externalPositions, allTransactions, activeTab]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -84,7 +91,7 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
   const [rowSelection, setRowSelection] = React.useState({});
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize,
   });
 
   const columns = React.useMemo<ColumnDef<PositionProps>[]>(
@@ -158,6 +165,7 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
         cell: ({ row }) => {
           const position = row.original;
           const isBorrow = position.type === "borrow";
+          const tokenSymbol = (position.tokenValue ?? position.assetName).toLowerCase();
 
           return (
             <div className="flex items-center gap-4">
@@ -200,15 +208,13 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
                   }}
                 />
               )}
-              <button
+              <Link
+                href={`/market?token=${tokenSymbol}`}
                 className="text-white/80 hover:text-white transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                type="button"
+                onClick={(e) => e.stopPropagation()}
               >
                 <Plus size={18} />
-              </button>
+              </Link>
             </div>
           );
         },
@@ -218,9 +224,16 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
   );
 
   // Reset pagination to first page when tab changes
-  React.useEffect(() => {
-    setPagination({ pageIndex: 0, pageSize: 10 });
-  }, [activeTab]);
+  const handleTabChange = React.useCallback((value: string) => {
+    const tab = value as "borrow" | "lend";
+    setActiveTab(tab);
+    if (isServerPagination) {
+      onPageChange(1);
+      onTabChange?.(tab);
+    } else {
+      setPagination({ pageIndex: 0, pageSize });
+    }
+  }, [isServerPagination, onPageChange, onTabChange, pageSize]);
 
   const table = useReactTable({
     data: currentData,
@@ -229,7 +242,9 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(isServerPagination
+      ? { manualPagination: true, pageCount: totalPages ?? -1 }
+      : { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -240,11 +255,12 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination,
+      pagination: isServerPagination
+        ? { pageIndex: (serverPage ?? 1) - 1, pageSize }
+        : pagination,
     },
   });
 
-  // PositionTable as memoized component to prevent recreation
   const PositionTable = React.useMemo(() => (
     <>
       <div className="flex-1 overflow-y-auto overflow-x-auto max-h-[300px]">
@@ -252,29 +268,27 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-white/5 border-none">
-                {headerGroup.headers.map((header, index) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        "text-white/60 font-normal h-12",
-                        index === 0 && "pl-6",
-                        index === headerGroup.headers.length - 1 && "pr-6"
+                {headerGroup.headers.map((header, index) => (
+                  <TableHead
+                    key={header.id}
+                    className={cn(
+                      "text-white/60 font-normal h-12",
+                      index === 0 && "pl-6",
+                      index === headerGroup.headers.length - 1 && "pr-6"
+                    )}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
                       )}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    </TableHead>
-                  );
-                })}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="h-[400px]">
+          <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -303,7 +317,7 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-[400px] text-center"
+                  className="h-[300px] text-center"
                 >
                   No results.
                 </TableCell>
@@ -315,10 +329,18 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
     </>
   ), [table, currentData.length]);
 
+  // Pagination values
+  const displayPage = isServerPagination ? (serverPage ?? 1) : (currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0);
+  const displayTotalPages = isServerPagination ? (totalPages ?? 1) : Math.max(1, table.getPageCount() || 1);
+  const displayShowing = table.getRowModel().rows.length;
+  const displayTotal = isServerPagination ? (totalData ?? 0) : currentData.length;
+  const canPrev = isServerPagination ? (serverPage ?? 1) > 1 : table.getCanPreviousPage();
+  const canNext = isServerPagination ? (serverPage ?? 1) < (totalPages ?? 1) : table.getCanNextPage();
+
   return (
     <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
-      <Tabs defaultValue="lend" className="w-full !gap-0 flex flex-col h-full" onValueChange={(value) => setActiveTab(value as "borrow" | "lend")}>
-        <div className="flex items-center justify-between py-2 px-6 flex-shrink-0">
+      <Tabs defaultValue="lend" className="w-full !gap-0 flex flex-col h-full" onValueChange={handleTabChange}>
+        <div className="flex items-center justify-between py-2 px-6 shrink-0">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
           <TabsList className="bg-white/5 h-10 border border-white/5">
             <TabsTrigger
@@ -344,18 +366,14 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
           {PositionTable}
         </TabsContent>
       </Tabs>
-      <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
+      <div className="flex flex-col sm:flex-row shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
-            Page{" "}
-            {currentData.length > 0
-              ? table.getState().pagination.pageIndex + 1
-              : 0}{" "}
-            of {Math.max(1, table.getPageCount() || 1)}
+            Page {displayPage} of {displayTotalPages}
           </span>
-          <span className="text-white/20">•</span>
+          <span className="text-white/20">&bull;</span>
           <span className="text-white/40">
-            Showing {table.getRowModel().rows.length} of {currentData.length} Data
+            Showing {displayShowing} of {displayTotal} Data
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -363,8 +381,14 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => {
+              if (isServerPagination) {
+                onPageChange(Math.max(1, (serverPage ?? 1) - 1));
+              } else {
+                table.previousPage();
+              }
+            }}
+            disabled={!canPrev}
           >
             <ArrowLeft size={16} className="text-white" />
           </Button>
@@ -372,8 +396,14 @@ export function DataTableAllPosition({ positions: externalPositions }: DataTable
             variant="outline"
             size="icon"
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => {
+              if (isServerPagination) {
+                onPageChange(Math.min((totalPages ?? 1), (serverPage ?? 1) + 1));
+              } else {
+                table.nextPage();
+              }
+            }}
+            disabled={!canNext}
           >
             <ArrowRight size={16} className="text-white" />
           </Button>
