@@ -1,27 +1,43 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyPositions, type MyPositionItem } from "@/lib/api";
 import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
 
-export function useMyPositions() {
+const EMPTY_POSITIONS: MyPositionItem[] = [];
+
+export interface UseMyPositionsOptions {
+  type?: "LEND" | "BORROW";
+  page?: number;
+  limit?: number;
+}
+
+export function useMyPositions(options?: UseMyPositionsOptions) {
+  const { type, page = 1, limit = 10 } = options ?? {};
   const { getToken } = useAuthToken();
 
-  const query = useQuery<MyPositionItem[]>({
-    queryKey: ["my-positions"],
+  const query = useQuery({
+    queryKey: ["my-positions", type, page, limit],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
-      return getMyPositions(token);
+      return getMyPositions(token, { type, page, limit });
     },
     staleTime: 10_000,
     refetchInterval: 15_000,
     enabled: !USE_MOCK,
+    placeholderData: (prev) => prev,
   });
 
+  const positions = useMemo(() => query.data?.data ?? EMPTY_POSITIONS, [query.data]);
+
   return {
-    positions: query.data ?? [],
+    positions,
+    page: query.data?.page ?? page,
+    totalData: query.data?.totalData ?? 0,
+    totalPages: query.data?.totalPages ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
   };

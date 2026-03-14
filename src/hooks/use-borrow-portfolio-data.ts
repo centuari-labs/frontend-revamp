@@ -20,7 +20,7 @@ export interface BorrowPortfolioData {
 
 export function useBorrowPortfolioData(): BorrowPortfolioData {
   const mock = usePortfolioFromStorage();
-  const { assets, isLoading: assetsLoading } = useMyAssets();
+  const { assets, isLoading: assetsLoading } = useMyAssets({ limit: 100 });
   const { lendBorrow, isLoading: lbLoading } = useLendBorrowAssets();
 
   return useMemo(() => {

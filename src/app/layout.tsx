@@ -5,6 +5,7 @@ import { Provider } from "@/components/provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { switzer } from "@/components/ui/fonts";
 import { TourProvider } from "@/components/product-tour/tour-context";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Centuari",
@@ -43,6 +44,7 @@ export default function RootLayout({
               <TourProvider>
                 <CentuariNavbar />
                 {children}
+                <Toaster theme="dark" position="bottom-right" richColors />
               </TourProvider>
             </Provider>
           </ThemeProvider>

@@ -135,16 +135,49 @@ export interface MyPositionItem {
 	maturity: number | null;
 }
 
-export function getMyPositions(
+export interface MyPositionsResponse {
+	data: MyPositionItem[];
+	page: number;
+	limit: number;
+	totalData: number;
+	totalPages: number;
+}
+
+export async function getMyPositions(
 	token: string,
-	type?: "LEND" | "BORROW",
-): Promise<MyPositionItem[]> {
-	const params = new URLSearchParams({ limit: "100" });
-	if (type) params.set("type", type);
-	return apiClient<MyPositionItem[]>(
-		`/portfolio/my-position?${params.toString()}`,
-		{ token },
+	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number },
+): Promise<MyPositionsResponse> {
+	const page = params?.page ?? 1;
+	const limit = params?.limit ?? 10;
+	const searchParams = new URLSearchParams({
+		page: String(page),
+		limit: String(limit),
+	});
+	if (params?.type) searchParams.set("type", params.type);
+
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const res = await fetch(
+		`/api/portfolio/my-position?${searchParams.toString()}`,
+		{ headers },
 	);
+
+	if (!res.ok) {
+		throw new Error(`API error: ${res.status} ${res.statusText}`);
+	}
+
+	const json = await res.json();
+	const meta = json.meta ?? {};
+	return {
+		data: json.data ?? [],
+		page: meta.page ?? page,
+		limit: meta.limit ?? limit,
+		totalData: meta.totalData ?? 0,
+		totalPages: meta.totalPages ?? 0,
+	};
 }
 
 // ─── Set Asset As Collateral ────────────────────────────────────────
@@ -183,10 +216,37 @@ export interface MyAssetsResponse {
 	totalPages: number;
 }
 
-export function getMyAssets(token: string): Promise<MyAssetItem[]> {
-	return apiClient<MyAssetItem[]>("/portfolio/my-assets?limit=100", {
-		token,
-	});
+export async function getMyAssets(
+	token: string,
+	params?: { page?: number; limit?: number },
+): Promise<MyAssetsResponse> {
+	const page = params?.page ?? 1;
+	const limit = params?.limit ?? 10;
+
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const res = await fetch(
+		`/api/portfolio/my-assets?page=${page}&limit=${limit}`,
+		{ headers },
+	);
+
+	if (!res.ok) {
+		throw new Error(`API error: ${res.status} ${res.statusText}`);
+	}
+
+	const json = await res.json();
+	// API returns { statusCode, data: [...], meta: { page, limit, totalData, totalPages } }
+	const meta = json.meta ?? {};
+	return {
+		data: json.data ?? [],
+		page: meta.page ?? page,
+		limit: meta.limit ?? limit,
+		totalData: meta.totalData ?? 0,
+		totalPages: meta.totalPages ?? 0,
+	};
 }
 
 // ─── Lend Limit Order ─────────────────────────────────────────────────
