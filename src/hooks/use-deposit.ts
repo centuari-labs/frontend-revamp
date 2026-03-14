@@ -4,7 +4,9 @@ import { useState, useCallback } from "react";
 import { useWriteContract, usePublicClient, useAccount } from "wagmi";
 import { parseUnits, erc20Abi } from "viem";
 import { treasuryAbi } from "@/../abis/treasury";
+import { confirmDeposit } from "@/lib/api";
 import type { DepositToken } from "@/lib/api";
+import { useAuthToken } from "@/hooks/use-auth-token";
 
 const TREASURY_ADDRESS = process.env
 	.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
@@ -28,6 +30,7 @@ export function useDeposit() {
 	const { address } = useAccount();
 	const publicClient = usePublicClient();
 	const { writeContractAsync } = useWriteContract();
+	const { getToken } = useAuthToken();
 	const [status, setStatus] = useState<DepositStatus>("idle");
 	const [error, setError] = useState<string | null>(null);
 
@@ -108,6 +111,13 @@ export function useDeposit() {
 					throw new Error("Deposit transaction reverted on-chain");
 				}
 
+				// Step 5: Notify backend to sync portfolio immediately (fire-and-forget)
+				getToken().then((authToken) => {
+					if (authToken) {
+						confirmDeposit(depositTxHash, authToken).catch(() => {});
+					}
+				});
+
 				setStatus("success");
 				return {
 					transactionHash: depositTxHash,
@@ -130,7 +140,7 @@ export function useDeposit() {
 				return null;
 			}
 		},
-		[address, publicClient, writeContractAsync],
+		[address, publicClient, writeContractAsync, getToken],
 	);
 
 	const reset = useCallback(() => {

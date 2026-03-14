@@ -378,6 +378,17 @@ export function submitDeposit(
 	});
 }
 
+export function confirmDeposit(
+	txHash: string,
+	token: string,
+): Promise<{ processed: number }> {
+	return apiClient<{ processed: number }>("/deposit/confirm", {
+		method: "POST",
+		body: { txHash },
+		token,
+	});
+}
+
 // ─── Withdraw ─────────────────────────────────────────────────────────
 
 export interface WithdrawResponse {
