@@ -9,10 +9,12 @@ import { StatRow } from "@/components/stat-row";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useAccountName } from "@/hooks/use-account-name";
 import { HomeHeaderSkeleton } from "./home-header-skeleton";
+import { usePrivy } from "@privy-io/react-auth";
 
 export function HomeHeader() {
   const { totalDeposit, activeLoans, isLoading } = useMarketData();
   const name = useAccountName();
+  const { authenticated } = usePrivy();
 
   if (isLoading) return <HomeHeaderSkeleton />;
 
@@ -30,9 +32,9 @@ export function HomeHeader() {
 
       {/* Header Text - centered on mobile, left-aligned on desktop */}
       <div className="text-center md:text-left w-full">
-        <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-linear-to-r from-primary-blue-base via-white to-primary-blue-base">
+        {authenticated && <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-linear-to-r from-primary-blue-base via-white to-primary-blue-base">
           Hi{name ? ` ${name}` : ""},
-        </CentuariTypography>
+        </CentuariTypography>}
         <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
           Welcome To Centuari
         </CentuariTypography>
