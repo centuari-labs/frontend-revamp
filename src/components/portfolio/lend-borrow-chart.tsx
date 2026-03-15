@@ -18,43 +18,32 @@ interface ChartDataPoint {
 }
 
 const chartData: ChartDataPoint[] = [
-  { date: "1 Oct", supply: 35000, borrow: 8000 },
-  { date: "3 Oct", supply: 36200, borrow: 8500 },
-  { date: "5 Oct", supply: 38500, borrow: 9200 },
-  { date: "7 Oct", supply: 37800, borrow: 9800 },
-  { date: "9 Oct", supply: 39500, borrow: 10200 },
-  { date: "11 Oct", supply: 41200, borrow: 10800 },
-  { date: "13 Oct", supply: 40500, borrow: 11500 },
-  { date: "15 Oct", supply: 42800, borrow: 12200 },
-  { date: "17 Oct", supply: 44500, borrow: 12800 },
-  { date: "19 Oct", supply: 43800, borrow: 13500 },
-  { date: "21 Oct", supply: 46200, borrow: 14200 },
-  { date: "23 Oct", supply: 48500, borrow: 15000 },
-  { date: "25 Oct", supply: 47200, borrow: 15800 },
-  { date: "27 Oct", supply: 49800, borrow: 16500 },
-  { date: "29 Oct", supply: 52200, borrow: 17200 },
-  { date: "31 Oct", supply: 51500, borrow: 18000 },
-  { date: "2 Nov", supply: 54200, borrow: 18800 },
-  { date: "4 Nov", supply: 56800, borrow: 19500 },
-  { date: "6 Nov", supply: 55500, borrow: 20300 },
-  { date: "8 Nov", supply: 58200, borrow: 21200 },
-  { date: "10 Nov", supply: 60500, borrow: 22000 },
-  { date: "12 Nov", supply: 59200, borrow: 22800 },
-  { date: "14 Nov", supply: 62000, borrow: 23800 },
-  { date: "16 Nov", supply: 64500, borrow: 24500 },
-  { date: "18 Nov", supply: 63200, borrow: 25500 },
-  { date: "20 Nov", supply: 66200, borrow: 26500 },
-  { date: "22 Nov", supply: 68800, borrow: 27500 },
-  { date: "24 Nov", supply: 67500, borrow: 28500 },
-  { date: "26 Nov", supply: 70500, borrow: 29800 },
-  { date: "28 Nov", supply: 73200, borrow: 31200 },
-  { date: "30 Nov", supply: 71800, borrow: 32500 },
-  { date: "2 Dec", supply: 74800, borrow: 33800 },
-  { date: "4 Dec", supply: 77500, borrow: 35200 },
-  { date: "6 Dec", supply: 76000, borrow: 36500 },
-  { date: "8 Dec", supply: 79200, borrow: 37800 },
-  { date: "10 Dec", supply: 82000, borrow: 39200 },
-  { date: "11 Dec", supply: 85000, borrow: 42000 },
+  { date: "1 Oct", supply: 5000, borrow: 2000 },
+  { date: "4 Oct", supply: 5200, borrow: 2100 },
+  { date: "7 Oct", supply: 5500, borrow: 2200 },
+  { date: "10 Oct", supply: 5400, borrow: 2300 },
+  { date: "13 Oct", supply: 6800, borrow: 2500 },
+  { date: "16 Oct", supply: 7200, borrow: 2600 },
+  { date: "19 Oct", supply: 7000, borrow: 2800 },
+  // { date: "22 Oct", supply: 8500, borrow: 3000 },
+  // { date: "25 Oct", supply: 9200, borrow: 3200 },
+  // { date: "28 Oct", supply: 9000, borrow: 3400 },
+  // { date: "31 Oct", supply: 12000, borrow: 3600 },
+  // { date: "3 Nov", supply: 14500, borrow: 3800 },
+  // { date: "6 Nov", supply: 16000, borrow: 4200 },
+  // { date: "9 Nov", supply: 18500, borrow: 4500 },
+  // { date: "12 Nov", supply: 22000, borrow: 5000 },
+  // { date: "15 Nov", supply: 25000, borrow: 5500 },
+  // { date: "18 Nov", supply: 28000, borrow: 6000 },
+  // { date: "21 Nov", supply: 32000, borrow: 6800 },
+  // { date: "24 Nov", supply: 35000, borrow: 7200 },
+  // { date: "27 Nov", supply: 38000, borrow: 7800 },
+  // { date: "30 Nov", supply: 36000, borrow: 8200 },
+  // { date: "3 Dec", supply: 40000, borrow: 8800 },
+  // { date: "6 Dec", supply: 42000, borrow: 9200 },
+  // { date: "8 Dec", supply: 41000, borrow: 9500 },
+  // { date: "10 Dec", supply: 43000, borrow: 9800 },
+  // { date: "11 Dec", supply: 45000, borrow: 10200 },
 ];
 
 interface TooltipPayload {
@@ -75,15 +64,16 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
     const borrowValue = payload.find((p) => p.dataKey === "borrow")?.value || 0;
 
     return (
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 shadow-xl border border-slate-600">
-        <p className="text-slate-300 text-sm mb-3">{date} 2025</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-8">
+      <div className="bg-white/10 backdrop-blur-[24px] rounded-xl px-4 py-3 shadow-xl border border-white/20">
+        <p className="text-white text-sm font-medium">{date} 2025</p>
+        <div className="border-t border-dashed border-white/20 my-2" />
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-10">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-white border-2 border-blue-500"></div>
-              <span className="text-slate-400 text-sm">Supply</span>
+              <div className="w-2 h-2 rounded-full bg-[#517FFF]"></div>
+              <span className="text-white/70 text-sm">Supply</span>
             </div>
-            <span className="text-slate-200 font-medium">
+            <span className="text-white font-medium text-sm">
               $
               {supplyValue.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
@@ -91,12 +81,12 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
               })}
             </span>
           </div>
-          <div className="flex items-center justify-between gap-8">
+          <div className="flex items-center justify-between gap-10">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-white border-2 border-pink-500"></div>
-              <span className="text-slate-400 text-sm">Borrow</span>
+              <div className="w-2 h-2 rounded-full bg-[#EF336F]"></div>
+              <span className="text-white/70 text-sm">Borrow</span>
             </div>
-            <span className="text-slate-200 font-medium">
+            <span className="text-white font-medium text-sm">
               $
               {borrowValue.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
@@ -122,26 +112,26 @@ export default function LendBorrowChart() {
           <defs>
             <linearGradient id="supplyGradient" x1="0" y1="0" x2="0" y2="1">
               <stop
-                offset="5%"
-                stopColor="hsl(217, 91%, 60%)"
-                stopOpacity={0.8}
+                offset="0%"
+                stopColor="rgba(51, 97, 239)"
+                stopOpacity={0.5}
               />
               <stop
-                offset="95%"
-                stopColor="hsl(217, 91%, 60%)"
-                stopOpacity={0.1}
+                offset="90.3%"
+                stopColor="rgba(51, 97, 239)"
+                stopOpacity={0}
               />
             </linearGradient>
             <linearGradient id="borrowGradient" x1="0" y1="0" x2="0" y2="1">
               <stop
-                offset="5%"
-                stopColor="hsl(330, 82%, 55%)"
-                stopOpacity={0.8}
+                offset="0%"
+                stopColor="#EF336F"
+                stopOpacity={0.5}
               />
               <stop
-                offset="95%"
-                stopColor="hsl(330, 82%, 55%)"
-                stopOpacity={0.1}
+                offset="90.3%"
+                stopColor="#EF336F"
+                stopOpacity={0}
               />
             </linearGradient>
           </defs>
@@ -175,19 +165,23 @@ export default function LendBorrowChart() {
           <Area
             type="monotone"
             dataKey="borrow"
-            stroke="hsl(330, 82%, 55%)"
+            stroke="#EF336F"
             strokeWidth={2}
             fill="url(#borrowGradient)"
             fillOpacity={1}
+            dot={false}
+            activeDot={{ r: 5, fill: "white", stroke: "#EF336F", strokeWidth: 3 }}
           />
 
           <Area
             type="monotone"
             dataKey="supply"
-            stroke="hsl(217, 91%, 60%)"
-            strokeWidth={2}
+            stroke="#517FFF"
+            strokeWidth={1}
             fill="url(#supplyGradient)"
             fillOpacity={1}
+            dot={false}
+            activeDot={{ r: 5, fill: "white", stroke: "#517FFF", strokeWidth: 3 }}
           />
         </AreaChart>
       </ResponsiveContainer>

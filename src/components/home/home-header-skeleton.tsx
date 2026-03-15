@@ -1,11 +1,16 @@
+"use client"
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePrivy } from "@privy-io/react-auth";
 
 export function HomeHeaderSkeleton() {
+  const {authenticated} = usePrivy();
+
   return (
     <div className="relative flex flex-col justify-between items-center md:items-start gap-6 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border-0 md:border">
       {/* Header Text */}
       <div className="text-center md:text-left w-full space-y-2">
-        <Skeleton className="h-9 w-60 mx-auto md:mx-0" />
+        {authenticated && <Skeleton className="h-9 w-60 mx-auto md:mx-0" />}
         <Skeleton className="h-9 w-80 mx-auto md:mx-0" />
       </div>
 
