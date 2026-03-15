@@ -12,13 +12,18 @@ export function useSetCollateral() {
     mutationFn: async ({
       assetIds,
       isCollateral,
-    }: { assetIds: string[]; isCollateral: boolean }) => {
+    }: {
+      assetIds: string[];
+      isCollateral: boolean;
+    }) => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
       return setAssetAsCollateral(assetIds, isCollateral, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
     },
   });
 }

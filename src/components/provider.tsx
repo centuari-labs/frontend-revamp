@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { EmbeddedWalletGuard } from "./embedded-wallet-guard";
-import { WrongNetworkBanner } from "./wrong-network-banner";
 import { PriceProvider } from "@/contexts/price-context";
 
 const queryClient = new QueryClient();
@@ -32,7 +31,6 @@ export const Provider = ({ children }: { children: React.ReactNode }) => {
 			<QueryClientProvider client={queryClient}>
 				<WagmiProvider config={wagmiConfig}>
 					<EmbeddedWalletGuard>
-						<WrongNetworkBanner />
 						<PriceProvider>{children}</PriceProvider>
 					</EmbeddedWalletGuard>
 				</WagmiProvider>

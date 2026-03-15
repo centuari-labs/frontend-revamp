@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyPositions, type MyPositionItem } from "@/lib/api";
 import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePrivy } from "@privy-io/react-auth";
 
 const EMPTY_POSITIONS: MyPositionItem[] = [];
 
@@ -17,9 +18,11 @@ export interface UseMyPositionsOptions {
 export function useMyPositions(options?: UseMyPositionsOptions) {
   const { type, page = 1, limit = 10 } = options ?? {};
   const { getToken } = useAuthToken();
+  const { user } = usePrivy();
+  const address = user?.wallet?.address;
 
   const query = useQuery({
-    queryKey: ["my-positions", type, page, limit],
+    queryKey: ["my-positions", address, type, page, limit],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
@@ -27,11 +30,14 @@ export function useMyPositions(options?: UseMyPositionsOptions) {
     },
     staleTime: 10_000,
     refetchInterval: 15_000,
-    enabled: !USE_MOCK,
+    enabled: !USE_MOCK && !!address,
     placeholderData: (prev) => prev,
   });
 
-  const positions = useMemo(() => query.data?.data ?? EMPTY_POSITIONS, [query.data]);
+  const positions = useMemo(
+    () => query.data?.data ?? EMPTY_POSITIONS,
+    [query.data],
+  );
 
   return {
     positions,
