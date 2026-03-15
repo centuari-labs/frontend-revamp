@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
 import { CentuariInput } from "./centuari-input";
@@ -21,6 +21,7 @@ import {
 import { getTokenLogo } from "@/lib/tokens";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CentuariAlert } from "./centuari-alert";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
@@ -33,9 +34,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "./ui/label";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+
+const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 export function CentuariDepositDialog() {
   const router = useRouter();
+  const { user } = usePrivy();
+  const { wallets } = useWallets();
   const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
   const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
 
@@ -63,6 +70,30 @@ export function CentuariDepositDialog() {
   }, [tokens, selectedTokenId]);
 
   const { balance: onChainBalance, isLoading: balanceLoading } = useOnChainBalance(selectedToken?.symbol ?? "");
+
+  // ─── Network detection ───────────────────────────────────────────────
+  const linkedAddress = user?.wallet?.address?.toLowerCase();
+  const loginWallet = linkedAddress
+    ? wallets.find(
+        (w) =>
+          w.walletClientType !== "privy" &&
+          w.address.toLowerCase() === linkedAddress,
+      )
+    : undefined;
+  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
+  const [switchingChain, setSwitchingChain] = useState(false);
+
+  const handleSwitchChain = async () => {
+    if (!loginWallet || switchingChain) return;
+    setSwitchingChain(true);
+    try {
+      await loginWallet.switchChain(ACTIVE_CHAIN.id);
+    } catch {
+      toast.error("Failed to switch network");
+    } finally {
+      setSwitchingChain(false);
+    }
+  };
 
   const isProcessing =
     depositStatus === "checkingAllowance" ||
@@ -138,7 +169,7 @@ export function CentuariDepositDialog() {
   }, [depositAmount, onChainBalance]);
 
   const isSubmitDisabled =
-    isProcessing || !depositAmount || !selectedTokenId || amountExceedsBalance;
+    isProcessing || !depositAmount || !selectedTokenId || amountExceedsBalance || isWrongNetwork;
 
   const tokenIcon = selectedToken
     ? getTokenLogo(selectedToken.symbol, selectedToken.imageUrl ?? undefined)
@@ -198,25 +229,50 @@ export function CentuariDepositDialog() {
               >
                 <div className="w-full space-y-2 mt-3.5">
                   <Label>Select Chain</Label>
-                  <Select value="arbitrum-sepolia" disabled>
-                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
-                      <SelectGroup>
-                        <SelectItem value="arbitrum-sepolia">
-                          <img
-                            src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
-                            alt="Arbitrum Sepolia"
-                            width={16}
-                            height={16}
-                            className="size-4 rounded-full object-cover"
-                          />
-                          Arbitrum Sepolia
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  {isWrongNetwork ? (
+                    <button
+                      type="button"
+                      onClick={handleSwitchChain}
+                      disabled={switchingChain}
+                      className="flex w-full items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-400 transition-colors hover:bg-yellow-500/20 disabled:opacity-50"
+                    >
+                      {switchingChain ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4" />
+                      )}
+                      <span className="flex-1 text-left">
+                        {switchingChain ? "Switching..." : `Switch to ${ACTIVE_CHAIN_LABEL}`}
+                      </span>
+                      <img
+                        src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                        alt={ACTIVE_CHAIN_LABEL}
+                        width={20}
+                        height={20}
+                        className="size-5 rounded-full object-cover"
+                      />
+                    </button>
+                  ) : (
+                    <Select value="arbitrum-sepolia" disabled>
+                      <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                        <SelectGroup>
+                          <SelectItem value="arbitrum-sepolia">
+                            <img
+                              src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                              alt="Arbitrum Sepolia"
+                              width={16}
+                              height={16}
+                              className="size-4 rounded-full object-cover"
+                            />
+                            Arbitrum Sepolia
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="w-full space-y-2 mt-3.5">
                   <Label>Select Token</Label>
@@ -274,9 +330,25 @@ export function CentuariDepositDialog() {
                   }
                 />
                 {amountExceedsBalance && (
-                  <p className="text-xs text-red-400 mt-1">
-                    Amount exceeds available balance
-                  </p>
+                  <CentuariAlert
+                    variant="destructive"
+                    text="Insufficient wallet balance"
+                    description="Get testnet tokens from the faucet"
+                    className="mt-1.5"
+                    action={
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          setDialogOpen(false);
+                          router.push("/faucet");
+                        }}
+                      >
+                        Deposit
+                      </Button>
+                    }
+                  />
                 )}
               </form>
             </div>

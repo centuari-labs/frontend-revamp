@@ -1,9 +1,9 @@
 "use client";
 
 import { gsap } from "gsap";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, AlertTriangle } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogClose,
@@ -18,9 +18,7 @@ import { CentuariButton } from "./centuari-button";
 import { CentuariInput } from "./centuari-input";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariTypography } from "./centuari-typography";
-import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { Button } from "./ui/button";
-import { SelectToken } from "./select-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
@@ -35,11 +33,29 @@ import {
   formatMaturityTimestamp,
 } from "@/lib/maturity";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDeposit } from "@/hooks/use-deposit";
+import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
+import { getTokenLogo } from "@/lib/tokens";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "./ui/label";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+
+const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 type ViewMode = "lend" | "deposit-lend";
 
@@ -86,6 +102,119 @@ export function CentuariLendDialog({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const tokenValue = token_symbol.toLowerCase();
+
+  // ─── Deposit state & hooks ───────────────────────────────────────────
+  const { deposit, status: depositStatus, reset: resetDepositHook } = useDeposit();
+  const { data: depositTokens, isLoading: depositTokensLoading } = useDepositTokens();
+  const [depositSelectedTokenId, setDepositSelectedTokenId] = useState<string>("");
+  const [depositAmount, setDepositAmount] = useState<string>("");
+  const [depositDisplayAmount, setDepositDisplayAmount] = useState<string>("");
+
+  const depositSelectedToken = useMemo(
+    () => depositTokens?.find((t) => t.id === depositSelectedTokenId),
+    [depositTokens, depositSelectedTokenId],
+  );
+
+  // Auto-select first deposit token
+  useEffect(() => {
+    if (depositTokens && depositTokens.length > 0 && !depositSelectedTokenId) {
+      setDepositSelectedTokenId(depositTokens[0].id);
+    }
+  }, [depositTokens, depositSelectedTokenId]);
+
+  const { balance: depositOnChainBalance, isLoading: depositBalanceLoading } =
+    useOnChainBalance(depositSelectedToken?.symbol ?? "");
+
+  const isDepositProcessing =
+    depositStatus === "checkingAllowance" ||
+    depositStatus === "approving" ||
+    depositStatus === "waitingApproval" ||
+    depositStatus === "depositing" ||
+    depositStatus === "confirming";
+
+  const depositAmountExceedsBalance = useMemo(() => {
+    if (!depositAmount || depositOnChainBalance <= 0) return false;
+    return Number.parseFloat(depositAmount) > depositOnChainBalance;
+  }, [depositAmount, depositOnChainBalance]);
+
+  // ─── Network detection (for deposit view) ────────────────────────────
+  const { user: privyUser } = usePrivy();
+  const { wallets: privyWallets } = useWallets();
+  const linkedAddr = privyUser?.wallet?.address?.toLowerCase();
+  const loginWallet = linkedAddr
+    ? privyWallets.find(
+        (w) =>
+          w.walletClientType !== "privy" &&
+          w.address.toLowerCase() === linkedAddr,
+      )
+    : undefined;
+  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
+  const [switchingChain, setSwitchingChain] = useState(false);
+
+  const handleSwitchChain = async () => {
+    if (!loginWallet || switchingChain) return;
+    setSwitchingChain(true);
+    try {
+      await loginWallet.switchChain(ACTIVE_CHAIN.id);
+    } catch {
+      toast.error("Failed to switch network");
+    } finally {
+      setSwitchingChain(false);
+    }
+  };
+
+  const isDepositSubmitDisabled =
+    isDepositProcessing || !depositAmount || !depositSelectedTokenId || depositAmountExceedsBalance || isWrongNetwork;
+
+  const depositTokenIcon = depositSelectedToken
+    ? getTokenLogo(depositSelectedToken.symbol, depositSelectedToken.imageUrl ?? undefined)
+    : "/tokens/usdc-icon.svg";
+
+  const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numericValue = parseNumberFromSeparator(value);
+    const formattedValue = formatNumberWithSeparator(numericValue);
+    setDepositAmount(numericValue);
+    setDepositDisplayAmount(formattedValue);
+  };
+
+  const handleDepositMaxClick = () => {
+    if (depositOnChainBalance > 0) {
+      const balance = String(depositOnChainBalance);
+      setDepositAmount(balance);
+      setDepositDisplayAmount(formatNumberWithSeparator(balance));
+    }
+  };
+
+  const handleDepositSubmit = async () => {
+    if (!depositAmount || !depositSelectedTokenId || isDepositProcessing) return;
+
+    try {
+      const result = await deposit(depositSelectedTokenId, depositAmount, depositSelectedToken);
+      if (result) {
+        toast.success(`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""}`);
+        // Reset deposit form and go back to lend view
+        setDepositAmount("");
+        setDepositDisplayAmount("");
+        resetDepositHook();
+        setViewMode("lend");
+        // Refresh balances
+        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Deposit failed";
+      toast.error(message);
+    }
+  };
+
+  const resetDepositForm = () => {
+    setDepositAmount("");
+    setDepositDisplayAmount("");
+    setDepositSelectedTokenId(depositTokens?.[0]?.id ?? "");
+    resetDepositHook();
+  };
 
   // State for success dialog
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
@@ -144,6 +273,7 @@ export function CentuariLendDialog({
       setDisplayAmount("");
       setShowSuccessDialog(false);
       setSubmitError(null);
+      resetDepositForm();
     }
   };
 
@@ -583,6 +713,7 @@ export function CentuariLendDialog({
                     onClick={handleBackToLend}
                     className="mb-4 -ml-2"
                     type="button"
+                    disabled={isDepositProcessing}
                   >
                     <ArrowLeft size={16} />
                   </Button>
@@ -604,17 +735,142 @@ export function CentuariLendDialog({
                       your Centuari balance.
                     </CentuariTypography>
                   </div>
-                  <form>
-                    <SelectToken />
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleDepositSubmit();
+                    }}
+                  >
+                    <div className="w-full space-y-2 mt-3.5">
+                      <Label>Select Chain</Label>
+                      {isWrongNetwork ? (
+                        <button
+                          type="button"
+                          onClick={handleSwitchChain}
+                          disabled={switchingChain}
+                          className="flex w-full items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-400 transition-colors hover:bg-yellow-500/20 disabled:opacity-50"
+                        >
+                          {switchingChain ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <span className="flex-1 text-left">
+                            {switchingChain ? "Switching..." : `Switch to ${ACTIVE_CHAIN_LABEL}`}
+                          </span>
+                          <img
+                            src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                            alt={ACTIVE_CHAIN_LABEL}
+                            width={20}
+                            height={20}
+                            className="size-5 rounded-full object-cover"
+                          />
+                        </button>
+                      ) : (
+                        <Select value="arbitrum-sepolia" disabled>
+                          <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                            <SelectGroup>
+                              <SelectItem value="arbitrum-sepolia">
+                                <img
+                                  src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
+                                  alt="Arbitrum Sepolia"
+                                  width={16}
+                                  height={16}
+                                  className="size-4 rounded-full object-cover"
+                                />
+                                Arbitrum Sepolia
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <div className="w-full space-y-2 mt-3.5">
+                      <Label>Select Token</Label>
+                      <Select
+                        value={depositSelectedTokenId}
+                        onValueChange={setDepositSelectedTokenId}
+                        disabled={depositTokensLoading || isDepositProcessing}
+                      >
+                        <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                          <SelectValue placeholder={depositTokensLoading ? "Loading..." : "Select Token"} />
+                        </SelectTrigger>
+                        <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
+                          <SelectGroup>
+                            {depositTokens?.map((token) => (
+                              <SelectItem key={token.id} value={token.id}>
+                                <Image
+                                  src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
+                                  width={16}
+                                  height={16}
+                                  alt={token.symbol}
+                                />
+                                {token.symbol}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <CentuariInput
-                      id="amount"
+                      id={`deposit-amount-${reactId}`}
                       label="Deposit Amount"
                       size="large"
-                      placeholder="Amount"
-                      leftIcon={<IcDollarCentuari size={16} />}
+                      placeholder="0"
+                      leftIcon={
+                        <Image
+                          src={depositTokenIcon}
+                          width={16}
+                          height={16}
+                          alt={depositSelectedToken?.symbol ?? "token"}
+                        />
+                      }
                       className="mt-0"
                       containerClassName="mt-3.5"
+                      value={depositDisplayAmount}
+                      onChange={handleDepositAmountChange}
+                      disabled={isDepositProcessing}
+                      type="text"
+                      inputMode="decimal"
+                      balanceText={
+                        !depositBalanceLoading && depositOnChainBalance != null ? (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            Balance: {depositOnChainBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {depositSelectedToken?.symbol ?? ""}
+                            <button
+                              type="button"
+                              onClick={handleDepositMaxClick}
+                              className="text-primary-blue-base hover:underline font-medium ml-1"
+                            >
+                              Max
+                            </button>
+                          </span>
+                        ) : null
+                      }
                     />
+                    {depositAmountExceedsBalance && (
+                      <CentuariAlert
+                        variant="destructive"
+                        text="Insufficient wallet balance"
+                        description="Get testnet tokens from the faucet"
+                        className="mt-1.5"
+                        action={
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              setIsDialogOpen(false);
+                              router.push("/faucet");
+                            }}
+                          >
+                            Deposit
+                          </Button>
+                        }
+                      />
+                    )}
                   </form>
                 </div>
               </div>
@@ -629,25 +885,47 @@ export function CentuariLendDialog({
                 type="button"
                 variant={"primary"}
                 className="flex-1"
-                onClick={handleLend}
+                onClick={viewMode === "deposit-lend" ? handleDepositSubmit : handleLend}
                 disabled={
-                  isPending ||
-                  dataLoading ||
-                  (viewMode === "lend" &&
-                    (numericAmount <= 0 || numericAmount > availableBalance))
+                  viewMode === "deposit-lend"
+                    ? isDepositSubmitDisabled
+                    : isPending ||
+                      dataLoading ||
+                      numericAmount <= 0 ||
+                      numericAmount > availableBalance
                 }
               >
-                {isPending || dataLoading ? (
+                {viewMode === "deposit-lend" ? (
+                  depositStatus === "checkingAllowance" ? (
+                    <>
+                      Checking allowance... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    </>
+                  ) : depositStatus === "approving" ? (
+                    <>
+                      Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    </>
+                  ) : depositStatus === "waitingApproval" ? (
+                    <>
+                      Waiting for approval... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    </>
+                  ) : depositStatus === "depositing" ? (
+                    <>
+                      Confirm deposit in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    </>
+                  ) : depositStatus === "confirming" ? (
+                    <>
+                      Confirming deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    </>
+                  ) : (
+                    "Confirm Deposit"
+                  )
+                ) : isPending || dataLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {dataLoading ? "Loading..." : "Processing..."}
                   </>
-                ) : viewMode === "lend" ? (
-                  "Confirm Lend"
-                ) : viewMode === "deposit-lend" ? (
-                  "Confirm Deposit"
                 ) : (
-                  "Confirm Add Collateral"
+                  "Confirm Lend"
                 )}
               </CentuariButton>
             </div>

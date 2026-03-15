@@ -14,7 +14,6 @@ import { CentuariWithdrawDialog } from "./centuari-withdraw-dialog";
 import { CentuariDepositDialog } from "./centuari-deposit-dialog";
 import { CentuariLoginDialog } from "./centuari-login-dialog";
 import { CentuariUserMenu } from "./centuari-user-menu";
-import { NetworkSwitcher } from "./network-switcher";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
 
 interface NavItem {
@@ -276,7 +275,7 @@ export default function CentuariNavbar() {
               {authenticated && (
                 <div className="border border-white/10 h-4 border-r-[0.5px]"></div>
               )}
-              {authenticated && <NetworkSwitcher />}
+
               {authenticated ? (
                 <CentuariUserMenu />
               ) : (
