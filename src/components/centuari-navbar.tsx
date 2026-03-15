@@ -198,7 +198,7 @@ export default function CentuariNavbar() {
               <img
                 src="/centuari-logo.png"
                 alt="Logo"
-                className="w-6 h-6 md:w-8 md:h-8 ml-2"
+                className="w-6 h-6 md:w-8 md:h-8 ml-0 md:ml-2"
               />
 
               <div className="hidden md:flex items-center space-x-2 relative">
