@@ -1,7 +1,7 @@
 "use client";
 
 import { gsap } from "gsap";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -24,8 +24,12 @@ import { getChainIcon } from "@/lib/chains";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useWithdraw } from "@/hooks/use-withdraw";
 import type { MyAssetItem } from "@/lib/api";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { toast } from "sonner";
+import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
 
 const ARBITRUM_ICON = getChainIcon("arbitrum");
+const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 type Step = "select-token" | "enter-amount";
 
@@ -50,6 +54,32 @@ export function CentuariWithdrawDialog() {
   } = useWithdraw();
 
   const isProcessing = isPending;
+
+  // ─── Network detection ───────────────────────────────────────────────
+  const { user: privyUser } = usePrivy();
+  const { wallets: privyWallets } = useWallets();
+  const linkedAddr = privyUser?.wallet?.address?.toLowerCase();
+  const loginWallet = linkedAddr
+    ? privyWallets.find(
+        (w) =>
+          w.walletClientType !== "privy" &&
+          w.address.toLowerCase() === linkedAddr,
+      )
+    : undefined;
+  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
+  const [switchingChain, setSwitchingChain] = useState(false);
+
+  const handleSwitchChain = async () => {
+    if (!loginWallet || switchingChain) return;
+    setSwitchingChain(true);
+    try {
+      await loginWallet.switchChain(ACTIVE_CHAIN.id);
+    } catch {
+      toast.error("Failed to switch network");
+    } finally {
+      setSwitchingChain(false);
+    }
+  };
 
   // Filter to assets with positive non-collateral balance
   const withdrawableAssets = assets.filter(
@@ -216,21 +246,46 @@ export function CentuariWithdrawDialog() {
                   </div>
 
                   <div className="mt-8 px-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <img
-                        src={ARBITRUM_ICON}
-                        alt="Arbitrum Sepolia"
-                        width={20}
-                        height={20}
-                        className="size-5 rounded-full object-cover"
-                      />
-                      <CentuariTypography
-                        variant="b2"
-                        className="text-muted-foreground"
+                    {isWrongNetwork ? (
+                      <button
+                        type="button"
+                        onClick={handleSwitchChain}
+                        disabled={switchingChain}
+                        className="flex w-full items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-400 transition-colors hover:bg-yellow-500/20 disabled:opacity-50 mb-3"
                       >
-                        Arbitrum Sepolia
-                      </CentuariTypography>
-                    </div>
+                        {switchingChain ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4" />
+                        )}
+                        <span className="flex-1 text-left">
+                          {switchingChain ? "Switching..." : `Switch to ${ACTIVE_CHAIN_LABEL}`}
+                        </span>
+                        <img
+                          src={ARBITRUM_ICON}
+                          alt={ACTIVE_CHAIN_LABEL}
+                          width={20}
+                          height={20}
+                          className="size-5 rounded-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 mb-3">
+                        <img
+                          src={ARBITRUM_ICON}
+                          alt="Arbitrum Sepolia"
+                          width={20}
+                          height={20}
+                          className="size-5 rounded-full object-cover"
+                        />
+                        <CentuariTypography
+                          variant="b2"
+                          className="text-muted-foreground"
+                        >
+                          Arbitrum Sepolia
+                        </CentuariTypography>
+                      </div>
+                    )}
                     <CentuariTypography
                       variant="s3"
                       className="text-muted-foreground mb-3"
@@ -472,7 +527,8 @@ export function CentuariWithdrawDialog() {
                   isProcessing ||
                   !withdrawAmount ||
                   amountNum <= 0 ||
-                  exceedsBalance
+                  exceedsBalance ||
+                  isWrongNetwork
                 }
               >
                 {isProcessing ? (
