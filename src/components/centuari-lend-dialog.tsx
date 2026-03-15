@@ -24,8 +24,16 @@ import { SelectToken } from "./select-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
-import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
+import {
+  formatNumberWithSeparator,
+  parseNumberFromSeparator,
+  formatCurrency,
+  calculateFutureAmount,
+} from "@/lib/utils";
+import {
+  getDefaultMaturityTimestamp,
+  formatMaturityTimestamp,
+} from "@/lib/maturity";
 import { Loader2 } from "lucide-react";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
@@ -104,7 +112,11 @@ export function CentuariLendDialog({
   // Maturity date - withdrawal unlocks on the same date
   const maturityDate = getDefaultMaturityTimestamp();
 
-  const futureAmount = calculateFutureAmount(numericAmount, lendAPRNumeric, maturityDate);
+  const futureAmount = calculateFutureAmount(
+    numericAmount,
+    lendAPRNumeric,
+    maturityDate,
+  );
 
   // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +175,7 @@ export function CentuariLendDialog({
           lendViewRef.current,
           { x: -100, opacity: 0 },
           { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15"
+          "-=0.15",
         );
     } else if (
       viewMode === "deposit-lend" &&
@@ -181,7 +193,7 @@ export function CentuariLendDialog({
           collateralViewRef.current,
           { x: 100, opacity: 0 },
           { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15"
+          "-=0.15",
         );
     }
   }, [viewMode]);
@@ -212,18 +224,16 @@ export function CentuariLendDialog({
             : undefined,
         );
 
-        // Invalidate portfolio-related queries so balances refresh
-        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
         setAmountToLend("");
         setDisplayAmount("");
         setIsDialogOpen(false);
         setShowSuccessDialog(true);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Transaction failed. Please try again.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Transaction failed. Please try again.";
         setSubmitError(message);
       }
     } else if (viewMode === "deposit-lend") {
@@ -263,7 +273,9 @@ export function CentuariLendDialog({
                       width={76.5}
                       height={76.5}
                     />
-                    <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
+                    <CentuariTypography variant="h4">
+                      {token_symbol}
+                    </CentuariTypography>
                     <div className="flex w-full items-center justify-around mt-4 px-6">
                       <div>
                         <CentuariTypography
@@ -275,7 +287,10 @@ export function CentuariLendDialog({
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {formatMaturityTimestamp(maturityDate)}
                         </CentuariTypography>
                       </div>
@@ -285,11 +300,16 @@ export function CentuariLendDialog({
                           variant="b3"
                         >
                           Vault Total{" "}
-                          <CentuariTooltip message={`The total amount of ${token_symbol} in the vault.`}>
+                          <CentuariTooltip
+                            message={`The total amount of ${token_symbol} in the vault.`}
+                          >
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {formattedVaultTotal}
                         </CentuariTypography>
                       </div>
@@ -299,11 +319,16 @@ export function CentuariLendDialog({
                           variant="b3"
                         >
                           Lend APR{" "}
-                          <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
+                          <CentuariTooltip
+                            message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}
+                          >
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {lendAPR}
                         </CentuariTypography>
                       </div>
@@ -341,7 +366,11 @@ export function CentuariLendDialog({
                           Max
                         </Button>
                       }
-                      balanceText={dataLoading ? "Loading..." : `${token_symbol} ${formatNumberWithSeparator(availableBalance)}`}
+                      balanceText={
+                        dataLoading
+                          ? "Loading..."
+                          : `${token_symbol} ${formatNumberWithSeparator(availableBalance)}`
+                      }
                       value={displayAmount}
                       onChange={handleAmountChange}
                     />
@@ -443,7 +472,11 @@ export function CentuariLendDialog({
                           </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
-                          <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"}</p>
+                          <p>
+                            {numericAmount > 0
+                              ? formatCurrency(transactionFee)
+                              : "$0.00"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -454,7 +487,11 @@ export function CentuariLendDialog({
                           </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
-                          <p>{numericAmount > 0 ? formatCurrency(amountToPay) : "$0.00"}</p>
+                          <p>
+                            {numericAmount > 0
+                              ? formatCurrency(amountToPay)
+                              : "$0.00"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -468,7 +505,9 @@ export function CentuariLendDialog({
                           </CentuariTooltip>{" "}
                         </div>
                         <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-                          {numericAmount > 0 ? formatCurrency(futureAmount) : "$0.00"}
+                          {numericAmount > 0
+                            ? formatCurrency(futureAmount)
+                            : "$0.00"}
                         </span>
                       </div>
                     </div>
@@ -613,8 +652,8 @@ export function CentuariLendDialog({
               </CentuariButton>
             </div>
             <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
-              This position is automatically refinanced. At maturity, it will roll
-              over to the next available term unless you take action.
+              This position is automatically refinanced. At maturity, it will
+              roll over to the next available term unless you take action.
             </p>
           </DialogFooter>
         </DialogContent>
@@ -624,7 +663,11 @@ export function CentuariLendDialog({
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
         title="Lend Complete"
-        description={successAmount ? `You have successfully lent ${successAmount} ${token_symbol} to the vault.` : `Your ${token_symbol} lend has been completed successfully.`}
+        description={
+          successAmount
+            ? `You have successfully lent ${successAmount} ${token_symbol} to the vault.`
+            : `Your ${token_symbol} lend has been completed successfully.`
+        }
         primaryActionLabel="Start Earning"
         onPrimaryAction={() => router.push("/")}
         secondaryActionLabel="Done"

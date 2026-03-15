@@ -13,6 +13,7 @@ import {
   useDetectedWallets,
   type DetectedWallet,
 } from "@/hooks/use-detected-wallets";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
 
 export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
   const id = useId();
@@ -37,11 +38,36 @@ export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
       // EIP-55 checksum required by SIWE spec
       const address = getAddress(rawAddress);
 
-      // Get chain ID from the wallet itself (not wagmi default)
-      const chainIdHex = (await wallet.provider.request({
-        method: "eth_chainId",
-      })) as string;
-      const chainId = Number.parseInt(chainIdHex, 16);
+      // Switch wallet to the correct chain before SIWE login
+      const targetChainHex = `0x${ACTIVE_CHAIN.id.toString(16)}`;
+      try {
+        await wallet.provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: targetChainHex }],
+        });
+      } catch (switchErr: unknown) {
+        // Chain not added — try adding it
+        if ((switchErr as { code?: number })?.code === 4902) {
+          await wallet.provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: targetChainHex,
+                chainName: ACTIVE_CHAIN.name,
+                rpcUrls: [ACTIVE_CHAIN.rpcUrls.default.http[0]],
+                nativeCurrency: ACTIVE_CHAIN.nativeCurrency,
+                blockExplorerUrls: ACTIVE_CHAIN.blockExplorers
+                  ? [ACTIVE_CHAIN.blockExplorers.default.url]
+                  : undefined,
+              },
+            ],
+          });
+        } else {
+          throw switchErr;
+        }
+      }
+
+      const chainId = ACTIVE_CHAIN.id;
 
       // Generate SIWE message via Privy
       const message = await generateSiweMessage({
@@ -112,7 +138,8 @@ export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
             ))}
             {detectedWallets.length === 0 && (
               <CentuariTypography className="text-sm text-muted-foreground px-3 py-4 text-center">
-                No wallet extensions detected. Please install a wallet like Rabby or MetaMask.
+                No wallet extensions detected. Please install a wallet like
+                Rabby or MetaMask.
               </CentuariTypography>
             )}
           </div>

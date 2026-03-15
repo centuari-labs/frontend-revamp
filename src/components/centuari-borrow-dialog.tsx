@@ -26,8 +26,16 @@ import { SelectToken } from "./select-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
-import { formatNumberWithSeparator, parseNumberFromSeparator, formatCurrency, calculateFutureAmount } from "@/lib/utils";
-import { getDefaultMaturityTimestamp, formatMaturityTimestamp } from "@/lib/maturity";
+import {
+  formatNumberWithSeparator,
+  parseNumberFromSeparator,
+  formatCurrency,
+  calculateFutureAmount,
+} from "@/lib/utils";
+import {
+  getDefaultMaturityTimestamp,
+  formatMaturityTimestamp,
+} from "@/lib/maturity";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { getLiquidationThreshold } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
@@ -116,38 +124,51 @@ export function CentuariBorrowDialog({
   // Maturity date - withdrawal unlocks on the same date
   const maturityDate = getDefaultMaturityTimestamp();
 
-  const futureAmount = calculateFutureAmount(numericAmount, borrowAPRNumeric, maturityDate);
+  const futureAmount = calculateFutureAmount(
+    numericAmount,
+    borrowAPRNumeric,
+    maturityDate,
+  );
 
   // Calculate total portfolio value from selected collaterals
-  const totalPortfolioValue = selectedCollaterals.reduce((total, collateralValue) => {
-    const portfolioValue = portfolio[collateralValue] || 0;
-    return total + portfolioValue;
-  }, 0);
+  const totalPortfolioValue = selectedCollaterals.reduce(
+    (total, collateralValue) => {
+      const portfolioValue = portfolio[collateralValue] || 0;
+      return total + portfolioValue;
+    },
+    0,
+  );
 
   // Calculate weighted LTV (average LTV of selected collaterals)
-  const weightedLTV = selectedCollaterals.length > 0 && totalPortfolioValue > 0
-    ? selectedCollaterals.reduce((sum, collateralValue) => {
-      const token = collateralTokenList.find(t => t.value === collateralValue);
-      const portfolioValue = portfolio[collateralValue] || 0;
-      if (token && portfolioValue > 0) {
-        return sum + (token.ltv * portfolioValue);
-      }
-      return sum;
-    }, 0) / totalPortfolioValue
-    : parseAPR(collateralFactor) / 100; // Use collateralFactor as LTV if no selection
+  const weightedLTV =
+    selectedCollaterals.length > 0 && totalPortfolioValue > 0
+      ? selectedCollaterals.reduce((sum, collateralValue) => {
+          const token = collateralTokenList.find(
+            (t) => t.value === collateralValue,
+          );
+          const portfolioValue = portfolio[collateralValue] || 0;
+          if (token && portfolioValue > 0) {
+            return sum + token.ltv * portfolioValue;
+          }
+          return sum;
+        }, 0) / totalPortfolioValue
+      : parseAPR(collateralFactor) / 100; // Use collateralFactor as LTV if no selection
 
   // Calculate weighted Liquidation Threshold (average LT of selected collaterals)
-  const weightedLT = selectedCollaterals.length > 0 && totalPortfolioValue > 0
-    ? selectedCollaterals.reduce((sum, collateralValue) => {
-      const token = collateralTokenList.find(t => t.value === collateralValue);
-      const portfolioValue = portfolio[collateralValue] || 0;
-      if (token && portfolioValue > 0) {
-        const lt = getLiquidationThreshold(token);
-        return sum + (lt * portfolioValue);
-      }
-      return sum;
-    }, 0) / totalPortfolioValue
-    : weightedLTV * 0.92; // Default: 92% of LTV
+  const weightedLT =
+    selectedCollaterals.length > 0 && totalPortfolioValue > 0
+      ? selectedCollaterals.reduce((sum, collateralValue) => {
+          const token = collateralTokenList.find(
+            (t) => t.value === collateralValue,
+          );
+          const portfolioValue = portfolio[collateralValue] || 0;
+          if (token && portfolioValue > 0) {
+            const lt = getLiquidationThreshold(token);
+            return sum + lt * portfolioValue;
+          }
+          return sum;
+        }, 0) / totalPortfolioValue
+      : weightedLTV * 0.92; // Default: 92% of LTV
 
   // Calculate max borrow capacity = (Total Portfolio Value × LTV)
   const maxBorrowCapacity = totalPortfolioValue * weightedLTV;
@@ -164,16 +185,23 @@ export function CentuariBorrowDialog({
   // After borrow: HF = (Portfolio × LT) / (Current Debt + New Borrow)
   // Only calculate if we have collateral selected and borrow amount
   // Ensure health factor is a reasonable number (typically 0-10 range)
-  const healthFactor = newTotalDebt > 0 && totalPortfolioValue > 0 && !isNaN(weightedLT) && selectedCollaterals.length > 0
-    ? (() => {
-      const calculatedHF = (totalPortfolioValue * weightedLT) / newTotalDebt;
-      // Cap at 10 for display, but log if it's unreasonably large (likely a bug)
-      if (calculatedHF > 10) {
-        console.warn(`Health factor is unusually high: ${calculatedHF}. Portfolio: ${totalPortfolioValue}, LT: ${weightedLT}, Debt: ${newTotalDebt}`);
-      }
-      return Math.min(calculatedHF, 10);
-    })()
-    : 0;
+  const healthFactor =
+    newTotalDebt > 0 &&
+    totalPortfolioValue > 0 &&
+    !isNaN(weightedLT) &&
+    selectedCollaterals.length > 0
+      ? (() => {
+          const calculatedHF =
+            (totalPortfolioValue * weightedLT) / newTotalDebt;
+          // Cap at 10 for display, but log if it's unreasonably large (likely a bug)
+          if (calculatedHF > 10) {
+            console.warn(
+              `Health factor is unusually high: ${calculatedHF}. Portfolio: ${totalPortfolioValue}, LT: ${weightedLT}, Debt: ${newTotalDebt}`,
+            );
+          }
+          return Math.min(calculatedHF, 10);
+        })()
+      : 0;
 
   // Convert health factor to percentage for display (0-100 scale)
   // More realistic mapping:
@@ -183,17 +211,21 @@ export function CentuariBorrowDialog({
   // - HF >= 1.0: Critical (25%)
   // - HF < 1.0: Danger (0%)
   // Show 0 (empty) if no collateral selected or no borrow amount
-  const healthFactorPercentage = healthFactor > 0 && !isNaN(healthFactor) && selectedCollaterals.length > 0 && numericAmount > 0
-    ? healthFactor >= 2.5
-      ? 100
-      : healthFactor >= 1.5
-        ? 75 + ((healthFactor - 1.5) / 1.0) * 25 // 75-100%
-        : healthFactor >= 1.2
-          ? 50 + ((healthFactor - 1.2) / 0.3) * 25 // 50-75%
-          : healthFactor >= 1.0
-            ? 25 + ((healthFactor - 1.0) / 0.2) * 25 // 25-50%
-            : (healthFactor / 1.0) * 25 // 0-25%
-    : 0;
+  const healthFactorPercentage =
+    healthFactor > 0 &&
+    !isNaN(healthFactor) &&
+    selectedCollaterals.length > 0 &&
+    numericAmount > 0
+      ? healthFactor >= 2.5
+        ? 100
+        : healthFactor >= 1.5
+          ? 75 + ((healthFactor - 1.5) / 1.0) * 25 // 75-100%
+          : healthFactor >= 1.2
+            ? 50 + ((healthFactor - 1.2) / 0.3) * 25 // 50-75%
+            : healthFactor >= 1.0
+              ? 25 + ((healthFactor - 1.0) / 0.2) * 25 // 25-50%
+              : (healthFactor / 1.0) * 25 // 0-25%
+      : 0;
 
   // Format vault total with currency
   const formattedVaultTotal = formatCurrency(vaultTotal);
@@ -238,12 +270,13 @@ export function CentuariBorrowDialog({
     if (open) {
       // Auto-select all tokens that are marked as collateral and have balance
       const autoSelected = collateralTokenList
-        .filter(token =>
-          portfolio[token.value] &&
-          portfolio[token.value] > 0 &&
-          collateralStatus[token.value] === true
+        .filter(
+          (token) =>
+            portfolio[token.value] &&
+            portfolio[token.value] > 0 &&
+            collateralStatus[token.value] === true,
         )
-        .map(token => token.value);
+        .map((token) => token.value);
 
       setSelectedCollaterals(autoSelected);
       setSubmitError(null);
@@ -275,7 +308,7 @@ export function CentuariBorrowDialog({
         borrowViewRef.current,
         { x: -100, opacity: 0 },
         { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-        "-=0.15"
+        "-=0.15",
       );
     } else if (
       viewMode === "deposit-collateral" &&
@@ -291,7 +324,7 @@ export function CentuariBorrowDialog({
         collateralViewRef.current,
         { x: 100, opacity: 0 },
         { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-        "-=0.15"
+        "-=0.15",
       );
     }
   }, [viewMode]);
@@ -321,11 +354,6 @@ export function CentuariBorrowDialog({
             : undefined,
         );
 
-        // Invalidate portfolio-related queries so balances refresh
-        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-
         setSuccessAmount(formatNumberWithSeparator(numericAmount));
         setAmountToBorrow("");
         setDisplayAmount("");
@@ -333,7 +361,10 @@ export function CentuariBorrowDialog({
         setIsDialogOpen(false);
         setShowSuccessDialog(true);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Transaction failed. Please try again.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Transaction failed. Please try again.";
         setSubmitError(message);
       }
     } else if (viewMode === "deposit-collateral") {
@@ -374,7 +405,9 @@ export function CentuariBorrowDialog({
                       width={76.5}
                       height={76.5}
                     />
-                    <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
+                    <CentuariTypography variant="h4">
+                      {token_symbol}
+                    </CentuariTypography>
                     <div className="flex w-full items-center justify-around mt-4 px-6">
                       <div>
                         <CentuariTypography
@@ -386,7 +419,10 @@ export function CentuariBorrowDialog({
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {formatMaturityTimestamp(maturityDate)}
                         </CentuariTypography>
                       </div>
@@ -396,11 +432,16 @@ export function CentuariBorrowDialog({
                           variant="b3"
                         >
                           Borrow APR{" "}
-                          <CentuariTooltip message={`The interest rate at which you can borrow ${token_symbol}.`}>
+                          <CentuariTooltip
+                            message={`The interest rate at which you can borrow ${token_symbol}.`}
+                          >
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {borrowAPR}
                         </CentuariTypography>
                       </div>
@@ -410,11 +451,16 @@ export function CentuariBorrowDialog({
                           variant="b3"
                         >
                           Lend APR{" "}
-                          <CentuariTooltip message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}>
+                          <CentuariTooltip
+                            message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}
+                          >
                             <Info size={16} />
                           </CentuariTooltip>
                         </CentuariTypography>
-                        <CentuariTypography variant="h5" className="text-center">
+                        <CentuariTypography
+                          variant="h5"
+                          className="text-center"
+                        >
                           {lendAPR}
                         </CentuariTypography>
                       </div>
@@ -446,9 +492,9 @@ export function CentuariBorrowDialog({
                           />
                         }
                         // rightIcon={
-                        //   <Button 
-                        //     variant="link" 
-                        //     className="px-0" 
+                        //   <Button
+                        //     variant="link"
+                        //     className="px-0"
                         //     type="button"
                         //     onClick={handleMaxClick}
                         //   >
@@ -537,7 +583,9 @@ export function CentuariBorrowDialog({
                           </CentuariTooltip>
                           <Badge
                             variant={
-                              healthFactor === 0 || selectedCollaterals.length === 0 || numericAmount === 0
+                              healthFactor === 0 ||
+                              selectedCollaterals.length === 0 ||
+                              numericAmount === 0
                                 ? "default"
                                 : healthFactor >= 2.5
                                   ? "success"
@@ -552,7 +600,12 @@ export function CentuariBorrowDialog({
                           >
                             {(() => {
                               // Ensure we're displaying the actual health factor value, not other values
-                              if (healthFactor > 0 && !isNaN(healthFactor) && selectedCollaterals.length > 0 && numericAmount > 0) {
+                              if (
+                                healthFactor > 0 &&
+                                !isNaN(healthFactor) &&
+                                selectedCollaterals.length > 0 &&
+                                numericAmount > 0
+                              ) {
                                 // Format health factor with 2 decimal places
                                 // Health factor should be in range 0-10 typically
                                 // Ensure health factor is a reasonable number (not thousands)
@@ -563,7 +616,9 @@ export function CentuariBorrowDialog({
                                   hfValue = 10;
                                 }
 
-                                const hfDisplay = parseFloat(hfValue.toFixed(2));
+                                const hfDisplay = parseFloat(
+                                  hfValue.toFixed(2),
+                                );
                                 let status: string;
 
                                 if (hfDisplay >= 2.5) {
@@ -589,7 +644,11 @@ export function CentuariBorrowDialog({
                           <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
                             <HealthFactor
                               targetValue={healthFactorPercentage}
-                              healthFactor={healthFactor > 0 && !isNaN(healthFactor) ? healthFactor : undefined}
+                              healthFactor={
+                                healthFactor > 0 && !isNaN(healthFactor)
+                                  ? healthFactor
+                                  : undefined
+                              }
                             />
                           </div>
                           <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
@@ -598,16 +657,22 @@ export function CentuariBorrowDialog({
                                 <>
                                   If portfolio value drops{" "}
                                   <span className="text-white font-medium">
-                                    below {formatCurrency(newTotalDebt / weightedLT)}
-                                  </span>
-                                  {" "}or total debt exceeds{" "}
+                                    below{" "}
+                                    {formatCurrency(newTotalDebt / weightedLT)}
+                                  </span>{" "}
+                                  or total debt exceeds{" "}
                                   <span className="text-white font-medium">
-                                    {formatCurrency(totalPortfolioValue * weightedLT)}
+                                    {formatCurrency(
+                                      totalPortfolioValue * weightedLT,
+                                    )}
                                   </span>
                                   , your position could be liquidated.
                                 </>
                               ) : (
-                                <>Select collateral from portfolio and enter borrow amount to see health factor.</>
+                                <>
+                                  Select collateral from portfolio and enter
+                                  borrow amount to see health factor.
+                                </>
                               )}
                             </p>
                           </div>
@@ -632,7 +697,12 @@ export function CentuariBorrowDialog({
                             </CentuariTooltip>
                           </p>
                           <div className="flex items-center gap-1">
-                            <p>{numericAmount > 0 ? formatCurrency(transactionFee) : "$0.00"} (0.01%)</p>
+                            <p>
+                              {numericAmount > 0
+                                ? formatCurrency(transactionFee)
+                                : "$0.00"}{" "}
+                              (0.01%)
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -640,7 +710,11 @@ export function CentuariBorrowDialog({
                             Amount to Pay Now
                           </p>
                           <div className="flex items-center gap-1">
-                            <p>{numericAmount > 0 ? formatCurrency(amountToPay) : "$0.00"}</p>
+                            <p>
+                              {numericAmount > 0
+                                ? formatCurrency(amountToPay)
+                                : "$0.00"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -654,7 +728,9 @@ export function CentuariBorrowDialog({
                             </CentuariTooltip>{" "}
                           </div>
                           <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-                            {numericAmount > 0 ? formatCurrency(futureAmount) : "$0.00"}
+                            {numericAmount > 0
+                              ? formatCurrency(futureAmount)
+                              : "$0.00"}
                           </span>
                         </div>
                       </div>
@@ -812,8 +888,8 @@ export function CentuariBorrowDialog({
               </CentuariButton>
             </div>
             <p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
-              This position is automatically refinanced. At maturity, it will roll
-              over to the next available term unless you take action.
+              This position is automatically refinanced. At maturity, it will
+              roll over to the next available term unless you take action.
             </p>
           </DialogFooter>
         </DialogContent>
@@ -823,7 +899,11 @@ export function CentuariBorrowDialog({
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
         title="Borrow Complete"
-        description={successAmount ? `You have successfully borrowed ${successAmount} ${token_symbol} from the vault.` : `Your ${token_symbol} borrow has been completed successfully.`}
+        description={
+          successAmount
+            ? `You have successfully borrowed ${successAmount} ${token_symbol} from the vault.`
+            : `Your ${token_symbol} borrow has been completed successfully.`
+        }
         primaryActionLabel="Start Earning"
         onPrimaryAction={() => router.push("/")}
         secondaryActionLabel="Done"

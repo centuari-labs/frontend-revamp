@@ -191,7 +191,9 @@ export function BorrowForm({
                   form.limitNumericAmount > form.limitAvailableQuota ||
                   form.limitSelectedCollaterals.length === 0 ||
                   form.limitTotalPortfolioValue === 0 ||
-                  form.limitHealthFactor < 1.0
+                  form.limitHealthFactor < 1.0 ||
+                  !form.limitTargetAPR ||
+                  !form.limitMaturity
                 }
               >
                 {form.isPending ? (
@@ -348,7 +350,8 @@ export function BorrowForm({
                   form.marketNumericAmount > form.marketAvailableQuota ||
                   form.marketSelectedCollaterals.length === 0 ||
                   form.marketTotalPortfolioValue === 0 ||
-                  form.marketHealthFactor < 1.0
+                  form.marketHealthFactor < 1.0 ||
+                  !form.marketMaturity
                 }
               >
                 {form.isPending ? (
