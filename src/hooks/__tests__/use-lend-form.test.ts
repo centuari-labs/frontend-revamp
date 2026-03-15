@@ -59,8 +59,8 @@ vi.mock("@/lib/positions-adapter.mock", () => ({
 }));
 
 const tokenList = [
-  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/xsgd-icon.png", value: "xsgd", label: "XSGD" },
+  { logo: "/tokens/usdc-icon.webp", value: "usdc", label: "USDC" },
+  { logo: "/tokens/xsgd-icon.webp", value: "xsgd", label: "XSGD" },
 ];
 
 beforeEach(() => {

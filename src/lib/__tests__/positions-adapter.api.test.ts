@@ -155,7 +155,7 @@ describe("normalizeOrderToLendPosition", () => {
     expect(position.apr).toBeCloseTo(0.065, 4);
     expect(position.maturity).toBe(1735689600000);
     expect(position.status).toBe("pending");
-    expect(position.assetImg).toBe("/tokens/usdc-icon.svg");
+    expect(position.assetImg).toBe("/tokens/usdc-icon.webp");
   });
 
   it("maps OPEN status to pending", () => {
@@ -193,7 +193,7 @@ describe("normalizeOrderToLendPosition", () => {
 describe("submitLendLimitOrder", () => {
   const baseParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 1000,
     amountInUsd: 1000,
@@ -302,7 +302,7 @@ describe("normalizeOrderToBorrowPosition", () => {
     expect(position.maturity).toBe(1735689600000);
     expect(position.status).toBe("pending");
     expect(position.collateralTokens).toEqual([]);
-    expect(position.assetImg).toBe("/tokens/usdc-icon.svg");
+    expect(position.assetImg).toBe("/tokens/usdc-icon.webp");
   });
 
   it("accepts market orderType", () => {
@@ -330,7 +330,7 @@ describe("normalizeOrderToBorrowPosition", () => {
 describe("submitLendMarketOrder", () => {
   const baseParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 1000,
     amountInUsd: 1000,
@@ -384,7 +384,7 @@ describe("submitLendMarketOrder", () => {
 describe("submitBorrowLimitOrder", () => {
   const baseParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 500,
     maturity: 1735689600000,
@@ -440,7 +440,7 @@ describe("submitBorrowLimitOrder", () => {
 describe("submitBorrowMarketOrder", () => {
   const baseParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 500,
     maturity: 1735689600000,

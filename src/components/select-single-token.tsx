@@ -103,7 +103,7 @@ export function SelectSingleToken() {
               <SelectGroup>
                 <SelectItem value="usdt">
                   <Image
-                    src={"/tokens/usdt-icon.svg"}
+                    src={"/tokens/usdt-icon.webp"}
                     width={16}
                     height={16}
                     alt="USDT"
@@ -112,7 +112,7 @@ export function SelectSingleToken() {
                 </SelectItem>
                 <SelectItem value="usdc">
                   <Image
-                    src={"/tokens/usdc-icon.svg"}
+                    src={"/tokens/usdc-icon.webp"}
                     width={16}
                     height={16}
                     alt="USDC"
@@ -121,7 +121,7 @@ export function SelectSingleToken() {
                 </SelectItem>
                 <SelectItem value="btc">
                   <Image
-                    src={"/tokens/btc-icon.svg"}
+                    src={"/tokens/btc-icon.webp"}
                     width={16}
                     height={16}
                     alt="BTC"

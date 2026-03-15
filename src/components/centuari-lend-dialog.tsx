@@ -168,7 +168,7 @@ export function CentuariLendDialog({
 
   const depositTokenIcon = depositSelectedToken
     ? getTokenLogo(depositSelectedToken.symbol, depositSelectedToken.imageUrl ?? undefined)
-    : "/tokens/usdc-icon.svg";
+    : "/tokens/usdc-icon.webp";
 
   const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

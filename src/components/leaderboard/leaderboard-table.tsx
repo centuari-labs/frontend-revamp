@@ -105,7 +105,7 @@ export const columns: ColumnDef<LeaderboardProps>[] = [
           <Image src="/assets/tier-3.png" alt="tier1" width={24} height={24} />
           <div className="flex items-center gap-2">
             <Image
-              src="/assets/metamask.png"
+              src="/assets/metamask.webp"
               alt="verified"
               width={20}
               height={20}
@@ -264,7 +264,7 @@ export function LeaderboardTable() {
                         />
                         <div className="flex items-center gap-2">
                           <Image
-                            src="/assets/metamask.png"
+                            src="/assets/metamask.webp"
                             alt="verified"
                             width={20}
                             height={20}

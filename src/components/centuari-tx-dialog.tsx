@@ -33,12 +33,12 @@ export function CentuariTxDialog({
     success: {
       title,
       description,
-      image: "/assets/tx-success.png",
+      image: "/assets/tx-success.webp",
     },
     failed: {
       title,
       description,
-      image: "/assets/tx-failed.png",
+      image: "/assets/tx-failed.webp",
     },
   };
   return (

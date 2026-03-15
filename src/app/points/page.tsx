@@ -157,7 +157,7 @@ export default function PointsPage() {
                 </div>
                 <div className="relative overflow-hidden rounded-lg border border-white/5 bg-slate-800/95 p-2 2xl:p-3 mx-auto sm:mx-0">
                   <Image
-                    src="/assets/centuari-single-token.png"
+                    src="/assets/centuari-single-token.webp"
                     alt="centuari single token"
                     width={90}
                     height={90}
@@ -191,7 +191,7 @@ export default function PointsPage() {
                     <div className="inline-flex items-center gap-3 2xl:gap-4">
                       <div className="relative inline-flex gap-1 rounded-lg bg-neutral-80/10 p-2 2xl:p-2.5 border border-white/5">
                         <Image
-                          src={"/assets/centuari-single-token.png"}
+                          src={"/assets/centuari-single-token.webp"}
                           alt="single centuari token"
                           width={22}
                           height={22}
@@ -212,7 +212,7 @@ export default function PointsPage() {
                     <div className="inline-flex items-center gap-3 2xl:gap-4">
                       <div className="relative inline-flex gap-1 rounded-lg bg-neutral-80/10 p-2 2xl:p-2.5 border border-white/5">
                         <Image
-                          src={"/assets/centuari-single-token.png"}
+                          src={"/assets/centuari-single-token.webp"}
                           alt="single centuari token"
                           width={22}
                           height={22}

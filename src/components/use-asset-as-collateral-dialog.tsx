@@ -67,7 +67,7 @@ export function UseAssetAsCollateralDialog({
                     unoptimized
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "/tokens/eth-icon.svg";
+                      target.src = "/tokens/eth-icon.webp";
                     }}
                   />
                 </div>

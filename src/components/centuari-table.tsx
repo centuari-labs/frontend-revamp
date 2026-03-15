@@ -39,9 +39,9 @@ import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 const data: PositionProps[] = [
   {
     id: "a1b2c3d4",
-    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenImg: "/tokens/usdt-icon.webp",
     collateralTokenSymbol: "USDT",
-    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenImg: "/tokens/usdc-icon.webp",
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
@@ -52,9 +52,9 @@ const data: PositionProps[] = [
   },
   {
     id: "3u1reuv4",
-    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenImg: "/tokens/usdt-icon.webp",
     collateralTokenSymbol: "USDT",
-    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenImg: "/tokens/usdc-icon.webp",
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
@@ -65,9 +65,9 @@ const data: PositionProps[] = [
   },
   {
     id: "derv1ws0",
-    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenImg: "/tokens/usdt-icon.webp",
     collateralTokenSymbol: "USDT",
-    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenImg: "/tokens/usdc-icon.webp",
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
@@ -78,9 +78,9 @@ const data: PositionProps[] = [
   },
   {
     id: "5kma53ae",
-    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenImg: "/tokens/usdt-icon.webp",
     collateralTokenSymbol: "USDT",
-    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenImg: "/tokens/usdc-icon.webp",
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
@@ -91,9 +91,9 @@ const data: PositionProps[] = [
   },
   {
     id: "bhqecj4p",
-    collateralTokenImg: "/tokens/usdt-icon.svg",
+    collateralTokenImg: "/tokens/usdt-icon.webp",
     collateralTokenSymbol: "USDT",
-    loanTokenImg: "/tokens/usdc-icon.svg",
+    loanTokenImg: "/tokens/usdc-icon.webp",
     loanTokenSymbol: "USDC",
     amount: 500,
     apr: 0.05,
@@ -120,10 +120,10 @@ export type PositionProps = {
 
 const tokenList = [
   { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
-  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/xaut-icon.webp", value: "xaut", label: "Tether Gold" },
+  { logo: "/tokens/eth-icon.webp", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
-  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
+  { logo: "/tokens/usdc-icon.webp", value: "usdc", label: "USDC" },
   { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
   { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
   { logo: "/tokens/centuari-centuari.png", value: "centuari", label: "Centuari" },
@@ -170,7 +170,7 @@ const ActionCell: React.FC<{
   // Since PositionProps has loanTokenSymbol, it's a borrow position
   const positionForDialog: PositionForDialog | null = row.loanTokenSymbol ? {
     id: row.id,
-    assetImg: row.loanTokenImg || "/tokens/usdc-icon.svg",
+    assetImg: row.loanTokenImg || "/tokens/usdc-icon.webp",
     assetName: row.loanTokenSymbol,
     amount: row.amount,
     apr: row.apr || 0.12,

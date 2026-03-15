@@ -20,12 +20,12 @@ import { CentuariAlert } from "@/components/centuari-alert";
 import { CentuariCalender } from "@/components/centuari-calender";
 
 const tokenList = [
-  { logo: "/tokens/btc-icon.svg", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/xaut-icon.png", value: "xaut", label: "Tether Gold" },
-  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
+  { logo: "/tokens/btc-icon.webp", value: "btc", label: "Bitcoin" },
+  { logo: "/tokens/xaut-icon.webp", value: "xaut", label: "Tether Gold" },
+  { logo: "/tokens/eth-icon.webp", value: "eth", label: "Ethereum" },
   { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
-  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/usdt-icon.svg", value: "usdt", label: "USDT" },
+  { logo: "/tokens/usdc-icon.webp", value: "usdc", label: "USDC" },
+  { logo: "/tokens/usdt-icon.webp", value: "usdt", label: "USDT" },
   { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
   {
     logo: "/tokens/centuari-centuari.png",

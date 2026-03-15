@@ -32,7 +32,7 @@ describe("MARKET_TOKEN_LIST", () => {
 
 describe("getTokenLogo", () => {
   it("returns mapped logo for known token", () => {
-    expect(getTokenLogo("usdc")).toBe("/tokens/usdc-icon.svg");
+    expect(getTokenLogo("usdc")).toBe("/tokens/usdc-icon.webp");
   });
 
   it("returns assetImg if starts with /", () => {
@@ -40,22 +40,22 @@ describe("getTokenLogo", () => {
   });
 
   it("returns default logo for unknown with no assetImg", () => {
-    expect(getTokenLogo("unknown")).toBe("/tokens/usdc-icon.svg");
+    expect(getTokenLogo("unknown")).toBe("/tokens/usdc-icon.webp");
   });
 
   it("is case-insensitive", () => {
-    expect(getTokenLogo("USDC")).toBe("/tokens/usdc-icon.svg");
-    expect(getTokenLogo("BTC")).toBe("/tokens/btc-icon.svg");
+    expect(getTokenLogo("USDC")).toBe("/tokens/usdc-icon.webp");
+    expect(getTokenLogo("BTC")).toBe("/tokens/btc-icon.webp");
   });
 });
 
 describe("getTokenIcon", () => {
   it("returns icon for known token", () => {
-    expect(getTokenIcon("usdc")).toBe("/tokens/usdc-icon.svg");
+    expect(getTokenIcon("usdc")).toBe("/tokens/usdc-icon.webp");
   });
 
   it("returns default for unknown", () => {
-    expect(getTokenIcon("zzz")).toBe("/tokens/usdt-icon.svg");
+    expect(getTokenIcon("zzz")).toBe("/tokens/usdt-icon.webp");
   });
 });
 

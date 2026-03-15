@@ -144,7 +144,7 @@ describe("full submission chain (mocked API)", () => {
 		const position = await submitLendLimitOrder(
 			{
 				tokenValue: "usdc",
-				tokenLogo: "/tokens/usdc-icon.svg",
+				tokenLogo: "/tokens/usdc-icon.webp",
 				tokenLabel: "USDC",
 				amount: 1000,
 				amountInUsd: 1000,

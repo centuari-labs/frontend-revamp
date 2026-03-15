@@ -73,7 +73,7 @@ describe("useSubmitLend (API mode)", () => {
 
     const params = {
       tokenValue: "usdc",
-      tokenLogo: "/tokens/usdc-icon.svg",
+      tokenLogo: "/tokens/usdc-icon.webp",
       tokenLabel: "USDC",
       amount: 1000,
       amountInUsd: 1000,
@@ -103,7 +103,7 @@ describe("useSubmitLend (API mode)", () => {
       returned = await result.current.submitLimit(
         {
           tokenValue: "usdc",
-          tokenLogo: "/tokens/usdc-icon.svg",
+          tokenLogo: "/tokens/usdc-icon.webp",
           tokenLabel: "USDC",
           amount: 500,
           amountInUsd: 500,
@@ -133,7 +133,7 @@ describe("useSubmitLend (API mode)", () => {
       const p = result.current.submitLimit(
         {
           tokenValue: "usdc",
-          tokenLogo: "/tokens/usdc-icon.svg",
+          tokenLogo: "/tokens/usdc-icon.webp",
           tokenLabel: "USDC",
           amount: 100,
           amountInUsd: 100,
@@ -163,7 +163,7 @@ describe("useSubmitLend (API mode)", () => {
       act(async () => {
         await result.current.submitLimit({
           tokenValue: "usdc",
-          tokenLogo: "/tokens/usdc-icon.svg",
+          tokenLogo: "/tokens/usdc-icon.webp",
           tokenLabel: "USDC",
           amount: 100,
           amountInUsd: 100,
@@ -184,7 +184,7 @@ describe("useSubmitLend (API mode)", () => {
         await result.current.submitLimit(
           {
             tokenValue: "usdc",
-            tokenLogo: "/tokens/usdc-icon.svg",
+            tokenLogo: "/tokens/usdc-icon.webp",
             tokenLabel: "USDC",
             amount: 100,
             amountInUsd: 100,
@@ -208,7 +208,7 @@ describe("useSubmitLend (API mode)", () => {
         await result.current.submitLimit(
           {
             tokenValue: "usdc",
-            tokenLogo: "/tokens/usdc-icon.svg",
+            tokenLogo: "/tokens/usdc-icon.webp",
             tokenLabel: "USDC",
             amount: 100,
             amountInUsd: 100,
@@ -233,7 +233,7 @@ describe("useSubmitLend (API mode)", () => {
       await result.current.submitLimit(
         {
           tokenValue: "usdc",
-          tokenLogo: "/tokens/usdc-icon.svg",
+          tokenLogo: "/tokens/usdc-icon.webp",
           tokenLabel: "USDC",
           amount: 1000,
           amountInUsd: 1000,
@@ -266,7 +266,7 @@ describe("useSubmitLend.submitMarket (API mode)", () => {
 
   const marketParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 2000,
     amountInUsd: 2000,

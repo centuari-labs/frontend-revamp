@@ -173,7 +173,7 @@ export function CentuariDepositDialog() {
 
   const tokenIcon = selectedToken
     ? getTokenLogo(selectedToken.symbol, selectedToken.imageUrl ?? undefined)
-    : "/tokens/usdc-icon.svg";
+    : "/tokens/usdc-icon.webp";
 
   const TokenIcon = () => (
     <Image

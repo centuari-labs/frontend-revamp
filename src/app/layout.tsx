@@ -27,7 +27,7 @@ export default function RootLayout({
         <main
           className="mx-auto max-w-full py-2.5 text-foreground min-h-screen"
           style={{
-            backgroundImage: 'url("/bg-centuari.png")',
+            backgroundImage: 'url("/bg-centuari.webp")',
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             backgroundPosition: "center",
