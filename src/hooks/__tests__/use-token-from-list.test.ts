@@ -3,9 +3,9 @@ import { renderHook, act } from "@testing-library/react";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 
 const tokenList = [
-  { logo: "/tokens/usdc-icon.svg", value: "usdc", label: "USDC" },
-  { logo: "/tokens/xsgd-icon.png", value: "xsgd", label: "XSGD" },
-  { logo: "/tokens/idrx-icon.png", value: "idrx", label: "IDRX" },
+  { logo: "/tokens/usdc-icon.webp", value: "usdc", label: "USDC" },
+  { logo: "/tokens/xsgd-icon.webp", value: "xsgd", label: "XSGD" },
+  { logo: "/tokens/idrx-icon.webp", value: "idrx", label: "IDRX" },
 ];
 
 describe("useTokenFromList", () => {

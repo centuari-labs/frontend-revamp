@@ -21,7 +21,7 @@ export function HomeHeader() {
       {/* Desktop dot-world background - hidden on mobile */}
       <div className="hidden md:block absolute top-0 right-0 w-155.25 h-60 overflow-hidden">
         <Image
-          src="/assets/centuari-home-header.png"
+          src="/assets/centuari-home-header.webp"
           alt="centuari-home-header"
           fill
           className="object-cover z-50 object-right"

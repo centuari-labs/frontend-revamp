@@ -45,7 +45,7 @@ export function TxSuccessAutoCloseDialog({
           </div>
           <div className="mt-6 px-6 flex items-center justify-center flex-col gap-4 pb-6">
             <Image
-              src="/assets/tx-success.png"
+              src="/assets/tx-success.webp"
               alt="Success"
               width={116}
               height={124}

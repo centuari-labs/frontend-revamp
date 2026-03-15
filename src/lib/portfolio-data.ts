@@ -13,7 +13,7 @@ export interface TokenInfo {
 
 export const tokenList: TokenInfo[] = [
   { 
-    logo: "/tokens/btc-icon.svg", 
+    logo: "/tokens/btc-icon.webp", 
     value: "btc", 
     label: "Bitcoin", 
     ltv: 0.75, 
@@ -22,7 +22,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 5, // 5%
   },
   { 
-    logo: "/tokens/xaut-icon.png", 
+    logo: "/tokens/xaut-icon.webp", 
     value: "xaut", 
     label: "Tether Gold", 
     ltv: 0.75, 
@@ -40,7 +40,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 5,
   },
   { 
-    logo: "/tokens/eth-icon.svg", 
+    logo: "/tokens/eth-icon.webp", 
     value: "arb", 
     label: "Arbitrum", 
     ltv: 0.65, 
@@ -49,7 +49,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 8,
   },
   {
-    logo: "/tokens/usdc-icon.svg",
+    logo: "/tokens/usdc-icon.webp",
     value: "usdc",
     label: "USDC",
     ltv: 0.90,
@@ -58,7 +58,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 1,
   },
   {
-    logo: "/tokens/usdt-icon.svg",
+    logo: "/tokens/usdt-icon.webp",
     value: "usdt",
     label: "USDT",
     ltv: 0.90,
@@ -67,7 +67,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 1,
   },
   { 
-    logo: "/tokens/usdc-icon.svg", 
+    logo: "/tokens/usdc-icon.webp", 
     value: "dai", 
     label: "DAI", 
     ltv: 0.85, 
@@ -76,7 +76,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 3,
   },
   {
-    logo: "/tokens/xsgd-icon.png",
+    logo: "/tokens/xsgd-icon.webp",
     value: "xsgd",
     label: "XSGD",
     ltv: 0.90,
@@ -85,7 +85,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 1,
   },
   {
-    logo: "/tokens/idrx-icon.png",
+    logo: "/tokens/idrx-icon.webp",
     value: "idrx",
     label: "IDRX",
     ltv: 0.90,
@@ -103,7 +103,7 @@ export const tokenList: TokenInfo[] = [
     liquidationPenalty: 5,
   },
   {
-    logo: "/tokens/nvda-icon.svg",
+    logo: "/tokens/nvda-icon.webp",
     value: "nvdaon",
     label: "NVIDIA (Ondo Tokenized)",
     ltv: 0.75,

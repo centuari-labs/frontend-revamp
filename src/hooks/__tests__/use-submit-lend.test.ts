@@ -49,7 +49,7 @@ describe("useSubmitLend", () => {
     await act(async () => {
       await result.current.submitLimit({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 100,
         amountInUsd: 100,
@@ -70,7 +70,7 @@ describe("useSubmitLend", () => {
     await act(async () => {
       await result.current.submitLimit({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 200,
         amountInUsd: 200,
@@ -90,7 +90,7 @@ describe("useSubmitLend", () => {
     await act(async () => {
       await result.current.submitMarket({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 500,
         amountInUsd: 500,
@@ -108,7 +108,7 @@ describe("useSubmitLend", () => {
     await act(async () => {
       await result.current.submitMarket({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 500,
         amountInUsd: 500,

@@ -8,7 +8,7 @@ export function makeLendPosition(
   counter++;
   return {
     id: `lend-test-${counter}`,
-    assetImg: "/tokens/usdc-icon.svg",
+    assetImg: "/tokens/usdc-icon.webp",
     assetName: "USDC",
     amount: 1000,
     apr: 0.065,
@@ -30,7 +30,7 @@ export function makeBorrowPosition(
   counter++;
   return {
     id: `borrow-test-${counter}`,
-    assetImg: "/tokens/usdc-icon.svg",
+    assetImg: "/tokens/usdc-icon.webp",
     assetName: "USDC",
     amount: 500,
     apr: 0.101,

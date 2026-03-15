@@ -451,7 +451,7 @@ describe("buildLendLimitPosition", () => {
   it("creates lend limit position with correct fields", () => {
     const pos = buildLendLimitPosition({
       tokenValue: "usdc",
-      tokenLogo: "/tokens/usdc-icon.svg",
+      tokenLogo: "/tokens/usdc-icon.webp",
       tokenLabel: "USDC",
       amount: 100,
       amountInUsd: 100,
@@ -469,7 +469,7 @@ describe("buildLendLimitPosition", () => {
     const existing = makeLendPosition({ id: "keep-me" });
     const pos = buildLendLimitPosition({
       tokenValue: "usdc",
-      tokenLogo: "/tokens/usdc-icon.svg",
+      tokenLogo: "/tokens/usdc-icon.webp",
       tokenLabel: "USDC",
       amount: 100,
       amountInUsd: 100,
@@ -485,7 +485,7 @@ describe("buildLendMarketPosition", () => {
   it("creates lend market position with best APR", () => {
     const pos = buildLendMarketPosition({
       tokenValue: "usdc",
-      tokenLogo: "/tokens/usdc-icon.svg",
+      tokenLogo: "/tokens/usdc-icon.webp",
       tokenLabel: "USDC",
       amount: 100,
       amountInUsd: 100,
@@ -521,7 +521,7 @@ describe("buildBorrowMarketPosition", () => {
   it("creates borrow market position with best APR", () => {
     const pos = buildBorrowMarketPosition({
       tokenValue: "usdc",
-      tokenLogo: "/tokens/usdc-icon.svg",
+      tokenLogo: "/tokens/usdc-icon.webp",
       tokenLabel: "USDC",
       amount: 300,
       maturity: 3000,

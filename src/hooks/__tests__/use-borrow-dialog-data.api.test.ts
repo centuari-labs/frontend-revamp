@@ -11,7 +11,7 @@ const mockAssets = [
     walletBalance: 5000,
     amountInUsd: 5000,
     isCollateral: true,
-    imageUrl: "/tokens/usdc-icon.svg",
+    imageUrl: "/tokens/usdc-icon.webp",
     ltv: 0.9,
     liquidationThreshold: 0.92,
   },
@@ -21,7 +21,7 @@ const mockAssets = [
     walletBalance: 0.5,
     amountInUsd: 45000,
     isCollateral: false,
-    imageUrl: "/tokens/btc-icon.svg",
+    imageUrl: "/tokens/btc-icon.webp",
     ltv: 0.75,
     liquidationThreshold: 0.8,
   },
@@ -96,7 +96,7 @@ describe("useBorrowDialogData (API mode)", () => {
     expect(usdc!.ltv).toBe(0.9);
     expect(usdc!.liquidationThreshold).toBe(0.92);
     expect(usdc!.price).toBe(1); // 5000/5000
-    expect(usdc!.logo).toBe("/tokens/usdc-icon.svg");
+    expect(usdc!.logo).toBe("/tokens/usdc-icon.webp");
     expect(usdc!.label).toBe("USDC");
 
     const btc = result.current.collateralTokenList.find(

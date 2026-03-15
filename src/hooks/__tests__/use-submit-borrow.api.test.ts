@@ -67,7 +67,7 @@ async function getHook() {
 describe("useSubmitBorrow.submitLimit (API mode)", () => {
   const limitParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 500,
     maturity: 1735689600000,
@@ -175,7 +175,7 @@ describe("useSubmitBorrow.submitLimit (API mode)", () => {
 describe("useSubmitBorrow.submitMarket (API mode)", () => {
   const marketParams = {
     tokenValue: "usdc",
-    tokenLogo: "/tokens/usdc-icon.svg",
+    tokenLogo: "/tokens/usdc-icon.webp",
     tokenLabel: "USDC",
     amount: 300,
     maturity: 1735689600000,

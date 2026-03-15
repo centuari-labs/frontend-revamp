@@ -41,7 +41,7 @@ export function FaucetTokenGrid() {
       return {
         value: t.symbol.toLowerCase(),
         label: t.symbol,
-        icon: t.imageUrl || "/tokens/usdc-icon.svg",
+        icon: t.imageUrl || "/tokens/usdc-icon.webp",
         tokenAddress: t.tokenAddress,
         dripAmount: DRIP_AMOUNTS[symbol] || 1000,
       };

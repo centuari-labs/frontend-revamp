@@ -12,7 +12,7 @@ export function useTokenFromList(
   const defaultToken =
     getDefaultTokenFromList(tokenList, defaultSlug) ??
     ({
-      logo: "/tokens/usdc-icon.svg",
+      logo: "/tokens/usdc-icon.webp",
       value: defaultSlug,
       label: defaultSlug.toUpperCase(),
     } as TokenOption);

@@ -84,7 +84,7 @@ describe("useSubmitBorrow", () => {
     await act(async () => {
       await result.current.submitMarket({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 300,
         maturity: 2000,
@@ -102,7 +102,7 @@ describe("useSubmitBorrow", () => {
     await act(async () => {
       await result.current.submitMarket({
         tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.svg",
+        tokenLogo: "/tokens/usdc-icon.webp",
         tokenLabel: "USDC",
         amount: 300,
         maturity: 2000,
