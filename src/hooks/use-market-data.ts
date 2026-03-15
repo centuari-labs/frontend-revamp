@@ -15,5 +15,6 @@ export function useMarketData() {
 		markets: query.data?.markets ?? [],
 		isLoading: query.isLoading,
 		isError: query.isError,
+		refetch: query.refetch,
 	};
 }
