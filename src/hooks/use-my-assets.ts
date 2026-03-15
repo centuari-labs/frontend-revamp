@@ -41,5 +41,6 @@ export function useMyAssets(options?: UseMyAssetsOptions) {
     totalPages: query.data?.totalPages ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }

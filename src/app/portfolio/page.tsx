@@ -28,6 +28,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { CentuariLoginDialog } from "@/components/centuari-login-dialog";
 import { Lock } from "lucide-react";
 import { PortfolioPageSkeleton } from "@/components/portfolio/portfolio-skeleton";
+import { SectionErrorOverlay } from "@/components/ui/section-error";
 
 export default function PortfolioPage() {
   const { authenticated, ready } = usePrivy();
@@ -39,15 +40,17 @@ export default function PortfolioPage() {
   const POSITIONS_PAGE_SIZE = 3;
 
   // ─── API mode hooks ────────────────────────────────────────────────
-  const { portfolio: apiPortfolio, isLoading: isPortfolioLoading } =
+  const { portfolio: apiPortfolio, isLoading: isPortfolioLoading, isError: isPortfolioError, refetch: refetchPortfolio } =
     useMyPortfolio();
-  const { lendBorrow, isLoading: isLendBorrowLoading } = useLendBorrowAssets();
+  const { lendBorrow, isLoading: isLendBorrowLoading, isError: isLendBorrowError, refetch: refetchLendBorrow } = useLendBorrowAssets();
   const {
     positions: apiPositions,
     page: currentPositionsPage,
     totalData: positionsTotalData,
     totalPages: positionsTotalPages,
     isLoading: isPositionsLoading,
+    isError: isPositionsError,
+    refetch: refetchPositions,
   } = useMyPositions({
     type: positionsTab.toUpperCase() as "LEND" | "BORROW",
     page: positionsPage,
@@ -59,6 +62,8 @@ export default function PortfolioPage() {
     totalData: assetsTotalData,
     totalPages: assetsTotalPages,
     isLoading: isAssetsLoading,
+    isError: isAssetsError,
+    refetch: refetchAssets,
   } = useMyAssets({ page: assetsPage, limit: ASSETS_PAGE_SIZE });
   const setCollateralMutation = useSetCollateral();
 
@@ -133,6 +138,14 @@ export default function PortfolioPage() {
     isAssetsLoading;
   const isPageLoading = !ready || (authenticated && isDataLoading);
 
+  const isPageError = isPortfolioError || isLendBorrowError || isPositionsError || isAssetsError;
+  const refetchAll = () => {
+    refetchPortfolio();
+    refetchLendBorrow();
+    refetchPositions();
+    refetchAssets();
+  };
+
   if (isPageLoading) {
     return (
       <PageContainer>
@@ -142,6 +155,7 @@ export default function PortfolioPage() {
   }
 
   return (
+    <SectionErrorOverlay isError={isPageError} onRetry={refetchAll}>
     <PageContainer>
       {ready && !authenticated && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/5 backdrop-blur-xl">
@@ -332,31 +346,32 @@ export default function PortfolioPage() {
       </div>
       <div className="flex flex-col lg:flex-row items-stretch gap-3 mt-3">
         <div className="flex-1 min-h-full md:min-h-[400px] min-w-0 overflow-x-auto">
-          <DataTableAssets
-            assets={assetTableData}
-            onToggleCollateral={handleToggleCollateral}
-            page={currentAssetsPage}
-            totalData={assetsTotalData}
-            totalPages={assetsTotalPages}
-            onPageChange={setAssetsPage}
-            pageSize={ASSETS_PAGE_SIZE}
-          />
+            <DataTableAssets
+              assets={assetTableData}
+              onToggleCollateral={handleToggleCollateral}
+              page={currentAssetsPage}
+              totalData={assetsTotalData}
+              totalPages={assetsTotalPages}
+              onPageChange={setAssetsPage}
+              pageSize={ASSETS_PAGE_SIZE}
+            />
         </div>
         <div className="flex-1 min-h-full md:min-h-[400px] min-w-0 overflow-x-auto">
-          <DataTableAllPosition
-            positions={positionTableData}
-            page={currentPositionsPage}
-            totalData={positionsTotalData}
-            totalPages={positionsTotalPages}
-            onPageChange={setPositionsPage}
-            pageSize={POSITIONS_PAGE_SIZE}
-            onTabChange={(tab) => {
-              setPositionsTab(tab);
-              setPositionsPage(1);
-            }}
-          />
+            <DataTableAllPosition
+              positions={positionTableData}
+              page={currentPositionsPage}
+              totalData={positionsTotalData}
+              totalPages={positionsTotalPages}
+              onPageChange={setPositionsPage}
+              pageSize={POSITIONS_PAGE_SIZE}
+              onTabChange={(tab) => {
+                setPositionsTab(tab);
+                setPositionsPage(1);
+              }}
+            />
         </div>
       </div>
     </PageContainer>
+    </SectionErrorOverlay>
   );
 }

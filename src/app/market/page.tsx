@@ -14,10 +14,11 @@ import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { MarketPageSkeleton } from "@/components/market/market-skeleton";
+import { SectionErrorOverlay } from "@/components/ui/section-error";
 
 export default function Page() {
   const searchParams = useSearchParams();
-  const { markets, isLoading } = useMarketData();
+  const { markets, isLoading, isError, refetch } = useMarketData();
 
   const tokenList = useMemo(
     () => {
@@ -61,6 +62,7 @@ export default function Page() {
   }
 
   return (
+    <SectionErrorOverlay isError={isError} onRetry={refetch}>
     <PageContainer className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0" maxWidth="wide">
         <MarketHeader
           selectedToken={selectedToken}
@@ -98,5 +100,6 @@ export default function Page() {
 
       <MobileLendBorrowButtons tokenList={tokenList} selectedToken={selectedToken} />
     </PageContainer>
+    </SectionErrorOverlay>
   );
 }
