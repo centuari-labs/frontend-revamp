@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { USE_MOCK } from "@/lib/use-mock";
 import {
   submitOpenOrder,
@@ -27,67 +25,85 @@ export interface SubmitBorrowOptions {
 }
 
 export function useSubmitBorrow() {
-  const [isPending, setIsPending] = useState(false);
+  const queryClient = useQueryClient();
 
-  const submitLimit = useCallback(
-    async (params: SubmitBorrowLimitParams, options?: SubmitBorrowOptions) => {
-      setIsPending(true);
-      try {
-        if (USE_MOCK) {
-          const position = buildBorrowLimitPosition(params);
-          if (params.editingPosition) {
-            await updateOpenOrder(position);
-            return position;
-          }
-          const result = await submitOpenOrder(position);
-          return result as BorrowPosition;
+  const limitMutation = useMutation({
+    mutationFn: async ({
+      params,
+      options,
+    }: {
+      params: SubmitBorrowLimitParams;
+      options?: SubmitBorrowOptions;
+    }) => {
+      if (USE_MOCK) {
+        const position = buildBorrowLimitPosition(params);
+        if (params.editingPosition) {
+          await updateOpenOrder(position);
+          return position;
         }
-
-        // API mode
-        const { token, markets } = options ?? {};
-        if (!token || !markets) {
-          throw new Error("Auth token and market data required for API mode");
-        }
-        return await submitBorrowLimitOrder(params, markets, token);
-      } finally {
-        setIsPending(false);
+        const result = await submitOpenOrder(position);
+        return result as BorrowPosition;
       }
-    },
-    [],
-  );
 
-  const submitMarket = useCallback(
-    async (params: SubmitBorrowMarketParams, options?: SubmitBorrowOptions) => {
-      setIsPending(true);
-      try {
-        if (USE_MOCK) {
-          const position = buildBorrowMarketPosition(params);
-          if (params.editingPosition) {
-            await updateFilledPosition(position);
-            return position;
-          }
-          const result = await submitFilledBorrowPosition(position, {
-            amount: params.amount,
-          });
-          return result;
-        }
-
-        // API mode
-        const { token, markets } = options ?? {};
-        if (!token || !markets) {
-          throw new Error("Auth token and market data required for API mode");
-        }
-        return await submitBorrowMarketOrder(params, markets, token);
-      } finally {
-        setIsPending(false);
+      // API mode
+      const { token, markets } = options ?? {};
+      if (!token || !markets) {
+        throw new Error("Auth token and market data required for API mode");
       }
+      return await submitBorrowLimitOrder(params, markets, token);
     },
-    [],
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+    },
+  });
+
+  const marketMutation = useMutation({
+    mutationFn: async ({
+      params,
+      options,
+    }: {
+      params: SubmitBorrowMarketParams;
+      options?: SubmitBorrowOptions;
+    }) => {
+      if (USE_MOCK) {
+        const position = buildBorrowMarketPosition(params);
+        if (params.editingPosition) {
+          await updateFilledPosition(position);
+          return position;
+        }
+        const result = await submitFilledBorrowPosition(position, {
+          amount: params.amount,
+        });
+        return result;
+      }
+
+      // API mode
+      const { token, markets } = options ?? {};
+      if (!token || !markets) {
+        throw new Error("Auth token and market data required for API mode");
+      }
+      return await submitBorrowMarketOrder(params, markets, token);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+    },
+  });
 
   return {
-    submitLimit,
-    submitMarket,
-    isPending,
+    submitLimit: (
+      params: SubmitBorrowLimitParams,
+      options?: SubmitBorrowOptions,
+    ) => limitMutation.mutateAsync({ params, options }),
+    submitMarket: (
+      params: SubmitBorrowMarketParams,
+      options?: SubmitBorrowOptions,
+    ) => marketMutation.mutateAsync({ params, options }),
+    isPending: limitMutation.isPending || marketMutation.isPending,
   };
 }

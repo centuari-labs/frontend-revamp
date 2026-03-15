@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils";
 import { getTokenLogo } from "@/lib/tokens";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
@@ -35,7 +36,7 @@ import { Label } from "./ui/label";
 
 export function CentuariDepositDialog() {
   const router = useRouter();
-  const { deposit, status: depositStatus, error: depositError, reset: resetDeposit } = useDeposit();
+  const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
   const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
 
   const [selectedTokenId, setSelectedTokenId] = useState<string>("");
@@ -113,15 +114,20 @@ export function CentuariDepositDialog() {
   const handleDeposit = async () => {
     if (!depositAmount || !selectedTokenId || isProcessing) return;
 
-    const result = await deposit(selectedTokenId, depositAmount, selectedToken);
+    try {
+      const result = await deposit(selectedTokenId, depositAmount, selectedToken);
 
-    if (result) {
-      setSuccessData({
-        symbol: selectedToken?.symbol ?? "",
-        amount: displayAmount || depositAmount,
-        txHash: result.transactionHash,
-      });
-      setDialogOpen(false);
+      if (result) {
+        setSuccessData({
+          symbol: selectedToken?.symbol ?? "",
+          amount: displayAmount || depositAmount,
+          txHash: result.transactionHash,
+        });
+        setDialogOpen(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Deposit failed";
+      toast.error(message);
     }
   };
 
@@ -270,11 +276,6 @@ export function CentuariDepositDialog() {
                 {amountExceedsBalance && (
                   <p className="text-xs text-red-400 mt-1">
                     Amount exceeds available balance
-                  </p>
-                )}
-                {depositError && (
-                  <p className="text-xs text-red-400 mt-1">
-                    {depositError}
                   </p>
                 )}
               </form>

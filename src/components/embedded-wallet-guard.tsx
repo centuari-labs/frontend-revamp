@@ -10,7 +10,7 @@ import { useWalletDisconnectListener } from "@/hooks/use-wallet-disconnect-liste
 export function EmbeddedWalletGuard({
 	children,
 }: { children: React.ReactNode }) {
-	const { authenticated, ready } = usePrivy();
+	const { authenticated, ready, user } = usePrivy();
 	const { wallets } = useWallets();
 	const { setActiveWallet } = useSetActiveWallet();
 	const { createWallet } = useCreateWallet();
@@ -18,6 +18,9 @@ export function EmbeddedWalletGuard({
 
 	useSyncAccount();
 	useWalletDisconnectListener();
+
+	// The wallet address the user authenticated with (via SIWE)
+	const linkedWalletAddress = user?.wallet?.address?.toLowerCase();
 
 	// Create embedded wallet if user is authenticated via social login but has none
 	useEffect(() => {
@@ -36,36 +39,42 @@ export function EmbeddedWalletGuard({
 		});
 	}, [ready, authenticated, wallets, createWallet]);
 
-	// Prefer external wallet for on-chain interactions, fallback to embedded
+	// Prefer the wallet used for login, fallback to embedded
 	// Also auto-switch external wallet to the correct chain
 	const hasSwitchedChain = useRef(false);
 	useEffect(() => {
 		if (!ready || !authenticated) return;
 
-		const externalWallet = wallets.find(
-			(w) => w.walletClientType !== "privy",
-		);
 		const embeddedWallet = wallets.find(
 			(w) => w.walletClientType === "privy",
 		);
 
-		const activeWallet = externalWallet ?? embeddedWallet;
+		// Match the exact wallet used for login by address
+		const loginWallet = linkedWalletAddress
+			? wallets.find(
+					(w) =>
+						w.walletClientType !== "privy" &&
+						w.address.toLowerCase() === linkedWalletAddress,
+				)
+			: undefined;
+
+		const activeWallet = loginWallet ?? embeddedWallet;
 		if (activeWallet) {
 			setActiveWallet(activeWallet);
 		}
 
-		// Auto-switch external wallet to the correct chain on connect
+		// Auto-switch the login wallet to the correct chain on connect
 		if (
-			externalWallet &&
-			externalWallet.chainId !== `eip155:${ACTIVE_CHAIN.id}` &&
+			loginWallet &&
+			loginWallet.chainId !== `eip155:${ACTIVE_CHAIN.id}` &&
 			!hasSwitchedChain.current
 		) {
 			hasSwitchedChain.current = true;
-			externalWallet.switchChain(ACTIVE_CHAIN.id).catch(() => {
-				// Switch failed (unsupported chain or user rejected) — WrongNetworkBanner will handle it
+			loginWallet.switchChain(ACTIVE_CHAIN.id).catch(() => {
+				// Switch failed — NetworkSwitcher in navbar will handle it
 			});
 		}
-	}, [ready, authenticated, wallets, setActiveWallet]);
+	}, [ready, authenticated, wallets, linkedWalletAddress, setActiveWallet]);
 
 	// Reset when user logs out
 	useEffect(() => {

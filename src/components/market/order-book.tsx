@@ -17,8 +17,7 @@ const OrderRowView: React.FC<{
   maxAmount: number;
 }> = ({ order, maxAmount }) => {
   const isBorrow = order.side === "borrow";
-  const widthPct =
-    maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
+  const widthPct = maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
 
   const barRef = React.useRef<HTMLDivElement>(null);
 
@@ -33,13 +32,11 @@ const OrderRowView: React.FC<{
 
   return (
     <div className="relative grid grid-cols-12 h-7 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
-      {/* Per-row liquidity bar — anchored left */}
+      {/* Per-row liquidity bar — anchored right */}
       <div
         ref={barRef}
-        className={`absolute inset-y-0 left-0 ${
-          isBorrow
-            ? "bg-[rgba(255,59,68,0.18)]"
-            : "bg-[rgba(61,229,122,0.18)]"
+        className={`absolute inset-y-0 right-0 ${
+          isBorrow ? "bg-[rgba(61,229,122,0.25)]" : "bg-[rgba(255,59,68,0.25)]"
         }`}
         style={{ width: "0%" }}
       />
@@ -47,7 +44,7 @@ const OrderRowView: React.FC<{
       {/* APR */}
       <div
         className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
-          isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
+          isBorrow ? "text-[#3de57a]" : "text-[#ff5b5b]"
         }`}
       >
         {formatAPR(order.apr)}
@@ -61,17 +58,20 @@ const OrderRowView: React.FC<{
   );
 };
 
-const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
+const OrderTable: React.FC<{
+  orders: OrderRow[];
+  align?: "top" | "bottom";
+}> = ({ orders, align = "top" }) => {
   const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
   return (
-    <ScrollArea className="space-y-0.5 h-[160px]">
-      {orders.map((row, i) => (
-        <OrderRowView
-          key={i}
-          order={row}
-          maxAmount={sideMaxAmount}
-        />
-      ))}
+    <ScrollArea className="h-[160px]">
+      <div
+        className={`flex flex-col ${align === "bottom" ? "justify-end min-h-[160px]" : ""} space-y-0.5`}
+      >
+        {orders.map((row, i) => (
+          <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+        ))}
+      </div>
     </ScrollArea>
   );
 };
@@ -97,7 +97,7 @@ const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
           </div>
           <div
             className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
-              trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
+              trade.type === "Lend" ? "text-[#ff5b5b]" : "text-[#3de57a]"
             }`}
           >
             {trade.type}
@@ -148,12 +148,12 @@ const OrderBookContent: React.FC<{
         </div>
       </div>
 
-      {/* BORROW — rate paling besar → kecil */}
-      <OrderTable orders={sortedBorrow} />
+      {/* LEND (Asks) — rate paling besar → kecil (bottom-aligned) */}
+      <OrderTable orders={sortedLend} align="bottom" />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (
-        <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
+        <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4 border border-white/5">
           <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
             <ArrowUp color="#3de57a" size={16} />
             <span>{formatAPR(midApr)}</span>
@@ -164,8 +164,8 @@ const OrderBookContent: React.FC<{
         </div>
       )}
 
-      {/* LEND — rate paling besar → kecil */}
-      <OrderTable orders={sortedLend} />
+      {/* BORROW (Bids) — rate paling besar → kecil (top-aligned) */}
+      <OrderTable orders={sortedBorrow} align="top" />
     </>
   );
 };
@@ -199,11 +199,7 @@ export const OrderBookCard: React.FC<{
   height?: string;
   assetId?: string;
   decimals?: number;
-}> = ({
-  height = "auto",
-  assetId,
-  decimals,
-}) => {
+}> = ({ height = "auto", assetId, decimals }) => {
   const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
   const { trades } = useRecentTrades({ assetId, decimals });
 
@@ -216,20 +212,23 @@ export const OrderBookCard: React.FC<{
         <TabsList className="bg-white/5 w-full">
           <TabsTrigger
             value="orderbook"
-            className="data-[state=active]:!border-none"
+            className="data-[state=active]:border-none!"
           >
             Order Book
           </TabsTrigger>
           <TabsTrigger
             value="trades"
-            className="data-[state=active]:!border-none"
+            className="data-[state=active]:border-none!"
           >
             Recent Trades
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orderbook">
-          <OrderBookContent borrowOrders={borrowOrders} lendOrders={lendOrders} />
+          <OrderBookContent
+            borrowOrders={borrowOrders}
+            lendOrders={lendOrders}
+          />
         </TabsContent>
 
         <TabsContent value="trades">
