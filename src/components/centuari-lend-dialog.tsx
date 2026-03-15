@@ -95,7 +95,7 @@ export function CentuariLendDialog({
 
   // Calculate derived values
   const numericAmount = parseFloat(amountToLend) || 0;
-  const transactionFee = numericAmount * 0.0001; // 0.01%
+  const transactionFee = Math.min(numericAmount * 0.0001, 0.05); // 0.01% capped at $0.05
   const amountToPay = numericAmount + transactionFee;
 
   // Format vault total with currency
@@ -205,6 +205,7 @@ export function CentuariLendDialog({
             amount: numericAmount,
             amountInUsd,
             maturity: maturityDate,
+            autoRollover: true,
           },
           authToken && markets.length > 0
             ? { token: authToken, markets }

@@ -157,6 +157,7 @@ export async function submitLendMarketOrder(
 		assetId,
 		amount: String(params.amount),
 		marketIds: [marketId],
+		autoRollover: params.autoRollover ?? true,
 	};
 
 	const response = await createLendMarketOrder(dto, token);

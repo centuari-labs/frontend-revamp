@@ -348,6 +348,7 @@ describe("submitLendMarketOrder", () => {
         assetId: "asset-uuid-usdc",
         amount: "1000",
         marketIds: ["market-uuid-1"],
+        autoRollover: true,
       },
       "jwt-token",
     );

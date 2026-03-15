@@ -108,7 +108,7 @@ export function CentuariBorrowDialog({
   const numericAmount = parseFloat(amountToBorrow) || 0;
 
   // Transaction fee: 0.01% of amount (supports decimal amounts)
-  const transactionFee = numericAmount * 0.0001; // 0.01%
+  const transactionFee = Math.min(numericAmount * 0.0001, 0.05); // 0.01% capped at $0.05
 
   // Amount to pay: borrow amount + transaction fee
   const amountToPay = numericAmount + transactionFee;

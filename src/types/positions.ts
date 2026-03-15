@@ -69,6 +69,7 @@ export interface SubmitLendMarketParams {
   amount: number;
   amountInUsd: number;
   maturity: number;
+  autoRollover?: boolean;
   editingPosition?: LendPosition;
 }
 
