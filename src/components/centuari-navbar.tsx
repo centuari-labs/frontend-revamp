@@ -15,6 +15,7 @@ import { CentuariDepositDialog } from "./centuari-deposit-dialog";
 import { CentuariLoginDialog } from "./centuari-login-dialog";
 import { CentuariUserMenu } from "./centuari-user-menu";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
+import { glassStyle, glassBorderGradient } from "@/components/ui/glass-card";
 
 interface NavItem {
   name: string;
@@ -204,14 +205,27 @@ export default function CentuariNavbar() {
               <div className="hidden md:flex items-center space-x-2 relative">
                 <div
                   ref={indicatorRef}
-                  className="absolute h-10 bg-white/10 rounded-lg transition-colors pointer-events-none"
+                  className="absolute h-10 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"
                   style={{
                     left: 0,
                     top: "50%",
                     transform: "translateY(-50%)",
                     zIndex: 0,
+                    ...glassStyle,
                   }}
-                />
+                >
+                  <div
+                    className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                    style={{
+                      padding: "0.5px",
+                      background: glassBorderGradient,
+                      mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                      maskComposite: "exclude",
+                      WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                      WebkitMaskComposite: "xor",
+                    }}
+                  />
+                </div>
 
                 {NAV_ITEMS.map((item, index) => (
                   <Link
