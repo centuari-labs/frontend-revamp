@@ -26,5 +26,6 @@ export function useLendBorrowAssets() {
     lendBorrow: query.data ?? null,
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }
