@@ -61,6 +61,15 @@ const OrderRowView: React.FC<{
 
 const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
   const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
+
+  if (orders.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[195px] text-sm text-white/40">
+        No data
+      </div>
+    );
+  }
+
   return (
     <ScrollArea className="space-y-0.5 h-[195px]">
       {orders.map((row, i) => (
@@ -75,20 +84,12 @@ const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
 };
 
 const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
-  if (trades.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-20 text-sm text-white/40">
-        No recent trades
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-0.5">
       {trades.map((trade, i) => (
         <div
           key={i}
-          className="grid grid-cols-12 h-6 gap-6 items-center text-sm hover:bg-white/5 transition-colors min-w-[320px]"
+          className="grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors"
         >
           <div className="col-span-3 text-start text-white/90 shrink-0">
             {trade.time}
@@ -176,28 +177,70 @@ const OrderBookContent: React.FC<{
 
 const RecentTradesContent: React.FC<{
   trades: TradeRow[];
-}> = ({ trades }) => (
-  <div className="overflow-auto max-h-[400px]">
-    <div className="min-w-max">
-      <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm min-w-[320px]">
-        <div className="col-span-3 text-white/80 font-semibold shrink-0">
+  cardRef: React.RefObject<HTMLDivElement | null>;
+}> = ({ trades, cardRef }) => {
+  const headerRef = React.useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    const card = cardRef.current;
+    const header = headerRef.current;
+    if (!card) return;
+
+    // Find TabsList element height
+    const tabsList = card.querySelector('[data-slot="tabs-list"]');
+
+    const recalc = () => {
+      const cardH = card.clientHeight;
+      const cardPadding = parseFloat(getComputedStyle(card).paddingTop) + parseFloat(getComputedStyle(card).paddingBottom);
+      const tabsH = tabsList?.getBoundingClientRect().height ?? 0;
+      const headerH = header?.offsetHeight ?? 0;
+      // gap-2 from Tabs = 8px, mt-2.5 from header = 10px, mb-3 = 12px
+      const gaps = 8 + 8;
+      setListHeight(Math.max(cardH - cardPadding - tabsH - headerH - gaps, 0));
+    };
+
+    const observer = new ResizeObserver(recalc);
+    observer.observe(card);
+    recalc();
+    return () => observer.disconnect();
+  }, [cardRef]);
+
+  return (
+    <>
+      <div ref={headerRef} className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center">
+        <div className="col-span-3 text-white/80 font-semibold">
           Time
         </div>
-        <div className="col-span-3 text-white/80 font-semibold shrink-0">
+        <div className="col-span-3 text-white/80 font-semibold">
           Type
         </div>
-        <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+        <div className="col-span-3 text-white/80 font-semibold">
           Amount
         </div>
-        <div className="col-span-3 text-white/80 text-right font-semibold shrink-0">
+        <div className="col-span-3 text-white/80 text-right font-semibold">
           APR
         </div>
       </div>
 
-      <RecentTradeTable trades={trades} />
-    </div>
-  </div>
-);
+      {trades.length === 0 ? (
+        <div
+          className="flex items-center justify-center text-sm text-white/40"
+          style={{ height: listHeight || undefined }}
+        >
+          No recent trades
+        </div>
+      ) : (
+        <div
+          className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+          style={{ height: listHeight || undefined }}
+        >
+          <RecentTradeTable trades={trades} />
+        </div>
+      )}
+    </>
+  );
+};
 
 export const OrderBookCard: React.FC<{
   height?: string;
@@ -210,14 +253,16 @@ export const OrderBookCard: React.FC<{
 }) => {
     const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
     const { trades } = useRecentTrades({ assetId, decimals });
+    const cardRef = React.useRef<HTMLDivElement>(null);
 
     return (
       <div
-        className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]"
+        ref={cardRef}
+        className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]`"
         style={{ height }}
       >
         <Tabs defaultValue="orderbook" className="w-full">
-          <TabsList className="bg-white/5 w-full">
+          <TabsList className="bg-white/5 w-full shrink-0">
             <TabsTrigger
               value="orderbook"
               className="data-[state=active]:!border-none"
@@ -237,7 +282,7 @@ export const OrderBookCard: React.FC<{
           </TabsContent>
 
           <TabsContent value="trades">
-            <RecentTradesContent trades={trades} />
+            <RecentTradesContent trades={trades} cardRef={cardRef} />
           </TabsContent>
         </Tabs>
       </div>

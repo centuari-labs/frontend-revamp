@@ -263,7 +263,7 @@ export function DataTableAllPosition({
 
   const PositionTable = React.useMemo(() => (
     <>
-      <div className="flex-1 overflow-y-auto overflow-x-auto max-h-[300px]">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
         <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
