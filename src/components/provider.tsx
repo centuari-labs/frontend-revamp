@@ -8,7 +8,14 @@ import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { EmbeddedWalletGuard } from "./embedded-wallet-guard";
 import { PriceProvider } from "@/contexts/price-context";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 10_000,
+			refetchOnWindowFocus: false,
+		},
+	},
+});
 
 export const Provider = ({ children }: { children: React.ReactNode }) => {
 	return (
