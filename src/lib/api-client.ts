@@ -26,7 +26,22 @@ export async function apiClient<T>(
 	});
 
 	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
+		let message = `API error: ${res.status} ${res.statusText}`;
+		try {
+			const errorBody = await res.json();
+			const msg = errorBody?.message;
+			if (typeof msg === "string") {
+				message = msg;
+			} else if (Array.isArray(msg)) {
+				message = msg.join(", ");
+			} else if (msg && typeof msg === "object" && typeof msg.message === "string") {
+				// NestJS HttpException wraps response as { statusCode, message, error }
+				message = msg.message;
+			}
+		} catch {
+			// response body is not JSON — keep the default message
+		}
+		throw new Error(message);
 	}
 
 	const json: ApiResponse<T> = await res.json();

@@ -441,8 +441,8 @@ export function submitDeposit(
 export function confirmDeposit(
 	txHash: string,
 	token: string,
-): Promise<{ processed: number }> {
-	return apiClient<{ processed: number }>("/deposit/confirm", {
+): Promise<DepositResponse> {
+	return apiClient<DepositResponse>("/deposit/confirm", {
 		method: "POST",
 		body: { txHash },
 		token,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { toast } from "sonner";
 import {
   formatNumberWithSeparator,
   calculateFutureAmount,
@@ -175,7 +176,7 @@ export function useLendForm({
   }, [editingPosition, tokenList]);
 
   const limitNumericAmount = parseFloat(limitAmountInput.amount) || 0;
-  const limitTransactionFee = limitNumericAmount * 0.0001;
+  const limitTransactionFee = Math.min(limitNumericAmount * 0.0001, 0.05);
   const limitAmountToPay = limitNumericAmount + limitTransactionFee;
   const limitTargetAPRNumeric =
     parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
@@ -186,7 +187,7 @@ export function useLendForm({
   );
 
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
-  const marketTransactionFee = marketNumericAmount * 0.0001;
+  const marketTransactionFee = Math.min(marketNumericAmount * 0.0001, 0.05);
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
   const marketFutureAmount = calculateFutureAmount(
     marketNumericAmount,
@@ -236,7 +237,9 @@ export function useLendForm({
         setLimitTargetAPR("");
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message =
+          error instanceof Error ? error.message : "Transaction failed";
+        toast.error(message);
       }
     },
     [
@@ -291,7 +294,9 @@ export function useLendForm({
         marketAmountInput.reset();
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message =
+          error instanceof Error ? error.message : "Transaction failed";
+        toast.error(message);
       }
     },
     [

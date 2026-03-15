@@ -5,47 +5,39 @@ import { USE_MOCK } from "@/lib/use-mock";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
 
 export type TradeRow = {
-	time: string;
-	type: "Lend" | "Borrow";
-	amount: number;
-	apr: number;
+  id: string;
+  time: string;
+  type: "Lend" | "Borrow";
+  amount: number;
+  apr: number;
 };
-
-// ─── Mock helpers ────────────────────────────────────────────────────
-
-function randomTime(): string {
-	const now = new Date();
-	return now.toLocaleTimeString("en-US", { hour12: false });
-}
-
-function generateMockTrade(): TradeRow {
-	const type = Math.random() < 0.5 ? "Lend" : "Borrow";
-	const apr = 0.04 + Math.random() * 0.015;
-	const amount = 1000 + Math.round(Math.random() * 9000);
-	return { time: randomTime(), type, amount, apr };
-}
 
 // ─── WebSocket types ─────────────────────────────────────────────────
 
 interface RecentTradeEvent {
-	assetId: string;
-	side: "LEND" | "BORROW";
-	amount: string;
-	rate: number;
-	timestamp: number;
+  assetId: string;
+  side: "LEND" | "BORROW";
+  amount: string;
+  rate: number;
+  timestamp: number;
 }
 
-function tradeEventToRow(
-	event: RecentTradeEvent,
-	decimals: number,
-): TradeRow {
-	const date = new Date(event.timestamp);
-	return {
-		time: date.toLocaleTimeString("en-US", { hour12: false }),
-		type: event.side === "LEND" ? "Lend" : "Borrow",
-		amount: Number(event.amount) / 10 ** decimals,
-		apr: event.rate / 10000,
-	};
+function tradeEventToRow(event: RecentTradeEvent, decimals: number): TradeRow {
+  const date = new Date(event.timestamp);
+  const type = event.side === "LEND" ? "Lend" : "Borrow";
+  const amount = Number(event.amount) / 10 ** decimals;
+  const apr = event.rate / 10000;
+
+  // Create a unique ID based on properties to help with deduplication
+  const id = `${event.timestamp}-${type}-${amount}-${apr}`;
+
+  return {
+    id,
+    time: date.toLocaleTimeString("en-US", { hour12: false }),
+    type,
+    amount,
+    apr,
+  };
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────
@@ -53,74 +45,78 @@ function tradeEventToRow(
 const MAX_TRADES = 20;
 
 export function useRecentTrades(options?: {
-	assetId?: string;
-	decimals?: number;
+  assetId?: string;
+  decimals?: number;
 }) {
-	const { assetId, decimals = 6 } = options ?? {};
+  const { assetId, decimals = 6 } = options ?? {};
 
-	const [trades, setTrades] = useState<TradeRow[]>([]);
-	const [isConnected, setIsConnected] = useState(false);
+  const [trades, setTrades] = useState<TradeRow[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
-	const prependTrade = useCallback(
-		(trade: TradeRow) => {
-			setTrades((prev) => {
-				const next = [trade, ...prev];
-				if (next.length > MAX_TRADES) next.length = MAX_TRADES;
-				return next;
-			});
-		},
-		[],
-	);
+  const prependTrade = useCallback((trade: TradeRow) => {
+    setTrades((prev) => {
+      // Check if trade already exists
+      if (prev.some((t) => t.id === trade.id)) return prev;
 
-	// Mock mode
-	useEffect(() => {
-		if (!USE_MOCK) return;
-		const interval = setInterval(() => {
-			prependTrade(generateMockTrade());
-		}, 2000);
-		return () => clearInterval(interval);
-	}, [prependTrade]);
+      const next = [trade, ...prev];
+      if (next.length > MAX_TRADES) next.length = MAX_TRADES;
+      return next;
+    });
+  }, []);
 
-	// WebSocket mode
-	useEffect(() => {
-		if (USE_MOCK || !assetId) return;
+  // WebSocket mode
+  useEffect(() => {
+    if (!assetId) return;
 
-		setTrades([]);
+    setTrades([]);
 
-		const socket = acquireSocket();
+    const socket = acquireSocket();
 
-		const onConnect = () => setIsConnected(true);
-		const onDisconnect = () => setIsConnected(false);
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
 
-		const onTrade = (data: RecentTradeEvent) => {
-			if (data.assetId !== assetId) return;
-			prependTrade(tradeEventToRow(data, decimals));
-		};
+    const onTrade = (data: RecentTradeEvent) => {
+      if (data.assetId !== assetId) return;
+      prependTrade(tradeEventToRow(data, decimals));
+    };
 
-		const onSnapshot = (data: RecentTradeEvent[]) => {
-			setTrades(data.map((e) => tradeEventToRow(e, decimals)));
-		};
+    const onSnapshot = (data: RecentTradeEvent[]) => {
+      const rows = data.map((e) => tradeEventToRow(e, decimals));
 
-		socket.on("connect", onConnect);
-		socket.on("disconnect", onDisconnect);
-		socket.on("recent-trade", onTrade);
-		socket.on("recent-trades-snapshot", onSnapshot);
+      // Deduplicate snapshot just in case
+      const uniqueRows: TradeRow[] = [];
+      const seenIds = new Set<string>();
 
-		if (socket.connected) {
-			setIsConnected(true);
-		}
+      for (const row of rows) {
+        if (!seenIds.has(row.id)) {
+          uniqueRows.push(row);
+          seenIds.add(row.id);
+        }
+      }
 
-		socket.emit("subscribe-recent-trades", { assetId });
+      setTrades(uniqueRows.slice(0, MAX_TRADES));
+    };
 
-		return () => {
-			socket.emit("unsubscribe-recent-trades", { assetId });
-			socket.off("connect", onConnect);
-			socket.off("disconnect", onDisconnect);
-			socket.off("recent-trade", onTrade);
-			socket.off("recent-trades-snapshot", onSnapshot);
-			releaseSocket();
-		};
-	}, [assetId, decimals, prependTrade]);
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("recent-trade", onTrade);
+    socket.on("recent-trades-snapshot", onSnapshot);
 
-	return { trades, isConnected };
+    if (socket.connected) {
+      setIsConnected(true);
+    }
+
+    socket.emit("subscribe-recent-trades", { assetId });
+
+    return () => {
+      socket.emit("unsubscribe-recent-trades", { assetId });
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("recent-trade", onTrade);
+      socket.off("recent-trades-snapshot", onSnapshot);
+      releaseSocket();
+    };
+  }, [assetId, decimals, prependTrade]);
+
+  return { trades, isConnected };
 }

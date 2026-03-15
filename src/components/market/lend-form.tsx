@@ -106,7 +106,10 @@ export function LendForm({
                     <>
                       Auto Rollover
                       <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
-                        <Info size={16} className="ml-1 inline-block text-muted-foreground" />
+                        <Info
+                          size={16}
+                          className="ml-1 inline-block text-muted-foreground"
+                        />
                       </CentuariTooltip>
                     </>
                   }
@@ -127,6 +130,8 @@ export function LendForm({
               disabled={
                 !form.limitAmount ||
                 parseFloat(form.limitAmount) <= 0 ||
+                !form.limitTargetAPR ||
+                !form.limitMaturity ||
                 form.isPending
               }
             >
@@ -193,7 +198,9 @@ export function LendForm({
                     <Button
                       key={ts}
                       type="button"
-                      variant={form.marketMaturity === ts ? "default" : "outline"}
+                      variant={
+                        form.marketMaturity === ts ? "default" : "outline"
+                      }
                       className={`h-9 ${
                         form.marketMaturity === ts
                           ? "bg-primary-blue-base/20 border border-primary-blue-base text-white hover:text-white hover:bg-primary-blue-base/20"
@@ -219,7 +226,10 @@ export function LendForm({
                     <>
                       Auto Rollover
                       <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
-                        <Info size={16} className="ml-1 inline-block text-muted-foreground" />
+                        <Info
+                          size={16}
+                          className="ml-1 inline-block text-muted-foreground"
+                        />
                       </CentuariTooltip>
                     </>
                   }
@@ -240,6 +250,7 @@ export function LendForm({
               disabled={
                 !form.marketAmount ||
                 parseFloat(form.marketAmount) <= 0 ||
+                !form.marketMaturity ||
                 form.isPending
               }
             >

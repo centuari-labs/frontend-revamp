@@ -146,7 +146,7 @@ export function CentuariUserMenu() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 transition-colors cursor-pointer"
+          className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-1.5 hover:bg-white/10 transition-colors cursor-pointer"
         >
           <div className="w-7 h-7 rounded-full bg-primary-blue-base/60 flex items-center justify-center text-white text-sm font-semibold">
             {initial}
@@ -158,7 +158,7 @@ export function CentuariUserMenu() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-72 p-0 bg-[#0a0e1a] border border-white/10 rounded-xl shadow-2xl"
+        className="z-200 w-72 p-0 bg-white/5 backdrop-blur-[140px] border border-white/10 rounded-xl shadow-2xl"
       >
         {view === "main" ? (
           <div className="flex flex-col">

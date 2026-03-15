@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useDisconnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { AlertTriangle, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
@@ -12,12 +12,16 @@ export function WrongNetworkBanner() {
 	const { wallets } = useWallets();
 	const { logout, authenticated, ready } = usePrivy();
 	const { disconnect } = useDisconnect();
+	const { address: activeAddress } = useAccount();
 	const [switching, setSwitching] = useState(false);
 	const [dismissed, setDismissed] = useState(false);
 
-	// Find any connected external (non-embedded) wallet
+	// Find the external wallet that matches the active wagmi account
 	const externalWallet = wallets.find(
-		(w) => w.walletClientType !== "privy",
+		(w) =>
+			w.walletClientType !== "privy" &&
+			(!activeAddress ||
+				w.address.toLowerCase() === activeAddress.toLowerCase()),
 	);
 
 	// Check if the external wallet is on the wrong chain

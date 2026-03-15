@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { formatNumberWithSeparator } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
@@ -178,7 +179,9 @@ export function useBorrowForm({
         setLimitSelectedCollaterals([]);
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message =
+          error instanceof Error ? error.message : "Transaction failed";
+        toast.error(message);
       }
     },
     [
@@ -234,7 +237,9 @@ export function useBorrowForm({
         setMarketSelectedCollaterals([]);
         setShowSuccessDialog(true);
       } catch (error) {
-        console.error("Transaction failed:", error);
+        const message =
+          error instanceof Error ? error.message : "Transaction failed";
+        toast.error(message);
       }
     },
     [
