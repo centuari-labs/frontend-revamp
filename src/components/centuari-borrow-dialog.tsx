@@ -348,6 +348,7 @@ export function CentuariBorrowDialog({
             amount: numericAmount,
             maturity: maturityDate,
             collateralTokens: selectedCollaterals,
+            autoRollover: true,
           },
           authToken && markets.length > 0
             ? { token: authToken, markets }

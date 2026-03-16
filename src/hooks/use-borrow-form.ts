@@ -162,6 +162,7 @@ export function useBorrowForm({
             maturity: limitMaturity,
             targetApr: aprDecimal,
             collateralTokens: limitSelectedCollaterals,
+            autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
           USE_MOCK ? undefined : { token: token!, markets },
@@ -197,6 +198,7 @@ export function useBorrowForm({
       submitLimit,
       editingPosition,
       onUpdate,
+      autoRefinance,
     ]
   );
 
@@ -221,6 +223,7 @@ export function useBorrowForm({
             amount: numericAmount,
             maturity: marketMaturity,
             collateralTokens: marketSelectedCollaterals,
+            autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
           USE_MOCK ? undefined : { token: token!, markets },
@@ -254,6 +257,7 @@ export function useBorrowForm({
       submitMarket,
       editingPosition,
       onUpdate,
+      autoRefinance,
     ]
   );
 

@@ -176,6 +176,7 @@ export async function submitBorrowLimitOrder(
 		amount: String(params.amount),
 		marketIds: [marketId],
 		rate: aprToBasisPoints(params.targetApr),
+		autoRollover: params.autoRollover,
 	};
 
 	const response = await createBorrowLimitOrder(dto, token);
@@ -193,6 +194,7 @@ export async function submitBorrowMarketOrder(
 		assetId,
 		amount: String(params.amount),
 		marketIds: [marketId],
+		autoRollover: params.autoRollover ?? true,
 	};
 
 	const response = await createBorrowMarketOrder(dto, token);
