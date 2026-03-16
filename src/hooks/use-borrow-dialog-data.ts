@@ -8,7 +8,6 @@ import {
 } from "@/lib/portfolio-data";
 import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
 import { useMyAssets } from "@/hooks/use-my-assets";
-import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";
 
 export interface BorrowDialogData {
   portfolio: Record<string, number>;
@@ -22,7 +21,6 @@ export interface BorrowDialogData {
 export function useBorrowDialogData(): BorrowDialogData {
   const mock = usePortfolioFromStorage();
   const { assets, isLoading: assetsLoading, isError: assetsError } = useMyAssets({ limit: 100 });
-  const { lendBorrow, isLoading: lbLoading, isError: lbError } = useLendBorrowAssets();
 
   return useMemo(() => {
     if (USE_MOCK) {
@@ -60,11 +58,11 @@ export function useBorrowDialogData(): BorrowDialogData {
 
     return {
       portfolio,
-      totalDebt: lendBorrow?.borrowedAssets ?? 0,
+      totalDebt: 0,
       collateralStatus,
       collateralTokenList,
-      isLoading: assetsLoading || lbLoading,
-      isError: assetsError || lbError,
+      isLoading: assetsLoading,
+      isError: assetsError,
     };
-  }, [mock, assets, lendBorrow, assetsLoading, lbLoading, assetsError, lbError]);
+  }, [mock, assets, assetsLoading, assetsError]);
 }

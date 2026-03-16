@@ -135,8 +135,8 @@ const OrderBookContent: React.FC<{
   const displayBorrow = borrowOrders.slice(0, 10);
   const displayLend = lendOrders.slice(0, 10);
 
-  // Best borrow = last item (closest to spread)
-  const bestBorrowApr = displayBorrow[displayBorrow.length - 1]?.apr;
+  // Best borrow = first item (closest to spread, data arrives sorted this way)
+  const bestBorrowApr = displayBorrow[0]?.apr;
   // Best lend = first item (closest to spread)
   const bestLendApr = displayLend[0]?.apr;
 
@@ -161,7 +161,7 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* BORROW — rows pinned to bottom */}
-      <OrderTable orders={displayBorrow} side="borrow" />
+      <OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (

@@ -6,7 +6,7 @@ import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
 
-export function useLendBorrowAssets({ enabled = true }: { enabled?: boolean } = {}) {
+export function useLendBorrowAssets() {
   const { getToken } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
@@ -19,7 +19,7 @@ export function useLendBorrowAssets({ enabled = true }: { enabled?: boolean } = 
       return getLendBorrowAssets(token);
     },
     staleTime: 10_000,
-    enabled: !USE_MOCK && !!address && enabled,
+    enabled: !USE_MOCK && !!address,
   });
 
   return {
