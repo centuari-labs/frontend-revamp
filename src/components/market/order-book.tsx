@@ -131,20 +131,14 @@ const OrderBookContent: React.FC<{
   borrowOrders: OrderRow[];
   lendOrders: OrderRow[];
 }> = ({ borrowOrders, lendOrders }) => {
-  // Borrow (red, above spread): ascending — lowest rate at top, highest near spread
-  const sortedBorrow = [...borrowOrders]
-    .sort((a, b) => a.apr - b.apr)
-    .slice(-10);
+  // WebSocket already sends orders in correct display order — no sorting needed.
+  const displayBorrow = borrowOrders.slice(0, 10);
+  const displayLend = lendOrders.slice(0, 10);
 
-  // Lend (green, below spread): ascending — lowest rate near spread at top, highest at bottom
-  const sortedLend = [...lendOrders]
-    .sort((a, b) => a.apr - b.apr)
-    .slice(0, 10);
-
-  // Best borrow = highest borrow APR (bottom of ascending list, near spread)
-  const bestBorrowApr = sortedBorrow[sortedBorrow.length - 1]?.apr;
-  // Best lend = lowest lend APR (top of ascending list, near spread)
-  const bestLendApr = sortedLend[0]?.apr;
+  // Best borrow = last item (closest to spread)
+  const bestBorrowApr = displayBorrow[displayBorrow.length - 1]?.apr;
+  // Best lend = first item (closest to spread)
+  const bestLendApr = displayLend[0]?.apr;
 
   const midApr =
     bestBorrowApr != null && bestLendApr != null
@@ -167,7 +161,7 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* BORROW — rows pinned to bottom */}
-      <OrderTable orders={sortedBorrow} side="borrow" />
+      <OrderTable orders={displayBorrow} side="borrow" />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (
@@ -183,7 +177,7 @@ const OrderBookContent: React.FC<{
       )}
 
       {/* LEND — rows start from top */}
-      <OrderTable orders={sortedLend} side="lend" />
+      <OrderTable orders={displayLend} side="lend" />
     </>
   );
 };
