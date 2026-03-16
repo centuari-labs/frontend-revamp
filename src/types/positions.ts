@@ -15,6 +15,7 @@ export interface LendPosition {
   type: "lend";
   tokenValue: string;
   tokenSymbol: string;
+  assetId?: string;
   maturity: number;
   status: PositionStatus;
   createdAt: string;
@@ -31,6 +32,7 @@ export interface BorrowPosition {
   type: "borrow";
   tokenValue: string;
   tokenSymbol: string;
+  assetId?: string;
   maturity: number;
   status: PositionStatus;
   createdAt: string;

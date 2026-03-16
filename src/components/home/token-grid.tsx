@@ -18,6 +18,8 @@ export function TokenGrid() {
         <CentuariTokenCard
           id={index + 1}
           key={market.asset.id}
+          asset_id={market.asset.id}
+          market_id={market.market.market_id ?? undefined}
           token_image={market.asset.image_url ?? "/tokens/default-icon.svg"}
           token_name={market.asset.name}
           token_symbol={market.asset.symbol}

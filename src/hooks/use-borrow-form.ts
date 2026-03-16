@@ -14,7 +14,7 @@ import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
 import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { useMarketData } from "@/hooks/use-market-data";
+import { useMarketDetail } from "@/hooks/use-market-detail";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -23,6 +23,7 @@ export interface UseBorrowFormParams {
   selectedTokenProp?: TokenOption;
   editingPosition?: BorrowPosition;
   onUpdate?: (updatedPosition: BorrowPosition) => void;
+  assetId?: string;
 }
 
 export function useBorrowForm({
@@ -30,9 +31,10 @@ export function useBorrowForm({
   selectedTokenProp,
   editingPosition,
   onUpdate,
+  assetId: assetIdProp,
 }: UseBorrowFormParams) {
+  const { upcomingMaturities } = useMarketDetail(assetIdProp);
   const { getToken } = useAuthToken();
-  const { markets } = useMarketData();
   const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -164,7 +166,10 @@ export function useBorrowForm({
             collateralTokens: limitSelectedCollaterals,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : { token: token!, markets },
+          USE_MOCK ? undefined : (() => {
+            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
+            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
+          })(),
         );
 
         if (editingPosition && onUpdate) {
@@ -193,7 +198,8 @@ export function useBorrowForm({
       isPending,
       selectedToken,
       getToken,
-      markets,
+      assetIdProp,
+      upcomingMaturities,
       submitLimit,
       editingPosition,
       onUpdate,
@@ -223,7 +229,10 @@ export function useBorrowForm({
             collateralTokens: marketSelectedCollaterals,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : { token: token!, markets },
+          USE_MOCK ? undefined : (() => {
+            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
+            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
+          })(),
         );
 
         if (editingPosition && onUpdate) {
@@ -250,7 +259,8 @@ export function useBorrowForm({
       isPending,
       selectedToken,
       getToken,
-      markets,
+      assetIdProp,
+      upcomingMaturities,
       submitMarket,
       editingPosition,
       onUpdate,

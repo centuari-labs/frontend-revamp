@@ -14,27 +14,16 @@ import {
   formatMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
-import type { MarketItem } from "@/lib/api";
 import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
-import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useOpenLendAmounts } from "@/hooks/use-open-lend-amounts";
+import { useMarketDetail } from "@/hooks/use-market-detail";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
-
-function getMaturitiesFromMarkets(markets: MarketItem[]): number[] {
-  const seen = new Set<number>();
-  for (const m of markets) {
-    if (m.market.maturity != null) {
-      seen.add(m.market.maturity * 1000); // seconds → ms
-    }
-  }
-  return [...seen].sort((a, b) => a - b);
-}
 
 export interface UseLendFormParams {
   tokenList: TokenOption[];
@@ -42,6 +31,7 @@ export interface UseLendFormParams {
   editingPosition?: LendPosition;
   onUpdate?: (updatedPosition: LendPosition) => void;
   maturityOptions?: number[];
+  assetId?: string;
 }
 
 export function useLendForm({
@@ -50,9 +40,10 @@ export function useLendForm({
   editingPosition,
   onUpdate,
   maturityOptions,
+  assetId: assetIdProp,
 }: UseLendFormParams) {
+  const { upcomingMaturities } = useMarketDetail(assetIdProp);
   const { getToken } = useAuthToken();
-  const { markets } = useMarketData();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -62,14 +53,6 @@ export function useLendForm({
 
   const { assets: myAssets } = useMyAssets({ limit: 100 });
   const { data: openLendAmounts } = useOpenLendAmounts();
-
-  // Resolve the asset ID for the selected token from market data
-  const selectedAssetId = useMemo(() => {
-    const market = markets.find(
-      (m) => m.asset.symbol.toLowerCase() === selectedToken.value.toLowerCase(),
-    );
-    return market?.asset.id;
-  }, [markets, selectedToken.value]);
 
   // Portfolio balance for the selected token (from backend)
   const portfolioBalance = useMemo(() => {
@@ -81,9 +64,9 @@ export function useLendForm({
 
   // Amount locked in open lend orders for the selected token
   const lockedAmount = useMemo(() => {
-    if (!selectedAssetId || !openLendAmounts) return 0;
-    return openLendAmounts.get(selectedAssetId) ?? 0;
-  }, [selectedAssetId, openLendAmounts]);
+    if (!assetIdProp || !openLendAmounts) return 0;
+    return openLendAmounts.get(assetIdProp) ?? 0;
+  }, [assetIdProp, openLendAmounts]);
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -92,11 +75,8 @@ export function useLendForm({
     if (maturityOptions && maturityOptions.length > 0) {
       return maturityOptions;
     }
-    if (USE_MOCK || markets.length === 0) {
-      return getAvailableMaturityTimestamps();
-    }
-    return getMaturitiesFromMarkets(markets);
-  }, [maturityOptions, markets]);
+    return getAvailableMaturityTimestamps();
+  }, [maturityOptions]);
 
   const defaultMaturity = availableMaturities[0] ?? getDefaultMaturityTimestamp();
 
@@ -223,7 +203,10 @@ export function useLendForm({
             autoRollover,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : { token: token!, markets },
+          USE_MOCK ? undefined : (() => {
+            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
+            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
+          })(),
         );
 
         if (editingPosition && onUpdate) {
@@ -251,7 +234,8 @@ export function useLendForm({
       selectedToken,
       getTokenInfo,
       getToken,
-      markets,
+      assetIdProp,
+      upcomingMaturities,
       submitLimit,
       editingPosition,
       onUpdate,
@@ -281,7 +265,10 @@ export function useLendForm({
             maturity: marketMaturity,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : { token: token!, markets },
+          USE_MOCK ? undefined : (() => {
+            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
+            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
+          })(),
         );
 
         if (editingPosition && onUpdate) {
@@ -306,7 +293,8 @@ export function useLendForm({
       selectedToken,
       getTokenInfo,
       getToken,
-      markets,
+      assetIdProp,
+      upcomingMaturities,
       submitMarket,
       editingPosition,
       onUpdate,

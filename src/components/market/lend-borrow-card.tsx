@@ -9,12 +9,14 @@ interface LendBorrowCardProps {
   tokenList: TokenOption[];
   selectedToken?: TokenOption;
   maturityOptions?: number[];
+  assetId?: string;
 }
 
 export function LendBorrowCard({
   tokenList,
   selectedToken,
   maturityOptions,
+  assetId,
 }: LendBorrowCardProps) {
   return (
     <div className="col-span-1 hidden md:block">
@@ -43,6 +45,7 @@ export function LendBorrowCard({
               tokenList={tokenList}
               selectedToken={selectedToken}
               maturityOptions={maturityOptions}
+              assetId={assetId}
             />
           </TabsContent>
 
@@ -51,6 +54,7 @@ export function LendBorrowCard({
               tokenList={tokenList}
               selectedToken={selectedToken}
               maturityOptions={maturityOptions}
+              assetId={assetId}
             />
           </TabsContent>
         </Tabs>

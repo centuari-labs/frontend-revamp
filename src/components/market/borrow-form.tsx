@@ -29,6 +29,7 @@ interface BorrowFormProps {
   editingPosition?: BorrowPosition;
   onUpdate?: (updatedPosition: BorrowPosition) => void;
   maturityOptions?: number[];
+  assetId?: string;
 }
 
 export function BorrowForm({
@@ -37,12 +38,14 @@ export function BorrowForm({
   editingPosition,
   onUpdate,
   maturityOptions,
+  assetId,
 }: BorrowFormProps) {
   const form = useBorrowForm({
     tokenList,
     selectedTokenProp,
     editingPosition,
     onUpdate,
+    assetId,
   });
 
   return (

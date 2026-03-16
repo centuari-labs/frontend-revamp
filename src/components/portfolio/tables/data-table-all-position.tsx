@@ -49,6 +49,7 @@ export type PositionProps = {
   timestamp?: number;
   collateralTokens?: string[];
   maturity?: number;
+  assetId?: string;
 };
 
 interface DataTableAllPositionProps {
@@ -165,7 +166,9 @@ export function DataTableAllPosition({
         cell: ({ row }) => {
           const position = row.original;
           const isBorrow = position.type === "borrow";
-          const tokenSymbol = (position.tokenValue ?? position.assetName).toLowerCase();
+          const marketLink = position.assetId
+            ? `/market?token=${position.assetId}`
+            : `/market?token=${(position.tokenValue ?? position.assetName).toLowerCase()}`;
 
           return (
             <div className="flex items-center gap-4">
@@ -209,7 +212,7 @@ export function DataTableAllPosition({
                 />
               )}
               <Link
-                href={`/market?token=${tokenSymbol}`}
+                href={marketLink}
                 className="text-white/80 hover:text-white transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >

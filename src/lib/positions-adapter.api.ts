@@ -8,7 +8,6 @@ import {
 	createLendMarketOrder,
 	createBorrowLimitOrder,
 	createBorrowMarketOrder,
-	type MarketItem,
 	type OrderResponseData,
 } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
@@ -24,22 +23,12 @@ import type {
 	SubmitLendMarketParams,
 } from "@/types/positions";
 
-// ─── ID Resolution ────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────
 
-export function resolveMarketForAsset(
-	tokenValue: string,
-	markets: MarketItem[],
-): { assetId: string; marketId: string } {
-	const match = markets.find(
-		(m) => m.asset.symbol.toLowerCase() === tokenValue.toLowerCase(),
-	);
-	if (!match) {
-		throw new Error(`No asset found for token "${tokenValue}"`);
-	}
-	if (!match.market.market_id) {
-		throw new Error(`No market available for token "${tokenValue}"`);
-	}
-	return { assetId: match.asset.id, marketId: match.market.market_id };
+export interface MarketIds {
+	assetId: string;
+	marketId: string;
+	tokenSymbol: string;
 }
 
 // ─── Conversions ──────────────────────────────────────────────────────
@@ -65,15 +54,11 @@ function mapStatus(backendStatus: string): PositionStatus {
 
 export function normalizeOrderToLendPosition(
 	order: OrderResponseData,
-	markets: MarketItem[],
+	tokenSymbol: string,
 	orderType: OrderType = "limit",
 ): LendPosition {
-	// Reverse-lookup token symbol from assetId
-	const marketItem = markets.find(
-		(m) => m.asset.id.toLowerCase() === order.assetId.toLowerCase(),
-	);
-	const tokenValue = marketItem?.asset.symbol.toLowerCase() ?? "unknown";
-	const tokenLabel = marketItem?.asset.symbol ?? "UNKNOWN";
+	const tokenValue = tokenSymbol.toLowerCase();
+	const tokenLabel = tokenSymbol.toUpperCase();
 
 	const maturitySec = order.markets[0]?.maturity ?? 0;
 
@@ -86,6 +71,7 @@ export function normalizeOrderToLendPosition(
 		type: "lend",
 		tokenValue,
 		tokenSymbol: tokenLabel,
+		assetId: order.assetId,
 		maturity: maturitySec * 1000,
 		status: mapStatus(order.status),
 		createdAt: formatDate(new Date(order.createdAt)),
@@ -96,14 +82,11 @@ export function normalizeOrderToLendPosition(
 
 export function normalizeOrderToBorrowPosition(
 	order: OrderResponseData,
-	markets: MarketItem[],
+	tokenSymbol: string,
 	orderType: OrderType = "limit",
 ): BorrowPosition {
-	const marketItem = markets.find(
-		(m) => m.asset.id.toLowerCase() === order.assetId.toLowerCase(),
-	);
-	const tokenValue = marketItem?.asset.symbol.toLowerCase() ?? "unknown";
-	const tokenLabel = marketItem?.asset.symbol ?? "UNKNOWN";
+	const tokenValue = tokenSymbol.toLowerCase();
+	const tokenLabel = tokenSymbol.toUpperCase();
 
 	const maturitySec = order.markets[0]?.maturity ?? 0;
 
@@ -116,6 +99,7 @@ export function normalizeOrderToBorrowPosition(
 		type: "borrow",
 		tokenValue,
 		tokenSymbol: tokenLabel,
+		assetId: order.assetId,
 		maturity: maturitySec * 1000,
 		status: mapStatus(order.status),
 		createdAt: formatDate(new Date(order.createdAt)),
@@ -129,72 +113,64 @@ export function normalizeOrderToBorrowPosition(
 
 export async function submitLendLimitOrder(
 	params: SubmitLendLimitParams,
-	markets: MarketItem[],
+	ids: MarketIds,
 	token: string,
 ): Promise<LendPosition> {
-	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
-
 	const dto = {
-		assetId,
+		assetId: ids.assetId,
 		amount: String(params.amount),
-		marketIds: [marketId],
+		marketIds: [ids.marketId],
 		rate: aprToBasisPoints(params.targetApr),
 		autoRollover: params.autoRollover,
 	};
 
 	const response = await createLendLimitOrder(dto, token);
-	return normalizeOrderToLendPosition(response, markets, "limit");
+	return normalizeOrderToLendPosition(response, ids.tokenSymbol, "limit");
 }
 
 export async function submitLendMarketOrder(
 	params: SubmitLendMarketParams,
-	markets: MarketItem[],
+	ids: MarketIds,
 	token: string,
 ): Promise<LendPosition> {
-	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
-
 	const dto = {
-		assetId,
+		assetId: ids.assetId,
 		amount: String(params.amount),
-		marketIds: [marketId],
+		marketIds: [ids.marketId],
 		autoRollover: params.autoRollover ?? true,
 	};
 
 	const response = await createLendMarketOrder(dto, token);
-	return normalizeOrderToLendPosition(response, markets, "market");
+	return normalizeOrderToLendPosition(response, ids.tokenSymbol, "market");
 }
 
 export async function submitBorrowLimitOrder(
 	params: SubmitBorrowLimitParams,
-	markets: MarketItem[],
+	ids: MarketIds,
 	token: string,
 ): Promise<BorrowPosition> {
-	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
-
 	const dto = {
-		assetId,
+		assetId: ids.assetId,
 		amount: String(params.amount),
-		marketIds: [marketId],
+		marketIds: [ids.marketId],
 		rate: aprToBasisPoints(params.targetApr),
 	};
 
 	const response = await createBorrowLimitOrder(dto, token);
-	return normalizeOrderToBorrowPosition(response, markets, "limit");
+	return normalizeOrderToBorrowPosition(response, ids.tokenSymbol, "limit");
 }
 
 export async function submitBorrowMarketOrder(
 	params: SubmitBorrowMarketParams,
-	markets: MarketItem[],
+	ids: MarketIds,
 	token: string,
 ): Promise<BorrowPosition> {
-	const { assetId, marketId } = resolveMarketForAsset(params.tokenValue, markets);
-
 	const dto = {
-		assetId,
+		assetId: ids.assetId,
 		amount: String(params.amount),
-		marketIds: [marketId],
+		marketIds: [ids.marketId],
 	};
 
 	const response = await createBorrowMarketOrder(dto, token);
-	return normalizeOrderToBorrowPosition(response, markets, "market");
+	return normalizeOrderToBorrowPosition(response, ids.tokenSymbol, "market");
 }

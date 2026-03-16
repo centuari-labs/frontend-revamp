@@ -7,6 +7,7 @@ import { wagmiConfig } from "@/lib/wagmi";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { EmbeddedWalletGuard } from "./embedded-wallet-guard";
 import { PriceProvider } from "@/contexts/price-context";
+import { UserDetailsProvider } from "@/contexts/user-details-context";
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -38,7 +39,9 @@ export const Provider = ({ children }: { children: React.ReactNode }) => {
 			<QueryClientProvider client={queryClient}>
 				<WagmiProvider config={wagmiConfig}>
 					<EmbeddedWalletGuard>
-						<PriceProvider>{children}</PriceProvider>
+						<PriceProvider>
+							<UserDetailsProvider>{children}</UserDetailsProvider>
+						</PriceProvider>
 					</EmbeddedWalletGuard>
 				</WagmiProvider>
 			</QueryClientProvider>

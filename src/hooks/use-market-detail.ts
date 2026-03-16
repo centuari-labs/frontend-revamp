@@ -2,6 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getMarketDetail } from "@/lib/api";
 
 interface UseMarketDetailResult {
+	assetId: string | undefined;
+	symbol: string | undefined;
+	decimals: number | null | undefined;
+	imageUrl: string | null | undefined;
 	totalDeposit: number;
 	activeLoans: number;
 	collateralFactor: number;
@@ -12,6 +16,7 @@ interface UseMarketDetailResult {
 	}[];
 	isLoading: boolean;
 	isError: boolean;
+	refetch: () => void;
 }
 
 export function useMarketDetail(assetId: string | undefined): UseMarketDetailResult {
@@ -31,6 +36,10 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 	const data = query.data;
 
 	return {
+		assetId: data?.asset.id,
+		symbol: data?.asset.symbol,
+		decimals: data?.asset.decimals,
+		imageUrl: data?.asset.imageUrl,
 		totalDeposit: data ? Number.parseFloat(data.total_deposit) : 0,
 		activeLoans: data ? Number.parseFloat(data.active_loans) : 0,
 		collateralFactor: data ? data.collateral_factor : 0,
@@ -42,6 +51,7 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 			})) ?? [],
 		isLoading: query.isLoading,
 		isError: query.isError,
+		refetch: query.refetch,
 	};
 }
 

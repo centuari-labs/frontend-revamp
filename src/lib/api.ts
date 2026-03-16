@@ -217,6 +217,41 @@ export async function getMyPositions(
 	};
 }
 
+// ─── User Details (Assets + Debt) ───────────────────────────────────
+
+export interface UserAssetDetail {
+	assetId: string;
+	totalBalance: number;
+	lockedInOrders: number;
+	availableBalance: number;
+	availableBalanceUsd: number;
+	isCollateral: boolean;
+	ltv: number;
+	liquidationThreshold: number;
+}
+
+export interface UserDebtDetail {
+	assetId: string;
+	debtAmount: number;
+	debtAmountUsd: number;
+}
+
+export interface UserDetailsResponse {
+	assets: UserAssetDetail[];
+	totalDebtUsd: number;
+	settledDebtUsd: number;
+	pendingDebtUsd: number;
+	debts: UserDebtDetail[];
+}
+
+export function getUserDetails(
+	token: string,
+): Promise<UserDetailsResponse> {
+	return apiClient<UserDetailsResponse>("/portfolio/user-details", {
+		token,
+	});
+}
+
 // ─── Set Asset As Collateral ────────────────────────────────────────
 
 export function setAssetAsCollateral(

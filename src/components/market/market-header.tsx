@@ -5,34 +5,22 @@ import { IcPieChartColorCentuari } from "@/components/icons/ic-pie-chart-color-c
 import { IcWalletColorCentuari } from "@/components/icons/ic-wallet-color-centuari";
 import { CurrencyValue } from "@/components/currency-value";
 import { StatCard } from "@/components/stat-card";
-import { MARKET_TOKEN_LIST } from "@/lib/tokens";
-import { getSelectedTokenFromParams } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
-
-type MarketToken = (typeof MARKET_TOKEN_LIST)[number];
+import { useRouter } from "next/navigation";
 
 export interface MarketHeaderProps {
-  /** When provided, used as single source of truth (e.g. from page). Otherwise derived from URL params. */
-  selectedToken?: MarketToken;
+  selectedToken: { logo: string; value: string; label: string };
   totalDeposit?: number;
   activeLoans?: number;
 }
 
 export function MarketHeader({
-  selectedToken: selectedTokenProp,
+  selectedToken,
   totalDeposit,
   activeLoans,
-}: MarketHeaderProps = {}) {
+}: MarketHeaderProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const selectedToken = useMemo(() => {
-    if (selectedTokenProp) return selectedTokenProp;
-    return getSelectedTokenFromParams(MARKET_TOKEN_LIST, searchParams.get("token"), "usdc");
-  }, [selectedTokenProp, searchParams]);
 
   return (
     <>

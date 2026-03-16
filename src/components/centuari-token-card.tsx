@@ -16,13 +16,15 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariBorrowDialog } from "./centuari-borrow-dialog";
 import { CentuariLendDialog } from "./centuari-lend-dialog";
 import { useRouter } from "next/navigation";
-import { getTokenSlug, randomIntInRange } from "@/lib/utils";
+import { randomIntInRange } from "@/lib/utils";
 
 export const CentuariTokenCard = ({
   token_image,
   token_name,
   token_symbol,
   id,
+  asset_id,
+  market_id,
   borrow_rate,
   lend_rate,
   collateral_factor,
@@ -31,6 +33,8 @@ export const CentuariTokenCard = ({
   token_name: string;
   token_symbol: string;
   id: number;
+  asset_id: string;
+  market_id?: string;
   borrow_rate: number;
   lend_rate: number;
   collateral_factor: number;
@@ -99,6 +103,8 @@ export const CentuariTokenCard = ({
             borrowAPR={rates.borrowAPR}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}
+            asset_id={asset_id}
+            market_id={market_id}
           />
           <CentuariLendDialog
             token_image={token_image}
@@ -108,11 +114,13 @@ export const CentuariTokenCard = ({
             borrowAPR={rates.borrowAPR}
             collateralFactor={rates.collateralFactor}
             vaultTotal={vaultTotal}
+            asset_id={asset_id}
+            market_id={market_id}
           />
         </div>
         <Button
           className="w-full flex items-center justify-center mt-3 md:mt-4 gap-2 text-xs md:text-sm bg-transparent hover:bg-transparent text-white"
-          onClick={() => router.push(`/market?token=${getTokenSlug(token_symbol)}`)}
+          onClick={() => router.push(`/market?token=${asset_id}`)}
         >
           <span
             className="relative flex items-center gap-2 group hover:after:w-full after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-white after:w-0 after:transition-all after:duration-300"

@@ -40,7 +40,6 @@ import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
 import { getLiquidationThreshold } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
-import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
 import { CollateralListDisplay } from "./collateral-list-display";
@@ -56,6 +55,8 @@ interface CentuariBorrowDialogProps {
   borrowAPR: string;
   collateralFactor: string;
   vaultTotal: number;
+  asset_id?: string;
+  market_id?: string;
 }
 
 export function CentuariBorrowDialog({
@@ -66,6 +67,8 @@ export function CentuariBorrowDialog({
   borrowAPR,
   collateralFactor,
   vaultTotal,
+  asset_id,
+  market_id,
 }: CentuariBorrowDialogProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("borrow");
   const borrowViewRef = useRef<HTMLDivElement>(null);
@@ -74,7 +77,6 @@ export function CentuariBorrowDialog({
   const router = useRouter();
   const { submitMarket, isPending } = useSubmitBorrow();
   const { getToken } = useAuthToken();
-  const { markets } = useMarketData();
   const queryClient = useQueryClient();
 
   // Bridge hook: reads localStorage in mock mode, API in real mode
@@ -349,8 +351,8 @@ export function CentuariBorrowDialog({
             maturity: maturityDate,
             collateralTokens: selectedCollaterals,
           },
-          authToken && markets.length > 0
-            ? { token: authToken, markets }
+          authToken && asset_id && market_id
+            ? { token: authToken, marketIds: { assetId: asset_id, marketId: market_id, tokenSymbol: token_symbol } }
             : undefined,
         );
 

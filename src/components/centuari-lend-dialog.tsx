@@ -36,7 +36,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
-import { useMarketData } from "@/hooks/use-market-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDeposit } from "@/hooks/use-deposit";
@@ -67,6 +66,8 @@ interface CentuariLendDialogProps {
   borrowAPR: string;
   collateralFactor: string;
   vaultTotal: number;
+  asset_id?: string;
+  market_id?: string;
 }
 
 export function CentuariLendDialog({
@@ -77,6 +78,8 @@ export function CentuariLendDialog({
   borrowAPR,
   collateralFactor,
   vaultTotal,
+  asset_id,
+  market_id,
 }: CentuariLendDialogProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("lend");
   const lendViewRef = useRef<HTMLDivElement>(null);
@@ -86,7 +89,6 @@ export function CentuariLendDialog({
   const router = useRouter();
   const { submitMarket, isPending } = useSubmitLend();
   const { getToken } = useAuthToken();
-  const { markets } = useMarketData();
   const queryClient = useQueryClient();
 
   // Bridge hook: reads localStorage in mock mode, API in real mode
@@ -349,8 +351,8 @@ export function CentuariLendDialog({
             maturity: maturityDate,
             autoRollover: true,
           },
-          authToken && markets.length > 0
-            ? { token: authToken, markets }
+          authToken && asset_id && market_id
+            ? { token: authToken, marketIds: { assetId: asset_id, marketId: market_id, tokenSymbol: token_symbol } }
             : undefined,
         );
 
