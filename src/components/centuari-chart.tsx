@@ -11,7 +11,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const chartData = [
+interface CentuariChartProps {
+  data?: { date: string; value: number }[];
+}
+
+const fallbackData = [
   { date: "1 Oct", value: 45 },
   { date: "2 Oct", value: 52 },
   { date: "3 Oct", value: 48 },
@@ -64,7 +68,9 @@ const CustomDot = (props: {
   return null;
 };
 
-export function CentuariChart() {
+export function CentuariChart({ data }: CentuariChartProps) {
+  const chartData = data && data.length > 0 ? data : fallbackData;
+
   return (
     <div className="h-96 mt-10">
       <ResponsiveContainer width="100%" height="100%">

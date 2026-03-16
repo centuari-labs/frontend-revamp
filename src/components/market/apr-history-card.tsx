@@ -1,10 +1,27 @@
 "use client";
 
+import { useMemo } from "react";
+import { format } from "date-fns";
 import { CentuariChart } from "@/components/centuari-chart";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useRateHistory } from "@/hooks/use-rate-history";
 
-export function APRHistoryCard() {
+interface APRHistoryCardProps {
+  assetId: string | undefined;
+}
+
+export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
+  const { rateHistory } = useRateHistory(assetId);
+
+  const chartData = useMemo(
+    () =>
+      rateHistory.map((item) => ({
+        date: format(new Date(item.date), "d MMM"),
+        value: item.rate,
+      })),
+    [rateHistory],
+  );
   return (
     <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden">
       {/* Desktop Header - Only visible on md+ */}
@@ -57,7 +74,7 @@ export function APRHistoryCard() {
       </div>
 
       {/* Chart */}
-      <CentuariChart />
+      <CentuariChart data={chartData} />
 
       {/* Mobile Tabs - Only visible on mobile, below chart */}
       <div className="md:hidden px-4 pb-4">

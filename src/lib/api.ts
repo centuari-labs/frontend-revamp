@@ -52,6 +52,22 @@ export function getMarketDetail(assetId: string): Promise<MarketDetailResponse> 
 	return apiClient<MarketDetailResponse>(`/market/${assetId}`);
 }
 
+// ─── Rate History ──────────────────────────────────────────────────
+
+export interface RateHistoryItem {
+	date: string;
+	rate: number;
+}
+
+export interface RateHistoryResponse {
+	assetId: string;
+	rateHistory: RateHistoryItem[];
+}
+
+export function getRateHistory(assetId: string): Promise<RateHistoryResponse> {
+	return apiClient<RateHistoryResponse>(`/market/${assetId}/rate-history`);
+}
+
 export interface AccountResponse {
 	id: string;
 	privy_user_id: string;
