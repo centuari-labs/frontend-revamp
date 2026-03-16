@@ -59,8 +59,15 @@ const OrderRowView: React.FC<{
   );
 };
 
-const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
+const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({ orders, side }) => {
   const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (side === "borrow" && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [side, orders]);
 
   if (orders.length === 0) {
     return (
@@ -71,15 +78,23 @@ const OrderTable: React.FC<{ orders: OrderRow[] }> = ({ orders }) => {
   }
 
   return (
-    <ScrollArea className="space-y-0.5 h-[195px]">
-      {orders.map((row, i) => (
-        <OrderRowView
-          key={i}
-          order={row}
-          maxAmount={sideMaxAmount}
-        />
-      ))}
-    </ScrollArea>
+    <div
+      ref={scrollRef}
+      style={{ height: 165, overflowY: "auto", overflowX: "hidden" }}
+      className="[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+    >
+      {side === "borrow" ? (
+        <div className="flex flex-col justify-end" style={{ minHeight: 195 }}>
+          {orders.map((row, i) => (
+            <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+          ))}
+        </div>
+      ) : (
+        orders.map((row, i) => (
+          <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+        ))
+      )}
+    </div>
   );
 };
 
@@ -116,21 +131,19 @@ const OrderBookContent: React.FC<{
   borrowOrders: OrderRow[];
   lendOrders: OrderRow[];
 }> = ({ borrowOrders, lendOrders }) => {
-  // Sort borrow: highest APR first (descending) — the highest rate above
-  // Limited to 10 best levels (lowest rates) which are at the end of the descending sorted list
+  // Borrow (red, above spread): ascending — lowest rate at top, highest near spread
   const sortedBorrow = [...borrowOrders]
-    .sort((a, b) => b.apr - a.apr)
+    .sort((a, b) => a.apr - b.apr)
     .slice(-10);
 
-  // Sort lend: highest APR first (descending) — the highest rate above
-  // Limited to 10 best levels (highest rates) which are at the top of the descending sorted list
+  // Lend (green, below spread): ascending — lowest rate near spread at top, highest at bottom
   const sortedLend = [...lendOrders]
-    .sort((a, b) => b.apr - a.apr)
+    .sort((a, b) => a.apr - b.apr)
     .slice(0, 10);
 
-  // Best borrow = lowest APR (bottom of borrow list)
+  // Best borrow = highest borrow APR (bottom of ascending list, near spread)
   const bestBorrowApr = sortedBorrow[sortedBorrow.length - 1]?.apr;
-  // Best lend = highest APR (top of lend list)
+  // Best lend = lowest lend APR (top of ascending list, near spread)
   const bestLendApr = sortedLend[0]?.apr;
 
   const midApr =
@@ -153,8 +166,8 @@ const OrderBookContent: React.FC<{
         </div>
       </div>
 
-      {/* BORROW — rate paling besar → kecil */}
-      <OrderTable orders={sortedBorrow} />
+      {/* BORROW — rows pinned to bottom */}
+      <OrderTable orders={sortedBorrow} side="borrow" />
 
       {/* MID APR */}
       {midApr != null && spreadApr != null && (
@@ -169,8 +182,8 @@ const OrderBookContent: React.FC<{
         </div>
       )}
 
-      {/* LEND — rate paling besar → kecil */}
-      <OrderTable orders={sortedLend} />
+      {/* LEND — rows start from top */}
+      <OrderTable orders={sortedLend} side="lend" />
     </>
   );
 };
