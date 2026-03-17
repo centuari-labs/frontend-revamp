@@ -13,7 +13,6 @@ import {
 	type UserAssetDetail,
 	type UserDebtDetail,
 } from "@/lib/api";
-import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -43,7 +42,7 @@ export function UserDetailsProvider({ children }: { children: ReactNode }) {
 		},
 		staleTime: 10_000,
 		refetchInterval: 15_000,
-		enabled: !USE_MOCK && !!address,
+		enabled: !!address,
 	});
 
 	const value = useMemo<UserDetailsContextValue>(

@@ -1,12 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { USE_MOCK } from "@/lib/use-mock";
-import {
-  tokenList as portfolioTokenList,
-  type TokenInfo,
-} from "@/lib/portfolio-data";
-import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
+import { type TokenInfo } from "@/lib/portfolio-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
 
 export interface BorrowPortfolioData {
@@ -18,20 +13,9 @@ export interface BorrowPortfolioData {
 }
 
 export function useBorrowPortfolioData(): BorrowPortfolioData {
-  const mock = usePortfolioFromStorage();
   const { assets, isLoading: assetsLoading } = useMyAssets({ limit: 100 });
 
   return useMemo(() => {
-    if (USE_MOCK) {
-      return {
-        portfolio: mock.portfolio,
-        totalDebt: mock.totalDebt,
-        collateralStatus: mock.collateralStatus,
-        collateralTokenList: portfolioTokenList,
-        isLoading: false,
-      };
-    }
-
     const portfolio: Record<string, number> = {};
     const collateralStatus: Record<string, boolean> = {};
     const collateralTokenList: TokenInfo[] = [];
@@ -59,5 +43,5 @@ export function useBorrowPortfolioData(): BorrowPortfolioData {
       collateralTokenList,
       isLoading: assetsLoading,
     };
-  }, [mock, assets, assetsLoading]);
+  }, [assets, assetsLoading]);
 }

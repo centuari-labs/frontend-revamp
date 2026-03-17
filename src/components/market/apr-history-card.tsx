@@ -5,14 +5,34 @@ import { format } from "date-fns";
 import { CentuariChart } from "@/components/centuari-chart";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart3 } from "lucide-react";
 import { useRateHistory } from "@/hooks/use-rate-history";
 
 interface APRHistoryCardProps {
   assetId: string | undefined;
 }
 
+function APRHistoryCardSkeleton() {
+  return (
+    <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden">
+      <div className="hidden md:flex px-6 lg:px-8 py-4 items-center justify-between w-full">
+        <Skeleton className="h-5 w-24" />
+        <div className="flex gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-10 rounded-md" />
+          ))}
+        </div>
+      </div>
+      <div className="px-6 pb-6">
+        <Skeleton className="h-[300px] w-full rounded-md" />
+      </div>
+    </div>
+  );
+}
+
 export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
-  const { rateHistory } = useRateHistory(assetId);
+  const { rateHistory, isLoading } = useRateHistory(assetId);
 
   const chartData = useMemo(
     () =>
@@ -22,6 +42,20 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
       })),
     [rateHistory],
   );
+
+  if (isLoading) {
+    return <APRHistoryCardSkeleton />;
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden flex flex-col items-center justify-center min-h-[300px] gap-3">
+        <BarChart3 size={40} className="text-white/20" />
+        <span className="text-sm text-white/40">No Data</span>
+      </div>
+    );
+  }
+
   return (
     <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden">
       {/* Desktop Header - Only visible on md+ */}

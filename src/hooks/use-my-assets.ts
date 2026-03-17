@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyAssets, type MyAssetItem } from "@/lib/api";
-import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -28,7 +27,7 @@ export function useMyAssets(options?: UseMyAssetsOptions) {
       return getMyAssets(token, { page, limit });
     },
     staleTime: 10_000,
-    enabled: !USE_MOCK && !!address,
+    enabled: !!address,
     placeholderData: (prev) => prev,
   });
 

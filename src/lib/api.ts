@@ -519,3 +519,59 @@ export function submitWithdraw(
 	});
 }
 
+// ─── Order Management ─────────────────────────────────────────────────
+
+export function cancelOrder(
+	orderId: string,
+	token: string,
+): Promise<{ success: boolean }> {
+	return apiClient<{ success: boolean }>(`/orders/${orderId}/cancel`, {
+		method: "POST",
+		token,
+	});
+}
+
+export function updateOrder(
+	orderId: string,
+	data: { amount?: string; rate?: number },
+	token: string,
+): Promise<OrderResponseData> {
+	return apiClient<OrderResponseData>(`/orders/${orderId}`, {
+		method: "PATCH",
+		body: data,
+		token,
+	});
+}
+
+// ─── Repay ────────────────────────────────────────────────────────────
+
+export interface RepayResponse {
+	txHash: string;
+}
+
+export function submitRepay(
+	positionId: string,
+	amount: string,
+	token: string,
+): Promise<RepayResponse> {
+	return apiClient<RepayResponse>("/repay", {
+		method: "POST",
+		body: { positionId, amount },
+		token,
+	});
+}
+
+// ─── Withdraw Lend Position ───────────────────────────────────────────
+
+export function submitWithdrawLend(
+	positionId: string,
+	amount: string,
+	token: string,
+): Promise<{ txHash: string }> {
+	return apiClient<{ txHash: string }>("/withdraw-lend", {
+		method: "POST",
+		body: { positionId, amount },
+		token,
+	});
+}
+

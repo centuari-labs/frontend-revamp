@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { USE_MOCK } from "@/lib/use-mock";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
 
 export type TradeRow = {

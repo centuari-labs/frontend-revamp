@@ -7,7 +7,6 @@ import {
   getDefaultMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
-import { USE_MOCK } from "@/lib/use-mock";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
@@ -154,7 +153,8 @@ export function useBorrowForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = USE_MOCK ? undefined : await getToken();
+        const token = await getToken();
+        const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
         const result = await submitLimit(
           {
             tokenValue: selectedToken.value,
@@ -166,10 +166,7 @@ export function useBorrowForm({
             collateralTokens: limitSelectedCollaterals,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : (() => {
-            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
-            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
-          })(),
+          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
         );
 
         if (editingPosition && onUpdate) {
@@ -218,7 +215,8 @@ export function useBorrowForm({
       if (marketCalcs.healthFactor < 1.0) return;
 
       try {
-        const token = USE_MOCK ? undefined : await getToken();
+        const token = await getToken();
+        const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
         const result = await submitMarket(
           {
             tokenValue: selectedToken.value,
@@ -229,10 +227,7 @@ export function useBorrowForm({
             collateralTokens: marketSelectedCollaterals,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : (() => {
-            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
-            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
-          })(),
+          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
         );
 
         if (editingPosition && onUpdate) {

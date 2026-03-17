@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useWallets } from "@privy-io/react-auth";
-import { USE_MOCK } from "@/lib/use-mock";
 import { requestFaucetTokens, type FaucetResponse } from "@/lib/api";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
 

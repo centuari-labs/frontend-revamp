@@ -28,11 +28,9 @@ import {
   getHealthFactorPercentage,
   handleNumberInputChange,
   getHealthFactorDisplayStatus,
-  getTokenValueFromList,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
-import { tokenList, defaultPortfolio, getLiquidationThreshold } from "@/lib/portfolio-data";
-import { usePortfolioFromStorage } from "@/hooks/use-portfolio-from-storage";
+import { useMyAssets } from "@/hooks/use-my-assets";
 import { useRepay } from "@/hooks/use-repay";
 import HealthFactor from "./centuari-health-factor";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
@@ -76,15 +74,24 @@ export function CentuariRepayDialog({
   const isHoveringRef = useRef<boolean>(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const tokenValue = getTokenValueFromList(tokenList, token_symbol);
+  const { assets: myAssets } = useMyAssets({ limit: 100 });
 
-  const { portfolio, totalDebt, collateralStatus } = usePortfolioFromStorage();
+  const tokenValue = token_symbol.toLowerCase();
+  const assetInfo = myAssets.find(a => a.symbol.toLowerCase() === tokenValue);
+  const tokenPrice = assetInfo && assetInfo.amountInUsd > 0 && assetInfo.walletBalance > 0
+    ? assetInfo.amountInUsd / assetInfo.walletBalance
+    : 0;
+  const availableBalance = assetInfo?.walletBalance ?? 0;
 
-  // Get available balance from portfolio for the token
-  const token = tokenList.find(t => t.value === tokenValue);
-  const availableBalance = token && token.price > 0
-    ? (portfolio[tokenValue] || 0) / token.price
-    : portfolio[tokenValue] || 0;
+  // Build portfolio and collateral from real assets
+  const portfolio: Record<string, number> = {};
+  const collateralStatus: Record<string, boolean> = {};
+  for (const asset of myAssets) {
+    const key = asset.symbol.toLowerCase();
+    portfolio[key] = asset.amountInUsd;
+    collateralStatus[key] = asset.isCollateral;
+  }
+  const totalDebt = 0; // Debt is managed by backend
 
   // Calculate derived values
   const numericAmount = parseFloat(repayAmount) || 0;
@@ -107,9 +114,9 @@ export function CentuariRepayDialog({
   const weightedLT = totalPortfolioValue > 0
     ? Object.entries(portfolio).reduce((sum, [tokenValue, value]) => {
       if (collateralStatus[tokenValue] === true && value > 0) {
-        const token = tokenList.find(t => t.value === tokenValue);
-        if (token) {
-          const lt = getLiquidationThreshold(token);
+        const assetItem = myAssets.find(a => a.symbol.toLowerCase() === tokenValue);
+        if (assetItem) {
+          const lt = assetItem.liquidationThreshold ?? 0;
           return sum + (lt * value);
         }
       }
@@ -142,7 +149,7 @@ export function CentuariRepayDialog({
   const formattedAmountBorrowed = formatCurrency(amountBorrowed);
 
   // Format available balance
-  const formattedAvailableBalance = formatCurrency(availableBalance * (token?.price || 1));
+  const formattedAvailableBalance = formatCurrency(availableBalance * (tokenPrice || 1));
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleanValue = e.target.value.replace(/^\$/, "");
@@ -154,7 +161,7 @@ export function CentuariRepayDialog({
 
   // Handle Max button - set amount to minimum of available balance or amount borrowed
   const handleMaxClick = () => {
-    const maxAmount = Math.min(availableBalance * (token?.price || 1), amountBorrowed).toString();
+    const maxAmount = Math.min(availableBalance * (tokenPrice || 1), amountBorrowed).toString();
     const formattedMax = formatNumberWithSeparator(maxAmount);
     setRepayAmount(maxAmount);
     setDisplayAmount(formattedMax);
@@ -193,7 +200,7 @@ export function CentuariRepayDialog({
   const handleRepay = async () => {
     if (numericAmount <= 0) return;
 
-    const availableInUsd = availableBalance * (token?.price || 1);
+    const availableInUsd = availableBalance * (tokenPrice || 1);
     if (futureAmount > availableInUsd) return;
     if (numericAmount > amountBorrowed) return;
 
@@ -424,7 +431,7 @@ export function CentuariRepayDialog({
                 disabled={
                   isPending ||
                   numericAmount <= 0 ||
-                  futureAmount > availableBalance * (token?.price || 1) ||
+                  futureAmount > availableBalance * (tokenPrice || 1) ||
                   numericAmount > amountBorrowed
                 }
               >

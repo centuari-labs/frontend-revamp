@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getOpenLendAmounts } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { USE_MOCK } from "@/lib/use-mock";
 
 /**
  * Fetches the total locked amount per asset for the current user's
@@ -17,7 +16,6 @@ export function useOpenLendAmounts() {
 	return useQuery({
 		queryKey: ["open-lend-amounts"],
 		queryFn: async () => {
-			if (USE_MOCK) return new Map<string, number>();
 			const jwt = await getToken();
 			if (!jwt) return new Map<string, number>();
 			const data = await getOpenLendAmounts(jwt);

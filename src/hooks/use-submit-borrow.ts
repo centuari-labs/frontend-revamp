@@ -1,13 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { USE_MOCK } from "@/lib/use-mock";
-import {
-	submitOpenOrder,
-	submitFilledBorrowPosition,
-	updateOpenOrder,
-	updateFilledPosition,
-	buildBorrowLimitPosition,
-	buildBorrowMarketPosition,
-} from "@/lib/positions-adapter.mock";
 import {
 	submitBorrowLimitOrder,
 	submitBorrowMarketOrder,
@@ -35,20 +26,9 @@ export function useSubmitBorrow() {
 			params: SubmitBorrowLimitParams;
 			options?: SubmitBorrowOptions;
 		}) => {
-			if (USE_MOCK) {
-				const position = buildBorrowLimitPosition(params);
-				if (params.editingPosition) {
-					await updateOpenOrder(position);
-					return position;
-				}
-				const result = await submitOpenOrder(position);
-				return result as BorrowPosition;
-			}
-
-			// API mode
 			const { token, marketIds } = options ?? {};
 			if (!token || !marketIds) {
-				throw new Error("Auth token and market IDs required for API mode");
+				throw new Error("Auth token and market IDs required");
 			}
 			return await submitBorrowLimitOrder(params, marketIds, token);
 		},
@@ -68,22 +48,9 @@ export function useSubmitBorrow() {
 			params: SubmitBorrowMarketParams;
 			options?: SubmitBorrowOptions;
 		}) => {
-			if (USE_MOCK) {
-				const position = buildBorrowMarketPosition(params);
-				if (params.editingPosition) {
-					await updateFilledPosition(position);
-					return position;
-				}
-				const result = await submitFilledBorrowPosition(position, {
-					amount: params.amount,
-				});
-				return result;
-			}
-
-			// API mode
 			const { token, marketIds } = options ?? {};
 			if (!token || !marketIds) {
-				throw new Error("Auth token and market IDs required for API mode");
+				throw new Error("Auth token and market IDs required");
 			}
 			return await submitBorrowMarketOrder(params, marketIds, token);
 		},
