@@ -13,6 +13,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,183 +24,90 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Image from "next/image";
-
 import { CentuariBadge } from "@/components/centuari-badge";
+import { Edit2, Trash2 } from "lucide-react";
 
-export type HistoryItemProps = {
+export type OpenOrderItemProps = {
   id: string;
-  date: string;
-  type: "Borrow" | "Lend";
   tokenSymbol: string;
   tokenImg: string;
+  orderType: "Lend" | "Borrow";
   amount: number;
-  fee: number;
-  loanTokenSymbol: string;
-  rateValue: number;
+  apr: number;
   maturity: string;
-  status: "OPEN" | "CANCELLED" | "PARTIALLY FILLED" | "FILLED";
+  createdAt: string;
+  status: "pending" | "processing" | "success" | "failed";
 };
 
-const data: HistoryItemProps[] = [
+const statusStyles: Record<OpenOrderItemProps["status"], { color: string; bg: string }> = {
+  pending: { color: "text-yellow-500", bg: "bg-yellow-500" },
+  processing: { color: "text-blue-500", bg: "bg-blue-500" },
+  success: { color: "text-green-500", bg: "bg-green-500" },
+  failed: { color: "text-red-500", bg: "bg-red-500" },
+};
+
+const data: OpenOrderItemProps[] = [
   {
     id: "1",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
     tokenSymbol: "USDT",
     tokenImg: "/tokens/usdt-icon.webp",
+    orderType: "Borrow",
     amount: 12000,
-    fee: 24,
-    loanTokenSymbol: "USDT",
-    rateValue: 12,
+    apr: 0.12,
     maturity: "Dec 31, 2025",
-    status: "OPEN",
+    createdAt: "Oct 7, 2025 14:32:15",
+    status: "pending",
   },
   {
     id: "2",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
     tokenSymbol: "USDT",
     tokenImg: "/tokens/usdt-icon.webp",
+    orderType: "Lend",
     amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
+    apr: 0.22,
     maturity: "Jan 15, 2026",
-    status: "FILLED",
+    createdAt: "Oct 7, 2025 09:15:42",
+    status: "success",
   },
   {
     id: "3",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
     tokenSymbol: "USDT",
     tokenImg: "/tokens/usdt-icon.webp",
+    orderType: "Borrow",
     amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
+    apr: 0.22,
     maturity: "Mar 1, 2026",
-    status: "PARTIALLY FILLED",
+    createdAt: "Oct 7, 2025 11:05:30",
+    status: "processing",
   },
   {
     id: "4",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
     tokenSymbol: "USDT",
     tokenImg: "/tokens/usdt-icon.webp",
+    orderType: "Lend",
     amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
+    apr: 0.22,
     maturity: "Feb 28, 2026",
-    status: "CANCELLED",
+    createdAt: "Oct 7, 2025 16:45:10",
+    status: "failed",
   },
   {
     id: "5",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
     tokenSymbol: "USDT",
     tokenImg: "/tokens/usdt-icon.webp",
+    orderType: "Borrow",
     amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
+    apr: 0.22,
     maturity: "Apr 15, 2026",
-    status: "OPEN",
-  },
-  {
-    id: "6",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 24,
-    loanTokenSymbol: "USDT",
-    rateValue: 12,
-    maturity: "Dec 31, 2025",
-    status: "FILLED",
-  },
-  {
-    id: "7",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Jan 15, 2026",
-    status: "OPEN",
-  },
-  {
-    id: "8",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Mar 1, 2026",
-    status: "PARTIALLY FILLED",
-  },
-  {
-    id: "9",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Feb 28, 2026",
-    status: "FILLED",
-  },
-  {
-    id: "10",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Apr 15, 2026",
-    status: "CANCELLED",
+    createdAt: "Oct 7, 2025 08:20:55",
+    status: "pending",
   },
 ];
 
-const statusDotColors: Record<HistoryItemProps["status"], string> = {
-  OPEN: "bg-blue-500",
-  CANCELLED: "bg-red-500",
-  "PARTIALLY FILLED": "bg-yellow-500",
-  FILLED: "bg-green-500",
-};
-
-export const columns: ColumnDef<HistoryItemProps>[] = [
-  {
-    accessorKey: "date",
-    header: "Date",
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => (
-      <CentuariBadge
-        variant={row.original.type === "Lend" ? "primary" : "warning"}
-        className="capitalize"
-      >
-        {row.original.type}
-      </CentuariBadge>
-    ),
-  },
+export const columns: ColumnDef<OpenOrderItemProps>[] = [
   {
     accessorKey: "tokenSymbol",
-    header: "Token",
+    header: "Loan Token",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <Image
@@ -207,9 +115,22 @@ export const columns: ColumnDef<HistoryItemProps>[] = [
           alt={row.original.tokenSymbol}
           width={24}
           height={24}
+          className="rounded-full"
         />
         <span>{row.original.tokenSymbol}</span>
       </div>
+    ),
+  },
+  {
+    accessorKey: "orderType",
+    header: "Order Type",
+    cell: ({ row }) => (
+      <CentuariBadge
+        variant={row.original.orderType === "Lend" ? "primary" : "warning"}
+        className="capitalize"
+      >
+        {row.original.orderType}
+      </CentuariBadge>
     ),
   },
   {
@@ -225,42 +146,52 @@ export const columns: ColumnDef<HistoryItemProps>[] = [
     ),
   },
   {
-    accessorKey: "fee",
-    header: "Fee",
-    cell: ({ row }) => (
-      <span>
-        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-          row.original.fee
-        )}{" "}
-        {row.original.loanTokenSymbol}
-      </span>
-    ),
-  },
-  {
-    id: "rate",
-    header: "APR",
-    cell: ({ row }) => `${row.original.rateValue}%`,
+    accessorKey: "apr",
+    header: "Target APR %",
+    cell: ({ row }) => {
+      const aprPercent = (row.original.apr * 100).toFixed(1);
+      return aprPercent.replace(".", ",") + "%";
+    },
   },
   {
     accessorKey: "maturity",
     header: "Maturity",
   },
   {
+    accessorKey: "createdAt",
+    header: "Created at",
+  },
+  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
+      const styles = statusStyles[status];
       return (
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 ${statusDotColors[status]} rounded-full`} />
-          <span className="capitalize">{status.toLowerCase()}</span>
+          <span className={`w-2 h-2 ${styles.bg} rounded-full`} />
+          <span className="capitalize">{status}</span>
         </div>
       );
     },
   },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: () => (
+      <div className="flex items-center gap-2">
+        <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+          <Edit2 size={14} className="text-white" />
+        </button>
+        <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+          <Trash2 size={14} className="text-red-400" />
+        </button>
+      </div>
+    ),
+  },
 ];
 
-export function DataTableHistory() {
+export function DataTableOpenOrders() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []

@@ -2,6 +2,7 @@
 
 import { CentuariCalender } from "@/components/centuari-calender";
 import { DataTableHistory } from "@/components/transaction-history/tables/data-table-history";
+import { DataTableOpenOrders } from "@/components/transaction-history/tables/data-table-open-orders";
 import { TransactionHistoryHeader } from "@/components/transaction-history/tables/transaction-history-header";
 import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
@@ -127,7 +128,7 @@ export default function TransactionHistoryPage() {
 
             <TabsContent value="open_orders" className="mt-0">
               <div className="overflow-x-auto">
-                <DataTableHistory />
+                <DataTableOpenOrders />
               </div>
             </TabsContent>
             <TabsContent value="transaction_history" className="mt-0">
