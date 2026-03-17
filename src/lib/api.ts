@@ -182,7 +182,7 @@ export interface MyPositionsResponse {
 
 export async function getMyPositions(
 	token: string,
-	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number },
+	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number; assetId?: string },
 ): Promise<MyPositionsResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -191,6 +191,7 @@ export async function getMyPositions(
 		limit: String(limit),
 	});
 	if (params?.type) searchParams.set("type", params.type);
+	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",

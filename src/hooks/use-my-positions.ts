@@ -13,20 +13,21 @@ export interface UseMyPositionsOptions {
   type?: "LEND" | "BORROW";
   page?: number;
   limit?: number;
+  assetId?: string;
 }
 
 export function useMyPositions(options?: UseMyPositionsOptions) {
-  const { type, page = 1, limit = 10 } = options ?? {};
+  const { type, page = 1, limit = 10, assetId } = options ?? {};
   const { getToken } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery({
-    queryKey: ["my-positions", address, type, page, limit],
+    queryKey: ["my-positions", address, type, page, limit, assetId],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
-      return getMyPositions(token, { type, page, limit });
+      return getMyPositions(token, { type, page, limit, assetId });
     },
     staleTime: 10_000,
     refetchInterval: 15_000,
