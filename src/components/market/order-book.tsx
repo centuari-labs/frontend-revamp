@@ -216,10 +216,10 @@ const RecentTradesContent: React.FC<{
   return (
     <>
       <div ref={headerRef} className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center">
-        <div className="col-span-3 text-white/80 font-semibold">
+        <div className="col-span-3 text-white/80 font-semibold text-left">
           Time
         </div>
-        <div className="col-span-3 text-white/80 font-semibold">
+        <div className="col-span-3 text-white/80 text-left font-semibold">
           Type
         </div>
         <div className="col-span-3 text-white/80 font-semibold">

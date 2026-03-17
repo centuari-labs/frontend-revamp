@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthToken } from "./use-auth-token";
 import { submitWithdraw } from "@/lib/api";
-import { USE_MOCK } from "@/lib/use-mock";
 
 export function useWithdraw() {
   const { getToken } = useAuthToken();
@@ -17,12 +16,6 @@ export function useWithdraw() {
       assetId: string;
       amount: string;
     }) => {
-      if (USE_MOCK) {
-        // Mock mode: simulate processing
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        return { txHash: "0xmock_tx_hash" };
-      }
-
       const token = await getToken();
       if (!token) {
         throw new Error("Authentication required");

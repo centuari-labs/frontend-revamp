@@ -1,43 +1,42 @@
 "use client";
 
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getMyAssets, type MyAssetItem } from "@/lib/api";
+import {
+  getTransactionHistory,
+  type TransactionHistoryItem,
+  type TransactionHistoryResponse,
+} from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
 
-const EMPTY_ASSETS: MyAssetItem[] = [];
+const EMPTY: TransactionHistoryItem[] = [];
 
-export interface UseMyAssetsOptions {
+export function useTransactionHistory(options?: {
   page?: number;
   limit?: number;
-}
-
-export function useMyAssets(options?: UseMyAssetsOptions) {
+}) {
   const { page = 1, limit = 10 } = options ?? {};
   const { getToken } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
-  const query = useQuery({
-    queryKey: ["my-assets", address, page, limit],
+  const query = useQuery<TransactionHistoryResponse>({
+    queryKey: ["transaction-history", address, page, limit],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
-      return getMyAssets(token, { page, limit });
+      return getTransactionHistory(token, { page, limit });
     },
     staleTime: 10_000,
     enabled: !!address,
     placeholderData: (prev) => prev,
   });
 
-  const assets = useMemo(() => query.data?.data ?? EMPTY_ASSETS, [query.data]);
-
   return {
-    assets,
-    page: query.data?.page ?? page,
-    totalData: query.data?.totalData ?? 0,
-    totalPages: query.data?.totalPages ?? 0,
+    transactions: query.data?.data ?? EMPTY,
+    page: query.data?.meta?.page ?? page,
+    total: query.data?.meta?.total ?? 0,
+    totalPages: Math.ceil((query.data?.meta?.total ?? 0) / limit),
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: query.refetch,

@@ -1,46 +1,44 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { getAllPositions } from "@/lib/positions-adapter.mock";
+import { useMyPositions } from "@/hooks/use-my-positions";
 import type { Position } from "@/types/positions";
+import type { MyPositionItem } from "@/lib/api";
+
+function mapPositionItem(p: MyPositionItem): Position {
+  const base = {
+    id: p.id,
+    assetImg: p.imageUrl ?? "",
+    assetName: p.name,
+    amount: p.amountInUsd,
+    apr: 0,
+    tokenValue: p.symbol.toLowerCase(),
+    tokenSymbol: p.symbol,
+    maturity: (p.maturity ?? 0) * 1000,
+    status: "success" as const,
+    createdAt: "",
+    timestamp: Date.now(),
+  };
+
+  if (p.side === "BORROW") {
+    return { ...base, type: "borrow", collateralTokens: [] };
+  }
+  return { ...base, type: "lend" };
+}
 
 /**
- * Hook to read positions and orders reactively.
- * openOrders: from centuari_open_orders (unfilled orders)
- * allTransactions: from centuari_positions (filled positions / All Transaction tab)
+ * Hook to read positions from the backend API.
+ * Maps backend MyPositionItem to the frontend Position type.
  */
 export function usePositions() {
-  const [openOrders, setOpenOrders] = useState<Position[]>([]);
-  const [allTransactions, setAllTransactions] = useState<Position[]>([]);
+  const { positions: allPositions, isLoading, refetch } = useMyPositions({ limit: 100 });
 
-  const refresh = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const { openOrders: orders, allTransactions: transactions } = getAllPositions();
-    setOpenOrders(orders);
-    setAllTransactions(transactions);
-  }, []);
-
-  useEffect(() => {
-    refresh();
-
-    const handleStorageChange = () => refresh();
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("centuari-positions-updated", handleStorageChange);
-
-    const interval = setInterval(refresh, 500);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("centuari-positions-updated", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [refresh]);
-
-  const positions = [...openOrders, ...allTransactions];
+  const mapped = allPositions.map(mapPositionItem);
 
   return {
-    positions,
-    openOrders,
-    allTransactions,
-    refresh,
+    positions: mapped,
+    openOrders: [] as Position[],
+    allTransactions: mapped,
+    isLoading,
+    refresh: refetch,
   };
 }

@@ -8,8 +8,6 @@ import {
 	useState,
 	type ReactNode,
 } from "react";
-import { USE_MOCK } from "@/lib/use-mock";
-import { tokenList } from "@/lib/portfolio-data";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
 
 type PricesMap = Record<string, number>;
@@ -23,22 +21,8 @@ const PriceContext = createContext<PriceContextValue | undefined>(undefined);
 export function PriceProvider({ children }: { children: ReactNode }) {
 	const [prices, setPrices] = useState<PricesMap>({});
 
-	// Mock mode: derive a simple prices map from the static token list
-	useEffect(() => {
-		if (!USE_MOCK) return;
-
-		const mockPrices: PricesMap = {};
-		for (const token of tokenList) {
-			// Use the token `value` as a stable key in mock mode
-			mockPrices[token.value] = token.price;
-		}
-		setPrices(mockPrices);
-	}, []);
-
 	// WebSocket mode: subscribe once to global prices channel
 	useEffect(() => {
-		if (USE_MOCK) return;
-
 		const socket = acquireSocket();
 
 		const handleSnapshot = (snapshot: PricesMap) => {

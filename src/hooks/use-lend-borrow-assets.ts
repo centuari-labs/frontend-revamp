@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getLendBorrowAssets, type LendBorrowAssetsResponse } from "@/lib/api";
-import { USE_MOCK } from "@/lib/use-mock";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
 
@@ -19,7 +18,7 @@ export function useLendBorrowAssets() {
       return getLendBorrowAssets(token);
     },
     staleTime: 10_000,
-    enabled: !USE_MOCK && !!address,
+    enabled: !!address,
   });
 
   return {

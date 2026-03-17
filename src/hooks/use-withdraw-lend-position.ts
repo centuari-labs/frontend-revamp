@@ -1,32 +1,32 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { withdrawLendPosition } from "@/lib/positions-adapter.mock";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitWithdrawLend } from "@/lib/api";
+import { useAuthToken } from "@/hooks/use-auth-token";
 import type { WithdrawLendParams } from "@/types/positions";
 
 export function useWithdrawLendPosition() {
-  const [isPending, setIsPending] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { getToken } = useAuthToken();
+  const queryClient = useQueryClient();
 
-  const withdraw = useCallback(async (params: WithdrawLendParams) => {
-    setIsPending(true);
-    setIsSuccess(false);
-    try {
-      await withdrawLendPosition(params);
-      setIsSuccess(true);
-    } finally {
-      setIsPending(false);
-    }
-  }, []);
-
-  const resetSuccess = useCallback(() => {
-    setIsSuccess(false);
-  }, []);
+  const mutation = useMutation({
+    mutationFn: async (params: WithdrawLendParams) => {
+      const token = await getToken();
+      if (!token) throw new Error("Authentication required");
+      return submitWithdrawLend(params.positionId, String(params.amount), token);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
+    },
+  });
 
   return {
-    withdraw,
-    isPending,
-    isSuccess,
-    resetSuccess,
+    withdraw: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    resetSuccess: mutation.reset,
   };
 }

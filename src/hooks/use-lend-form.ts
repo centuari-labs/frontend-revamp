@@ -6,15 +6,12 @@ import {
   formatNumberWithSeparator,
   calculateFutureAmount,
 } from "@/lib/utils";
-import { USE_MOCK } from "@/lib/use-mock";
-import { getBestLendAPR } from "@/lib/positions-adapter.mock";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
   formatMaturityTimestamp,
   normalizeMaturity,
 } from "@/lib/maturity";
-import { tokenList as portfolioTokenList } from "@/lib/portfolio-data";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
@@ -86,7 +83,7 @@ export function useLendForm({
 
   // Sync default maturity when backend data loads
   useEffect(() => {
-    if (!USE_MOCK && availableMaturities.length > 0) {
+    if (availableMaturities.length > 0) {
       setLimitMaturity((prev) => {
         const isLocal = !availableMaturities.includes(prev);
         return isLocal ? availableMaturities[0] : prev;
@@ -103,30 +100,20 @@ export function useLendForm({
   const [successTokenSymbol, setSuccessTokenSymbol] = useState("");
 
   const getTokenInfo = useCallback((value: string) => {
-    return portfolioTokenList.find((t) => t.value === value);
-  }, []);
+    const asset = myAssets.find(
+      (a) => a.symbol.toLowerCase() === value.toLowerCase(),
+    );
+    if (!asset) return undefined;
+    const price =
+      asset.amountInUsd > 0 && asset.walletBalance > 0
+        ? asset.amountInUsd / asset.walletBalance
+        : 0;
+    return { value: asset.symbol.toLowerCase(), label: asset.name, price };
+  }, [myAssets]);
 
   const getAvailableBalance = useCallback((): number => {
-    if (!USE_MOCK) {
-      return Math.max(0, portfolioBalance - lockedAmount);
-    }
-
-    if (typeof window === "undefined") return 1000;
-    const stored = localStorage.getItem("centuari_portfolio");
-    if (stored) {
-      try {
-        const portfolio = JSON.parse(stored);
-        const tokenInfo = getTokenInfo(selectedToken.value);
-        if (tokenInfo) {
-          const portfolioValue = portfolio[selectedToken.value] || 0;
-          return tokenInfo.price > 0 ? portfolioValue / tokenInfo.price : 1000;
-        }
-      } catch {
-        return 1000;
-      }
-    }
-    return 1000;
-  }, [selectedToken.value, getTokenInfo, portfolioBalance, lockedAmount]);
+    return Math.max(0, portfolioBalance - lockedAmount);
+  }, [portfolioBalance, lockedAmount]);
 
   useEffect(() => {
     if (!editingPosition) return;
@@ -171,7 +158,7 @@ export function useLendForm({
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
   const marketFutureAmount = calculateFutureAmount(
     marketNumericAmount,
-    getBestLendAPR(selectedToken?.value ?? "usdc"),
+    0,
     marketMaturity
   );
 
@@ -190,7 +177,8 @@ export function useLendForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = USE_MOCK ? undefined : await getToken();
+        const token = await getToken();
+        const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
         const result = await submitLimit(
           {
             tokenValue: selectedToken.value,
@@ -198,15 +186,12 @@ export function useLendForm({
             tokenLabel: selectedToken.label,
             amount: numericAmount,
             amountInUsd,
-            targetApr: aprDecimal || (4.5 + Math.random() * 3) / 100,
+            targetApr: aprDecimal,
             maturity: limitMaturity,
             autoRollover,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : (() => {
-            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
-            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
-          })(),
+          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
         );
 
         if (editingPosition && onUpdate) {
@@ -254,7 +239,8 @@ export function useLendForm({
       try {
         const amountInUsd = numericAmount * tokenInfo.price;
 
-        const token = USE_MOCK ? undefined : await getToken();
+        const token = await getToken();
+        const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
         const result = await submitMarket(
           {
             tokenValue: selectedToken.value,
@@ -265,10 +251,7 @@ export function useLendForm({
             maturity: marketMaturity,
             editingPosition: editingPosition ?? undefined,
           },
-          USE_MOCK ? undefined : (() => {
-            const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
-            return assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined;
-          })(),
+          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
         );
 
         if (editingPosition && onUpdate) {

@@ -1,33 +1,30 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import {
-  deleteOpenOrder,
-  deleteFilledPosition,
-  getOpenOrders,
-} from "@/lib/positions-adapter.mock";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { cancelOrder } from "@/lib/api";
+import { useAuthToken } from "@/hooks/use-auth-token";
 
 export function useDeleteOpenOrder() {
-  const [isPending, setIsPending] = useState(false);
+  const { getToken } = useAuthToken();
+  const queryClient = useQueryClient();
 
-  const deleteOrder = useCallback(async (positionId: string) => {
-    setIsPending(true);
-    try {
-      const openOrders = getOpenOrders();
-      const isOpenOrder = openOrders.some((p) => p.id === positionId);
-      if (isOpenOrder) {
-        await deleteOpenOrder(positionId);
-      } else {
-        await deleteFilledPosition(positionId);
-      }
-    } finally {
-      setIsPending(false);
-    }
-  }, []);
+  const mutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const token = await getToken();
+      if (!token) throw new Error("Authentication required");
+      return cancelOrder(orderId, token);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
+    },
+  });
 
   return {
-    delete: deleteOrder,
-    deleteOrder,
-    isPending,
+    delete: mutation.mutateAsync,
+    deleteOrder: mutation.mutateAsync,
+    isPending: mutation.isPending,
   };
 }

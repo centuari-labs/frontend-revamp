@@ -3,18 +3,10 @@
 import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -27,109 +19,54 @@ import Image from "next/image";
 import { CentuariBadge } from "@/components/centuari-badge";
 import { Edit2, Trash2 } from "lucide-react";
 
-export type OpenOrderItemProps = {
+// TODO: Replace with real API type once open orders endpoint is available
+export type OpenOrderItem = {
   id: string;
-  tokenSymbol: string;
-  tokenImg: string;
-  orderType: "Lend" | "Borrow";
-  amount: number;
-  apr: number;
-  maturity: string;
+  side: "LEND" | "BORROW";
+  orderType: string;
+  rate: number;
+  amount: string;
+  status: string;
+  asset: {
+    symbol: string;
+    imageUrl: string | null;
+  };
   createdAt: string;
-  status: "pending" | "processing" | "success" | "failed";
 };
 
-const statusStyles: Record<OpenOrderItemProps["status"], { color: string; bg: string }> = {
-  pending: { color: "text-yellow-500", bg: "bg-yellow-500" },
-  processing: { color: "text-blue-500", bg: "bg-blue-500" },
-  success: { color: "text-green-500", bg: "bg-green-500" },
-  failed: { color: "text-red-500", bg: "bg-red-500" },
+const statusDotColors: Record<string, string> = {
+  OPEN: "bg-blue-500",
+  PARTIALLY_FILLED: "bg-yellow-500",
 };
 
-const data: OpenOrderItemProps[] = [
+const columns: ColumnDef<OpenOrderItem>[] = [
   {
-    id: "1",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    orderType: "Borrow",
-    amount: 12000,
-    apr: 0.12,
-    maturity: "Dec 31, 2025",
-    createdAt: "Oct 7, 2025 14:32:15",
-    status: "pending",
-  },
-  {
-    id: "2",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    orderType: "Lend",
-    amount: 12000,
-    apr: 0.22,
-    maturity: "Jan 15, 2026",
-    createdAt: "Oct 7, 2025 09:15:42",
-    status: "success",
-  },
-  {
-    id: "3",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    orderType: "Borrow",
-    amount: 12000,
-    apr: 0.22,
-    maturity: "Mar 1, 2026",
-    createdAt: "Oct 7, 2025 11:05:30",
-    status: "processing",
-  },
-  {
-    id: "4",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    orderType: "Lend",
-    amount: 12000,
-    apr: 0.22,
-    maturity: "Feb 28, 2026",
-    createdAt: "Oct 7, 2025 16:45:10",
-    status: "failed",
-  },
-  {
-    id: "5",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    orderType: "Borrow",
-    amount: 12000,
-    apr: 0.22,
-    maturity: "Apr 15, 2026",
-    createdAt: "Oct 7, 2025 08:20:55",
-    status: "pending",
-  },
-];
-
-export const columns: ColumnDef<OpenOrderItemProps>[] = [
-  {
-    accessorKey: "tokenSymbol",
+    id: "token",
     header: "Loan Token",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <Image
-          src={row.original.tokenImg}
-          alt={row.original.tokenSymbol}
-          width={24}
-          height={24}
-          className="rounded-full"
-        />
-        <span>{row.original.tokenSymbol}</span>
+        {row.original.asset.imageUrl && (
+          <Image
+            src={row.original.asset.imageUrl}
+            alt={row.original.asset.symbol}
+            width={24}
+            height={24}
+            className="rounded-full"
+          />
+        )}
+        <span>{row.original.asset.symbol}</span>
       </div>
     ),
   },
   {
-    accessorKey: "orderType",
+    accessorKey: "side",
     header: "Order Type",
     cell: ({ row }) => (
       <CentuariBadge
-        variant={row.original.orderType === "Lend" ? "primary" : "warning"}
+        variant={row.original.side === "LEND" ? "primary" : "warning"}
         className="capitalize"
       >
-        {row.original.orderType}
+        {row.original.side === "LEND" ? "Lend" : "Borrow"}
       </CentuariBadge>
     ),
   },
@@ -139,23 +76,19 @@ export const columns: ColumnDef<OpenOrderItemProps>[] = [
     cell: ({ row }) => (
       <span>
         {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-          row.original.amount
+          Number(row.original.amount)
         )}{" "}
-        {row.original.tokenSymbol}
+        {row.original.asset.symbol}
       </span>
     ),
   },
   {
-    accessorKey: "apr",
+    accessorKey: "rate",
     header: "Target APR %",
     cell: ({ row }) => {
-      const aprPercent = (row.original.apr * 100).toFixed(1);
+      const aprPercent = row.original.rate.toFixed(1);
       return aprPercent.replace(".", ",") + "%";
     },
-  },
-  {
-    accessorKey: "maturity",
-    header: "Maturity",
   },
   {
     accessorKey: "createdAt",
@@ -166,11 +99,10 @@ export const columns: ColumnDef<OpenOrderItemProps>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
-      const styles = statusStyles[status];
       return (
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 ${styles.bg} rounded-full`} />
-          <span className="capitalize">{status}</span>
+          <span className={`w-2 h-2 ${statusDotColors[status] ?? "bg-gray-500"} rounded-full`} />
+          <span className="capitalize">{status.toLowerCase().replace("_", " ")}</span>
         </div>
       );
     },
@@ -191,32 +123,14 @@ export const columns: ColumnDef<OpenOrderItemProps>[] = [
   },
 ];
 
-export function DataTableOpenOrders() {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+// TODO: Integrate with real open orders API endpoint when available
+const EMPTY_DATA: OpenOrderItem[] = [];
 
+export function DataTableOpenOrders() {
   const table = useReactTable({
-    data,
+    data: EMPTY_DATA,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
   });
 
   return (
@@ -226,89 +140,42 @@ export function DataTableOpenOrders() {
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-white/5">
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={`text-sm text-muted-foreground font-normal ${
-                        headerGroup.headers[0].id === header.id
-                          ? "rounded-l-sm"
-                          : ""
-                      } ${
-                        headerGroup.headers[headerGroup.headers.length - 1]
-                          .id === header.id
-                          ? "rounded-r-sm"
-                          : ""
-                      }`}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={`text-sm text-muted-foreground font-normal ${
+                      headerGroup.headers[0].id === header.id
+                        ? "rounded-l-sm"
+                        : ""
+                    } ${
+                      headerGroup.headers[headerGroup.headers.length - 1].id ===
+                      header.id
+                        ? "rounded-r-sm"
+                        : ""
+                    }`}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="border border-transparent py-1"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center"
+              >
+                No open orders.
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
       </div>
     </div>
   );

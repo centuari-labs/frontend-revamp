@@ -1,14 +1,20 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { repayBorrowPosition } from "@/lib/positions-adapter.mock";
+import { submitRepay } from "@/lib/api";
+import { useAuthToken } from "@/hooks/use-auth-token";
 import type { RepayBorrowParams } from "@/types/positions";
 
 export function useRepay() {
+  const { getToken } = useAuthToken();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (params: RepayBorrowParams) => repayBorrowPosition(params),
+    mutationFn: async (params: RepayBorrowParams) => {
+      const token = await getToken();
+      if (!token) throw new Error("Authentication required");
+      return submitRepay(params.positionId, String(params.amount), token);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });
       queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
