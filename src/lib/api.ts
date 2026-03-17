@@ -613,6 +613,49 @@ export async function getTransactionHistory(
 	);
 }
 
+// ─── Open Orders ─────────────────────────────────────────────────────
+
+export interface OpenOrderItem {
+	id: string;
+	side: "LEND" | "BORROW";
+	orderType: "LIMIT" | "MARKET";
+	rate: number;
+	amount: string;
+	filledQuantity: string | null;
+	status: "OPEN" | "PARTIALLY_FILLED";
+	maturity: string;
+	asset: TransactionHistoryAsset;
+	createdAt: string;
+}
+
+export interface OpenOrdersResponse {
+	statusCode: number;
+	data: OpenOrderItem[];
+	meta: {
+		page: number;
+		limit: number;
+		totalData: number;
+		totalPages: number;
+	};
+}
+
+export async function getOpenOrders(
+	token: string,
+	params?: { page?: number; limit?: number },
+): Promise<OpenOrdersResponse> {
+	const page = params?.page ?? 1;
+	const limit = params?.limit ?? 10;
+	const searchParams = new URLSearchParams({
+		page: String(page),
+		limit: String(limit),
+	});
+
+	return apiClient<OpenOrdersResponse>(
+		`/portfolio/open-orders?${searchParams.toString()}`,
+		{ token },
+	);
+}
+
 // ─── Withdraw Lend Position ───────────────────────────────────────────
 
 export function submitWithdrawLend(

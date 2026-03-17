@@ -7,6 +7,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,22 +18,11 @@ import {
 } from "@/components/ui/table";
 import Image from "next/image";
 import { CentuariBadge } from "@/components/centuari-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Edit2, Trash2 } from "lucide-react";
-
-// TODO: Replace with real API type once open orders endpoint is available
-export type OpenOrderItem = {
-  id: string;
-  side: "LEND" | "BORROW";
-  orderType: string;
-  rate: number;
-  amount: string;
-  status: string;
-  asset: {
-    symbol: string;
-    imageUrl: string | null;
-  };
-  createdAt: string;
-};
+import { useOpenOrders } from "@/hooks/use-open-orders";
+import type { OpenOrderItem } from "@/lib/api";
+import { format } from "date-fns";
 
 const statusDotColors: Record<string, string> = {
   OPEN: "bg-blue-500",
@@ -85,14 +75,23 @@ const columns: ColumnDef<OpenOrderItem>[] = [
   {
     accessorKey: "rate",
     header: "Target APR %",
+    cell: ({ row }) => `${row.original.rate}%`,
+  },
+  {
+    accessorKey: "maturity",
+    header: "Maturity",
     cell: ({ row }) => {
-      const aprPercent = row.original.rate.toFixed(1);
-      return aprPercent.replace(".", ",") + "%";
+      const date = new Date(row.original.maturity);
+      return format(date, "MMM d, yyyy");
     },
   },
   {
     accessorKey: "createdAt",
     header: "Created at",
+    cell: ({ row }) => {
+      const date = new Date(row.original.createdAt);
+      return format(date, "MMM d, yyyy HH:mm:ss");
+    },
   },
   {
     accessorKey: "status",
@@ -101,8 +100,12 @@ const columns: ColumnDef<OpenOrderItem>[] = [
       const status = row.original.status;
       return (
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 ${statusDotColors[status] ?? "bg-gray-500"} rounded-full`} />
-          <span className="capitalize">{status.toLowerCase().replace("_", " ")}</span>
+          <span
+            className={`w-2 h-2 ${statusDotColors[status] ?? "bg-gray-500"} rounded-full`}
+          />
+          <span className="capitalize">
+            {status.toLowerCase().replace("_", " ")}
+          </span>
         </div>
       );
     },
@@ -123,15 +126,39 @@ const columns: ColumnDef<OpenOrderItem>[] = [
   },
 ];
 
-// TODO: Integrate with real open orders API endpoint when available
-const EMPTY_DATA: OpenOrderItem[] = [];
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 py-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex gap-4 px-2">
+          {Array.from({ length: 8 }).map((_, j) => (
+            <Skeleton key={j} className="h-4 flex-1" />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function DataTableOpenOrders() {
+  const [page, setPage] = React.useState(1);
+  const limit = 10;
+  const { orders, totalData, totalPages, isLoading } = useOpenOrders({
+    page,
+    limit,
+  });
+
   const table = useReactTable({
-    data: EMPTY_DATA,
+    data: orders,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: totalPages,
   });
+
+  if (isLoading && orders.length === 0) {
+    return <TableSkeleton />;
+  }
 
   return (
     <div className="w-full">
@@ -166,16 +193,60 @@ export function DataTableOpenOrders() {
             ))}
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
-                No open orders.
-              </TableCell>
-            </TableRow>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="border border-transparent py-1"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No open orders.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex items-center justify-between py-4">
+        <div className="text-muted-foreground text-sm">
+          {totalData} open order{totalData !== 1 ? "s" : ""}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages || 1}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
