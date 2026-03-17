@@ -14,21 +14,23 @@ const EMPTY: OpenOrderItem[] = [];
 export function useOpenOrders(options?: {
   page?: number;
   limit?: number;
+  assetId?: string;
+  enabled?: boolean;
 }) {
-  const { page = 1, limit = 10 } = options ?? {};
+  const { page = 1, limit = 10, assetId, enabled = true } = options ?? {};
   const { getToken } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery<OpenOrdersResponse>({
-    queryKey: ["open-orders", address, page, limit],
+    queryKey: ["open-orders", address, assetId, page, limit],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");
-      return getOpenOrders(token, { page, limit });
+      return getOpenOrders(token, { page, limit, assetId });
     },
     staleTime: 10_000,
-    enabled: !!address,
+    enabled: !!address && enabled,
     placeholderData: (prev) => prev,
   });
 
