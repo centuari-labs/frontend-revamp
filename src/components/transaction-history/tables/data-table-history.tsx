@@ -3,15 +3,9 @@
 import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,192 +17,62 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Image from "next/image";
-
 import { CentuariBadge } from "@/components/centuari-badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTransactionHistory } from "@/hooks/use-transaction-history";
+import type { TransactionHistoryItem } from "@/lib/api";
+import { format } from "date-fns";
 
-export type HistoryItemProps = {
-  id: string;
-  date: string;
-  type: "Borrow" | "Lend";
-  tokenSymbol: string;
-  tokenImg: string;
-  amount: number;
-  fee: number;
-  loanTokenSymbol: string;
-  rateValue: number;
-  maturity: string;
-  status: "OPEN" | "CANCELLED" | "PARTIALLY FILLED" | "FILLED";
-};
-
-const data: HistoryItemProps[] = [
-  {
-    id: "1",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 24,
-    loanTokenSymbol: "USDT",
-    rateValue: 12,
-    maturity: "Dec 31, 2025",
-    status: "OPEN",
-  },
-  {
-    id: "2",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Jan 15, 2026",
-    status: "FILLED",
-  },
-  {
-    id: "3",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Mar 1, 2026",
-    status: "PARTIALLY FILLED",
-  },
-  {
-    id: "4",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Feb 28, 2026",
-    status: "CANCELLED",
-  },
-  {
-    id: "5",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Apr 15, 2026",
-    status: "OPEN",
-  },
-  {
-    id: "6",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 24,
-    loanTokenSymbol: "USDT",
-    rateValue: 12,
-    maturity: "Dec 31, 2025",
-    status: "FILLED",
-  },
-  {
-    id: "7",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Jan 15, 2026",
-    status: "OPEN",
-  },
-  {
-    id: "8",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Mar 1, 2026",
-    status: "PARTIALLY FILLED",
-  },
-  {
-    id: "9",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Lend",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Feb 28, 2026",
-    status: "FILLED",
-  },
-  {
-    id: "10",
-    date: "Oct 7, 2025 14:32:15",
-    type: "Borrow",
-    tokenSymbol: "USDT",
-    tokenImg: "/tokens/usdt-icon.webp",
-    amount: 12000,
-    fee: 48,
-    loanTokenSymbol: "USDT",
-    rateValue: 22,
-    maturity: "Apr 15, 2026",
-    status: "CANCELLED",
-  },
-];
-
-const statusDotColors: Record<HistoryItemProps["status"], string> = {
+const statusDotColors: Record<TransactionHistoryItem["status"], string> = {
   OPEN: "bg-blue-500",
   CANCELLED: "bg-red-500",
-  "PARTIALLY FILLED": "bg-yellow-500",
+  PARTIALLY_FILLED: "bg-yellow-500",
   FILLED: "bg-green-500",
 };
 
-export const columns: ColumnDef<HistoryItemProps>[] = [
+const statusLabels: Record<TransactionHistoryItem["status"], string> = {
+  OPEN: "open",
+  CANCELLED: "cancelled",
+  PARTIALLY_FILLED: "partially filled",
+  FILLED: "filled",
+};
+
+const columns: ColumnDef<TransactionHistoryItem>[] = [
   {
-    accessorKey: "date",
+    accessorKey: "createdAt",
     header: "Date",
+    cell: ({ row }) => {
+      const date = new Date(row.original.createdAt);
+      return format(date, "MMM d, yyyy HH:mm:ss");
+    },
   },
   {
-    accessorKey: "type",
+    accessorKey: "side",
     header: "Type",
     cell: ({ row }) => (
       <CentuariBadge
-        variant={row.original.type === "Lend" ? "primary" : "warning"}
+        variant={row.original.side === "LEND" ? "primary" : "warning"}
         className="capitalize"
       >
-        {row.original.type}
+        {row.original.side === "LEND" ? "Lend" : "Borrow"}
       </CentuariBadge>
     ),
   },
   {
-    accessorKey: "tokenSymbol",
+    id: "token",
     header: "Token",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <Image
-          src={row.original.tokenImg}
-          alt={row.original.tokenSymbol}
-          width={24}
-          height={24}
-        />
-        <span>{row.original.tokenSymbol}</span>
+        {row.original.asset.imageUrl && (
+          <Image
+            src={row.original.asset.imageUrl}
+            alt={row.original.asset.symbol}
+            width={24}
+            height={24}
+            className="rounded-full"
+          />
+        )}
+        <span>{row.original.asset.symbol}</span>
       </div>
     ),
   },
@@ -218,32 +82,31 @@ export const columns: ColumnDef<HistoryItemProps>[] = [
     cell: ({ row }) => (
       <span>
         {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-          row.original.amount
+          Number(row.original.amount)
         )}{" "}
-        {row.original.tokenSymbol}
+        {row.original.asset.symbol}
       </span>
     ),
   },
   {
     accessorKey: "fee",
     header: "Fee",
-    cell: ({ row }) => (
-      <span>
-        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-          row.original.fee
-        )}{" "}
-        {row.original.loanTokenSymbol}
-      </span>
-    ),
+    cell: ({ row }) => {
+      if (!row.original.fee) return "-";
+      return (
+        <span>
+          {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+            Number(row.original.fee)
+          )}{" "}
+          {row.original.asset.symbol}
+        </span>
+      );
+    },
   },
   {
-    id: "rate",
+    accessorKey: "rate",
     header: "APR",
-    cell: ({ row }) => `${row.original.rateValue}%`,
-  },
-  {
-    accessorKey: "maturity",
-    header: "Maturity",
+    cell: ({ row }) => `${row.original.rate}%`,
   },
   {
     accessorKey: "status",
@@ -253,40 +116,46 @@ export const columns: ColumnDef<HistoryItemProps>[] = [
       return (
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 ${statusDotColors[status]} rounded-full`} />
-          <span className="capitalize">{status.toLowerCase()}</span>
+          <span className="capitalize">{statusLabels[status]}</span>
         </div>
       );
     },
   },
 ];
 
-export function DataTableHistory() {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 py-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex gap-4 px-2">
+          {Array.from({ length: 7 }).map((_, j) => (
+            <Skeleton key={j} className="h-4 flex-1" />
+          ))}
+        </div>
+      ))}
+    </div>
   );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+}
+
+export function DataTableHistory() {
+  const [page, setPage] = React.useState(1);
+  const limit = 10;
+  const { transactions, total, totalPages, isLoading } = useTransactionHistory({
+    page,
+    limit,
+  });
 
   const table = useReactTable({
-    data,
+    data: transactions,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+    manualPagination: true,
+    pageCount: totalPages,
   });
+
+  if (isLoading && transactions.length === 0) {
+    return <TableSkeleton />;
+  }
 
   return (
     <div className="w-full">
@@ -295,40 +164,35 @@ export function DataTableHistory() {
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-white/5">
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={`text-sm text-muted-foreground font-normal ${
-                        headerGroup.headers[0].id === header.id
-                          ? "rounded-l-sm"
-                          : ""
-                      } ${
-                        headerGroup.headers[headerGroup.headers.length - 1]
-                          .id === header.id
-                          ? "rounded-r-sm"
-                          : ""
-                      }`}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className={`text-sm text-muted-foreground font-normal ${
+                      headerGroup.headers[0].id === header.id
+                        ? "rounded-l-sm"
+                        : ""
+                    } ${
+                      headerGroup.headers[headerGroup.headers.length - 1].id ===
+                      header.id
+                        ? "rounded-r-sm"
+                        : ""
+                    }`}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
@@ -355,25 +219,27 @@ export function DataTableHistory() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+      <div className="flex items-center justify-between py-4">
+        <div className="text-muted-foreground text-sm">
+          {total} total transaction{total !== 1 ? "s" : ""}
         </div>
-        <div className="space-x-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
           >
             Previous
           </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages || 1}
+          </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
           >
             Next
           </Button>
