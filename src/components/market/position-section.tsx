@@ -24,7 +24,17 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit2, Search, Trash2 } from "lucide-react";
+import { Edit2, Loader2, Search, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { formatCurrency } from "@/lib/utils";
@@ -32,6 +42,7 @@ import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
+import { CentuariTypography } from "../centuari-typography";
 import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
 
 function PositionCard({
@@ -287,15 +298,87 @@ function LendPositionTable({
   );
 }
 
+function CancelOrderDialog({
+  onConfirm,
+  trigger,
+}: {
+  onConfirm: () => void | Promise<void>;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsPending(true);
+    try {
+      await onConfirm();
+      setOpen(false);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !isPending && setOpen(v)}>
+      <button type="button" onClick={() => setOpen(true)}>
+        {trigger}
+      </button>
+      <DialogContent className="flex max-h-[min(400px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+        <DialogHeader className="contents space-y-0 text-left">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+            <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+          </div>
+          <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+              <Trash2 size={28} className="text-red-400" />
+            </div>
+            <CentuariTypography className="text-xl font-semibold">
+              Cancel Order
+            </CentuariTypography>
+            <CentuariTypography className="text-center text-muted-foreground text-sm">
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </CentuariTypography>
+          </div>
+        </DialogHeader>
+        <DialogFooter className="flex-row items-center justify-end px-6 py-5">
+          <DialogClose asChild>
+            <Button variant="secondary" className="flex-1" disabled={isPending}>
+              No, keep it
+            </Button>
+          </DialogClose>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            onClick={handleConfirm}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Cancelling...
+              </>
+            ) : (
+              "Yes, cancel order"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Unified Position Table Component for Open Orders
 function UnifiedPositionTable({
   positions,
   onDelete,
-  onUpdate
+  onUpdate,
+  hideEdit = false,
 }: {
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
+  hideEdit?: boolean;
 }) {
   const columns: ColumnDef<Position>[] = useMemo(() => [
     {
@@ -344,11 +427,11 @@ function UnifiedPositionTable({
       header: "Maturity",
       cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
     },
-    {
-      accessorKey: "createdAt",
-      header: "Created at",
-      cell: ({ row }) => row.original.createdAt,
-    },
+    // {
+    //   accessorKey: "createdAt",
+    //   header: "Created at",
+    //   cell: ({ row }) => row.original.createdAt,
+    // },
     {
       accessorKey: "status",
       header: "Status",
@@ -374,27 +457,31 @@ function UnifiedPositionTable({
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2">
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+            {!hideEdit && (
+              <AmendDialog
+                position={row.original}
+                tokenList={MARKET_TOKEN_LIST}
+                onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+                trigger={
+                  <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    <Edit2 size={14} className="text-white" />
+                  </button>
+                }
+              />
+            )}
+            <CancelOrderDialog
+              onConfirm={() => onDelete(row.original.id)}
               trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
+                <div className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Trash2 size={14} className="text-red-400" />
+                </div>
               }
             />
-            <button
-              onClick={() => onDelete(row.original.id)}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={14} className="text-red-400" />
-            </button>
           </div>
         );
       },
     },
-  ], [onDelete, onUpdate]);
+  ], [onDelete, onUpdate, hideEdit]);
 
   const table = useReactTable({
     data: positions,
@@ -714,7 +801,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       assetImg: p.imageUrl ?? "",
       assetName: p.name,
       amount: p.amountInUsd,
-      apr: 0,
+      apr: (p.apr ?? 0) / 100,
       type: p.side.toLowerCase() as "lend" | "borrow",
       tokenValue: p.symbol.toLowerCase(),
       tokenSymbol: p.symbol,
@@ -899,7 +986,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   ))}
                 </div>
               ) : filteredPositions.length > 0 ? (
-                <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
+                <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} hideEdit={tab !== "open_orders"} />
               ) : (
                 <div className="py-8 text-center text-muted-foreground">
                   {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
