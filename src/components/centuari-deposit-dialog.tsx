@@ -253,21 +253,21 @@ export function CentuariDepositDialog() {
                       />
                     </button>
                   ) : (
-                    <Select value="arbitrum-sepolia" disabled>
+                    <Select value={String(ACTIVE_CHAIN.id)} disabled>
                       <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
                         <SelectGroup>
-                          <SelectItem value="arbitrum-sepolia">
+                          <SelectItem value={String(ACTIVE_CHAIN.id)}>
                             <img
                               src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
-                              alt="Arbitrum Sepolia"
+                              alt={ACTIVE_CHAIN_LABEL}
                               width={16}
                               height={16}
                               className="size-4 rounded-full object-cover"
                             />
-                            Arbitrum Sepolia
+                            {ACTIVE_CHAIN_LABEL}
                           </SelectItem>
                         </SelectGroup>
                       </SelectContent>
