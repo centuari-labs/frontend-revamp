@@ -37,7 +37,6 @@ import {
   formatMaturityTimestamp,
 } from "@/lib/maturity";
 import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { getLiquidationThreshold } from "@/lib/portfolio-data";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
@@ -156,22 +155,6 @@ export function CentuariBorrowDialog({
         }, 0) / totalPortfolioValue
       : parseAPR(collateralFactor) / 100; // Use collateralFactor as LTV if no selection
 
-  // Calculate weighted Liquidation Threshold (average LT of selected collaterals)
-  const weightedLT =
-    selectedCollaterals.length > 0 && totalPortfolioValue > 0
-      ? selectedCollaterals.reduce((sum, collateralValue) => {
-          const token = collateralTokenList.find(
-            (t) => t.value === collateralValue,
-          );
-          const portfolioValue = portfolio[collateralValue] || 0;
-          if (token && portfolioValue > 0) {
-            const lt = getLiquidationThreshold(token);
-            return sum + lt * portfolioValue;
-          }
-          return sum;
-        }, 0) / totalPortfolioValue
-      : weightedLTV * 0.92; // Default: 92% of LTV
-
   // Calculate max borrow capacity = (Total Portfolio Value × LTV)
   const maxBorrowCapacity = totalPortfolioValue * weightedLTV;
 
@@ -181,26 +164,18 @@ export function CentuariBorrowDialog({
   // Calculate new total debt after this borrow (current debt + new borrow amount)
   const newTotalDebt = totalDebt + numericAmount;
 
-  // Health Factor calculation (More realistic Aave/Morpho-like formula)
-  // Health Factor = (Total Collateral Value × Liquidation Threshold) / Total Debt
-  // Using Liquidation Threshold instead of LTV for more accurate calculation
-  // After borrow: HF = (Portfolio × LT) / (Current Debt + New Borrow)
-  // Only calculate if we have collateral selected and borrow amount
-  // Ensure health factor is a reasonable number (typically 0-10 range)
+  // Health Factor — matches backend formula (health-factor.helpers.ts):
+  // HF = ((collateralUsd - existingDebtUsd) × weightedLTV) / totalDebtUsd
   const healthFactor =
     newTotalDebt > 0 &&
     totalPortfolioValue > 0 &&
-    !isNaN(weightedLT) &&
+    !isNaN(weightedLTV) &&
     selectedCollaterals.length > 0
       ? (() => {
-          const calculatedHF =
-            (totalPortfolioValue * weightedLT) / newTotalDebt;
-          // Cap at 10 for display, but log if it's unreasonably large (likely a bug)
-          if (calculatedHF > 10) {
-            console.warn(
-              `Health factor is unusually high: ${calculatedHF}. Portfolio: ${totalPortfolioValue}, LT: ${weightedLT}, Debt: ${newTotalDebt}`,
-            );
-          }
+          const numerator =
+            (totalPortfolioValue - totalDebt) * weightedLTV;
+          const calculatedHF = numerator / newTotalDebt;
+          if (!Number.isFinite(calculatedHF) || calculatedHF < 0) return 0;
           return Math.min(calculatedHF, 10);
         })()
       : 0;
@@ -660,12 +635,12 @@ export function CentuariBorrowDialog({
                                   If portfolio value drops{" "}
                                   <span className="text-white font-medium">
                                     below{" "}
-                                    {formatCurrency(newTotalDebt / weightedLT)}
+                                    {formatCurrency(newTotalDebt / weightedLTV)}
                                   </span>{" "}
                                   or total debt exceeds{" "}
                                   <span className="text-white font-medium">
                                     {formatCurrency(
-                                      totalPortfolioValue * weightedLT,
+                                      totalPortfolioValue * weightedLTV,
                                     )}
                                   </span>
                                   , your position could be liquidated.

@@ -14,32 +14,36 @@ export function useBorrowCalculations(
   selectedCollaterals: string[],
   tokenList: TokenInfo[]
 ) {
+  // Backend formula (health-factor.helpers.ts):
+  // HF = ((collateralUsd - existingDebtUsd) × weightedLTV) / totalDebtUsd
   const calculateHealthFactor = useCallback(
     (amt: number, collaterals: string[]): number => {
       if (amt <= 0 || collaterals.length === 0) return 0;
 
-      const totalPortfolioValue = collaterals.reduce((total, collateralValue) => {
+      const collateralUsd = collaterals.reduce((total, collateralValue) => {
         const portfolioValue = portfolio[collateralValue] || 0;
         return total + portfolioValue;
       }, 0);
 
-      if (totalPortfolioValue === 0) return 0;
+      if (collateralUsd === 0) return 0;
 
-      const weightedLT =
+      const weightedLTV =
         collaterals.reduce((sum, collateralValue) => {
           const token = tokenList.find(
             (t) => t.value === collateralValue
           );
           const portfolioValue = portfolio[collateralValue] || 0;
           if (token && portfolioValue > 0) {
-            const lt = getLiquidationThreshold(token);
-            return sum + lt * portfolioValue;
+            return sum + token.ltv * portfolioValue;
           }
           return sum;
-        }, 0) / totalPortfolioValue;
+        }, 0) / collateralUsd;
 
-      const newTotalDebt = totalDebt + amt;
-      const healthFactor = (totalPortfolioValue * weightedLT) / newTotalDebt;
+      const totalDebtUsd = totalDebt + amt;
+      const numerator = (collateralUsd - totalDebt) * weightedLTV;
+      const healthFactor = numerator / totalDebtUsd;
+
+      if (!Number.isFinite(healthFactor) || healthFactor < 0) return 0;
       return Math.min(healthFactor, 10);
     },
     [portfolio, totalDebt, tokenList]
