@@ -143,10 +143,17 @@ export function getMyPortfolio(token: string): Promise<MyPortfolioResponse> {
 
 // ─── Lend & Borrow Assets ───────────────────────────────────────────
 
+export interface LendBorrowChartPoint {
+	date: string;
+	lendAmount: number | string;
+	borrowAmount: number | string;
+}
+
 export interface LendBorrowAssetsResponse {
 	suppliedAssets: number;
 	borrowedAssets: number;
 	healthFactor: number;
+	chartData: LendBorrowChartPoint[];
 }
 
 export function getLendBorrowAssets(

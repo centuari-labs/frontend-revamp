@@ -23,6 +23,7 @@ export function useLendBorrowAssets() {
 
   return {
     lendBorrow: query.data ?? null,
+    chartData: query.data?.chartData ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     refetch: query.refetch,
