@@ -13,10 +13,11 @@ export interface UseMyPositionsOptions {
   page?: number;
   limit?: number;
   assetId?: string;
+  enabled?: boolean;
 }
 
 export function useMyPositions(options?: UseMyPositionsOptions) {
-  const { type, page = 1, limit = 10, assetId } = options ?? {};
+  const { type, page = 1, limit = 10, assetId, enabled = true } = options ?? {};
   const { getToken } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
@@ -30,7 +31,7 @@ export function useMyPositions(options?: UseMyPositionsOptions) {
     },
     staleTime: 10_000,
     refetchInterval: 15_000,
-    enabled: !!address,
+    enabled: !!address && enabled,
     placeholderData: (prev) => prev,
   });
 
