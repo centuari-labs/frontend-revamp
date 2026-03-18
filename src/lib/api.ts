@@ -598,7 +598,7 @@ export interface TransactionHistoryResponse {
 
 export async function getTransactionHistory(
 	token: string,
-	params?: { page?: number; limit?: number },
+	params?: { page?: number; limit?: number; assetId?: string },
 ): Promise<TransactionHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -606,6 +606,7 @@ export async function getTransactionHistory(
 		page: String(page),
 		limit: String(limit),
 	});
+	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
 	return apiClient<TransactionHistoryResponse>(
 		`/portfolio/transaction-history?${searchParams.toString()}`,
@@ -641,7 +642,7 @@ export interface OpenOrdersResponse {
 
 export async function getOpenOrders(
 	token: string,
-	params?: { page?: number; limit?: number },
+	params?: { page?: number; limit?: number; assetId?: string },
 ): Promise<OpenOrdersResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -649,6 +650,7 @@ export async function getOpenOrders(
 		page: String(page),
 		limit: String(limit),
 	});
+	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
 	return apiClient<OpenOrdersResponse>(
 		`/portfolio/open-orders?${searchParams.toString()}`,

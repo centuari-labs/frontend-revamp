@@ -657,10 +657,10 @@ function BorrowPositionTable({
   );
 }
 
-export function PositionSection() {
+export function PositionSection({ assetId }: { assetId?: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("open_orders");
-  const { openOrders, allTransactions } = usePositions();
+  const { openOrders, positions, allTransactions } = usePositions({ assetId });
   const { update } = useUpdateOpenOrder();
   const { deleteOrder } = useDeleteOpenOrder();
 
@@ -682,9 +682,9 @@ export function PositionSection() {
 
   const tabPositions = useMemo(() => {
     if (activeTab === "open_orders") return openOrders;
-    if (activeTab === "active_position") return allTransactions;
-    return [...openOrders, ...allTransactions];
-  }, [activeTab, openOrders, allTransactions]);
+    if (activeTab === "active_position") return positions;
+    return allTransactions;
+  }, [activeTab, openOrders, positions, allTransactions]);
 
   const filteredPositions = useMemo(() => {
     if (!searchQuery) return tabPositions;
