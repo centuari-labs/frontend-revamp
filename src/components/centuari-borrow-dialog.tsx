@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useId, useMemo } from "react";
-import { gsap } from "gsap";
+import { useState, useRef, useId } from "react";
 import {
   Dialog,
   DialogClose,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
-import { Info, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
 import { CentuariTooltip } from "./centuari-tooltip";
@@ -43,24 +42,6 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
 import { CollateralListDisplay } from "./collateral-list-display";
 import { CollateralEmptyState } from "./collateral-empty-state";
-import { useDeposit } from "@/hooks/use-deposit";
-import { useDepositTokens } from "@/hooks/use-deposit-tokens";
-import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
-import { useSetCollateral } from "@/hooks/use-set-collateral";
-import { getTokenLogo } from "@/lib/tokens";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
-import { toast } from "sonner";
-
-type ViewMode = "borrow" | "deposit-collateral";
 
 interface CentuariBorrowDialogProps {
   token_image: string;
@@ -81,9 +62,7 @@ export function CentuariBorrowDialog({
   collateralFactor,
   vaultTotal,
 }: CentuariBorrowDialogProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("borrow");
   const borrowViewRef = useRef<HTMLDivElement>(null);
-  const collateralViewRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const router = useRouter();
   const { submitMarket, isPending } = useSubmitBorrow();
@@ -99,132 +78,6 @@ export function CentuariBorrowDialog({
     collateralTokenList,
     isLoading: dataLoading,
   } = useBorrowDialogData();
-
-  // ─── Deposit collateral state & hooks ──────────────────────────────
-  const { deposit, status: depositStatus, reset: resetDepositHook } = useDeposit();
-  const { data: depositTokens, isLoading: depositTokensLoading } = useDepositTokens();
-  const setCollateralMutation = useSetCollateral();
-  const [depositSelectedTokenId, setDepositSelectedTokenId] = useState<string>("");
-  const [depositAmount, setDepositAmount] = useState<string>("");
-  const [depositDisplayAmount, setDepositDisplayAmount] = useState<string>("");
-
-  const depositSelectedToken = useMemo(
-    () => depositTokens?.find((t) => t.id === depositSelectedTokenId),
-    [depositTokens, depositSelectedTokenId],
-  );
-
-  // Auto-select first deposit token
-  useEffect(() => {
-    if (depositTokens && depositTokens.length > 0 && !depositSelectedTokenId) {
-      setDepositSelectedTokenId(depositTokens[0].id);
-    }
-  }, [depositTokens, depositSelectedTokenId]);
-
-  const { balance: depositOnChainBalance, isLoading: depositBalanceLoading } =
-    useOnChainBalance(depositSelectedToken?.symbol ?? "");
-
-  const isDepositProcessing =
-    depositStatus === "checkingAllowance" ||
-    depositStatus === "approving" ||
-    depositStatus === "waitingApproval" ||
-    depositStatus === "depositing" ||
-    depositStatus === "confirming";
-
-  const depositAmountExceedsBalance = useMemo(() => {
-    if (!depositAmount || depositOnChainBalance <= 0) return false;
-    return Number.parseFloat(depositAmount) > depositOnChainBalance;
-  }, [depositAmount, depositOnChainBalance]);
-
-  // ─── Network detection (for deposit view) ──────────────────────────
-  const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
-  const { user: privyUser } = usePrivy();
-  const { wallets: privyWallets } = useWallets();
-  const linkedAddr = privyUser?.wallet?.address?.toLowerCase();
-  const loginWallet = linkedAddr
-    ? privyWallets.find(
-        (w) =>
-          w.walletClientType !== "privy" &&
-          w.address.toLowerCase() === linkedAddr,
-      )
-    : undefined;
-  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
-  const [switchingChain, setSwitchingChain] = useState(false);
-
-  const handleSwitchChain = async () => {
-    if (!loginWallet || switchingChain) return;
-    setSwitchingChain(true);
-    try {
-      await loginWallet.switchChain(ACTIVE_CHAIN.id);
-    } catch {
-      toast.error("Failed to switch network");
-    } finally {
-      setSwitchingChain(false);
-    }
-  };
-
-  const isDepositSubmitDisabled =
-    isDepositProcessing || !depositAmount || !depositSelectedTokenId || depositAmountExceedsBalance || isWrongNetwork;
-
-  const depositTokenIcon = depositSelectedToken
-    ? getTokenLogo(depositSelectedToken.symbol, depositSelectedToken.imageUrl ?? undefined)
-    : "/tokens/usdc-icon.webp";
-
-  const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const numericValue = parseNumberFromSeparator(value);
-    const formattedValue = formatNumberWithSeparator(numericValue);
-    setDepositAmount(numericValue);
-    setDepositDisplayAmount(formattedValue);
-  };
-
-  const handleDepositMaxClick = () => {
-    if (depositOnChainBalance > 0) {
-      const balance = String(depositOnChainBalance);
-      setDepositAmount(balance);
-      setDepositDisplayAmount(formatNumberWithSeparator(balance));
-    }
-  };
-
-  const handleDepositSubmit = async () => {
-    if (!depositAmount || !depositSelectedTokenId || isDepositProcessing) return;
-
-    try {
-      const result = await deposit(depositSelectedTokenId, depositAmount, depositSelectedToken);
-      if (result) {
-        // Auto-set deposited asset as collateral
-        try {
-          await setCollateralMutation.mutateAsync({
-            assetIds: [depositSelectedTokenId],
-            isCollateral: true,
-          });
-        } catch {
-          // Non-critical: deposit succeeded but collateral toggle failed
-          // User can manually toggle in portfolio
-        }
-
-        toast.success(`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""} as collateral`);
-        // Reset deposit form and go back to borrow view
-        setDepositAmount("");
-        setDepositDisplayAmount("");
-        resetDepositHook();
-        setViewMode("borrow");
-        // Refresh balances
-        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Deposit failed";
-      toast.error(message);
-    }
-  };
-
-  const resetDepositForm = () => {
-    setDepositAmount("");
-    setDepositDisplayAmount("");
-    setDepositSelectedTokenId(depositTokens?.[0]?.id ?? "");
-    resetDepositHook();
-  };
 
   // State for amount input
   const [amountToBorrow, setAmountToBorrow] = useState<string>("");
@@ -402,9 +255,6 @@ export function CentuariBorrowDialog({
     setDisplayAmount(formattedMax);
   };
 
-  const handleAddCollateralClick = () => setViewMode("deposit-collateral");
-  const handleBackToBorrow = () => setViewMode("borrow");
-
   const handleDialogChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (open) {
@@ -421,95 +271,50 @@ export function CentuariBorrowDialog({
       setSelectedCollaterals(autoSelected);
       setSubmitError(null);
     } else {
-      setViewMode("borrow");
       setAmountToBorrow("");
       setDisplayAmount("");
       setShowSuccessDialog(false);
       setSubmitError(null);
       setSelectedCollaterals([]);
-      resetDepositForm();
     }
   };
 
-  // Animate transitions between views
-  useEffect(() => {
-    const tl = gsap.timeline();
-
-    if (
-      viewMode === "borrow" &&
-      borrowViewRef.current &&
-      collateralViewRef.current
-    ) {
-      tl.to(collateralViewRef.current, {
-        x: 100,
-        opacity: 0,
-        duration: 0.3,
-        ease: "power2.in",
-      }).fromTo(
-        borrowViewRef.current,
-        { x: -100, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-        "-=0.15",
-      );
-    } else if (
-      viewMode === "deposit-collateral" &&
-      borrowViewRef.current &&
-      collateralViewRef.current
-    ) {
-      tl.to(borrowViewRef.current, {
-        x: -100,
-        opacity: 0,
-        duration: 0.3,
-        ease: "power2.in",
-      }).fromTo(
-        collateralViewRef.current,
-        { x: 100, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-        "-=0.15",
-      );
-    }
-  }, [viewMode]);
-
   const handleBorrow = async () => {
-    if (viewMode === "borrow") {
-      if (numericAmount <= 0 || numericAmount > availableQuota) return;
-      if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
-      if (healthFactor < 1.0) return;
+    if (numericAmount <= 0 || numericAmount > availableQuota) return;
+    if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
+    if (healthFactor < 1.0) return;
 
-      setSubmitError(null);
+    setSubmitError(null);
 
-      try {
-        const authToken = await getToken();
+    try {
+      const authToken = await getToken();
 
-        await submitMarket(
-          {
-            tokenValue: token_symbol.toLowerCase(),
-            tokenLogo: token_image,
-            tokenLabel: token_name,
-            amount: numericAmount,
-            maturity: maturityDate,
-            collateralTokens: selectedCollaterals,
-          },
-          authToken && markets.length > 0
-            ? { token: authToken, markets }
-            : undefined,
-        );
+      await submitMarket(
+        {
+          tokenValue: token_symbol.toLowerCase(),
+          tokenLogo: token_image,
+          tokenLabel: token_name,
+          amount: numericAmount,
+          maturity: maturityDate,
+          collateralTokens: selectedCollaterals,
+        },
+        authToken && markets.length > 0
+          ? { token: authToken, markets }
+          : undefined,
+      );
 
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setAmountToBorrow("");
-        setDisplayAmount("");
-        setSelectedCollaterals([]);
-        setIsDialogOpen(false);
-        setShowSuccessDialog(true);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Transaction failed. Please try again.";
-        setSubmitError(message);
-      }
-    } else if (viewMode === "deposit-collateral") {
-      await handleDepositSubmit();
+      setSuccessAmount(formatNumberWithSeparator(numericAmount));
+      setAmountToBorrow("");
+      setDisplayAmount("");
+      setSelectedCollaterals([]);
+      setIsDialogOpen(false);
+      setShowSuccessDialog(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Transaction failed. Please try again.";
+      setSubmitError(message);
     }
   };
 
@@ -532,12 +337,7 @@ export function CentuariBorrowDialog({
                 {/* Borrow View */}
                 <div
                   ref={borrowViewRef}
-                  className={
-                    viewMode === "borrow"
-                      ? "relative"
-                      : "absolute inset-0 pointer-events-none"
-                  }
-                  style={{ opacity: viewMode === "borrow" ? 1 : 0 }}
+                  className="relative"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 mt-6">
                     <Image
@@ -632,17 +432,6 @@ export function CentuariBorrowDialog({
                             className="w-4 h-4"
                           />
                         }
-                        // rightIcon={
-                        //   <Button
-                        //     variant="link"
-                        //     className="px-0"
-                        //     type="button"
-                        //     onClick={handleMaxClick}
-                        //   >
-                        //     Max
-                        //   </Button>
-                        // }
-                        // balanceText={`Available Quota: ${formatCurrency(availableQuota)}`}
                         value={displayAmount}
                         onChange={handleAmountChange}
                       />
@@ -659,62 +448,6 @@ export function CentuariBorrowDialog({
                           )}
                         </div>
                       </div>
-                      {/* 
-                    <div>
-                      <Label className="mb-2 mt-4">
-                        Maturity{" "}
-                        <CentuariTooltip message="Select the maturity period for your borrowed USDT.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </Label>
-                      <MaturityToggle />
-                      <CentuariTypography
-                        variant="s4"
-                        className="mt-2 text-muted-foreground flex items-center gap-1"
-                      >
-                        Withdrawal Unlocks on
-                        <CentuariTypography variant="s4">
-                          21 Oct 2026
-                        </CentuariTypography>
-                      </CentuariTypography>
-                    </div> */}
-
-                      {/* <SelectSingleToken /> */}
-
-                      {/* {(numericAmount > availableQuota || selectedCollaterals.length === 0 || totalPortfolioValue === 0 || healthFactor < 1.0) && (
-                      <CentuariAlert
-                        variant="destructive"
-                        text={
-                          numericAmount > availableQuota
-                            ? "Exceeds available quota"
-                            : selectedCollaterals.length === 0
-                            ? "No collateral selected"
-                            : totalPortfolioValue === 0
-                            ? "No portfolio value"
-                            : "Health factor too low"
-                        }
-                        description={
-                          numericAmount > availableQuota
-                            ? `Available quota: ${formatCurrency(availableQuota)}. Select more collateral or repay debt.`
-                            : selectedCollaterals.length === 0
-                            ? "Select collateral from your portfolio to borrow"
-                            : totalPortfolioValue === 0
-                            ? "Selected collateral has no value in portfolio"
-                            : "Increase collateral or reduce borrow amount to improve health factor"
-                        }
-                        className="mt-1.5"
-                        action={
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleAddCollateralClick}
-                            type="button"
-                          >
-                            {selectedCollaterals.length === 0 ? "Add Collateral" : "Deposit"}
-                          </Button>
-                        }
-                      />
-                    )} */}
 
                       <div>
                         <Label className="mb-2 mt-4">
@@ -888,235 +621,6 @@ export function CentuariBorrowDialog({
                     </form>
                   </div>
                 </div>
-
-                {/* Add-Collateral View */}
-                {/* <div
-                ref={collateralViewRef}
-                className={
-                  viewMode === "add-collateral"
-                    ? "relative mt-6 px-6"
-                    : "absolute inset-0 pointer-events-none mt-6 px-6"
-                }
-                style={{ opacity: viewMode === "add-collateral" ? 1 : 0 }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBackToBorrow}
-                  className="mb-4 -ml-2"
-                  type="button"
-                >
-                  <ArrowLeft size={16} />
-                </Button>
-                <CentuariTypography variant="h1" className="mb-1">
-                  Add Collateral
-                </CentuariTypography>
-                <span className="text-sm text-muted-foreground">
-                  Increase your borrowing limit and keep your position safe.
-                </span>
-                <form action="">
-                  <SelectSingleToken />
-                  <div>
-                    <Label className="mb-2 mt-4">
-                      Est. Health Factor{" "}
-                      <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
-                        <Info size={16} />
-                      </CentuariTooltip>
-                      <Badge variant="success">0.0 ~ Safe</Badge>
-                    </Label>
-                    <div className="border border-white/5 rounded-lg mt-2">
-                      <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                        <HealthFactor />
-                      </div>
-                      <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
-                        <p className="text-xs text-muted-foreground">
-                          If USDC drops{" "}
-                          <span className="text-white font-medium">
-                            below $000
-                          </span>
-                          , your position could be liquidated.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              </div> */}
-
-                {/* Deposit Collateral */}
-                <div
-                  ref={collateralViewRef}
-                  className={
-                    viewMode === "deposit-collateral"
-                      ? "relative mt-6 px-6"
-                      : "absolute inset-0 pointer-events-none mt-6 px-6"
-                  }
-                  style={{ opacity: viewMode === "deposit-collateral" ? 1 : 0 }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleBackToBorrow}
-                    className="mb-4 -ml-2"
-                    type="button"
-                    disabled={isDepositProcessing}
-                  >
-                    <ArrowLeft size={16} />
-                  </Button>
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <Image
-                      src={"/centuari-logo.png"}
-                      width={48}
-                      height={48}
-                      alt="centuari-logo"
-                    />
-                    <CentuariTypography variant="h1" className="mt-8">
-                      Deposit Collateral
-                    </CentuariTypography>
-                    <CentuariTypography
-                      variant="b3"
-                      className="mb-1 text-muted-foreground mt-3"
-                    >
-                      Deposit assets as collateral to unlock borrowing.
-                    </CentuariTypography>
-                  </div>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleDepositSubmit();
-                    }}
-                  >
-                    <div className="w-full space-y-2 mt-3.5">
-                      <Label>Select Chain</Label>
-                      {isWrongNetwork ? (
-                        <button
-                          type="button"
-                          onClick={handleSwitchChain}
-                          disabled={switchingChain}
-                          className="flex w-full items-center gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-sm text-yellow-400 transition-colors hover:bg-yellow-500/20 disabled:opacity-50"
-                        >
-                          {switchingChain ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4" />
-                          )}
-                          <span className="flex-1 text-left">
-                            {switchingChain ? "Switching..." : `Switch to ${ACTIVE_CHAIN_LABEL}`}
-                          </span>
-                          <img
-                            src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
-                            alt={ACTIVE_CHAIN_LABEL}
-                            width={20}
-                            height={20}
-                            className="size-5 rounded-full object-cover"
-                          />
-                        </button>
-                      ) : (
-                        <Select value="arbitrum-sepolia" disabled>
-                          <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
-                            <SelectGroup>
-                              <SelectItem value="arbitrum-sepolia">
-                                <img
-                                  src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
-                                  alt="Arbitrum Sepolia"
-                                  width={16}
-                                  height={16}
-                                  className="size-4 rounded-full object-cover"
-                                />
-                                Arbitrum Sepolia
-                              </SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                    <div className="w-full space-y-2 mt-3.5">
-                      <Label>Select Token</Label>
-                      <Select
-                        value={depositSelectedTokenId}
-                        onValueChange={setDepositSelectedTokenId}
-                        disabled={depositTokensLoading || isDepositProcessing}
-                      >
-                        <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
-                          <SelectValue placeholder={depositTokensLoading ? "Loading..." : "Select Token"} />
-                        </SelectTrigger>
-                        <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
-                          <SelectGroup>
-                            {depositTokens?.map((token) => (
-                              <SelectItem key={token.id} value={token.id}>
-                                <Image
-                                  src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
-                                  width={16}
-                                  height={16}
-                                  alt={token.symbol}
-                                />
-                                {token.symbol}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <CentuariInput
-                      id={`deposit-collateral-amount-${reactId}`}
-                      label="Deposit Amount"
-                      size="large"
-                      placeholder="0"
-                      leftIcon={
-                        <Image
-                          src={depositTokenIcon}
-                          width={16}
-                          height={16}
-                          alt={depositSelectedToken?.symbol ?? "token"}
-                        />
-                      }
-                      className="mt-0"
-                      containerClassName="mt-3.5"
-                      value={depositDisplayAmount}
-                      onChange={handleDepositAmountChange}
-                      disabled={isDepositProcessing}
-                      type="text"
-                      inputMode="decimal"
-                      balanceText={
-                        !depositBalanceLoading && depositOnChainBalance != null ? (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            Balance: {depositOnChainBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {depositSelectedToken?.symbol ?? ""}
-                            <button
-                              type="button"
-                              onClick={handleDepositMaxClick}
-                              className="text-primary-blue-base hover:underline font-medium ml-1"
-                            >
-                              Max
-                            </button>
-                          </span>
-                        ) : null
-                      }
-                    />
-                    {depositAmountExceedsBalance && (
-                      <CentuariAlert
-                        variant="destructive"
-                        text="Insufficient wallet balance"
-                        description="Get testnet tokens from the faucet"
-                        className="mt-1.5"
-                        action={
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            type="button"
-                            onClick={() => {
-                              setIsDialogOpen(false);
-                              router.push("/faucet");
-                            }}
-                          >
-                            Faucet
-                          </Button>
-                        }
-                      />
-                    )}
-                  </form>
-                </div>
               </div>
             </ScrollArea>
           </DialogHeader>
@@ -1129,45 +633,18 @@ export function CentuariBorrowDialog({
                 type="button"
                 variant="primary"
                 className="flex-1"
-                onClick={viewMode === "deposit-collateral" ? handleDepositSubmit : handleBorrow}
+                onClick={handleBorrow}
                 disabled={
-                  viewMode === "deposit-collateral"
-                    ? isDepositSubmitDisabled
-                    : isPending ||
-                      dataLoading ||
-                      (viewMode === "borrow" &&
-                        (numericAmount <= 0 ||
-                          numericAmount > availableQuota ||
-                          selectedCollaterals.length === 0 ||
-                          totalPortfolioValue === 0 ||
-                          healthFactor < 1.0))
+                  isPending ||
+                  dataLoading ||
+                  numericAmount <= 0 ||
+                  numericAmount > availableQuota ||
+                  selectedCollaterals.length === 0 ||
+                  totalPortfolioValue === 0 ||
+                  healthFactor < 1.0
                 }
               >
-                {viewMode === "deposit-collateral" ? (
-                  depositStatus === "checkingAllowance" ? (
-                    <>
-                      Checking allowance... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    </>
-                  ) : depositStatus === "approving" ? (
-                    <>
-                      Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    </>
-                  ) : depositStatus === "waitingApproval" ? (
-                    <>
-                      Waiting for approval... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    </>
-                  ) : depositStatus === "depositing" ? (
-                    <>
-                      Confirm deposit in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    </>
-                  ) : depositStatus === "confirming" ? (
-                    <>
-                      Confirming deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    </>
-                  ) : (
-                    "Deposit Collateral"
-                  )
-                ) : isPending || dataLoading ? (
+                {isPending || dataLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {dataLoading ? "Loading..." : "Processing..."}
