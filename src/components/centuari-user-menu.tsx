@@ -13,6 +13,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { updateAccountName } from "@/lib/api";
 import { useDisconnect, useBalance, useConnection } from "wagmi";
 import { formatUnits } from "viem";
@@ -203,7 +204,7 @@ export function CentuariUserMenu() {
                       <Copy className="w-3.5 h-3.5" />
                     </button>
                     <a
-                      href={`https://etherscan.io/address/${walletAddress}`}
+                      href={`${ACTIVE_CHAIN.blockExplorers.default.url}/address/${walletAddress}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-white/40 hover:text-white transition-colors"
