@@ -83,6 +83,7 @@ export interface SubmitBorrowLimitParams {
   maturity: number;
   targetApr: number;
   collateralTokens: string[];
+  autoRollover?: boolean;
   editingPosition?: BorrowPosition;
 }
 
@@ -93,6 +94,7 @@ export interface SubmitBorrowMarketParams {
   amount: number;
   maturity: number;
   collateralTokens: string[];
+  autoRollover?: boolean;
   editingPosition?: BorrowPosition;
 }
 
