@@ -162,6 +162,7 @@ export function getLendBorrowAssets(
 
 export interface MyPositionItem {
 	id: string;
+	marketId?: string;
 	symbol: string;
 	name: string;
 	walletBalance: number;
@@ -659,17 +660,24 @@ export async function getOpenOrders(
 	);
 }
 
-// ─── Withdraw Lend Position ───────────────────────────────────────────
+// ─── Withdraw Lend Position ──────────────────────────────────────────
 
-export function submitWithdrawLend(
-	positionId: string,
-	amount: string,
+export interface WithdrawLendPositionResponse {
+	txHash: string;
+	status: string;
+}
+
+export function withdrawLendPosition(
+	marketId: string,
 	token: string,
-): Promise<{ txHash: string }> {
-	return apiClient<{ txHash: string }>("/withdraw-lend", {
-		method: "POST",
-		body: { positionId, amount },
-		token,
-	});
+): Promise<WithdrawLendPositionResponse> {
+	return apiClient<WithdrawLendPositionResponse>(
+		"/portfolio/withdraw-lend-position",
+		{
+			method: "POST",
+			body: { marketId },
+			token,
+		},
+	);
 }
 

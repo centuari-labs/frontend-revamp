@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId, useRef } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogClose,
@@ -37,6 +38,7 @@ export type WithdrawSuccessMessage = { title: string; description: string };
 
 interface CentuariSellPositionDialogProps {
   positionId: string;
+  marketId?: string;
   token_image: string;
   token_name: string;
   token_symbol: string;
@@ -53,6 +55,7 @@ interface CentuariSellPositionDialogProps {
 
 export function CentuariSellPositionDialog({
   positionId,
+  marketId,
   token_image,
   token_name,
   token_symbol,
@@ -170,17 +173,15 @@ export function CentuariSellPositionDialog({
     if (numericAmount <= 0) return;
     if (numericAmount > availableFunds) return;
 
+    if (!marketId) {
+      toast.error("Market ID is missing. Cannot withdraw.");
+      return;
+    }
+
     try {
       await getAccessToken();
+      await withdraw(marketId);
 
-      await withdraw({
-        positionId,
-        amount: numericAmount,
-        tokenValue: getTokenValue(),
-      });
-
-      // If a parent wants to handle the success dialog (e.g. table row may unmount),
-      // notify it with a message so it can show a stable dialog outside this row.
       if (onWithdrawComplete) {
         onWithdrawComplete({
           title: "Withdrawal Complete",
@@ -191,11 +192,9 @@ export function CentuariSellPositionDialog({
       setWithdrawAmount("");
       setDisplayAmount("");
       setIsDialogOpen(false);
-      // Do not call onSuccess here — it triggers refetch and can unmount this
-      // component before TransactionSuccessDialog can show. Call it when the
-      // user dismisses the success dialog instead.
     } catch (error) {
-      console.error("Transaction failed:", error);
+      const message = error instanceof Error ? error.message : "Transaction failed";
+      toast.error(message);
     }
   };
 

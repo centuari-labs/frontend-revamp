@@ -7,10 +7,11 @@ import type { MyPositionItem } from "@/lib/api";
 function mapPositionItem(p: MyPositionItem): Position {
   const base = {
     id: p.id,
+    marketId: p.marketId,
     assetImg: p.imageUrl ?? "",
     assetName: p.name,
     amount: p.amountInUsd,
-    apr: 0,
+    apr: (p.apr ?? 0) / 100,
     tokenValue: p.symbol.toLowerCase(),
     tokenSymbol: p.symbol,
     maturity: (p.maturity ?? 0) * 1000,
