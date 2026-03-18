@@ -1,19 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 
-// Mock mode
 vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 
 vi.mock("@/hooks/use-my-assets", () => ({
   useMyAssets: vi.fn(() => ({ assets: [], isLoading: false, isError: false })),
-}));
-
-vi.mock("@/hooks/use-lend-borrow-assets", () => ({
-  useLendBorrowAssets: vi.fn(() => ({
-    lendBorrow: null,
-    isLoading: false,
-    isError: false,
-  })),
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
@@ -24,59 +15,90 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: vi.fn(() => ({ getAccessToken: vi.fn() })),
 }));
 
+vi.mock("@/contexts/user-details-context", () => ({
+  useUserDetailsContext: vi.fn(() => ({
+    userDetails: null,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  })),
+}));
+
 import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
+import { useMyAssets } from "@/hooks/use-my-assets";
+import { useUserDetailsContext } from "@/contexts/user-details-context";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.clear();
 });
 
-describe("useBorrowDialogData (mock mode)", () => {
-  it("returns defaultPortfolio when localStorage is empty", () => {
+describe("useBorrowDialogData (mock mode / no user details)", () => {
+  it("returns empty data when no assets and no user details", () => {
     const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.portfolio.btc).toBe(100000);
-    expect(result.current.portfolio.usdc).toBe(15000);
+    expect(result.current.portfolio).toEqual({});
+    expect(result.current.totalDebt).toBe(0);
+    expect(result.current.collateralStatus).toEqual({});
+    expect(result.current.collateralTokenList).toEqual([]);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isError).toBe(false);
   });
 
-  it("returns totalDebt from localStorage", () => {
-    localStorage.setItem("centuari_total_debt", "50000");
+  it("returns 0 totalDebt when userDetails is null", () => {
+    vi.mocked(useMyAssets).mockReturnValue({
+      assets: [
+        {
+          symbol: "USDC",
+          name: "USDC",
+          walletBalance: 1000,
+          amountInUsd: 1000,
+          isCollateral: true,
+          imageUrl: "/tokens/usdc-icon.webp",
+          ltv: 0.9,
+          liquidationThreshold: 0.92,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
     const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.totalDebt).toBe(50000);
+    expect(result.current.totalDebt).toBe(0);
+    expect(result.current.portfolio.usdc).toBe(1000);
   });
 
-  it("returns default $80k totalDebt when localStorage is empty", () => {
+  it("returns totalDebtUsd from userDetails when available", () => {
+    vi.mocked(useUserDetailsContext).mockReturnValue({
+      userDetails: {
+        totalDebtUsd: 5000,
+        settledDebtUsd: 3000,
+        pendingDebtUsd: 2000,
+        assets: [],
+        debts: [],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
     const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.totalDebt).toBe(80000);
+    expect(result.current.totalDebt).toBe(5000);
   });
 
-  it("returns collateralStatus from localStorage", () => {
-    localStorage.setItem(
-      "centuari_collateral",
-      JSON.stringify({ usdc: true, btc: false }),
-    );
+  it("returns loading state from assets", () => {
+    vi.mocked(useMyAssets).mockReturnValue({
+      assets: [],
+      isLoading: true,
+      isError: false,
+    });
     const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.collateralStatus.usdc).toBe(true);
-    expect(result.current.collateralStatus.btc).toBe(false);
+    expect(result.current.isLoading).toBe(true);
   });
 
-  it("returns hardcoded tokenList as collateralTokenList", () => {
+  it("returns error state from assets", () => {
+    vi.mocked(useMyAssets).mockReturnValue({
+      assets: [],
+      isLoading: false,
+      isError: true,
+    });
     const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.collateralTokenList.length).toBeGreaterThan(0);
-    const usdc = result.current.collateralTokenList.find(
-      (t) => t.value === "usdc",
-    );
-    expect(usdc).toBeDefined();
-    expect(usdc!.ltv).toBe(0.9);
-  });
-
-  it("returns localStorage portfolio when set", () => {
-    localStorage.setItem(
-      "centuari_portfolio",
-      JSON.stringify({ usdc: 9999 }),
-    );
-    const { result } = renderHook(() => useBorrowDialogData());
-    expect(result.current.portfolio.usdc).toBe(9999);
+    expect(result.current.isError).toBe(true);
   });
 });
