@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { CentuariTable } from "@/components/centuari-table";
-import { usePositions } from "@/hooks/use-positions";
+import { useOpenOrders } from "@/hooks/use-open-orders";
+import { useMyPositions } from "@/hooks/use-my-positions";
+import { useTransactionHistory } from "@/hooks/use-transaction-history";
 import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
 import { Input } from "@/components/ui/input";
@@ -22,7 +24,17 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit2, Search, Trash2 } from "lucide-react";
+import { Edit2, Loader2, Search, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { formatCurrency } from "@/lib/utils";
@@ -30,6 +42,7 @@ import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
+import { CentuariTypography } from "../centuari-typography";
 import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
 
 function PositionCard({
@@ -285,15 +298,87 @@ function LendPositionTable({
   );
 }
 
+function CancelOrderDialog({
+  onConfirm,
+  trigger,
+}: {
+  onConfirm: () => void | Promise<void>;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsPending(true);
+    try {
+      await onConfirm();
+      setOpen(false);
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !isPending && setOpen(v)}>
+      <button type="button" onClick={() => setOpen(true)}>
+        {trigger}
+      </button>
+      <DialogContent className="flex max-h-[min(400px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+        <DialogHeader className="contents space-y-0 text-left">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+            <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+            <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+          </div>
+          <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+              <Trash2 size={28} className="text-red-400" />
+            </div>
+            <CentuariTypography className="text-xl font-semibold">
+              Cancel Order
+            </CentuariTypography>
+            <CentuariTypography className="text-center text-muted-foreground text-sm">
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </CentuariTypography>
+          </div>
+        </DialogHeader>
+        <DialogFooter className="flex-row items-center justify-end px-6 py-5">
+          <DialogClose asChild>
+            <Button variant="secondary" className="flex-1" disabled={isPending}>
+              No, keep it
+            </Button>
+          </DialogClose>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            onClick={handleConfirm}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Cancelling...
+              </>
+            ) : (
+              "Yes, cancel order"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Unified Position Table Component for Open Orders
 function UnifiedPositionTable({
   positions,
   onDelete,
-  onUpdate
+  onUpdate,
+  hideEdit = false,
 }: {
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
+  hideEdit?: boolean;
 }) {
   const columns: ColumnDef<Position>[] = useMemo(() => [
     {
@@ -342,11 +427,11 @@ function UnifiedPositionTable({
       header: "Maturity",
       cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
     },
-    {
-      accessorKey: "createdAt",
-      header: "Created at",
-      cell: ({ row }) => row.original.createdAt,
-    },
+    // {
+    //   accessorKey: "createdAt",
+    //   header: "Created at",
+    //   cell: ({ row }) => row.original.createdAt,
+    // },
     {
       accessorKey: "status",
       header: "Status",
@@ -372,27 +457,31 @@ function UnifiedPositionTable({
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2">
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+            {!hideEdit && (
+              <AmendDialog
+                position={row.original}
+                tokenList={MARKET_TOKEN_LIST}
+                onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+                trigger={
+                  <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                    <Edit2 size={14} className="text-white" />
+                  </button>
+                }
+              />
+            )}
+            <CancelOrderDialog
+              onConfirm={() => onDelete(row.original.id)}
               trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
+                <div className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Trash2 size={14} className="text-red-400" />
+                </div>
               }
             />
-            <button
-              onClick={() => onDelete(row.original.id)}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={14} className="text-red-400" />
-            </button>
           </div>
         );
       },
     },
-  ], [onDelete, onUpdate]);
+  ], [onDelete, onUpdate, hideEdit]);
 
   const table = useReactTable({
     data: positions,
@@ -657,10 +746,17 @@ function BorrowPositionTable({
   );
 }
 
-export function PositionSection() {
+export function PositionSection({ assetId }: { assetId?: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("open_orders");
-  const { openOrders, allTransactions } = usePositions();
+  const [openOrdersPage, setOpenOrdersPage] = useState(1);
+  const [positionsPage, setPositionsPage] = useState(1);
+  const [txHistoryPage, setTxHistoryPage] = useState(1);
+
+  const { orders: openOrders, totalPages: openOrdersTotalPages, totalData: openOrdersTotal, isLoading: openOrdersLoading } = useOpenOrders({ page: openOrdersPage, limit: 10, assetId, enabled: activeTab === "open_orders" });
+  const { positions: activePositions, totalPages: positionsTotalPages, totalData: positionsTotal, isLoading: positionsLoading } = useMyPositions({ page: positionsPage, limit: 10, assetId, enabled: activeTab === "active_position" });
+  const { transactions, totalPages: txTotalPages, total: txTotal, isLoading: txLoading } = useTransactionHistory({ page: txHistoryPage, limit: 10, assetId, enabled: activeTab === "all_transactions" });
+
   const { update } = useUpdateOpenOrder();
   const { deleteOrder } = useDeleteOpenOrder();
 
@@ -680,11 +776,65 @@ export function PositionSection() {
     await update(updatedPosition);
   };
 
+  // Map open orders API data to Position type
+  const openOrderPositions: Position[] = useMemo(() =>
+    openOrders.map((o) => ({
+      id: o.id,
+      assetImg: o.asset.imageUrl ?? "",
+      assetName: o.asset.name,
+      amount: Number(o.amount),
+      apr: o.rate / 100,
+      type: o.side.toLowerCase() as "lend" | "borrow",
+      tokenValue: o.asset.symbol.toLowerCase(),
+      tokenSymbol: o.asset.symbol,
+      maturity: new Date(o.maturity).getTime(),
+      status: o.status === "OPEN" ? "pending" as const : "processing" as const,
+      createdAt: new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      timestamp: Date.now(),
+      ...(o.side === "BORROW" ? { collateralTokens: [] } : {}),
+    })) as Position[], [openOrders]);
+
+  // Map active positions API data to Position type
+  const activePositionsMapped: Position[] = useMemo(() =>
+    activePositions.map((p) => ({
+      id: p.id,
+      assetImg: p.imageUrl ?? "",
+      assetName: p.name,
+      amount: p.amountInUsd,
+      apr: (p.apr ?? 0) / 100,
+      type: p.side.toLowerCase() as "lend" | "borrow",
+      tokenValue: p.symbol.toLowerCase(),
+      tokenSymbol: p.symbol,
+      maturity: (p.maturity ?? 0) * 1000,
+      status: "success" as const,
+      createdAt: "",
+      timestamp: Date.now(),
+      ...(p.side === "BORROW" ? { collateralTokens: [] } : {}),
+    })) as Position[], [activePositions]);
+
+  // Map transaction history API data to Position type
+  const txPositions: Position[] = useMemo(() =>
+    transactions.map((t) => ({
+      id: t.id,
+      assetImg: t.asset.imageUrl ?? "",
+      assetName: t.asset.name,
+      amount: Number(t.amount),
+      apr: t.rate / 100,
+      type: t.side.toLowerCase() as "lend" | "borrow",
+      tokenValue: t.asset.symbol.toLowerCase(),
+      tokenSymbol: t.asset.symbol,
+      maturity: 0,
+      status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "failed" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
+      createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      timestamp: Date.now(),
+      ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
+    })) as Position[], [transactions]);
+
   const tabPositions = useMemo(() => {
-    if (activeTab === "open_orders") return openOrders;
-    if (activeTab === "active_position") return allTransactions;
-    return [...openOrders, ...allTransactions];
-  }, [activeTab, openOrders, allTransactions]);
+    if (activeTab === "open_orders") return openOrderPositions;
+    if (activeTab === "active_position") return activePositionsMapped;
+    return txPositions;
+  }, [activeTab, openOrderPositions, activePositionsMapped, txPositions]);
 
   const filteredPositions = useMemo(() => {
     if (!searchQuery) return tabPositions;
@@ -696,6 +846,12 @@ export function PositionSection() {
         formatCurrency(pos.amount).toLowerCase().includes(query)
     );
   }, [tabPositions, searchQuery]);
+
+  const currentPage = activeTab === "open_orders" ? openOrdersPage : activeTab === "active_position" ? positionsPage : txHistoryPage;
+  const currentTotalPages = activeTab === "open_orders" ? openOrdersTotalPages : activeTab === "active_position" ? positionsTotalPages : txTotalPages;
+  const currentTotal = activeTab === "open_orders" ? openOrdersTotal : activeTab === "active_position" ? positionsTotal : txTotal;
+  const currentLoading = activeTab === "open_orders" ? openOrdersLoading : activeTab === "active_position" ? positionsLoading : txLoading;
+  const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : setTxHistoryPage;
 
   return (
     <div className="mt-2 bg-white/5 rounded-md md:p-4">
@@ -817,34 +973,55 @@ export function PositionSection() {
           </div>
 
 
-          <TabsContent value="open_orders">
-            {filteredPositions.length > 0 ? (
-              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                No open orders found
-              </div>
-            )}
-          </TabsContent>
+          {["open_orders", "active_position", "all_transactions"].map((tab) => (
+            <TabsContent key={tab} value={tab}>
+              {currentLoading && filteredPositions.length === 0 ? (
+                <div className="space-y-3 py-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex gap-4 px-2">
+                      {Array.from({ length: 7 }).map((_, j) => (
+                        <div key={j} className="h-4 flex-1 bg-white/5 rounded animate-pulse" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : filteredPositions.length > 0 ? (
+                <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} hideEdit={tab !== "open_orders"} />
+              ) : (
+                <div className="py-8 text-center text-muted-foreground">
+                  {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
+                </div>
+              )}
+            </TabsContent>
+          ))}
 
-          <TabsContent value="active_position">
-            {filteredPositions.length > 0 ? (
-              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                No active positions found
+          {/* Pagination */}
+          {currentTotalPages > 0 && (
+            <div className="flex items-center justify-between py-3 px-1">
+              <div className="text-muted-foreground text-sm">
+                {currentTotal} result{currentTotal !== 1 ? "s" : ""}
               </div>
-            )}
-          </TabsContent>
-          <TabsContent value="all_transactions">
-            {filteredPositions.length > 0 ? (
-              <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} />
-            ) : (
-              <div className="py-8 text-center text-muted-foreground">
-                No transactions found
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p: number) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="px-3 py-1.5 text-sm rounded-md border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {currentTotalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p: number) => Math.min(currentTotalPages, p + 1))}
+                  disabled={currentPage >= currentTotalPages}
+                  className="px-3 py-1.5 text-sm rounded-md border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
               </div>
-            )}
-          </TabsContent>
+            </div>
+          )}
         </div>
       </Tabs>
     </div>

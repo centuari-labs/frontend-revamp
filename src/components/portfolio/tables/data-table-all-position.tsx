@@ -165,9 +165,10 @@ export function DataTableAllPosition({
         header: "Action",
         cell: ({ row }) => {
           const position = row.original;
+          console.log("posiiton", position)
           const isBorrow = position.type === "borrow";
-          const marketLink = position.assetId
-            ? `/market?token=${position.assetId}`
+          const marketLink = position.id
+            ? `/market?token=${position.id}`
             : `/market?token=${(position.tokenValue ?? position.assetName).toLowerCase()}`;
 
           return (
