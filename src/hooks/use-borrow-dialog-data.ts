@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { type TokenInfo } from "@/lib/portfolio-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
+import { useUserDetailsContext } from "@/contexts/user-details-context";
 
 export interface BorrowDialogData {
   portfolio: Record<string, number>;
@@ -15,6 +16,7 @@ export interface BorrowDialogData {
 
 export function useBorrowDialogData(): BorrowDialogData {
   const { assets, isLoading: assetsLoading, isError: assetsError } = useMyAssets({ limit: 100 });
+  const { userDetails } = useUserDetailsContext();
 
   return useMemo(() => {
     const portfolio: Record<string, number> = {};
@@ -40,11 +42,11 @@ export function useBorrowDialogData(): BorrowDialogData {
 
     return {
       portfolio,
-      totalDebt: 0,
+      totalDebt: userDetails?.totalDebtUsd ?? 0,
       collateralStatus,
       collateralTokenList,
       isLoading: assetsLoading,
       isError: assetsError,
     };
-  }, [assets, assetsLoading, assetsError]);
+  }, [assets, assetsLoading, assetsError, userDetails]);
 }

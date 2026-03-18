@@ -35,22 +35,6 @@ vi.mock("@/hooks/use-my-assets", () => ({
   })),
 }));
 
-vi.mock("@/hooks/use-lend-borrow-assets", () => ({
-  useLendBorrowAssets: vi.fn(() => ({
-    lendBorrow: { suppliedAssets: 10000, borrowedAssets: 25000, healthFactor: 2.0 },
-    isLoading: false,
-    isError: false,
-  })),
-}));
-
-vi.mock("@/hooks/use-portfolio-from-storage", () => ({
-  usePortfolioFromStorage: vi.fn(() => ({
-    portfolio: {},
-    totalDebt: 0,
-    collateralStatus: {},
-  })),
-}));
-
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: vi.fn(() => ({ getToken: vi.fn() })),
 }));
@@ -59,9 +43,18 @@ vi.mock("@privy-io/react-auth", () => ({
   usePrivy: vi.fn(() => ({ getAccessToken: vi.fn() })),
 }));
 
+vi.mock("@/contexts/user-details-context", () => ({
+  useUserDetailsContext: vi.fn(() => ({
+    userDetails: { totalDebtUsd: 25000, settledDebtUsd: 0, pendingDebtUsd: 0, assets: [], debts: [] },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  })),
+}));
+
 import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
-import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";
+import { useUserDetailsContext } from "@/contexts/user-details-context";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -107,11 +100,12 @@ describe("useBorrowDialogData (API mode)", () => {
     expect(btc!.price).toBe(90000); // 45000/0.5
   });
 
-  it("returns 0 totalDebt when lendBorrow is null", () => {
-    vi.mocked(useLendBorrowAssets).mockReturnValue({
-      lendBorrow: null,
+  it("returns 0 totalDebt when userDetails is null", () => {
+    vi.mocked(useUserDetailsContext).mockReturnValue({
+      userDetails: null,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.totalDebt).toBe(0);
@@ -121,11 +115,6 @@ describe("useBorrowDialogData (API mode)", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
       isLoading: true,
-      isError: false,
-    });
-    vi.mocked(useLendBorrowAssets).mockReturnValue({
-      lendBorrow: null,
-      isLoading: false,
       isError: false,
     });
     const { result } = renderHook(() => useBorrowDialogData());
