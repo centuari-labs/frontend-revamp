@@ -801,7 +801,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       assetImg: p.imageUrl ?? "",
       assetName: p.name,
       amount: p.amountInUsd,
-      apr: (p.apr ?? 0) / 100,
+      apr: (Number(p.apr) || 0) / 100,
       type: p.side.toLowerCase() as "lend" | "borrow",
       tokenValue: p.symbol.toLowerCase(),
       tokenSymbol: p.symbol,
