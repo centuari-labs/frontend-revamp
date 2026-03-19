@@ -116,10 +116,10 @@ export default function PortfolioPage() {
       assetImg: p.imageUrl ?? "/tokens/default-token.svg",
       assetName: p.name,
       amount: p.amountInUsd,
-      apr: (Number(p.apr) || 0) / 100,
+      apr: Number(p.apr) || 0,
       type: p.side.toLowerCase() as "lend" | "borrow",
       tokenValue: p.symbol.toLowerCase(),
-      maturity: p.maturity ?? undefined,
+      maturity: p.maturity ? p.maturity * 1000 : undefined,
     }));
   }, [apiPositions]);
 

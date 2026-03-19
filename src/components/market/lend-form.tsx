@@ -45,6 +45,12 @@ export function LendForm({
     assetId,
   });
 
+  const availableBalance = form.getAvailableBalance();
+  const limitNumeric = parseFloat(form.limitAmount) || 0;
+  const marketNumeric = parseFloat(form.marketAmount) || 0;
+  const limitInsufficientBalance = limitNumeric > 0 && limitNumeric > availableBalance;
+  const marketInsufficientBalance = marketNumeric > 0 && marketNumeric > availableBalance;
+
   return (
     <>
       <OrderTypeTabs
@@ -84,12 +90,15 @@ export function LendForm({
                     Max
                   </Button>
                 }
-                balanceText={`${form.selectedToken.label} ${formatNumberWithSeparator(form.getAvailableBalance().toString())}`}
+                balanceText={`${form.selectedToken.label} ${formatNumberWithSeparator(availableBalance.toString())}`}
                 value={form.limitDisplayAmount}
                 onChange={form.handleLimitAmountChange}
-                className="mt-0"
+                className={`mt-0 ${limitInsufficientBalance ? "border-red-500 focus-visible:border-red-500" : ""}`}
                 containerClassName="mt-3.5"
               />
+              {limitInsufficientBalance && (
+                <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
+              )}
               <div className="w-full mt-3.5">
                 <TargetAprMaturityInput
                   id="limit-target-apr"
@@ -135,7 +144,8 @@ export function LendForm({
                 parseFloat(form.limitAmount) <= 0 ||
                 !form.limitTargetAPR ||
                 !form.limitMaturity ||
-                form.isPending
+                form.isPending ||
+                limitInsufficientBalance
               }
             >
               {form.isPending ? (
@@ -183,12 +193,15 @@ export function LendForm({
                     Max
                   </Button>
                 }
-                balanceText={`${form.selectedToken.label} ${formatNumberWithSeparator(form.getAvailableBalance().toString())}`}
+                balanceText={`${form.selectedToken.label} ${formatNumberWithSeparator(availableBalance.toString())}`}
                 value={form.marketDisplayAmount}
                 onChange={form.handleMarketAmountChange}
-                className="mt-0"
+                className={`mt-0 ${marketInsufficientBalance ? "border-red-500 focus-visible:border-red-500" : ""}`}
                 containerClassName="mt-3.5"
               />
+              {marketInsufficientBalance && (
+                <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
+              )}
               <div>
                 <Label className="mb-1.5 mt-3.5">
                   Maturity
@@ -254,7 +267,8 @@ export function LendForm({
                 !form.marketAmount ||
                 parseFloat(form.marketAmount) <= 0 ||
                 !form.marketMaturity ||
-                form.isPending
+                form.isPending ||
+                marketInsufficientBalance
               }
             >
               {form.isPending ? (
