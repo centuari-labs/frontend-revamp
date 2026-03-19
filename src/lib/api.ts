@@ -174,7 +174,7 @@ export interface MyPositionItem {
 	name: string;
 	walletBalance: number;
 	amountInUsd: number;
-	apr: number;
+	apr: number | string;
 	isCollateral: boolean;
 	imageUrl: string | null;
 	side: "LEND" | "BORROW";

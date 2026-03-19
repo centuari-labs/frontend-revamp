@@ -116,7 +116,7 @@ export default function PortfolioPage() {
       assetImg: p.imageUrl ?? "/tokens/default-token.svg",
       assetName: p.name,
       amount: p.amountInUsd,
-      apr: 0,
+      apr: (Number(p.apr) || 0) / 100,
       type: p.side.toLowerCase() as "lend" | "borrow",
       tokenValue: p.symbol.toLowerCase(),
       maturity: p.maturity ?? undefined,

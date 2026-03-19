@@ -11,7 +11,7 @@ function mapPositionItem(p: MyPositionItem): Position {
     assetImg: p.imageUrl ?? "",
     assetName: p.name,
     amount: p.amountInUsd,
-    apr: (p.apr ?? 0) / 100,
+    apr: (Number(p.apr) || 0) / 100,
     tokenValue: p.symbol.toLowerCase(),
     tokenSymbol: p.symbol,
     maturity: (p.maturity ?? 0) * 1000,
