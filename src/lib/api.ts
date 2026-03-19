@@ -564,7 +564,7 @@ export function submitRepay(
 	amount: string,
 	token: string,
 ): Promise<RepayResponse> {
-	return apiClient<RepayResponse>("/repay", {
+	return apiClient<RepayResponse>("/portfolio/repay", {
 		method: "POST",
 		body: { positionId, amount },
 		token,
