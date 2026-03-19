@@ -45,7 +45,7 @@ vi.mock("@privy-io/react-auth", () => ({
 
 vi.mock("@/contexts/user-details-context", () => ({
   useUserDetailsContext: vi.fn(() => ({
-    userDetails: { totalDebtUsd: 25000, settledDebtUsd: 0, pendingDebtUsd: 0, assets: [], debts: [] },
+    userDetails: { totalDebtUsd: 25000, settledDebtUsd: 0, pendingDebtUsd: 0, assets: [], debts: [], healthFactor: 1.5, collateralUsd: 50000, weightedLtv: 0.75 },
     isLoading: false,
     isError: false,
     refetch: vi.fn(),

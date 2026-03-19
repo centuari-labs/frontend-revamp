@@ -21,9 +21,9 @@ import { IcCreditCardUploadCentuari } from "./icons/ic-credit-card-upload-centua
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { cn } from "@/lib/utils";
 import { getChainIcon } from "@/lib/chains";
-import { useMyAssets } from "@/hooks/use-my-assets";
+import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
-import type { MyAssetItem } from "@/lib/api";
+import type { UserAssetDetail } from "@/lib/api";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { toast } from "sonner";
 import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
@@ -36,14 +36,14 @@ type Step = "select-token" | "enter-amount";
 export function CentuariWithdrawDialog() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("select-token");
-  const [selectedAsset, setSelectedAsset] = useState<MyAssetItem | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<UserAssetDetail | null>(null);
   const selectTokenViewRef = useRef<HTMLDivElement>(null);
   const enterAmountViewRef = useRef<HTMLDivElement>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  const { assets, isLoading: assetsLoading } = useMyAssets({ limit: 100 });
+  const { userDetails, isLoading: assetsLoading } = useUserDetails();
   const {
     withdraw,
     withdrawStatus,
@@ -81,20 +81,20 @@ export function CentuariWithdrawDialog() {
     }
   };
 
-  // Filter to assets with positive non-collateral balance
-  const withdrawableAssets = assets.filter(
-    (a) => a.walletBalance > 0 && !a.isCollateral,
+  // Filter to assets with positive available balance
+  const withdrawableAssets = (userDetails?.assets ?? []).filter(
+    (a) => a.availableBalance > 0,
   );
 
   const amountNum = Number(withdrawAmount) || 0;
   const exceedsBalance =
-    selectedAsset != null && amountNum > selectedAsset.walletBalance;
+    selectedAsset != null && amountNum > selectedAsset.availableBalance;
   const tokenPrice =
-    selectedAsset && selectedAsset.walletBalance > 0
-      ? selectedAsset.amountInUsd / selectedAsset.walletBalance
+    selectedAsset && selectedAsset.availableBalance > 0
+      ? selectedAsset.availableBalanceUsd / selectedAsset.availableBalance
       : 0;
 
-  const handleTokenSelect = (asset: MyAssetItem) => {
+  const handleTokenSelect = (asset: UserAssetDetail) => {
     setSelectedAsset(asset);
     setStep("enter-amount");
   };
@@ -185,7 +185,7 @@ export function CentuariWithdrawDialog() {
 
   const handleQuickFill = (pct: number) => {
     if (!selectedAsset) return;
-    const val = selectedAsset.walletBalance * pct;
+    const val = selectedAsset.availableBalance * pct;
     // Use full precision for max, reasonable precision otherwise
     setWithdrawAmount(
       pct === 1 ? val.toString() : val.toFixed(6).replace(/\.?0+$/, ""),
@@ -341,7 +341,7 @@ export function CentuariWithdrawDialog() {
                                   variant="b2"
                                   className="text-muted-foreground"
                                 >
-                                  {asset.walletBalance.toLocaleString("en-US", {
+                                  {asset.availableBalance.toLocaleString("en-US", {
                                     maximumFractionDigits: 6,
                                   })}
                                 </CentuariTypography>
@@ -408,7 +408,7 @@ export function CentuariWithdrawDialog() {
                               variant="b3"
                               className="text-muted-foreground"
                             >
-                              {selectedAsset.walletBalance.toLocaleString(
+                              {selectedAsset.availableBalance.toLocaleString(
                                 "en-US",
                                 {
                                   maximumFractionDigits: 6,
@@ -497,7 +497,7 @@ export function CentuariWithdrawDialog() {
                         <CentuariAlert
                           variant="destructive"
                           text="Insufficient balance"
-                          description={`Available: ${selectedAsset?.walletBalance.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${selectedAsset?.symbol}`}
+                          description={`Available: ${selectedAsset?.availableBalance.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${selectedAsset?.symbol}`}
                           className="mt-4"
                         />
                       )}

@@ -638,7 +638,7 @@ export function CentuariLendDialog({
                         </div>
                         <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
                           {numericAmount > 0
-                            ? formatCurrency(futureAmount)
+                            ? formatCurrency(futureAmount - transactionFee)
                             : "$0.00"}
                         </span>
                       </div>

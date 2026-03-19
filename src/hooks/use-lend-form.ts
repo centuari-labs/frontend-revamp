@@ -147,20 +147,22 @@ export function useLendForm({
   const limitAmountToPay = limitNumericAmount + limitTransactionFee;
   const limitTargetAPRNumeric =
     parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
-  const limitFutureAmount = calculateFutureAmount(
-    limitNumericAmount,
-    limitTargetAPRNumeric,
-    limitMaturity
-  );
+  const limitFutureAmount =
+    calculateFutureAmount(
+      limitNumericAmount,
+      limitTargetAPRNumeric,
+      limitMaturity
+    ) - limitTransactionFee;
 
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
   const marketTransactionFee = Math.min(marketNumericAmount * 0.0001, 0.05);
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
-  const marketFutureAmount = calculateFutureAmount(
-    marketNumericAmount,
-    0,
-    marketMaturity
-  );
+  const marketFutureAmount =
+    calculateFutureAmount(
+      marketNumericAmount,
+      0,
+      marketMaturity
+    ) - marketTransactionFee;
 
   const handleLimitSubmit = useCallback(
     async (e: React.FormEvent) => {

@@ -181,7 +181,7 @@ export function DataTableAllPosition({
                   token_name={position.assetName}
                   token_symbol={position.assetName}
                   amountBorrowed={position.amount}
-                  apr={(position.apr ?? 0) * 100}
+                  apr={position.apr ?? 0}
                   maturityDate={normalizeMaturity(position.maturity)}
                   onSuccess={() => {
                     if (typeof window !== "undefined") {
@@ -199,12 +199,12 @@ export function DataTableAllPosition({
                   startDate={position.timestamp}
                   availableFunds={calculateFutureAmount(
                     position.amount,
-                    (position.apr ?? 0) * 100,
+                    position.apr ?? 0,
                     normalizeMaturity(position.maturity)
                   )}
                   moneyDeposited={position.amount * 0.9}
                   profitReturn={position.amount * 0.1}
-                  apr={(position.apr ?? 0) * 100}
+                  apr={position.apr ?? 0}
                   onWithdrawComplete={(message) => setWithdrawSuccess(message)}
                   onSuccess={() => {
                     if (typeof window !== "undefined") {

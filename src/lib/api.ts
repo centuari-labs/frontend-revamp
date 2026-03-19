@@ -231,6 +231,9 @@ export async function getMyPositions(
 
 export interface UserAssetDetail {
 	assetId: string;
+	symbol: string;
+	name: string;
+	imageUrl: string | null;
 	totalBalance: number;
 	lockedInOrders: number;
 	availableBalance: number;
@@ -252,6 +255,12 @@ export interface UserDetailsResponse {
 	settledDebtUsd: number;
 	pendingDebtUsd: number;
 	debts: UserDebtDetail[];
+	/** Health factor; may be Infinity when there is no debt. */
+	healthFactor: number;
+	/** Total collateral value in USD */
+	collateralUsd: number;
+	/** Weighted LTV across all collateral (decimal, e.g. 0.75 = 75%) */
+	weightedLtv: number;
 }
 
 export function getUserDetails(

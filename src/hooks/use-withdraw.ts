@@ -24,12 +24,7 @@ export function useWithdraw() {
       return await submitWithdraw(assetId, amount, token);
     },
     onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({
-        queryKey: ["lend-borrow-assets"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["user-details"] });
     },
   });
 
