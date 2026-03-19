@@ -8,6 +8,8 @@ import { treasuryAbi } from "@/../abis/treasury";
 import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 
+const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
+
 const TREASURY_ADDRESS = process.env
   .NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
 
@@ -71,6 +73,13 @@ export function useDeposit() {
           args: [address, TREASURY_ADDRESS],
         });
 
+        // Estimate gas fees with buffer to avoid "max fee per gas less than block base fee"
+        const block = await publicClient.getBlock();
+        const baseFee = block.baseFeePerGas ?? BigInt(0);
+        const maxFeePerGas = (baseFee * GAS_FEE_MULTIPLIER) / BigInt(100);
+        const maxPriorityFeePerGas = (baseFee * BigInt(25)) / BigInt(100); // 25% of base fee as tip
+        const gasOverrides = { maxFeePerGas, maxPriorityFeePerGas };
+
         // Step 2: Approve if needed (exact amount)
         if (currentAllowance < depositAmount) {
           setStatus("approving");
@@ -79,6 +88,7 @@ export function useDeposit() {
             abi: erc20Abi,
             functionName: "approve",
             args: [TREASURY_ADDRESS, depositAmount],
+            ...gasOverrides,
           });
 
           setStatus("waitingApproval");
@@ -94,11 +104,21 @@ export function useDeposit() {
 
         // Step 3: Call Treasury.deposit
         setStatus("depositing");
+        // Re-fetch gas fees in case base fee changed during approval
+        const latestBlock = await publicClient.getBlock();
+        const latestBaseFee = latestBlock.baseFeePerGas ?? BigInt(0);
+        const latestMaxFeePerGas =
+          (latestBaseFee * GAS_FEE_MULTIPLIER) / BigInt(100);
+        const latestMaxPriorityFeePerGas =
+          (latestBaseFee * BigInt(25)) / BigInt(100);
+
         const depositTxHash = await writeContractAsync({
           address: TREASURY_ADDRESS,
           abi: treasuryAbi,
           functionName: "deposit",
           args: [tokenAddress, depositAmount],
+          maxFeePerGas: latestMaxFeePerGas,
+          maxPriorityFeePerGas: latestMaxPriorityFeePerGas,
         });
 
         // Step 4: Wait for deposit confirmation
