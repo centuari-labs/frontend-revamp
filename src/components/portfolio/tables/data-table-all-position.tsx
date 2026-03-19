@@ -144,10 +144,11 @@ export function DataTableAllPosition({
         accessorKey: "apr",
         header: "APR %",
         cell: ({ row }) => {
-          const apr = row.original.apr ?? 0;
+          const apr = row.original.apr;
+          console.log("rowsdsds", row.original.apr)
           return (
             <div className="text-white font-medium">
-              {((apr ?? 0) * 100).toFixed(2).replace(".", ",")}%
+              {Number(apr)}%
             </div>
           );
         },
