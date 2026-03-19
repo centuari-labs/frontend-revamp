@@ -1,15 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Area,
   AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { format } from "date-fns";
+import type { LendBorrowChartPoint } from "@/lib/api";
 
 interface ChartDataPoint {
   date: string;
@@ -17,34 +16,9 @@ interface ChartDataPoint {
   borrow: number;
 }
 
-const chartData: ChartDataPoint[] = [
-  { date: "1 Oct", supply: 5000, borrow: 2000 },
-  { date: "4 Oct", supply: 5200, borrow: 2100 },
-  { date: "7 Oct", supply: 5500, borrow: 2200 },
-  { date: "10 Oct", supply: 5400, borrow: 2300 },
-  { date: "13 Oct", supply: 6800, borrow: 2500 },
-  { date: "16 Oct", supply: 7200, borrow: 2600 },
-  { date: "19 Oct", supply: 7000, borrow: 2800 },
-  // { date: "22 Oct", supply: 8500, borrow: 3000 },
-  // { date: "25 Oct", supply: 9200, borrow: 3200 },
-  // { date: "28 Oct", supply: 9000, borrow: 3400 },
-  // { date: "31 Oct", supply: 12000, borrow: 3600 },
-  // { date: "3 Nov", supply: 14500, borrow: 3800 },
-  // { date: "6 Nov", supply: 16000, borrow: 4200 },
-  // { date: "9 Nov", supply: 18500, borrow: 4500 },
-  // { date: "12 Nov", supply: 22000, borrow: 5000 },
-  // { date: "15 Nov", supply: 25000, borrow: 5500 },
-  // { date: "18 Nov", supply: 28000, borrow: 6000 },
-  // { date: "21 Nov", supply: 32000, borrow: 6800 },
-  // { date: "24 Nov", supply: 35000, borrow: 7200 },
-  // { date: "27 Nov", supply: 38000, borrow: 7800 },
-  // { date: "30 Nov", supply: 36000, borrow: 8200 },
-  // { date: "3 Dec", supply: 40000, borrow: 8800 },
-  // { date: "6 Dec", supply: 42000, borrow: 9200 },
-  // { date: "8 Dec", supply: 41000, borrow: 9500 },
-  // { date: "10 Dec", supply: 43000, borrow: 9800 },
-  // { date: "11 Dec", supply: 45000, borrow: 10200 },
-];
+interface LendBorrowChartProps {
+  data?: LendBorrowChartPoint[];
+}
 
 interface TooltipPayload {
   value: number;
@@ -65,7 +39,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
 
     return (
       <div className="bg-white/10 backdrop-blur-[24px] rounded-xl px-4 py-3 shadow-xl border border-white/20">
-        <p className="text-white text-sm font-medium">{date} 2025</p>
+        <p className="text-white text-sm font-medium">{date}</p>
         <div className="border-t border-dashed border-white/20 my-2" />
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-10">
@@ -101,7 +75,25 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
   return null;
 };
 
-export default function LendBorrowChart() {
+export default function LendBorrowChart({ data = [] }: LendBorrowChartProps) {
+  const chartData: ChartDataPoint[] = useMemo(
+    () =>
+      data.map((item) => ({
+        date: format(new Date(item.date), "d MMM"),
+        supply: Number(item.lendAmount) || 0,
+        borrow: Number(item.borrowAmount) || 0,
+      })),
+    [data]
+  );
+
+  if (chartData.length === 0) {
+    return (
+      <div className="w-full h-[180px] flex items-center justify-center text-sm text-white/40">
+        No chart data
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <ResponsiveContainer width="100%" height={180}>
@@ -135,30 +127,6 @@ export default function LendBorrowChart() {
               />
             </linearGradient>
           </defs>
-
-          {/* <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#1e293b"
-                vertical={false}
-              /> */}
-
-          {/* <XAxis
-                dataKey="date"
-                stroke="#475569"
-                tick={{ fill: "#64748b", fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-              /> */}
-
-          {/* <YAxis
-                stroke="#475569"
-                tick={{ fill: "#64748b", fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value: number) =>
-                  `$${(value / 1000).toFixed(0)}k`
-                }
-              /> */}
 
           <Tooltip content={<CustomTooltip />} />
 

@@ -42,7 +42,7 @@ export default function PortfolioPage() {
   // ─── API mode hooks ────────────────────────────────────────────────
   const { portfolio: apiPortfolio, isLoading: isPortfolioLoading, isError: isPortfolioError, refetch: refetchPortfolio } =
     useMyPortfolio();
-  const { lendBorrow, isLoading: isLendBorrowLoading, isError: isLendBorrowError, refetch: refetchLendBorrow } = useLendBorrowAssets();
+  const { lendBorrow, chartData: lendBorrowChartData, isLoading: isLendBorrowLoading, isError: isLendBorrowError, refetch: refetchLendBorrow } = useLendBorrowAssets();
   const {
     positions: apiPositions,
     page: currentPositionsPage,
@@ -340,7 +340,7 @@ export default function PortfolioPage() {
             </div>
           </div>
           <div className="w-full lg:w-[700px] xl:w-[700px] mt-6 lg:mt-0">
-            <LendBorrowChart />
+            <LendBorrowChart data={lendBorrowChartData} />
           </div>
         </div>
       </div>
