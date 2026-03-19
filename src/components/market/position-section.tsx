@@ -163,7 +163,7 @@ function LendPositionTable({
     {
       accessorKey: "amount",
       header: "Amount",
-      cell: ({ row }) => formatCurrency(row.original.amount),
+      cell: ({ row }) => formatCurrency(row.original.amount, 2),
     },
     {
       accessorKey: "apr",
@@ -374,11 +374,15 @@ function UnifiedPositionTable({
   onDelete,
   onUpdate,
   hideEdit = false,
+  hideStatus = false,
+  hideActions = false,
 }: {
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
   hideEdit?: boolean;
+  hideStatus?: boolean;
+  hideActions?: boolean;
 }) {
   const columns: ColumnDef<Position>[] = useMemo(() => [
     {
@@ -411,7 +415,7 @@ function UnifiedPositionTable({
     {
       accessorKey: "amount",
       header: "Amount",
-      cell: ({ row }) => formatCurrency(row.original.amount),
+      cell: ({ row }) => formatCurrency(row.original.amount, 2),
     },
     {
       accessorKey: "apr",
@@ -432,12 +436,12 @@ function UnifiedPositionTable({
     //   header: "Created at",
     //   cell: ({ row }) => row.original.createdAt,
     // },
-    {
-      accessorKey: "status",
+    ...(!hideStatus ? [{
+      accessorKey: "status" as const,
       header: "Status",
-      cell: ({ row }) => {
+      cell: ({ row }: { row: { original: Position } }) => {
         const status = row.original.status;
-        const statusColors = {
+        const statusColors: Record<string, string> = {
           pending: "bg-yellow-500",
           processing: "bg-blue-500",
           success: "bg-green-500",
@@ -450,11 +454,11 @@ function UnifiedPositionTable({
           </div>
         );
       },
-    },
-    {
-      id: "actions",
+    }] : []),
+    ...(!hideActions ? [{
+      id: "actions" as const,
       header: "Actions",
-      cell: ({ row }) => {
+      cell: ({ row }: { row: { original: Position } }) => {
         return (
           <div className="flex items-center gap-2">
             {!hideEdit && (
@@ -480,8 +484,8 @@ function UnifiedPositionTable({
           </div>
         );
       },
-    },
-  ], [onDelete, onUpdate, hideEdit]);
+    }] : []),
+  ], [onDelete, onUpdate, hideEdit, hideStatus, hideActions]);
 
   const table = useReactTable({
     data: positions,
@@ -611,7 +615,7 @@ function BorrowPositionTable({
     {
       accessorKey: "amount",
       header: "Amount Borrowed",
-      cell: ({ row }) => formatCurrency(row.original.amount),
+      cell: ({ row }) => formatCurrency(row.original.amount, 2),
     },
     {
       accessorKey: "apr",
@@ -986,7 +990,14 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   ))}
                 </div>
               ) : filteredPositions.length > 0 ? (
-                <UnifiedPositionTable positions={filteredPositions} onDelete={handleDelete} onUpdate={handleUpdate} hideEdit={tab !== "open_orders"} />
+                <UnifiedPositionTable
+                  positions={filteredPositions}
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdate}
+                  hideEdit={tab !== "open_orders"}
+                  hideStatus={tab === "active_position"}
+                  hideActions={tab === "active_position"}
+                />
               ) : (
                 <div className="py-8 text-center text-muted-foreground">
                   {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}

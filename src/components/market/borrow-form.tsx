@@ -21,7 +21,7 @@ import { CollateralEmptyState } from "@/components/collateral-empty-state";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
-import { getAvailableMaturityTimestamps } from "@/lib/maturity";
+
 
 interface BorrowFormProps {
   tokenList: TokenOption[];
@@ -45,6 +45,7 @@ export function BorrowForm({
     selectedTokenProp,
     editingPosition,
     onUpdate,
+    maturityOptions,
     assetId,
   });
 
@@ -113,8 +114,8 @@ export function BorrowForm({
                     onChange={form.setLimitTargetAPR}
                     maturity={form.limitMaturity}
                     onMaturityChange={form.setLimitMaturity}
-                  maturityOptions={maturityOptions ?? getAvailableMaturityTimestamps()}
-                    placeholder="12.5"
+                    maturityOptions={form.availableMaturities}
+                    placeholder="Enter your APR amount"
                     label="Target APR"
                   />
                 </div>
@@ -129,7 +130,7 @@ export function BorrowForm({
                 <div>
                   <Label className="mb-2 mt-2.5">
                     Health Factor{" "}
-                    <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
+                    <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
                     </CentuariTooltip>
                     <HealthFactorBadge
@@ -275,7 +276,7 @@ export function BorrowForm({
                   <MaturityToggle
                     value={form.marketMaturity}
                     onValueChange={form.setMarketMaturity}
-                    options={maturityOptions}
+                    options={form.availableMaturities}
                   />
                 </div>
                 <div className="mt-5">
@@ -289,7 +290,7 @@ export function BorrowForm({
                 <div>
                   <Label className="mb-2 mt-2.5">
                     Health Factor{" "}
-                    <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
+                    <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
                     </CentuariTooltip>
                     <HealthFactorBadge

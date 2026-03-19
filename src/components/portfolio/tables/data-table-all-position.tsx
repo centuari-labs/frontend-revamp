@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
-import { usePositions } from "@/hooks/use-positions";
 import {
   CentuariSellPositionDialog,
   type WithdrawSuccessMessage,
@@ -77,15 +76,14 @@ export function DataTableAllPosition({
   const [withdrawSuccess, setWithdrawSuccess] =
     React.useState<WithdrawSuccessMessage | null>(null);
   const [activeTab, setActiveTab] = React.useState<"borrow" | "lend">("lend");
-  const { allTransactions } = usePositions();
 
   const isServerPagination = !!onPageChange;
 
   // Always filter by active tab — safety net even if API doesn't filter
   const currentData = React.useMemo(() => {
-    const allData = externalPositions ?? allTransactions;
+    const allData = externalPositions ?? [];
     return (allData as PositionProps[]).filter((pos) => pos.type === activeTab);
-  }, [externalPositions, allTransactions, activeTab]);
+  }, [externalPositions, activeTab]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -255,6 +253,7 @@ export function DataTableAllPosition({
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,
@@ -266,81 +265,79 @@ export function DataTableAllPosition({
     },
   });
 
-  const PositionTable = React.useMemo(() => (
-    <>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
-        <Table className="w-full">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-white/5 border-none">
-                {headerGroup.headers.map((header, index) => (
-                  <TableHead
-                    key={header.id}
+  const positionTable = (
+    <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
+      <Table className="w-full">
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="bg-white/5 border-none">
+              {headerGroup.headers.map((header, index) => (
+                <TableHead
+                  key={header.id}
+                  className={cn(
+                    "text-white/60 font-normal h-12",
+                    index === 0 && "pl-6",
+                    index === headerGroup.headers.length - 1 && "pr-6"
+                  )}
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                className="border-none hover:bg-white/5 transition-colors h-8"
+              >
+                {row.getVisibleCells().map((cell, index) => (
+                  <TableCell
+                    key={cell.id}
                     className={cn(
-                      "text-white/60 font-normal h-12",
+                      "py-2",
                       index === 0 && "pl-6",
-                      index === headerGroup.headers.length - 1 && "pr-6"
+                      index === row.getVisibleCells().length - 1 && "pr-6"
                     )}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="border-none hover:bg-white/5 transition-colors h-8"
-                >
-                  {row.getVisibleCells().map((cell, index) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        "py-2",
-                        index === 0 && "pl-6",
-                        index === row.getVisibleCells().length - 1 && "pr-6"
-                      )}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-[300px] text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </>
-  ), [table, currentData.length]);
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={columns.length}
+                className="h-[300px] text-center"
+              >
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   // Pagination values
-  const displayPage = isServerPagination ? (serverPage ?? 1) : (currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0);
-  const displayTotalPages = isServerPagination ? (totalPages ?? 1) : Math.max(1, table.getPageCount() || 1);
+  const displayPage = isServerPagination ? Number(serverPage ?? 1) : (currentData.length > 0 ? table.getState().pagination.pageIndex + 1 : 0);
+  const displayTotalPages = isServerPagination ? Number(totalPages ?? 1) : Math.max(1, table.getPageCount() || 1);
   const displayShowing = table.getRowModel().rows.length;
-  const displayTotal = isServerPagination ? (totalData ?? 0) : currentData.length;
-  const canPrev = isServerPagination ? (serverPage ?? 1) > 1 : table.getCanPreviousPage();
-  const canNext = isServerPagination ? (serverPage ?? 1) < (totalPages ?? 1) : table.getCanNextPage();
+  const displayTotal = isServerPagination ? Number(totalData ?? 0) : currentData.length;
+  const canPrev = isServerPagination ? Number(serverPage ?? 1) > 1 : table.getCanPreviousPage();
+  const canNext = isServerPagination ? Number(serverPage ?? 1) < Number(totalPages ?? 1) : table.getCanNextPage();
 
   return (
     <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
@@ -364,11 +361,11 @@ export function DataTableAllPosition({
         </div>
 
         <TabsContent value="borrow" className="mt-0 flex-1 flex flex-col min-h-0">
-          {PositionTable}
+          {positionTable}
         </TabsContent>
 
         <TabsContent value="lend" className="mt-0 flex-1 flex flex-col min-h-0">
-          {PositionTable}
+          {positionTable}
         </TabsContent>
       </Tabs>
       <div className="flex flex-col sm:flex-row shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
@@ -388,7 +385,7 @@ export function DataTableAllPosition({
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
             onClick={() => {
               if (isServerPagination) {
-                onPageChange(Math.max(1, (serverPage ?? 1) - 1));
+                onPageChange(Math.max(1, Number(serverPage ?? 1) - 1));
               } else {
                 table.previousPage();
               }
@@ -403,7 +400,7 @@ export function DataTableAllPosition({
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
             onClick={() => {
               if (isServerPagination) {
-                onPageChange(Math.min((totalPages ?? 1), (serverPage ?? 1) + 1));
+                onPageChange(Math.min(Number(totalPages ?? 1), Number(serverPage ?? 1) + 1));
               } else {
                 table.nextPage();
               }

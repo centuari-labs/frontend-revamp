@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { formatNumberWithSeparator } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
+  getAvailableMaturityTimestamps,
   normalizeMaturity,
 } from "@/lib/maturity";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
@@ -22,6 +23,7 @@ export interface UseBorrowFormParams {
   selectedTokenProp?: TokenOption;
   editingPosition?: BorrowPosition;
   onUpdate?: (updatedPosition: BorrowPosition) => void;
+  maturityOptions?: number[];
   assetId?: string;
 }
 
@@ -30,6 +32,7 @@ export function useBorrowForm({
   selectedTokenProp,
   editingPosition,
   onUpdate,
+  maturityOptions,
   assetId: assetIdProp,
 }: UseBorrowFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
@@ -45,20 +48,40 @@ export function useBorrowForm({
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
 
-  const [limitMaturity, setLimitMaturity] = useState(() =>
-    getDefaultMaturityTimestamp()
-  );
+  const availableMaturities = useMemo(() => {
+    if (maturityOptions && maturityOptions.length > 0) {
+      return maturityOptions;
+    }
+    return getAvailableMaturityTimestamps();
+  }, [maturityOptions]);
+
+  const defaultMaturity = availableMaturities[0] ?? getDefaultMaturityTimestamp();
+
+  const [limitMaturity, setLimitMaturity] = useState(defaultMaturity);
   const [limitTargetAPR, setLimitTargetAPR] = useState("");
   const [limitSelectedCollaterals, setLimitSelectedCollaterals] = useState<
     string[]
   >([]);
-  const [marketMaturity, setMarketMaturity] = useState(() =>
-    getDefaultMaturityTimestamp()
-  );
+  const [marketMaturity, setMarketMaturity] = useState(defaultMaturity);
   const [marketSelectedCollaterals, setMarketSelectedCollaterals] = useState<
     string[]
   >([]);
   const [autoRefinance, setAutoRefinance] = useState(true);
+
+  // Sync default maturity when backend data loads
+  useEffect(() => {
+    if (availableMaturities.length > 0) {
+      setLimitMaturity((prev) => {
+        const isLocal = !availableMaturities.includes(prev);
+        return isLocal ? availableMaturities[0] : prev;
+      });
+      setMarketMaturity((prev) => {
+        const isLocal = !availableMaturities.includes(prev);
+        return isLocal ? availableMaturities[0] : prev;
+      });
+    }
+  }, [availableMaturities]);
+
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successAmount, setSuccessAmount] = useState("");
   const [successTokenSymbol, setSuccessTokenSymbol] = useState("");
@@ -320,5 +343,6 @@ export function useBorrowForm({
     successAmount,
     successTokenSymbol,
     isPending,
+    availableMaturities,
   };
 }
