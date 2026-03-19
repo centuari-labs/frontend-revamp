@@ -7,7 +7,7 @@ async function handler(
 	{ params }: { params: Promise<{ path: string[] }> },
 ) {
 	const { path } = await params;
-	const targetUrl = `${BACKEND_URL}/${path.join("/")}`;
+	const targetUrl = `${BACKEND_URL}/${path.join("/")}${req.nextUrl.search}`;
 
 	const headers: Record<string, string> = {};
 	const authorization = req.headers.get("authorization");

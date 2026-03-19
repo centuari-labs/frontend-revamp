@@ -40,7 +40,7 @@ export function useBorrowForm({
     selectedTokenProp,
     "usdt"
   );
-  const { portfolio, totalDebt, collateralStatus, collateralTokenList, isLoading: portfolioLoading } = useBorrowPortfolioData();
+  const { portfolio, totalDebt, collateralStatus, collateralTokenList, userHealthFactor, isLoading: portfolioLoading } = useBorrowPortfolioData();
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -312,6 +312,7 @@ export function useBorrowForm({
     marketTotalPortfolioValue: marketCalcs.totalPortfolioValue,
     marketAvailableQuota: marketCalcs.availableQuota,
     marketNumericAmount,
+    userHealthFactor,
     autoRefinance,
     setAutoRefinance,
     showSuccessDialog,

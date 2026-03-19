@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { TabsContent } from "@/components/ui/tabs";
 import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getHealthFactorPercentage } from "@/lib/utils";
 import { CollateralListDisplay } from "@/components/collateral-list-display";
 import { CollateralEmptyState } from "@/components/collateral-empty-state";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
@@ -133,23 +133,24 @@ export function BorrowForm({
                       <Info size={16} />
                     </CentuariTooltip>
                     <HealthFactorBadge
-                      healthFactor={form.limitHealthFactor}
+                      healthFactor={form.limitHealthFactor || form.userHealthFactor}
                       isEmpty={
-                        form.limitHealthFactor === 0 ||
-                        form.limitSelectedCollaterals.length === 0 ||
-                        form.limitNumericAmount === 0
+                        (form.limitHealthFactor === 0 && form.userHealthFactor === 0) ||
+                        (!form.limitNumericAmount && form.userHealthFactor === 0)
                       }
                     />
                   </Label>
                   <div className="border border-white/5 rounded-lg mt-2">
                     <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
-                        targetValue={form.limitHealthFactorPercentage}
+                        targetValue={form.limitHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
                           form.limitHealthFactor > 0 &&
                           !isNaN(form.limitHealthFactor)
                             ? form.limitHealthFactor
-                            : undefined
+                            : form.userHealthFactor > 0
+                              ? form.userHealthFactor
+                              : undefined
                         }
                       />
                     </div>
@@ -292,23 +293,24 @@ export function BorrowForm({
                       <Info size={16} />
                     </CentuariTooltip>
                     <HealthFactorBadge
-                      healthFactor={form.marketHealthFactor}
+                      healthFactor={form.marketHealthFactor || form.userHealthFactor}
                       isEmpty={
-                        form.marketHealthFactor === 0 ||
-                        form.marketSelectedCollaterals.length === 0 ||
-                        form.marketNumericAmount === 0
+                        (form.marketHealthFactor === 0 && form.userHealthFactor === 0) ||
+                        (!form.marketNumericAmount && form.userHealthFactor === 0)
                       }
                     />
                   </Label>
                   <div className="border border-white/5 rounded-lg mt-2">
                     <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
-                        targetValue={form.marketHealthFactorPercentage}
+                        targetValue={form.marketHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
                           form.marketHealthFactor > 0 &&
                           !isNaN(form.marketHealthFactor)
                             ? form.marketHealthFactor
-                            : undefined
+                            : form.userHealthFactor > 0
+                              ? form.userHealthFactor
+                              : undefined
                         }
                       />
                     </div>

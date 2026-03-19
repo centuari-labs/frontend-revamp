@@ -172,7 +172,7 @@ export interface MyPositionItem {
 	marketId?: string;
 	symbol: string;
 	name: string;
-	walletBalance: number;
+	shares: number;
 	amountInUsd: number;
 	apr: number | string;
 	isCollateral: boolean;

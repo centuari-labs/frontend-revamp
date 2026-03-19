@@ -10,6 +10,7 @@ export interface BorrowDialogData {
   totalDebt: number;
   collateralStatus: Record<string, boolean>;
   collateralTokenList: TokenInfo[];
+  userHealthFactor: number;
   isLoading: boolean;
   isError: boolean;
 }
@@ -45,6 +46,7 @@ export function useBorrowDialogData(): BorrowDialogData {
       totalDebt: userDetails?.totalDebtUsd ?? 0,
       collateralStatus,
       collateralTokenList,
+      userHealthFactor: Number.isFinite(userDetails?.healthFactor) ? userDetails!.healthFactor : 0,
       isLoading: assetsLoading,
       isError: assetsError,
     };

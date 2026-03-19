@@ -10,6 +10,7 @@ export interface BorrowPortfolioData {
   totalDebt: number;
   collateralStatus: Record<string, boolean>;
   collateralTokenList: TokenInfo[];
+  userHealthFactor: number;
   isLoading: boolean;
 }
 
@@ -43,6 +44,7 @@ export function useBorrowPortfolioData(): BorrowPortfolioData {
       totalDebt: userDetails?.totalDebtUsd ?? 0,
       collateralStatus,
       collateralTokenList,
+      userHealthFactor: Number.isFinite(userDetails?.healthFactor) ? userDetails!.healthFactor : 0,
       isLoading: assetsLoading,
     };
   }, [assets, assetsLoading, userDetails]);

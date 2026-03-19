@@ -31,6 +31,8 @@ import {
   parseNumberFromSeparator,
   formatCurrency,
   calculateFutureAmount,
+  getHealthFactorPercentage,
+  getHealthFactorDisplayStatus,
 } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
@@ -84,6 +86,7 @@ export function CentuariBorrowDialog({
     totalDebt,
     collateralStatus,
     collateralTokenList,
+    userHealthFactor,
     isLoading: dataLoading,
   } = useBorrowDialogData();
 
@@ -558,75 +561,36 @@ export function CentuariBorrowDialog({
                           <CentuariTooltip message="Your health factor indicates the safety of your borrowed position. Health Factor = (Total Collateral Value × Collateral Factor) / Total Borrowed Value">
                             <Info size={16} />
                           </CentuariTooltip>
-                          <Badge
-                            variant={
-                              healthFactor === 0 ||
-                              selectedCollaterals.length === 0 ||
-                              numericAmount === 0
-                                ? "default"
-                                : healthFactor >= 2.5
-                                  ? "success"
-                                  : healthFactor >= 1.5
-                                    ? "default"
-                                    : healthFactor >= 1.2
-                                      ? "warning"
-                                      : healthFactor >= 1.0
-                                        ? "warning"
-                                        : "destructive"
-                            }
-                          >
-                            {(() => {
-                              // Ensure we're displaying the actual health factor value, not other values
-                              if (
-                                healthFactor > 0 &&
-                                !isNaN(healthFactor) &&
-                                selectedCollaterals.length > 0 &&
-                                numericAmount > 0
-                              ) {
-                                // Format health factor with 2 decimal places
-                                // Health factor should be in range 0-10 typically
-                                // Ensure health factor is a reasonable number (not thousands)
-                                let hfValue = healthFactor;
-
-                                // If health factor is unreasonably large (likely a calculation error), cap it
-                                if (hfValue > 10) {
-                                  hfValue = 10;
-                                }
-
-                                const hfDisplay = parseFloat(
-                                  hfValue.toFixed(2),
-                                );
-                                let status: string;
-
-                                if (hfDisplay >= 2.5) {
-                                  status = "Excellent";
-                                } else if (hfDisplay >= 1.5) {
-                                  status = "Good";
-                                } else if (hfDisplay >= 1.2) {
-                                  status = "Warning";
-                                } else if (hfDisplay >= 1.0) {
-                                  status = "Critical";
-                                } else {
-                                  status = "Danger";
-                                }
-
-                                // Return formatted health factor (e.g., "2.50 ~ Excellent", "1.50 ~ Good")
-                                return `${hfDisplay.toFixed(2)} ~ ${status}`;
-                              }
-                              return "0.00 ~ Safe";
-                            })()}
-                          </Badge>
+                          {(() => {
+                            const displayHF = healthFactor > 0 ? healthFactor : userHealthFactor;
+                            const hasInput = numericAmount > 0 && selectedCollaterals.length > 0;
+                            const effectiveHF = hasInput ? healthFactor : displayHF;
+                            const { value, status, variant } = effectiveHF > 0
+                              ? getHealthFactorDisplayStatus(effectiveHF)
+                              : { value: "0.00", status: "Safe", variant: "default" as const };
+                            return (
+                              <Badge variant={variant}>
+                                {`${value} ~ ${status}`}
+                              </Badge>
+                            );
+                          })()}
                         </Label>
                         <div className="border border-white/5 rounded-lg mt-2">
                           <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                            <HealthFactor
-                              targetValue={healthFactorPercentage}
-                              healthFactor={
-                                healthFactor > 0 && !isNaN(healthFactor)
-                                  ? healthFactor
-                                  : undefined
-                              }
-                            />
+                            {(() => {
+                              const displayHF = healthFactor > 0 ? healthFactor : userHealthFactor;
+                              const displayPercentage = healthFactorPercentage > 0 ? healthFactorPercentage : (displayHF > 0 ? getHealthFactorPercentage(displayHF) : 0);
+                              return (
+                                <HealthFactor
+                                  targetValue={displayPercentage}
+                                  healthFactor={
+                                    displayHF > 0 && !isNaN(displayHF)
+                                      ? displayHF
+                                      : undefined
+                                  }
+                                />
+                              );
+                            })()}
                           </div>
                           <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                             <p className="text-xs text-muted-foreground text-center">
@@ -758,11 +722,19 @@ export function CentuariBorrowDialog({
                       <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
                         <Info size={16} />
                       </CentuariTooltip>
-                      <Badge variant="success">0.0 ~ Safe</Badge>
+                      {(() => {
+                        const { value, status, variant } = userHealthFactor > 0
+                          ? getHealthFactorDisplayStatus(userHealthFactor)
+                          : { value: "0.00", status: "Safe", variant: "default" as const };
+                        return <Badge variant={variant}>{`${value} ~ ${status}`}</Badge>;
+                      })()}
                     </Label>
                     <div className="border border-white/5 rounded-lg mt-2">
                       <div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
-                        <HealthFactor />
+                        <HealthFactor
+                          targetValue={userHealthFactor > 0 ? getHealthFactorPercentage(userHealthFactor) : 0}
+                          healthFactor={userHealthFactor > 0 ? userHealthFactor : undefined}
+                        />
                       </div>
                       <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                         <p className="text-xs text-muted-foreground">
