@@ -675,14 +675,14 @@ export interface WithdrawLendPositionResponse {
 }
 
 export function withdrawLendPosition(
-	marketId: string,
+	positionId: string,
 	token: string,
 ): Promise<WithdrawLendPositionResponse> {
 	return apiClient<WithdrawLendPositionResponse>(
 		"/portfolio/withdraw-lend-position",
 		{
 			method: "POST",
-			body: { marketId },
+			body: { positionId },
 			token,
 		},
 	);

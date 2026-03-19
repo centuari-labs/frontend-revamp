@@ -192,7 +192,6 @@ export function DataTableAllPosition({
               ) : (
                 <CentuariSellPositionDialog
                   positionId={position.id}
-                  marketId={position.id}
                   token_image={position.assetImg}
                   token_name={position.assetName}
                   token_symbol={position.assetName}

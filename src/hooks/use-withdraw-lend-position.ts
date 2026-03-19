@@ -9,10 +9,10 @@ export function useWithdrawLendPosition() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (marketId: string) => {
+    mutationFn: async (positionId: string) => {
       const token = await getToken();
       if (!token) throw new Error("Authentication required");
-      return withdrawLendPosition(marketId, token);
+      return withdrawLendPosition(positionId, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-positions"] });

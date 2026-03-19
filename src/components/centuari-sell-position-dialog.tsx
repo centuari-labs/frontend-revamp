@@ -38,7 +38,6 @@ export type WithdrawSuccessMessage = { title: string; description: string };
 
 interface CentuariSellPositionDialogProps {
   positionId: string;
-  marketId?: string;
   token_image: string;
   token_name: string;
   token_symbol: string;
@@ -55,7 +54,6 @@ interface CentuariSellPositionDialogProps {
 
 export function CentuariSellPositionDialog({
   positionId,
-  marketId,
   token_image,
   token_name,
   token_symbol,
@@ -173,14 +171,14 @@ export function CentuariSellPositionDialog({
     if (numericAmount <= 0) return;
     if (numericAmount > availableFunds) return;
 
-    if (!marketId) {
-      toast.error("Market ID is missing. Cannot withdraw.");
+    if (!positionId) {
+      toast.error("Position ID is missing. Cannot withdraw.");
       return;
     }
 
     try {
       await getAccessToken();
-      await withdraw(marketId);
+      await withdraw(positionId);
 
       if (onWithdrawComplete) {
         onWithdrawComplete({
