@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { CentuariTable } from "@/components/centuari-table";
 import { useOpenOrders } from "@/hooks/use-open-orders";
 import { useMyPositions } from "@/hooks/use-my-positions";
-import { useOrderHistory } from "@/hooks/use-order-history";
 import { useTransactionHistory } from "@/hooks/use-transaction-history";
 import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
@@ -44,7 +43,14 @@ import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
 import { CentuariTypography } from "../centuari-typography";
-import type { LendPosition, BorrowPosition, Position, OrderType } from "@/types/positions";
+import type { LendPosition, BorrowPosition, Position, OrderType, PositionStatus } from "@/types/positions";
+
+const STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  FILLED: "Filled",
+  CANCELLED: "Cancelled",
+  PARTIALLY_FILLED: "Partially Filled",
+};
 
 function PositionCard({
   position,
@@ -58,10 +64,10 @@ function PositionCard({
   hideEdit?: boolean;
 }) {
   const statusColors = {
-    pending: "bg-yellow-500",
-    processing: "bg-blue-500",
-    success: "bg-green-500",
-    failed: "bg-red-500",
+    OPEN: "bg-blue-500",
+    FILLED: "bg-green-500",
+    CANCELLED: "bg-red-500",
+    PARTIALLY_FILLED: "bg-yellow-500",
   };
 
   const handleDelete = () => {
@@ -195,15 +201,15 @@ function LendPositionTable({
       cell: ({ row }) => {
         const status = row.original.status;
         const statusColors = {
-          pending: "bg-yellow-500",
-          processing: "bg-blue-500",
-          success: "bg-green-500",
-          failed: "bg-red-500",
+          OPEN: "bg-blue-500",
+          FILLED: "bg-green-500",
+          CANCELLED: "bg-red-500",
+          PARTIALLY_FILLED: "bg-yellow-500",
         };
         return (
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-            <span className="capitalize">{status}</span>
+            <span>{STATUS_LABELS[status] ?? status}</span>
           </div>
         );
       },
@@ -373,139 +379,165 @@ function CancelOrderDialog({
   );
 }
 
-// Unified Position Table Component for Open Orders
+// Unified Position Table Component
 function UnifiedPositionTable({
   positions,
   onDelete,
   onUpdate,
   hideEdit = false,
-  hideStatus = false,
   hideActions = false,
+  emptyMessage = "No results.",
+  activeTab = "open_orders",
 }: {
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
   hideEdit?: boolean;
-  hideStatus?: boolean;
   hideActions?: boolean;
+  emptyMessage?: string;
+  activeTab?: string;
 }) {
-  const columns: ColumnDef<Position>[] = useMemo(() => [
-    {
-      accessorKey: "tokenSymbol",
-      header: "Loan Token",
-      cell: ({ row }) => {
-        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
-        return (
-          <div className="flex items-center gap-2">
-            <Image
-              src={logoPath}
-              alt={row.original.tokenSymbol}
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span>{row.original.tokenSymbol}</span>
-          </div>
-        );
-      },
+  // Shared column definitions
+  const colDate = {
+    accessorKey: "createdAt" as const,
+    header: "Date",
+    cell: ({ row }: { row: { original: Position } }) => row.original.createdAt || "-",
+  };
+  const colToken = {
+    accessorKey: "tokenSymbol" as const,
+    header: "Loan Token",
+    cell: ({ row }: { row: { original: Position } }) => {
+      const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
+      return (
+        <div className="flex items-center gap-2">
+          <Image src={logoPath} alt={row.original.tokenSymbol} width={24} height={24} className="rounded-full" />
+          <span>{row.original.tokenSymbol}</span>
+        </div>
+      );
     },
-    {
-      accessorKey: "type",
-      header: "Side",
-      cell: ({ row }) => {
-        const type = row.original.type;
-        return <CentuariBadge variant={type === "lend" ? "primary" : "warning"} className="capitalize">{type === "lend" ? "Lend" : "Borrow"}</CentuariBadge>;
-      },
+  };
+  const colSide = {
+    accessorKey: "type" as const,
+    header: "Side",
+    cell: ({ row }: { row: { original: Position } }) => {
+      const type = row.original.type;
+      return <CentuariBadge variant={type === "lend" ? "primary" : "warning"} className="capitalize">{type === "lend" ? "Lend" : "Borrow"}</CentuariBadge>;
     },
-    {
-      accessorKey: "orderType",
-      header: "Order Type",
-      cell: ({ row }) => (
-        <span className="capitalize">{row.original.orderType ?? "-"}</span>
-      ),
+  };
+  const colOrderType = {
+    accessorKey: "orderType" as const,
+    header: "Order Type",
+    cell: ({ row }: { row: { original: Position } }) => (
+      <span className="capitalize">{row.original.orderType ?? "-"}</span>
+    ),
+  };
+  const colAmount = {
+    accessorKey: "amount" as const,
+    header: "Amount",
+    cell: ({ row }: { row: { original: Position } }) => `${formatCurrency(row.original.amount, 2)} ${row.original.tokenSymbol}`,
+  };
+  const colFilledAmount = {
+    accessorKey: "filledQuantity" as const,
+    header: "Filled Amount",
+    cell: ({ row }: { row: { original: Position } }) => {
+      if (!row.original.filledQuantity) return "-";
+      return `${formatCurrency(row.original.filledQuantity, 2)} ${row.original.tokenSymbol}`;
     },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => formatCurrency(row.original.amount, 2),
+  };
+  const colFee = {
+    accessorKey: "fee" as const,
+    header: "Fee",
+    cell: ({ row }: { row: { original: Position } }) => {
+      if (!row.original.fee) return "-";
+      return `${formatCurrency(row.original.fee, 2)} ${row.original.tokenSymbol}`;
     },
-    {
-      accessorKey: "filledQuantity",
-      header: "Filled Amount",
-      cell: ({ row }) => {
-        if (!row.original.filledQuantity) return "-";
-        return formatCurrency(row.original.filledQuantity, 2);
-      },
+  };
+  const colTargetApr = {
+    accessorKey: "apr" as const,
+    header: "Target APR %",
+    cell: ({ row }: { row: { original: Position } }) => {
+      if (row.original.orderType === "market") return "-";
+      const aprValue = row.original.apr ?? 0;
+      const aprPercent = (aprValue * 100).toFixed(1);
+      return aprPercent.replace(".", ",") + "%";
     },
-    {
-      accessorKey: "apr",
-      header: "Target APR %",
-      cell: ({ row }) => {
-        const aprValue = row.original.apr ?? 0;
-        const aprPercent = (aprValue * 100).toFixed(1);
-        return aprPercent.replace(".", ",") + "%";
-      },
+  };
+  const colApr = {
+    id: "aprPercent" as const,
+    header: "APR %",
+    cell: ({ row }: { row: { original: Position } }) => {
+      const aprValue = row.original.apr ?? 0;
+      const aprPercent = (aprValue * 100).toFixed(1);
+      return aprPercent.replace(".", ",") + "%";
     },
-    {
-      accessorKey: "maturity",
-      header: "Maturity",
-      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
+  };
+  const colMaturity = {
+    accessorKey: "maturity" as const,
+    header: "Maturity",
+    cell: ({ row }: { row: { original: Position } }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
+  };
+  const colStatus = {
+    id: "status" as const,
+    header: "Status",
+    cell: ({ row }: { row: { original: Position } }) => {
+      const status = row.original.status;
+      const statusColors: Record<string, string> = {
+        OPEN: "bg-blue-500",
+        FILLED: "bg-green-500",
+        CANCELLED: "bg-red-500",
+        PARTIALLY_FILLED: "bg-yellow-500",
+      };
+      return (
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
+          <span>{STATUS_LABELS[status] ?? status}</span>
+        </div>
+      );
     },
-    // {
-    //   accessorKey: "createdAt",
-    //   header: "Created at",
-    //   cell: ({ row }) => row.original.createdAt,
-    // },
-    ...(!hideStatus ? [{
-      accessorKey: "status" as const,
-      header: "Status",
-      cell: ({ row }: { row: { original: Position } }) => {
-        const status = row.original.status;
-        const statusColors: Record<string, string> = {
-          pending: "bg-yellow-500",
-          processing: "bg-blue-500",
-          success: "bg-green-500",
-          failed: "bg-red-500",
-        };
-        return (
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-            <span className="capitalize">{status}</span>
-          </div>
-        );
-      },
-    }] : []),
-    ...(!hideActions ? [{
-      id: "actions" as const,
-      header: "Actions",
-      cell: ({ row }: { row: { original: Position } }) => {
-        return (
-          <div className="flex items-center gap-2">
-            {!hideEdit && (
-              <AmendDialog
-                position={row.original}
-                tokenList={MARKET_TOKEN_LIST}
-                onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
-                trigger={
-                  <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                    <Edit2 size={14} className="text-white" />
-                  </button>
-                }
-              />
-            )}
-            <CancelOrderDialog
-              onConfirm={() => onDelete(row.original.id)}
+  };
+  const colActions = {
+    id: "actions" as const,
+    header: "Actions",
+    cell: ({ row }: { row: { original: Position } }) => {
+      return (
+        <div className="flex items-center gap-2">
+          {!hideEdit && (
+            <AmendDialog
+              position={row.original}
+              tokenList={MARKET_TOKEN_LIST}
+              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
               trigger={
-                <div className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Trash2 size={14} className="text-red-400" />
-                </div>
+                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                  <Edit2 size={14} className="text-white" />
+                </button>
               }
             />
-          </div>
-        );
-      },
-    }] : []),
-  ], [onDelete, onUpdate, hideEdit, hideStatus, hideActions]);
+          )}
+          <CancelOrderDialog
+            onConfirm={() => onDelete(row.original.id)}
+            trigger={
+              <div className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                <Trash2 size={14} className="text-red-400" />
+              </div>
+            }
+          />
+        </div>
+      );
+    },
+  };
+
+  const columns: ColumnDef<Position>[] = useMemo(() => {
+    // Open Orders: Date, Loan Token, Side, Order Type, Amount, Target APR (market="-"), Maturity, Status
+    if (activeTab === "open_orders") {
+      return [colDate, colToken, colSide, colOrderType, colAmount, colTargetApr, colMaturity, colStatus, ...(!hideActions ? [colActions] : [])];
+    }
+    // Active Position: Loan Token, Side, Amount, APR, Maturity
+    if (activeTab === "active_position") {
+      return [colToken, colSide, colAmount, colApr, colMaturity];
+    }
+    // Transaction History: Date, Loan Token, Side, Amount, Fee, APR%, Maturity
+    return [colDate, colToken, colSide, colAmount, colFee, colApr, colMaturity];
+  }, [activeTab, hideActions, onDelete, onUpdate, hideEdit]);
 
   const table = useReactTable({
     data: positions,
@@ -564,7 +596,7 @@ function UnifiedPositionTable({
                 colSpan={columns.length}
                 className="h-24 text-center"
               >
-                No results.
+                {emptyMessage}
               </TableCell>
             </TableRow>
           )}
@@ -662,15 +694,15 @@ function BorrowPositionTable({
       cell: ({ row }) => {
         const status = row.original.status;
         const statusColors = {
-          pending: "bg-yellow-500",
-          processing: "bg-blue-500",
-          success: "bg-green-500",
-          failed: "bg-red-500",
+          OPEN: "bg-blue-500",
+          FILLED: "bg-green-500",
+          CANCELLED: "bg-red-500",
+          PARTIALLY_FILLED: "bg-yellow-500",
         };
         return (
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-            <span className="capitalize">{status}</span>
+            <span>{STATUS_LABELS[status] ?? status}</span>
           </div>
         );
       },
@@ -775,12 +807,10 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const [activeTab, setActiveTab] = useState("open_orders");
   const [openOrdersPage, setOpenOrdersPage] = useState(1);
   const [positionsPage, setPositionsPage] = useState(1);
-  const [orderHistoryPage, setOrderHistoryPage] = useState(1);
   const [txHistoryPage, setTxHistoryPage] = useState(1);
 
   const { orders: openOrders, totalPages: openOrdersTotalPages, totalData: openOrdersTotal, isLoading: openOrdersLoading } = useOpenOrders({ page: openOrdersPage, limit: 10, assetId, enabled: activeTab === "open_orders" });
   const { positions: activePositions, totalPages: positionsTotalPages, totalData: positionsTotal, isLoading: positionsLoading } = useMyPositions({ page: positionsPage, limit: 10, assetId, enabled: activeTab === "active_position" });
-  const { transactions: ohTransactions, totalPages: ohTotalPages, total: ohTotal, isLoading: ohLoading } = useOrderHistory({ page: orderHistoryPage, limit: 10, assetId, enabled: activeTab === "order_history" });
   const { transactions, totalPages: txTotalPages, total: txTotal, isLoading: txLoading } = useTransactionHistory({ page: txHistoryPage, limit: 10, assetId, enabled: activeTab === "all_transactions" });
 
   const { update } = useUpdateOpenOrder();
@@ -789,7 +819,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const tabConfig = {
     open_orders: { label: "Open Orders", placeholder: "Search Open Orders" },
     active_position: { label: "Active Position", placeholder: "Search Active Position" },
-    order_history: { label: "Order History", placeholder: "Search Order History" },
     all_transactions: { label: "All Transaction", placeholder: "Search Transactions" },
   } as const;
 
@@ -815,7 +844,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       tokenValue: o.asset.symbol.toLowerCase(),
       tokenSymbol: o.asset.symbol,
       maturity: new Date(o.maturity).getTime(),
-      status: o.status === "OPEN" ? "pending" as const : "processing" as const,
+      status: o.status as PositionStatus,
       createdAt: new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
       orderType: o.orderType?.toLowerCase() as OrderType | undefined,
@@ -835,31 +864,11 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       tokenValue: p.symbol.toLowerCase(),
       tokenSymbol: p.symbol,
       maturity: (p.maturity ?? 0) * 1000,
-      status: "success" as const,
+      status: "FILLED" as const,
       createdAt: "",
       timestamp: Date.now(),
       ...(p.side === "BORROW" ? { collateralTokens: [] } : {}),
     })) as Position[], [activePositions]);
-
-  // Map order history API data to Position type
-  const ohPositions: Position[] = useMemo(() =>
-    ohTransactions.map((t) => ({
-      id: t.id,
-      assetImg: t.asset.imageUrl ?? "",
-      assetName: t.asset.name,
-      amount: Number(t.amount),
-      apr: t.rate / 100,
-      type: t.side.toLowerCase() as "lend" | "borrow",
-      tokenValue: t.asset.symbol.toLowerCase(),
-      tokenSymbol: t.asset.symbol,
-      maturity: new Date(t.maturity).getTime(),
-      status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "failed" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
-      createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-      timestamp: Date.now(),
-      orderType: t.orderType?.toLowerCase() as OrderType | undefined,
-      filledQuantity: t.filledQuantity ? Number(t.filledQuantity) : undefined,
-      ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
-    })) as Position[], [ohTransactions]);
 
   // Map transaction history API data to Position type (from matches table — always settled)
   const txPositions: Position[] = useMemo(() =>
@@ -873,18 +882,18 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       tokenValue: t.asset.symbol.toLowerCase(),
       tokenSymbol: t.asset.symbol,
       maturity: new Date(t.maturity).getTime(),
-      status: "success" as const,
+      status: "FILLED" as const,
       createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
+      fee: t.fee ? Number(t.fee) : undefined,
       ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
     })) as Position[], [transactions]);
 
   const tabPositions = useMemo(() => {
     if (activeTab === "open_orders") return openOrderPositions;
     if (activeTab === "active_position") return activePositionsMapped;
-    if (activeTab === "order_history") return ohPositions;
     return txPositions;
-  }, [activeTab, openOrderPositions, activePositionsMapped, ohPositions, txPositions]);
+  }, [activeTab, openOrderPositions, activePositionsMapped, txPositions]);
 
   const filteredPositions = useMemo(() => {
     if (!searchQuery) return tabPositions;
@@ -897,11 +906,11 @@ export function PositionSection({ assetId }: { assetId?: string }) {
     );
   }, [tabPositions, searchQuery]);
 
-  const currentPage = activeTab === "open_orders" ? openOrdersPage : activeTab === "active_position" ? positionsPage : activeTab === "order_history" ? orderHistoryPage : txHistoryPage;
-  const currentTotalPages = activeTab === "open_orders" ? openOrdersTotalPages : activeTab === "active_position" ? positionsTotalPages : activeTab === "order_history" ? ohTotalPages : txTotalPages;
-  const currentTotal = activeTab === "open_orders" ? openOrdersTotal : activeTab === "active_position" ? positionsTotal : activeTab === "order_history" ? ohTotal : txTotal;
-  const currentLoading = activeTab === "open_orders" ? openOrdersLoading : activeTab === "active_position" ? positionsLoading : activeTab === "order_history" ? ohLoading : txLoading;
-  const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : activeTab === "order_history" ? setOrderHistoryPage : setTxHistoryPage;
+  const currentPage = activeTab === "open_orders" ? openOrdersPage : activeTab === "active_position" ? positionsPage : txHistoryPage;
+  const currentTotalPages = activeTab === "open_orders" ? openOrdersTotalPages : activeTab === "active_position" ? positionsTotalPages : txTotalPages;
+  const currentTotal = activeTab === "open_orders" ? openOrdersTotal : activeTab === "active_position" ? positionsTotal : txTotal;
+  const currentLoading = activeTab === "open_orders" ? openOrdersLoading : activeTab === "active_position" ? positionsLoading : txLoading;
+  const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : setTxHistoryPage;
 
   return (
     <div className="mt-2 bg-white/5 rounded-md md:p-4">
@@ -923,7 +932,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
               />
             </div>
 
-            <TabsList className="bg-white/5 w-full grid grid-cols-4 mb-3">
+            <TabsList className="bg-white/5 w-full grid grid-cols-3 mb-3">
               <TabsTrigger
                 value="open_orders"
                 className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
@@ -935,12 +944,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
                 Positions
-              </TabsTrigger>
-              <TabsTrigger
-                value="order_history"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                Order History
               </TabsTrigger>
               <TabsTrigger
                 value="all_transactions"
@@ -972,18 +975,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
             ) : (
               <div className="px-4 py-8 text-center text-muted-foreground">
                 No active positions found
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="order_history" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No order history found
               </div>
             )}
           </TabsContent>
@@ -1031,12 +1022,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   Active Position
                 </TabsTrigger>
                 <TabsTrigger
-                  value="order_history"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  Order History
-                </TabsTrigger>
-                <TabsTrigger
                   value="all_transactions"
                   className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
                 >
@@ -1047,7 +1032,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
           </div>
 
 
-          {["open_orders", "active_position", "order_history", "all_transactions"].map((tab) => (
+          {["open_orders", "active_position", "all_transactions"].map((tab) => (
             <TabsContent key={tab} value={tab}>
               {currentLoading && filteredPositions.length === 0 ? (
                 <div className="space-y-3 py-4">
@@ -1059,19 +1044,16 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                     </div>
                   ))}
                 </div>
-              ) : filteredPositions.length > 0 ? (
+              ) : (
                 <UnifiedPositionTable
                   positions={filteredPositions}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
                   hideEdit
-                  hideStatus={tab === "active_position"}
-                  hideActions={tab === "active_position"}
+                  hideActions={tab === "active_position" || tab === "all_transactions"}
+                  activeTab={tab}
+                  emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
                 />
-              ) : (
-                <div className="py-8 text-center text-muted-foreground">
-                  {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : tab === "order_history" ? "No order history found" : "No transactions found"}
-                </div>
               )}
             </TabsContent>
           ))}

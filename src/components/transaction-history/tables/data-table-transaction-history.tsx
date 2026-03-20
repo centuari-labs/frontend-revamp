@@ -33,20 +33,8 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
 		},
 	},
 	{
-		accessorKey: "side",
-		header: "Type",
-		cell: ({ row }) => (
-			<CentuariBadge
-				variant={row.original.side === "LEND" ? "primary" : "warning"}
-				className="capitalize"
-			>
-				{row.original.side === "LEND" ? "Lend" : "Borrow"}
-			</CentuariBadge>
-		),
-	},
-	{
 		id: "token",
-		header: "Token",
+		header: "Loan Token",
 		cell: ({ row }) => (
 			<div className="flex items-center gap-2">
 				{row.original.asset.imageUrl && (
@@ -60,6 +48,18 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
 				)}
 				<span>{row.original.asset.symbol}</span>
 			</div>
+		),
+	},
+	{
+		accessorKey: "side",
+		header: "Side",
+		cell: ({ row }) => (
+			<CentuariBadge
+				variant={row.original.side === "LEND" ? "primary" : "warning"}
+				className="capitalize"
+			>
+				{row.original.side === "LEND" ? "Lend" : "Borrow"}
+			</CentuariBadge>
 		),
 	},
 	{
@@ -91,8 +91,18 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
 	},
 	{
 		accessorKey: "rate",
-		header: "APR",
+		header: "APR %",
 		cell: ({ row }) => `${row.original.rate}%`,
+	},
+	{
+		accessorKey: "maturity",
+		header: "Maturity",
+		cell: ({ row }) => {
+			if (!row.original.maturity) return "-";
+			const date = new Date(row.original.maturity);
+			if (Number.isNaN(date.getTime())) return "-";
+			return format(date, "MMM d, yyyy");
+		},
 	},
 ];
 

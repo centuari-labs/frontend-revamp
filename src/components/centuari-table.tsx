@@ -48,7 +48,7 @@ const data: PositionProps[] = [
     healthFactor: "0.0 ~ Safe",
     maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
-    status: "pending",
+    status: "OPEN",
   },
   {
     id: "3u1reuv4",
@@ -61,7 +61,7 @@ const data: PositionProps[] = [
     maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
     healthFactor: "0.0 ~ Safe",
-    status: "pending",
+    status: "OPEN",
   },
   {
     id: "derv1ws0",
@@ -74,7 +74,7 @@ const data: PositionProps[] = [
     maturity: new Date(2024, 8, 22).getTime(),
     createdAt: "22 Jun 2024",
     healthFactor: "0.0 ~ Safe",
-    status: "pending",
+    status: "OPEN",
   },
   {
     id: "5kma53ae",
@@ -87,7 +87,7 @@ const data: PositionProps[] = [
     maturity: new Date(2024, 8, 22).getTime(),
     healthFactor: "0.0 ~ Safe",
     createdAt: "22 Jun 2024",
-    status: "pending",
+    status: "OPEN",
   },
   {
     id: "bhqecj4p",
@@ -100,7 +100,7 @@ const data: PositionProps[] = [
     maturity: new Date(2024, 8, 22).getTime(),
     healthFactor: "0.0 ~ Safe",
     createdAt: "22 Jun 2024",
-    status: "pending",
+    status: "OPEN",
   },
 ];
 
@@ -115,7 +115,7 @@ export type PositionProps = {
   maturity?: number;
   createdAt?: string;
   healthFactor?: string;
-  status: "pending" | "processing" | "success" | "failed";
+  status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
 };
 
 const tokenList = [
@@ -140,7 +140,7 @@ type PositionForDialog =
     tokenValue: string;
     tokenSymbol: string;
     maturity: number;
-    status: "pending" | "processing" | "success" | "failed";
+    status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
     createdAt: string;
     timestamp: number;
     orderType?: "limit" | "market";
@@ -155,7 +155,7 @@ type PositionForDialog =
     tokenValue: string;
     tokenSymbol: string;
     maturity: number;
-    status: "pending" | "processing" | "success" | "failed";
+    status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
     createdAt: string;
     timestamp: number;
     orderType?: "limit" | "market";

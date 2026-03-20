@@ -31,10 +31,10 @@ const statusDotColors: Record<OrderHistoryItem["status"], string> = {
 };
 
 const statusLabels: Record<OrderHistoryItem["status"], string> = {
-	OPEN: "open",
-	CANCELLED: "cancelled",
-	PARTIALLY_FILLED: "partially filled",
-	FILLED: "filled",
+	OPEN: "Open",
+	CANCELLED: "Cancelled",
+	PARTIALLY_FILLED: "Partially Filled",
+	FILLED: "Filled",
 };
 
 const columns: ColumnDef<OrderHistoryItem>[] = [
@@ -47,8 +47,26 @@ const columns: ColumnDef<OrderHistoryItem>[] = [
 		},
 	},
 	{
+		id: "token",
+		header: "Loan Token",
+		cell: ({ row }) => (
+			<div className="flex items-center gap-2">
+				{row.original.asset.imageUrl && (
+					<Image
+						src={row.original.asset.imageUrl}
+						alt={row.original.asset.symbol}
+						width={24}
+						height={24}
+						className="rounded-full"
+					/>
+				)}
+				<span>{row.original.asset.symbol}</span>
+			</div>
+		),
+	},
+	{
 		accessorKey: "side",
-		header: "Type",
+		header: "Side",
 		cell: ({ row }) => (
 			<CentuariBadge
 				variant={row.original.side === "LEND" ? "primary" : "warning"}
@@ -65,24 +83,6 @@ const columns: ColumnDef<OrderHistoryItem>[] = [
 			<span className="capitalize">
 				{row.original.orderType?.toLowerCase() ?? "-"}
 			</span>
-		),
-	},
-	{
-		id: "token",
-		header: "Token",
-		cell: ({ row }) => (
-			<div className="flex items-center gap-2">
-				{row.original.asset.imageUrl && (
-					<Image
-						src={row.original.asset.imageUrl}
-						alt={row.original.asset.symbol}
-						width={24}
-						height={24}
-						className="rounded-full"
-					/>
-				)}
-				<span>{row.original.asset.symbol}</span>
-			</div>
 		),
 	},
 	{
@@ -129,8 +129,21 @@ const columns: ColumnDef<OrderHistoryItem>[] = [
 	},
 	{
 		accessorKey: "rate",
-		header: "APR",
-		cell: ({ row }) => `${row.original.rate}%`,
+		header: "Target APR %",
+		cell: ({ row }) => {
+			if (row.original.orderType === "MARKET") return "-";
+			return `${row.original.rate}%`;
+		},
+	},
+	{
+		accessorKey: "maturity",
+		header: "Maturity",
+		cell: ({ row }) => {
+			if (!row.original.maturity) return "-";
+			const date = new Date(row.original.maturity);
+			if (Number.isNaN(date.getTime())) return "-";
+			return format(date, "MMM d, yyyy");
+		},
 	},
 	{
 		accessorKey: "status",
