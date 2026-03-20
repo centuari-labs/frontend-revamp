@@ -15,7 +15,8 @@ import {
 import { useCallback, useEffect, useId, useState } from "react";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { updateAccountName } from "@/lib/api";
-import { useDisconnect, useBalance, useConnection } from "wagmi";
+import { useDisconnect, useBalance } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { CentuariButton } from "./centuari-button";
@@ -65,7 +66,7 @@ export function CentuariUserMenu() {
   const { user, logout, getAccessToken } = usePrivy();
   const { disconnect } = useDisconnect();
   const { wallets } = useWallets();
-  const { address: wagmiAddress } = useConnection();
+  const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"main" | "edit-username">("main");
@@ -74,11 +75,13 @@ export function CentuariUserMenu() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Derive wallet address: prefer external wallet, fallback to embedded
-  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
+  // Use Privy's user wallet address as source of truth — this is the wallet
+  // the user authenticated with (SIWE for external, embedded for social login).
+  // Fallback to first available wallet from useWallets() if user.wallet is not set.
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
+  const firstWallet = wallets[0];
   const walletAddress =
-    externalWallet?.address ?? embeddedWallet?.address ?? wagmiAddress ?? "";
+    user?.wallet?.address ?? embeddedWallet?.address ?? firstWallet?.address ?? "";
 
   const { data: balanceData } = useBalance({
     address: walletAddress as `0x${string}` | undefined,
@@ -133,8 +136,9 @@ export function CentuariUserMenu() {
     setOpen(false);
     logout();
     disconnect();
+    queryClient.clear();
     localStorage.removeItem(LS_USERNAME_KEY);
-  }, [logout, disconnect]);
+  }, [logout, disconnect, queryClient]);
 
   const formattedBalance = balanceData
     ? `${Number(formatUnits(balanceData.value, balanceData.decimals)).toFixed(4)} ${balanceData.symbol}`
