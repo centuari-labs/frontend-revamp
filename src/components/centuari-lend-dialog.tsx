@@ -277,9 +277,9 @@ export function CentuariLendDialog({
       setViewMode("lend");
       setAmountToLend("");
       setDisplayAmount("");
-      setShowSuccessDialog(false);
       setSubmitError(null);
       resetDepositForm();
+      // Don't reset showSuccessDialog here — it may have just been set to true
     }
   };
 
@@ -939,7 +939,10 @@ export function CentuariLendDialog({
 
       <TransactionSuccessDialog
         open={showSuccessDialog}
-        onOpenChange={setShowSuccessDialog}
+        onOpenChange={(open) => {
+          setShowSuccessDialog(open);
+          if (!open) setSuccessAmount("");
+        }}
         title="Lend Complete"
         description={
           successAmount
