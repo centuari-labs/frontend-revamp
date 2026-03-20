@@ -11,6 +11,10 @@ export interface BorrowDialogData {
   collateralStatus: Record<string, boolean>;
   collateralTokenList: TokenInfo[];
   userHealthFactor: number;
+  /** Backend HF inputs for consistent projected calculation */
+  apiCollateralUsd: number;
+  apiSettledDebtUsd: number;
+  apiWeightedLtv: number;
   isLoading: boolean;
   isError: boolean;
 }
@@ -47,6 +51,9 @@ export function useBorrowDialogData(): BorrowDialogData {
       collateralStatus,
       collateralTokenList,
       userHealthFactor: Number.isFinite(userDetails?.healthFactor) ? userDetails!.healthFactor : 0,
+      apiCollateralUsd: userDetails?.collateralUsd ?? 0,
+      apiSettledDebtUsd: userDetails?.settledDebtUsd ?? 0,
+      apiWeightedLtv: userDetails?.weightedLtv ?? 0,
       isLoading: assetsLoading,
       isError: assetsError,
     };

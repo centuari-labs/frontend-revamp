@@ -15,6 +15,7 @@ import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
 import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMarketDetail } from "@/hooks/use-market-detail";
+import { useOrderbook } from "@/hooks/use-orderbook";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -36,6 +37,7 @@ export function useBorrowForm({
   assetId: assetIdProp,
 }: UseBorrowFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
+  const { lendOrders } = useOrderbook({ assetId: assetIdProp });
   const { getToken } = useAuthToken();
   const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
   const { selectedToken, setSelectedToken } = useTokenFromList(
@@ -43,7 +45,7 @@ export function useBorrowForm({
     selectedTokenProp,
     "usdt"
   );
-  const { portfolio, totalDebt, collateralStatus, collateralTokenList, userHealthFactor, isLoading: portfolioLoading } = useBorrowPortfolioData();
+  const { portfolio, totalDebt, collateralStatus, collateralTokenList, userHealthFactor, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, isLoading: portfolioLoading } = useBorrowPortfolioData();
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -108,21 +110,28 @@ export function useBorrowForm({
   const marketTradeFee = marketNumericAmount * (TAKER_FEE_BPS / 10000);
   const marketTransactionFee = marketSettlementFee + marketTradeFee;
   const marketAmountToPay = marketNumericAmount + marketTransactionFee;
-  const marketFutureAmount = calculateFutureAmount(marketNumericAmount, 0, marketMaturity);
+  const bestBorrowRate = (lendOrders[0]?.apr ?? 0) * 100;
+  const marketFutureAmount = calculateFutureAmount(marketNumericAmount, bestBorrowRate, marketMaturity);
 
   const limitCalcs = useBorrowCalculations(
     portfolio,
     totalDebt,
     limitNumericAmount,
     limitSelectedCollaterals,
-    collateralTokenList
+    collateralTokenList,
+    apiCollateralUsd,
+    apiSettledDebtUsd,
+    apiWeightedLtv,
   );
   const marketCalcs = useBorrowCalculations(
     portfolio,
     totalDebt,
     marketNumericAmount,
     marketSelectedCollaterals,
-    collateralTokenList
+    collateralTokenList,
+    apiCollateralUsd,
+    apiSettledDebtUsd,
+    apiWeightedLtv,
   );
 
   useEffect(() => {

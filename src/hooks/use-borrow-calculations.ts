@@ -12,41 +12,27 @@ export function useBorrowCalculations(
   totalDebt: number,
   amount: number,
   selectedCollaterals: string[],
-  tokenList: TokenInfo[]
+  tokenList: TokenInfo[],
+  apiCollateralUsd = 0,
+  apiSettledDebtUsd = 0,
+  apiWeightedLtv = 0,
 ) {
-  // Backend formula (health-factor.helpers.ts):
-  // HF = ((collateralUsd - existingDebtUsd) × weightedLTV) / totalDebtUsd
+  // Uses backend values (collateralUsd, settledDebtUsd, weightedLtv) from user-details API
+  // to match backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmount)
   const calculateHealthFactor = useCallback(
     (amt: number, collaterals: string[]): number => {
-      if (amt <= 0 || collaterals.length === 0) return 0;
+      if (amt <= 0 || collaterals.length === 0 || apiCollateralUsd <= 0) return 0;
 
-      const collateralUsd = collaterals.reduce((total, collateralValue) => {
-        const portfolioValue = portfolio[collateralValue] || 0;
-        return total + portfolioValue;
-      }, 0);
+      const projectedDebt = apiSettledDebtUsd + amt;
+      if (projectedDebt <= 0) return 0;
 
-      if (collateralUsd === 0) return 0;
-
-      const weightedLTV =
-        collaterals.reduce((sum, collateralValue) => {
-          const token = tokenList.find(
-            (t) => t.value === collateralValue
-          );
-          const portfolioValue = portfolio[collateralValue] || 0;
-          if (token && portfolioValue > 0) {
-            return sum + token.ltv * portfolioValue;
-          }
-          return sum;
-        }, 0) / collateralUsd;
-
-      const totalDebtUsd = totalDebt + amt;
-      const numerator = (collateralUsd - totalDebt) * weightedLTV;
-      const healthFactor = numerator / totalDebtUsd;
+      const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
+      const healthFactor = numerator / projectedDebt;
 
       if (!Number.isFinite(healthFactor) || healthFactor < 0) return 0;
-      return Math.min(healthFactor, 10);
+      return healthFactor;
     },
-    [portfolio, totalDebt, tokenList]
+    [apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv]
   );
 
   const totalPortfolioValue = useMemo(

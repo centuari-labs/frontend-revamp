@@ -87,6 +87,9 @@ export function CentuariBorrowDialog({
     collateralStatus,
     collateralTokenList,
     userHealthFactor,
+    apiCollateralUsd,
+    apiSettledDebtUsd,
+    apiWeightedLtv,
     isLoading: dataLoading,
   } = useBorrowDialogData();
 
@@ -169,19 +172,20 @@ export function CentuariBorrowDialog({
   // Calculate new total debt after this borrow (current debt + new borrow amount)
   const newTotalDebt = totalDebt + numericAmount;
 
-  // Health Factor — matches backend formula (health-factor.helpers.ts):
-  // HF = ((collateralUsd - existingDebtUsd) × weightedLTV) / totalDebtUsd
+  // Health Factor — uses backend values (collateralUsd, settledDebtUsd, weightedLtv)
+  // to match the backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmount)
   const healthFactor =
-    newTotalDebt > 0 &&
-    totalPortfolioValue > 0 &&
-    !isNaN(weightedLTV) &&
+    numericAmount > 0 &&
+    apiCollateralUsd > 0 &&
     selectedCollaterals.length > 0
       ? (() => {
+          const projectedDebt = apiSettledDebtUsd + numericAmount;
+          if (projectedDebt <= 0) return 0;
           const numerator =
-            (totalPortfolioValue - totalDebt) * weightedLTV;
-          const calculatedHF = numerator / newTotalDebt;
+            (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
+          const calculatedHF = numerator / projectedDebt;
           if (!Number.isFinite(calculatedHF) || calculatedHF < 0) return 0;
-          return Math.min(calculatedHF, 10);
+          return calculatedHF;
         })()
       : 0;
 

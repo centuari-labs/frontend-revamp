@@ -17,8 +17,8 @@ import { useAmountInput } from "@/hooks/use-amount-input";
 import { useTokenFromList } from "@/hooks/use-token-from-list";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMyAssets } from "@/hooks/use-my-assets";
-import { useOpenLendAmounts } from "@/hooks/use-open-lend-amounts";
 import { useMarketDetail } from "@/hooks/use-market-detail";
+import { useOrderbook } from "@/hooks/use-orderbook";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -40,6 +40,7 @@ export function useLendForm({
   assetId: assetIdProp,
 }: UseLendFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
+  const { borrowOrders } = useOrderbook({ assetId: assetIdProp });
   const { getToken } = useAuthToken();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
@@ -49,21 +50,14 @@ export function useLendForm({
   );
 
   const { assets: myAssets } = useMyAssets({ limit: 100 });
-  const { data: openLendAmounts } = useOpenLendAmounts();
 
-  // Portfolio balance for the selected token (from backend)
+  // Portfolio balance for the selected token (already net of locked amounts)
   const portfolioBalance = useMemo(() => {
     const asset = myAssets.find(
       (a) => a.symbol.toLowerCase() === selectedToken.value.toLowerCase(),
     );
     return asset?.walletBalance ?? 0;
   }, [myAssets, selectedToken.value]);
-
-  // Amount locked in open lend orders for the selected token
-  const lockedAmount = useMemo(() => {
-    if (!assetIdProp || !openLendAmounts) return 0;
-    return openLendAmounts.get(assetIdProp) ?? 0;
-  }, [assetIdProp, openLendAmounts]);
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -113,8 +107,8 @@ export function useLendForm({
   }, [myAssets]);
 
   const getAvailableBalance = useCallback((): number => {
-    return Math.max(0, portfolioBalance - lockedAmount);
-  }, [portfolioBalance, lockedAmount]);
+    return portfolioBalance;
+  }, [portfolioBalance]);
 
   useEffect(() => {
     if (!editingPosition) return;
@@ -169,9 +163,10 @@ export function useLendForm({
   const marketTotalFee = marketSettlementFee + marketTradeFee;
   const marketTransactionFee = marketTotalFee;
   const marketAmountToPay = marketNumericAmount + marketTotalFee;
+  const bestLendRate = (borrowOrders[0]?.apr ?? 0) * 100;
   const marketFutureAmount = calculateFutureAmount(
     marketNumericAmount,
-    0,
+    bestLendRate,
     marketMaturity
   );
 

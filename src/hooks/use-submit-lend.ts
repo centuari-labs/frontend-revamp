@@ -35,7 +35,6 @@ export function useSubmitLend() {
 			return await submitLendLimitOrder(params, marketIds, token);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
 			queryClient.invalidateQueries({ queryKey: ["my-assets"] });
 			queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
 			queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
@@ -58,7 +57,6 @@ export function useSubmitLend() {
 			return await submitLendMarketOrder(params, marketIds, token);
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
 			queryClient.invalidateQueries({ queryKey: ["my-assets"] });
 			queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
 			queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });

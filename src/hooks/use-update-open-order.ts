@@ -26,7 +26,6 @@ export function useUpdateOpenOrder() {
       queryClient.invalidateQueries({ queryKey: ["my-positions"] });
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });
       queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({ queryKey: ["open-lend-amounts"] });
     },
   });
 

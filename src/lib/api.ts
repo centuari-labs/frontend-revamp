@@ -421,19 +421,6 @@ export async function createBorrowMarketOrder(
 	return envelope.data;
 }
 
-// ─── Open Order Locked Amounts ───────────────────────────────────────
-
-export interface OpenLendAmount {
-	assetId: string;
-	lockedAmount: string;
-}
-
-export function getOpenLendAmounts(
-	token: string,
-): Promise<OpenLendAmount[]> {
-	return apiClient<OpenLendAmount[]>("/orders/open-amounts", { token });
-}
-
 // ─── Faucet ─────────────────────────────────────────────────────────
 
 export interface FaucetTokenResult {
