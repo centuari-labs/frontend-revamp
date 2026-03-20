@@ -18,6 +18,7 @@ import Image from "next/image";
 import { formatCurrency, getHealthFactorPercentage } from "@/lib/utils";
 import { CollateralListDisplay } from "@/components/collateral-list-display";
 import { CollateralEmptyState } from "@/components/collateral-empty-state";
+import { TransactionSummary } from "@/components/market/transaction-summary";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
@@ -185,6 +186,12 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
+                <TransactionSummary
+                  transactionFee={form.limitTransactionFee}
+                  amountToPay={form.limitAmountToPay}
+                  futureAmount={form.limitFutureAmount}
+                  futureLabel="In the future you'll pay"
+                />
               </ScrollArea>
               <Button
                 type="submit"
@@ -345,6 +352,12 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
+                <TransactionSummary
+                  transactionFee={form.marketTransactionFee}
+                  amountToPay={form.marketAmountToPay}
+                  futureAmount={form.marketFutureAmount}
+                  futureLabel="In the future you'll pay"
+                />
               </ScrollArea>
               <Button
                 type="submit"

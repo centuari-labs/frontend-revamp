@@ -143,27 +143,37 @@ export function useLendForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPosition, tokenList]);
 
+  // Fee constants (must mirror matching engine / backend)
+  const SETTLEMENT_FEE_BPS = 1; // 0.01%
+  const SETTLEMENT_FEE_MAX_USD = 0.05;
+  const MAKER_FEE_BPS = 10; // 0.1%
+  const TAKER_FEE_BPS = 20; // 0.2%
+
   const limitNumericAmount = parseFloat(limitAmountInput.amount) || 0;
-  const limitTransactionFee = Math.min(limitNumericAmount * 0.0001, 0.05);
-  const limitAmountToPay = limitNumericAmount + limitTransactionFee;
+  const limitSettlementFee = Math.min(limitNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
+  const limitTradeFee = limitNumericAmount * (MAKER_FEE_BPS / 10000);
+  const limitTotalFee = limitSettlementFee + limitTradeFee;
+  const limitTransactionFee = limitTotalFee;
+  const limitAmountToPay = limitNumericAmount + limitTotalFee;
   const limitTargetAPRNumeric =
     parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
-  const limitFutureAmount =
-    calculateFutureAmount(
-      limitNumericAmount,
-      limitTargetAPRNumeric,
-      limitMaturity
-    ) - limitTransactionFee;
+  const limitFutureAmount = calculateFutureAmount(
+    limitNumericAmount,
+    limitTargetAPRNumeric,
+    limitMaturity
+  );
 
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
-  const marketTransactionFee = Math.min(marketNumericAmount * 0.0001, 0.05);
-  const marketAmountToPay = marketNumericAmount + marketTransactionFee;
-  const marketFutureAmount =
-    calculateFutureAmount(
-      marketNumericAmount,
-      0,
-      marketMaturity
-    ) - marketTransactionFee;
+  const marketSettlementFee = Math.min(marketNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
+  const marketTradeFee = marketNumericAmount * (TAKER_FEE_BPS / 10000);
+  const marketTotalFee = marketSettlementFee + marketTradeFee;
+  const marketTransactionFee = marketTotalFee;
+  const marketAmountToPay = marketNumericAmount + marketTotalFee;
+  const marketFutureAmount = calculateFutureAmount(
+    marketNumericAmount,
+    0,
+    marketMaturity
+  );
 
   const handleLimitSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -309,6 +319,9 @@ export function useLendForm({
     setLimitTargetAPR,
     handleLimitAmountChange: limitAmountInput.handleChange,
     handleLimitSubmit,
+    limitSettlementFee,
+    limitTradeFee,
+    limitTotalFee,
     limitTransactionFee,
     limitAmountToPay,
     limitFutureAmount,
@@ -318,6 +331,9 @@ export function useLendForm({
     setMarketMaturity,
     handleMarketAmountChange: marketAmountInput.handleChange,
     handleMarketSubmit,
+    marketSettlementFee,
+    marketTradeFee,
+    marketTotalFee,
     marketTransactionFee,
     marketAmountToPay,
     marketFutureAmount,

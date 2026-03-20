@@ -119,10 +119,12 @@ export function CentuariBorrowDialog({
   // Calculate derived values - support decimal amounts like 0.1
   const numericAmount = parseFloat(amountToBorrow) || 0;
 
-  // Transaction fee: 0.01% of amount (supports decimal amounts)
-  const transactionFee = Math.min(numericAmount * 0.0001, 0.05); // 0.01% capped at $0.05
+  // Fee breakdown: settlement fee (0.01% capped $0.05) + trade fee (taker 0.2% for market orders)
+  const settlementFee = Math.min(numericAmount * 0.0001, 0.05);
+  const tradeFee = numericAmount * 0.002; // 0.2% taker fee (market order)
+  const transactionFee = settlementFee + tradeFee;
 
-  // Amount to pay: borrow amount + transaction fee
+  // Amount to pay: borrow amount + total fees
   const amountToPay = numericAmount + transactionFee;
 
   // Maturity date - withdrawal unlocks on the same date
@@ -638,8 +640,7 @@ export function CentuariBorrowDialog({
                             <p>
                               {numericAmount > 0
                                 ? formatCurrency(transactionFee)
-                                : "$0.00"}{" "}
-                              (0.01%)
+                                : "$0.00"}
                             </p>
                           </div>
                         </div>

@@ -234,7 +234,10 @@ export function CentuariLendDialog({
 
   // Calculate derived values
   const numericAmount = parseFloat(amountToLend) || 0;
-  const transactionFee = Math.min(numericAmount * 0.0001, 0.05); // 0.01% capped at $0.05
+  // Fee breakdown: settlement fee (0.01% capped $0.05) + trade fee (taker 0.2% for market orders)
+  const settlementFee = Math.min(numericAmount * 0.0001, 0.05);
+  const tradeFee = numericAmount * 0.002; // 0.2% taker fee (market order)
+  const transactionFee = settlementFee + tradeFee;
   const amountToPay = numericAmount + transactionFee;
 
   // Format vault total with currency

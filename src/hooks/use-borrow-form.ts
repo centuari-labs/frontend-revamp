@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { formatNumberWithSeparator } from "@/lib/utils";
+import { formatNumberWithSeparator, calculateFutureAmount } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
   getAvailableMaturityTimestamps,
@@ -86,8 +86,29 @@ export function useBorrowForm({
   const [successAmount, setSuccessAmount] = useState("");
   const [successTokenSymbol, setSuccessTokenSymbol] = useState("");
 
+  const SETTLEMENT_FEE_BPS = 1;
+  const SETTLEMENT_FEE_MAX_USD = 0.05;
+  const MAKER_FEE_BPS = 10;
+  const TAKER_FEE_BPS = 20;
+
   const limitNumericAmount = parseFloat(limitAmountInput.amount) || 0;
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
+
+  const limitTargetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
+
+  // Limit = maker fee
+  const limitSettlementFee = Math.min(limitNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
+  const limitTradeFee = limitNumericAmount * (MAKER_FEE_BPS / 10000);
+  const limitTransactionFee = limitSettlementFee + limitTradeFee;
+  const limitAmountToPay = limitNumericAmount + limitTransactionFee;
+  const limitFutureAmount = calculateFutureAmount(limitNumericAmount, limitTargetAPRNumeric, limitMaturity);
+
+  // Market = taker fee
+  const marketSettlementFee = Math.min(marketNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
+  const marketTradeFee = marketNumericAmount * (TAKER_FEE_BPS / 10000);
+  const marketTransactionFee = marketSettlementFee + marketTradeFee;
+  const marketAmountToPay = marketNumericAmount + marketTransactionFee;
+  const marketFutureAmount = calculateFutureAmount(marketNumericAmount, 0, marketMaturity);
 
   const limitCalcs = useBorrowCalculations(
     portfolio,
@@ -320,6 +341,9 @@ export function useBorrowForm({
     limitTotalPortfolioValue: limitCalcs.totalPortfolioValue,
     limitAvailableQuota: limitCalcs.availableQuota,
     limitNumericAmount,
+    limitTransactionFee,
+    limitAmountToPay,
+    limitFutureAmount,
     getLiquidationThresholdDisplay: limitCalcs.getLiquidationThresholdDisplay,
     marketAmount: marketAmountInput.amount,
     marketDisplayAmount: marketAmountInput.displayAmount,
@@ -335,6 +359,9 @@ export function useBorrowForm({
     marketTotalPortfolioValue: marketCalcs.totalPortfolioValue,
     marketAvailableQuota: marketCalcs.availableQuota,
     marketNumericAmount,
+    marketTransactionFee,
+    marketAmountToPay,
+    marketFutureAmount,
     userHealthFactor,
     autoRefinance,
     setAutoRefinance,

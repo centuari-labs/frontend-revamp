@@ -8,6 +8,7 @@ interface TransactionSummaryProps {
   futureAmount?: number;
   items?: Array<{ label: string; value: string }>;
   futurePayment?: string;
+  futureLabel?: string;
 }
 
 export function TransactionSummary({
@@ -16,12 +17,13 @@ export function TransactionSummary({
   futureAmount,
   items,
   futurePayment,
+  futureLabel = "In the future you'll get",
 }: TransactionSummaryProps) {
   // Use provided values or fallback to items prop (for backward compatibility)
   const displayItems = items || [
     {
       label: "Transaction Fee",
-      value: transactionFee !== undefined ? `${formatCurrency(transactionFee)} (0.01%)` : "$0.00 (0.01%)",
+      value: transactionFee !== undefined ? formatCurrency(transactionFee) : "$0.00",
     },
     {
       label: "Amount to Pay Now",
@@ -54,7 +56,7 @@ export function TransactionSummary({
       <div className="py-3 px-5 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5 flex flex-col justify-center">
         <div className="flex flex-row items-center justify-between gap-4 min-h-[2rem]">
           <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
-            In the future you'll get{" "}
+            {futureLabel}{" "}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
