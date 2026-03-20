@@ -3,7 +3,7 @@
  * Used by hooks and adapter for lend/borrow operations.
  */
 
-export type PositionStatus = "pending" | "processing" | "success" | "failed" | "cancelled";
+export type PositionStatus = "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
 export type OrderType = "limit" | "market";
 
 export interface LendPosition {
@@ -23,6 +23,7 @@ export interface LendPosition {
   timestamp: number;
   orderType?: OrderType;
   filledQuantity?: number;
+  fee?: number;
 }
 
 export interface BorrowPosition {
@@ -43,6 +44,7 @@ export interface BorrowPosition {
   collateralTokens: string[];
   orderType?: OrderType;
   filledQuantity?: number;
+  fee?: number;
 }
 
 export type Position = LendPosition | BorrowPosition;

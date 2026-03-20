@@ -15,7 +15,7 @@ function mapPositionItem(p: MyPositionItem): Position {
     tokenValue: p.symbol.toLowerCase(),
     tokenSymbol: p.symbol,
     maturity: (p.maturity ?? 0) * 1000,
-    status: "success" as const,
+    status: "FILLED" as const,
     createdAt: "",
     timestamp: Date.now(),
   };

@@ -39,15 +39,9 @@ export function aprToBasisPoints(aprDecimal: number): number {
 
 // ─── Status Mapping ───────────────────────────────────────────────────
 
-const STATUS_MAP: Record<string, PositionStatus> = {
-	OPEN: "pending",
-	PARTIALLY_FILLED: "processing",
-	FILLED: "success",
-	CANCELLED: "failed",
-};
-
 function mapStatus(backendStatus: string): PositionStatus {
-	return STATUS_MAP[backendStatus] ?? "pending";
+	const valid: PositionStatus[] = ["OPEN", "FILLED", "CANCELLED", "PARTIALLY_FILLED"];
+	return (valid.includes(backendStatus as PositionStatus) ? backendStatus : "OPEN") as PositionStatus;
 }
 
 // ─── Response Normalization ───────────────────────────────────────────

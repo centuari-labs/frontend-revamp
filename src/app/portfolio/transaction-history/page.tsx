@@ -41,7 +41,7 @@ export default function TransactionHistoryPage() {
     <PageContainer innerClassName="2xl:min-h-0">
         <TransactionHistoryHeader />
         <div className="bg-white/5 rounded-lg p-4 md:p-6">
-          <Tabs defaultValue="order_history" className="w-full">
+          <Tabs defaultValue="open_orders" className="w-full">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
               <TabsList className="bg-white/5 w-full lg:w-auto justify-start">
                 <TabsTrigger

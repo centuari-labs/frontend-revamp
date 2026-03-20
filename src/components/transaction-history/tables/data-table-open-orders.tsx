@@ -31,6 +31,14 @@ const statusDotColors: Record<string, string> = {
 
 const columns: ColumnDef<OpenOrderItem>[] = [
   {
+    accessorKey: "createdAt",
+    header: "Date",
+    cell: ({ row }) => {
+      const date = new Date(row.original.createdAt);
+      return format(date, "MMM d, yyyy HH:mm:ss");
+    },
+  },
+  {
     id: "token",
     header: "Loan Token",
     cell: ({ row }) => (
@@ -50,7 +58,7 @@ const columns: ColumnDef<OpenOrderItem>[] = [
   },
   {
     accessorKey: "side",
-    header: "Order Type",
+    header: "Side",
     cell: ({ row }) => (
       <CentuariBadge
         variant={row.original.side === "LEND" ? "primary" : "warning"}
@@ -58,6 +66,13 @@ const columns: ColumnDef<OpenOrderItem>[] = [
       >
         {row.original.side === "LEND" ? "Lend" : "Borrow"}
       </CentuariBadge>
+    ),
+  },
+  {
+    accessorKey: "orderType",
+    header: "Order Type",
+    cell: ({ row }) => (
+      <span className="capitalize">{row.original.orderType?.toLowerCase() ?? "-"}</span>
     ),
   },
   {
@@ -75,22 +90,19 @@ const columns: ColumnDef<OpenOrderItem>[] = [
   {
     accessorKey: "rate",
     header: "Target APR %",
-    cell: ({ row }) => `${row.original.rate}%`,
+    cell: ({ row }) => {
+      if (row.original.orderType === "MARKET") return "-";
+      return `${row.original.rate}%`;
+    },
   },
   {
     accessorKey: "maturity",
     header: "Maturity",
     cell: ({ row }) => {
+      if (!row.original.maturity) return "-";
       const date = new Date(row.original.maturity);
+      if (Number.isNaN(date.getTime())) return "-";
       return format(date, "MMM d, yyyy");
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created at",
-    cell: ({ row }) => {
-      const date = new Date(row.original.createdAt);
-      return format(date, "MMM d, yyyy HH:mm:ss");
     },
   },
   {

@@ -80,11 +80,10 @@ const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
   return (
     <div
       ref={scrollRef}
-      style={{ height: 165, overflowY: "auto", overflowX: "hidden" }}
-      className="[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+      className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
     >
       {side === "borrow" ? (
-        <div className="flex flex-col justify-end" style={{ minHeight: 195 }}>
+        <div className="flex flex-col justify-end min-h-full">
           {orders.map((row, i) => (
             <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
           ))}
@@ -150,8 +149,8 @@ const OrderBookContent: React.FC<{
       : 0;
 
   return (
-    <>
-      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm shrink-0">
         <div className="col-span-6 text-white/80 text-start font-semibold pl-2">
           APR
         </div>
@@ -161,10 +160,12 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* BORROW — rows pinned to bottom */}
-      <OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
+      </div>
 
       {/* MID APR */}
-      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
+      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4 shrink-0">
         <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
           <ArrowUp color="#3de57a" size={16} />
           <span>{formatAPR(midApr)}</span>
@@ -175,8 +176,10 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* LEND — rows start from top */}
-      <OrderTable orders={displayLend} side="lend" />
-    </>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <OrderTable orders={displayLend} side="lend" />
+      </div>
+    </div>
   );
 };
 
@@ -263,10 +266,10 @@ export const OrderBookCard: React.FC<{
     return (
       <div
         ref={cardRef}
-        className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]`"
+        className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px] overflow-hidden"
         style={{ height }}
       >
-        <Tabs defaultValue="orderbook" className="w-full">
+        <Tabs defaultValue="orderbook" className="w-full h-full flex flex-col">
           <TabsList className="bg-white/5 w-full shrink-0">
             <TabsTrigger
               value="orderbook"
@@ -282,11 +285,11 @@ export const OrderBookCard: React.FC<{
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="orderbook">
+          <TabsContent value="orderbook" className="flex-1 min-h-0">
             <OrderBookContent borrowOrders={borrowOrders} lendOrders={lendOrders} />
           </TabsContent>
 
-          <TabsContent value="trades">
+          <TabsContent value="trades" className="flex-1 min-h-0">
             <RecentTradesContent trades={trades} cardRef={cardRef} />
           </TabsContent>
         </Tabs>
