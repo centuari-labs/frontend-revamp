@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { CentuariTable } from "@/components/centuari-table";
 import { useOpenOrders } from "@/hooks/use-open-orders";
 import { useMyPositions } from "@/hooks/use-my-positions";
+import { useOrderHistory } from "@/hooks/use-order-history";
 import { useTransactionHistory } from "@/hooks/use-transaction-history";
 import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
@@ -43,7 +44,7 @@ import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
 import { CentuariBadge } from "../centuari-badge";
 import { CentuariTypography } from "../centuari-typography";
-import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
+import type { LendPosition, BorrowPosition, Position, OrderType } from "@/types/positions";
 
 function PositionCard({
   position,
@@ -410,16 +411,31 @@ function UnifiedPositionTable({
     },
     {
       accessorKey: "type",
-      header: "Order Type",
+      header: "Side",
       cell: ({ row }) => {
         const type = row.original.type;
         return <CentuariBadge variant={type === "lend" ? "primary" : "warning"} className="capitalize">{type === "lend" ? "Lend" : "Borrow"}</CentuariBadge>;
       },
     },
     {
+      accessorKey: "orderType",
+      header: "Order Type",
+      cell: ({ row }) => (
+        <span className="capitalize">{row.original.orderType ?? "-"}</span>
+      ),
+    },
+    {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ row }) => formatCurrency(row.original.amount, 2),
+    },
+    {
+      accessorKey: "filledQuantity",
+      header: "Filled Amount",
+      cell: ({ row }) => {
+        if (!row.original.filledQuantity) return "-";
+        return formatCurrency(row.original.filledQuantity, 2);
+      },
     },
     {
       accessorKey: "apr",
@@ -759,10 +775,12 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const [activeTab, setActiveTab] = useState("open_orders");
   const [openOrdersPage, setOpenOrdersPage] = useState(1);
   const [positionsPage, setPositionsPage] = useState(1);
+  const [orderHistoryPage, setOrderHistoryPage] = useState(1);
   const [txHistoryPage, setTxHistoryPage] = useState(1);
 
   const { orders: openOrders, totalPages: openOrdersTotalPages, totalData: openOrdersTotal, isLoading: openOrdersLoading } = useOpenOrders({ page: openOrdersPage, limit: 10, assetId, enabled: activeTab === "open_orders" });
   const { positions: activePositions, totalPages: positionsTotalPages, totalData: positionsTotal, isLoading: positionsLoading } = useMyPositions({ page: positionsPage, limit: 10, assetId, enabled: activeTab === "active_position" });
+  const { transactions: ohTransactions, totalPages: ohTotalPages, total: ohTotal, isLoading: ohLoading } = useOrderHistory({ page: orderHistoryPage, limit: 10, assetId, enabled: activeTab === "order_history" });
   const { transactions, totalPages: txTotalPages, total: txTotal, isLoading: txLoading } = useTransactionHistory({ page: txHistoryPage, limit: 10, assetId, enabled: activeTab === "all_transactions" });
 
   const { update } = useUpdateOpenOrder();
@@ -771,6 +789,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const tabConfig = {
     open_orders: { label: "Open Orders", placeholder: "Search Open Orders" },
     active_position: { label: "Active Position", placeholder: "Search Active Position" },
+    order_history: { label: "Order History", placeholder: "Search Order History" },
     all_transactions: { label: "All Transaction", placeholder: "Search Transactions" },
   } as const;
 
@@ -799,6 +818,8 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       status: o.status === "OPEN" ? "pending" as const : "processing" as const,
       createdAt: new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
+      orderType: o.orderType?.toLowerCase() as OrderType | undefined,
+      filledQuantity: o.filledQuantity ? Number(o.filledQuantity) : undefined,
       ...(o.side === "BORROW" ? { collateralTokens: [] } : {}),
     })) as Position[], [openOrders]);
 
@@ -820,9 +841,9 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       ...(p.side === "BORROW" ? { collateralTokens: [] } : {}),
     })) as Position[], [activePositions]);
 
-  // Map transaction history API data to Position type
-  const txPositions: Position[] = useMemo(() =>
-    transactions.map((t) => ({
+  // Map order history API data to Position type
+  const ohPositions: Position[] = useMemo(() =>
+    ohTransactions.map((t) => ({
       id: t.id,
       assetImg: t.asset.imageUrl ?? "",
       assetName: t.asset.name,
@@ -835,14 +856,35 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "failed" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
       createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
+      orderType: t.orderType?.toLowerCase() as OrderType | undefined,
+      filledQuantity: t.filledQuantity ? Number(t.filledQuantity) : undefined,
+      ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
+    })) as Position[], [ohTransactions]);
+
+  // Map transaction history API data to Position type (from matches table — always settled)
+  const txPositions: Position[] = useMemo(() =>
+    transactions.map((t) => ({
+      id: t.id,
+      assetImg: t.asset.imageUrl ?? "",
+      assetName: t.asset.name,
+      amount: Number(t.amount),
+      apr: t.rate / 100,
+      type: t.side.toLowerCase() as "lend" | "borrow",
+      tokenValue: t.asset.symbol.toLowerCase(),
+      tokenSymbol: t.asset.symbol,
+      maturity: new Date(t.maturity).getTime(),
+      status: "success" as const,
+      createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      timestamp: Date.now(),
       ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
     })) as Position[], [transactions]);
 
   const tabPositions = useMemo(() => {
     if (activeTab === "open_orders") return openOrderPositions;
     if (activeTab === "active_position") return activePositionsMapped;
+    if (activeTab === "order_history") return ohPositions;
     return txPositions;
-  }, [activeTab, openOrderPositions, activePositionsMapped, txPositions]);
+  }, [activeTab, openOrderPositions, activePositionsMapped, ohPositions, txPositions]);
 
   const filteredPositions = useMemo(() => {
     if (!searchQuery) return tabPositions;
@@ -855,11 +897,11 @@ export function PositionSection({ assetId }: { assetId?: string }) {
     );
   }, [tabPositions, searchQuery]);
 
-  const currentPage = activeTab === "open_orders" ? openOrdersPage : activeTab === "active_position" ? positionsPage : txHistoryPage;
-  const currentTotalPages = activeTab === "open_orders" ? openOrdersTotalPages : activeTab === "active_position" ? positionsTotalPages : txTotalPages;
-  const currentTotal = activeTab === "open_orders" ? openOrdersTotal : activeTab === "active_position" ? positionsTotal : txTotal;
-  const currentLoading = activeTab === "open_orders" ? openOrdersLoading : activeTab === "active_position" ? positionsLoading : txLoading;
-  const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : setTxHistoryPage;
+  const currentPage = activeTab === "open_orders" ? openOrdersPage : activeTab === "active_position" ? positionsPage : activeTab === "order_history" ? orderHistoryPage : txHistoryPage;
+  const currentTotalPages = activeTab === "open_orders" ? openOrdersTotalPages : activeTab === "active_position" ? positionsTotalPages : activeTab === "order_history" ? ohTotalPages : txTotalPages;
+  const currentTotal = activeTab === "open_orders" ? openOrdersTotal : activeTab === "active_position" ? positionsTotal : activeTab === "order_history" ? ohTotal : txTotal;
+  const currentLoading = activeTab === "open_orders" ? openOrdersLoading : activeTab === "active_position" ? positionsLoading : activeTab === "order_history" ? ohLoading : txLoading;
+  const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : activeTab === "order_history" ? setOrderHistoryPage : setTxHistoryPage;
 
   return (
     <div className="mt-2 bg-white/5 rounded-md md:p-4">
@@ -881,7 +923,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
               />
             </div>
 
-            <TabsList className="bg-white/5 w-full grid grid-cols-3 mb-3">
+            <TabsList className="bg-white/5 w-full grid grid-cols-4 mb-3">
               <TabsTrigger
                 value="open_orders"
                 className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
@@ -893,6 +935,12 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
               >
                 Positions
+              </TabsTrigger>
+              <TabsTrigger
+                value="order_history"
+                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
+              >
+                Order History
               </TabsTrigger>
               <TabsTrigger
                 value="all_transactions"
@@ -924,6 +972,18 @@ export function PositionSection({ assetId }: { assetId?: string }) {
             ) : (
               <div className="px-4 py-8 text-center text-muted-foreground">
                 No active positions found
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="order_history" className="mt-0">
+            {filteredPositions.length > 0 ? (
+              filteredPositions.map((position) => (
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-muted-foreground">
+                No order history found
               </div>
             )}
           </TabsContent>
@@ -971,6 +1031,12 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   Active Position
                 </TabsTrigger>
                 <TabsTrigger
+                  value="order_history"
+                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
+                >
+                  Order History
+                </TabsTrigger>
+                <TabsTrigger
                   value="all_transactions"
                   className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
                 >
@@ -981,7 +1047,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
           </div>
 
 
-          {["open_orders", "active_position", "all_transactions"].map((tab) => (
+          {["open_orders", "active_position", "order_history", "all_transactions"].map((tab) => (
             <TabsContent key={tab} value={tab}>
               {currentLoading && filteredPositions.length === 0 ? (
                 <div className="space-y-3 py-4">
@@ -1004,7 +1070,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 />
               ) : (
                 <div className="py-8 text-center text-muted-foreground">
-                  {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
+                  {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : tab === "order_history" ? "No order history found" : "No transactions found"}
                 </div>
               )}
             </TabsContent>

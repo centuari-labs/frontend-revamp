@@ -25,6 +25,11 @@ export function useWithdraw() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-details"] });
+      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
+      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
+      queryClient.invalidateQueries({
+        queryKey: ["lend-borrow-assets"],
+      });
     },
   });
 

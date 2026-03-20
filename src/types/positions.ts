@@ -22,6 +22,7 @@ export interface LendPosition {
   createdAt: string;
   timestamp: number;
   orderType?: OrderType;
+  filledQuantity?: number;
 }
 
 export interface BorrowPosition {
@@ -41,6 +42,7 @@ export interface BorrowPosition {
   timestamp: number;
   collateralTokens: string[];
   orderType?: OrderType;
+  filledQuantity?: number;
 }
 
 export type Position = LendPosition | BorrowPosition;

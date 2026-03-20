@@ -19,7 +19,7 @@ export function useWithdrawLendPosition() {
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });
       queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["transaction-history"] });
+      queryClient.invalidateQueries({ queryKey: ["order-history"] });
     },
   });
 

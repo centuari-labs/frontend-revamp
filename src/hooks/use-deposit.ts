@@ -156,6 +156,9 @@ export function useDeposit() {
       queryClient.invalidateQueries({
         queryKey: ["lend-borrow-assets"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["user-details"],
+      });
     },
   });
 

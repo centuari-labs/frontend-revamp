@@ -567,9 +567,9 @@ export function submitRepay(
 	});
 }
 
-// ─── Transaction History ──────────────────────────────────────────────
+// ─── Order History ────────────────────────────────────────────────────
 
-export interface TransactionHistoryAsset {
+export interface OrderHistoryAsset {
 	id: string;
 	name: string;
 	symbol: string;
@@ -578,7 +578,7 @@ export interface TransactionHistoryAsset {
 	tokenAddress: string;
 }
 
-export interface TransactionHistoryItem {
+export interface OrderHistoryItem {
 	id: string;
 	side: "LEND" | "BORROW";
 	orderType: "LIMIT" | "MARKET";
@@ -587,8 +587,70 @@ export interface TransactionHistoryItem {
 	filledQuantity: string | null;
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
 	maturity: string;
-	asset: TransactionHistoryAsset;
+	asset: OrderHistoryAsset;
 	fee: string | null;
+	createdAt: string;
+}
+
+export interface OrderHistoryResponse {
+	statusCode: number;
+	data: OrderHistoryItem[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+	};
+}
+
+export async function getOrderHistory(
+	token: string,
+	params?: { page?: number; limit?: number; assetId?: string },
+): Promise<OrderHistoryResponse> {
+	const page = params?.page ?? 1;
+	const limit = params?.limit ?? 10;
+	const searchParams = new URLSearchParams({
+		page: String(page),
+		limit: String(limit),
+	});
+	if (params?.assetId) searchParams.set("assetId", params.assetId);
+
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const res = await fetch(
+		`/api/portfolio/order-history?${searchParams.toString()}`,
+		{ headers },
+	);
+
+	if (!res.ok) {
+		throw new Error(`API error: ${res.status} ${res.statusText}`);
+	}
+
+	const json = await res.json();
+	const meta = json.meta ?? {};
+	return {
+		statusCode: json.statusCode ?? 200,
+		data: json.data ?? [],
+		meta: {
+			page: Number(meta.page) || page,
+			limit: Number(meta.limit) || limit,
+			total: Number(meta.total) || 0,
+		},
+	};
+}
+
+// ─── Transaction History ─────────────────────────────────────────────
+
+export interface TransactionHistoryItem {
+	id: string;
+	side: "LEND" | "BORROW";
+	rate: number;
+	amount: string;
+	fee: string | null;
+	maturity: string;
+	asset: OrderHistoryAsset;
 	createdAt: string;
 }
 
@@ -652,7 +714,7 @@ export interface OpenOrderItem {
 	filledQuantity: string | null;
 	status: "OPEN" | "PARTIALLY_FILLED";
 	maturity: string;
-	asset: TransactionHistoryAsset;
+	asset: OrderHistoryAsset;
 	createdAt: string;
 }
 

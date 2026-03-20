@@ -1,7 +1,8 @@
 "use client";
 
 import { CentuariCalender } from "@/components/centuari-calender";
-import { DataTableHistory } from "@/components/transaction-history/tables/data-table-history";
+import { DataTableOrderHistory } from "@/components/transaction-history/tables/data-table-order-history";
+import { DataTableTransactionHistory } from "@/components/transaction-history/tables/data-table-transaction-history";
 import { DataTableOpenOrders } from "@/components/transaction-history/tables/data-table-open-orders";
 import { TransactionHistoryHeader } from "@/components/transaction-history/tables/transaction-history-header";
 import { PageContainer } from "@/components/page-container";
@@ -40,7 +41,7 @@ export default function TransactionHistoryPage() {
     <PageContainer innerClassName="2xl:min-h-0">
         <TransactionHistoryHeader />
         <div className="bg-white/5 rounded-lg p-4 md:p-6">
-          <Tabs defaultValue="transaction_history" className="w-full">
+          <Tabs defaultValue="order_history" className="w-full">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
               <TabsList className="bg-white/5 w-full lg:w-auto justify-start">
                 <TabsTrigger
@@ -48,6 +49,12 @@ export default function TransactionHistoryPage() {
                   className="flex-1 lg:flex-none data-[state=active]:!border-none"
                 >
                   Open Orders
+                </TabsTrigger>
+                <TabsTrigger
+                  value="order_history"
+                  className="flex-1 lg:flex-none data-[state=active]:!border-none"
+                >
+                  Order History
                 </TabsTrigger>
                 <TabsTrigger
                   value="transaction_history"
@@ -131,9 +138,14 @@ export default function TransactionHistoryPage() {
                 <DataTableOpenOrders />
               </div>
             </TabsContent>
+            <TabsContent value="order_history" className="mt-0">
+              <div className="overflow-x-auto">
+                <DataTableOrderHistory />
+              </div>
+            </TabsContent>
             <TabsContent value="transaction_history" className="mt-0">
               <div className="overflow-x-auto">
-                <DataTableHistory />
+                <DataTableTransactionHistory />
               </div>
             </TabsContent>
           </Tabs>
