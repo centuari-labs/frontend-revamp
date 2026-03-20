@@ -37,6 +37,8 @@ export function useSubmitBorrow() {
 			queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
 			queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
 			queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+			queryClient.invalidateQueries({ queryKey: ["open-orders"] });
+			queryClient.invalidateQueries({ queryKey: ["transaction-history"] });
 		},
 	});
 
@@ -59,6 +61,8 @@ export function useSubmitBorrow() {
 			queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
 			queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
 			queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+			queryClient.invalidateQueries({ queryKey: ["open-orders"] });
+			queryClient.invalidateQueries({ queryKey: ["transaction-history"] });
 		},
 	});
 

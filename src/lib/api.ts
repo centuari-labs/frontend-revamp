@@ -586,6 +586,7 @@ export interface TransactionHistoryItem {
 	amount: string;
 	filledQuantity: string | null;
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
+	maturity: string;
 	asset: TransactionHistoryAsset;
 	fee: string | null;
 	createdAt: string;
@@ -613,10 +614,31 @@ export async function getTransactionHistory(
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
-	return apiClient<TransactionHistoryResponse>(
-		`/portfolio/transaction-history?${searchParams.toString()}`,
-		{ token },
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const res = await fetch(
+		`/api/portfolio/transaction-history?${searchParams.toString()}`,
+		{ headers },
 	);
+
+	if (!res.ok) {
+		throw new Error(`API error: ${res.status} ${res.statusText}`);
+	}
+
+	const json = await res.json();
+	const meta = json.meta ?? {};
+	return {
+		statusCode: json.statusCode ?? 200,
+		data: json.data ?? [],
+		meta: {
+			page: Number(meta.page) || page,
+			limit: Number(meta.limit) || limit,
+			total: Number(meta.total) || 0,
+		},
+	};
 }
 
 // ─── Open Orders ─────────────────────────────────────────────────────
@@ -657,10 +679,32 @@ export async function getOpenOrders(
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
-	return apiClient<OpenOrdersResponse>(
-		`/portfolio/open-orders?${searchParams.toString()}`,
-		{ token },
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const res = await fetch(
+		`/api/portfolio/open-orders?${searchParams.toString()}`,
+		{ headers },
 	);
+
+	if (!res.ok) {
+		throw new Error(`API error: ${res.status} ${res.statusText}`);
+	}
+
+	const json = await res.json();
+	const meta = json.meta ?? {};
+	return {
+		statusCode: json.statusCode ?? 200,
+		data: json.data ?? [],
+		meta: {
+			page: Number(meta.page) || page,
+			limit: Number(meta.limit) || limit,
+			totalData: Number(meta.totalData) || 0,
+			totalPages: Number(meta.totalPages) || 0,
+		},
+	};
 }
 
 // ─── Withdraw Lend Position ──────────────────────────────────────────

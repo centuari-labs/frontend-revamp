@@ -48,11 +48,13 @@ import type { LendPosition, BorrowPosition, Position } from "@/types/positions";
 function PositionCard({
   position,
   onDelete,
-  onUpdate
+  onUpdate,
+  hideEdit
 }: {
   position: Position;
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
+  hideEdit?: boolean;
 }) {
   const statusColors = {
     pending: "bg-yellow-500",
@@ -109,16 +111,18 @@ function PositionCard({
       </div>
 
       <div className="flex gap-2 justify-end">
-        <AmendDialog
-          position={position}
-          tokenList={MARKET_TOKEN_LIST}
-          onUpdate={onUpdate}
-          trigger={
-            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-              <Edit2 size={16} className="text-white" />
-            </button>
-          }
-        />
+        {!hideEdit && (
+          <AmendDialog
+            position={position}
+            tokenList={MARKET_TOKEN_LIST}
+            onUpdate={onUpdate}
+            trigger={
+              <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                <Edit2 size={16} className="text-white" />
+              </button>
+            }
+          />
+        )}
         <button
           onClick={handleDelete}
           className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
@@ -827,7 +831,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       type: t.side.toLowerCase() as "lend" | "borrow",
       tokenValue: t.asset.symbol.toLowerCase(),
       tokenSymbol: t.asset.symbol,
-      maturity: 0,
+      maturity: new Date(t.maturity).getTime(),
       status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "failed" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
       createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
@@ -903,7 +907,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
           <TabsContent value="open_orders" className="mt-0">
             {filteredPositions.length > 0 ? (
               filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} onUpdate={handleUpdate} />
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} hideEdit />
               ))
             ) : (
               <div className="px-4 py-8 text-center text-muted-foreground">
@@ -994,7 +998,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   positions={filteredPositions}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
-                  hideEdit={tab !== "open_orders"}
+                  hideEdit
                   hideStatus={tab === "active_position"}
                   hideActions={tab === "active_position"}
                 />

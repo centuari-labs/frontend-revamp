@@ -143,11 +143,11 @@ const OrderBookContent: React.FC<{
   const midApr =
     bestBorrowApr != null && bestLendApr != null
       ? (bestBorrowApr + bestLendApr) / 2
-      : undefined;
+      : (bestBorrowApr ?? bestLendApr ?? 0);
   const spreadApr =
     bestBorrowApr != null && bestLendApr != null
       ? Math.abs(bestBorrowApr - bestLendApr)
-      : undefined;
+      : 0;
 
   return (
     <>
@@ -164,17 +164,15 @@ const OrderBookContent: React.FC<{
       <OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
 
       {/* MID APR */}
-      {midApr != null && spreadApr != null && (
-        <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
-          <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
-            <ArrowUp color="#3de57a" size={16} />
-            <span>{formatAPR(midApr)}</span>
-          </div>
-          <div className="text-white/70 text-xs sm:text-sm">
-            Spread : {(spreadApr * 100).toFixed(2)}%
-          </div>
+      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
+        <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
+          <ArrowUp color="#3de57a" size={16} />
+          <span>{formatAPR(midApr)}</span>
         </div>
-      )}
+        <div className="text-white/70 text-xs sm:text-sm">
+          Spread : {(spreadApr * 100).toFixed(2)}%
+        </div>
+      </div>
 
       {/* LEND — rows start from top */}
       <OrderTable orders={displayLend} side="lend" />
