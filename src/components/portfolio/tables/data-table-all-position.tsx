@@ -125,7 +125,8 @@ export function DataTableAllPosition({
           const formatted = new Intl.NumberFormat("en-US", {
             style: "currency",
             currency: "USD",
-            minimumFractionDigits: 2,
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
           }).format(amount);
 
           const [main, cents] = formatted.split(".");

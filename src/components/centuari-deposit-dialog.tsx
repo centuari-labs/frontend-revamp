@@ -17,6 +17,7 @@ import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
+  truncateBalance,
 } from "@/lib/utils";
 import { getTokenLogo } from "@/lib/tokens";
 import { useRouter } from "next/navigation";
@@ -318,7 +319,7 @@ export function CentuariDepositDialog() {
                   balanceText={
                     !balanceLoading && onChainBalance != null ? (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        Balance: {onChainBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken?.symbol ?? ""}
+                        Balance: {truncateBalance(onChainBalance)} {selectedToken?.symbol ?? ""}
                         <button
                           type="button"
                           onClick={handleMaxClick}

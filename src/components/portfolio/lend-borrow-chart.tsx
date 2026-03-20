@@ -50,8 +50,8 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
             <span className="text-white font-medium text-sm">
               $
               {supplyValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3,
               })}
             </span>
           </div>
@@ -63,8 +63,8 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
             <span className="text-white font-medium text-sm">
               $
               {borrowValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3,
               })}
             </span>
           </div>

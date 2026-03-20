@@ -27,6 +27,7 @@ import {
   parseNumberFromSeparator,
   formatCurrency,
   calculateFutureAmount,
+  truncateBalance,
 } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
@@ -837,7 +838,7 @@ export function CentuariLendDialog({
                       balanceText={
                         !depositBalanceLoading && depositOnChainBalance != null ? (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            Balance: {depositOnChainBalance.toLocaleString(undefined, { maximumFractionDigits: 6 })} {depositSelectedToken?.symbol ?? ""}
+                            Balance: {truncateBalance(depositOnChainBalance)} {depositSelectedToken?.symbol ?? ""}
                             <button
                               type="button"
                               onClick={handleDepositMaxClick}

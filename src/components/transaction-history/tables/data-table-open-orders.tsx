@@ -65,7 +65,7 @@ const columns: ColumnDef<OpenOrderItem>[] = [
     header: "Amount",
     cell: ({ row }) => (
       <span>
-        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(
           Number(row.original.amount)
         )}{" "}
         {row.original.asset.symbol}

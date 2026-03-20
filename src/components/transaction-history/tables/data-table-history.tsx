@@ -81,7 +81,7 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
     header: "Amount",
     cell: ({ row }) => (
       <span>
-        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+        {new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(
           Number(row.original.amount)
         )}{" "}
         {row.original.asset.symbol}
@@ -95,7 +95,7 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
       if (!row.original.fee) return "-";
       return (
         <span>
-          {new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+          {new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(
             Number(row.original.fee)
           )}{" "}
           {row.original.asset.symbol}

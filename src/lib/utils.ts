@@ -9,6 +9,19 @@ export function formatAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars + 2)}..${address.slice(-chars)}`;
 }
 
+/**
+ * Truncate (floor) a number to N decimal places and format with thousand separators.
+ * Unlike toLocaleString/toFixed which round, this always floors — safe for balance display.
+ */
+export function truncateBalance(value: number, decimals: number = 3): string {
+  const factor = Math.pow(10, decimals);
+  const truncated = Math.floor(value * factor) / factor;
+  return truncated.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
 export function formatCurrency(value: number, decimalPlaces: number = 3) {
   // Handle very small values (less than 0.01) with more decimal places
   if (value > 0 && value < 0.01) {

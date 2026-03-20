@@ -19,7 +19,7 @@ import { CentuariTypography } from "./centuari-typography";
 import { Button } from "./ui/button";
 import { IcCreditCardUploadCentuari } from "./icons/ic-credit-card-upload-centuari";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
-import { cn } from "@/lib/utils";
+import { cn, truncateBalance } from "@/lib/utils";
 import { getChainIcon } from "@/lib/chains";
 import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
@@ -341,9 +341,7 @@ export function CentuariWithdrawDialog() {
                                   variant="b2"
                                   className="text-muted-foreground"
                                 >
-                                  {asset.availableBalance.toLocaleString("en-US", {
-                                    maximumFractionDigits: 6,
-                                  })}
+                                  {truncateBalance(asset.availableBalance)}
                                 </CentuariTypography>
                               </div>
                             </div>
@@ -465,8 +463,8 @@ export function CentuariWithdrawDialog() {
                           <p className="text-muted-foreground mt-1 text-center text-sm">
                             ~$
                             {(amountNum * tokenPrice).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
+                              minimumFractionDigits: 3,
+                              maximumFractionDigits: 3,
                             })}{" "}
                             USD
                           </p>
@@ -497,7 +495,7 @@ export function CentuariWithdrawDialog() {
                         <CentuariAlert
                           variant="destructive"
                           text="Insufficient balance"
-                          description={`Available: ${selectedAsset?.availableBalance.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${selectedAsset?.symbol}`}
+                          description={`Available: ${selectedAsset ? truncateBalance(selectedAsset.availableBalance) : "0.000"} ${selectedAsset?.symbol}`}
                           className="mt-4"
                         />
                       )}

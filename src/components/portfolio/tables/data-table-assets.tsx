@@ -21,7 +21,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, truncateBalance } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -320,10 +320,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
         return (
           <div className="flex items-center gap-1.5">
             <span className="text-white font-medium">
-              {asset.walletBalance.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {truncateBalance(asset.walletBalance)}
             </span>
             <span className="text-white/40">{asset.assetSymbol.toUpperCase()}</span>
           </div>
@@ -338,7 +335,8 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-          minimumFractionDigits: 2,
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3,
         }).format(amount);
 
         const [main, cents] = formatted.split(".");

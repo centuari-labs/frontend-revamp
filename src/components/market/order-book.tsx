@@ -10,7 +10,7 @@ import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
 
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
-  amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  amount.toLocaleString(undefined, { maximumFractionDigits: 3 });
 
 const OrderRowView: React.FC<{
   order: OrderRow;
