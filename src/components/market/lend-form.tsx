@@ -71,6 +71,7 @@ export function LendForm({
                 label="Supply"
                 size="large"
                 placeholder="Amount"
+                tooltipMessage="The amount you currently have that is available to use."
                 leftIcon={
                   <Image
                     src={form.selectedToken.logo}
@@ -107,7 +108,7 @@ export function LendForm({
                   maturity={form.limitMaturity}
                   onMaturityChange={form.setLimitMaturity}
                   maturityOptions={form.availableMaturities}
-                  placeholder="12.5"
+                  placeholder="Enter your APR amount"
                   label="Target APR"
                 />
               </div>
@@ -205,8 +206,8 @@ export function LendForm({
               <div>
                 <Label className="mb-1.5 mt-3.5">
                   Maturity
-                  <CentuariTooltip message="Coming Soon">
-                    <Info size={16} />
+                  <CentuariTooltip message="The date when your position ends and your funds are returned.">
+                    <Info size={16} className="text-muted-foreground"/>
                   </CentuariTooltip>
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
@@ -241,7 +242,7 @@ export function LendForm({
                   label={
                     <>
                       Auto Rollover
-                      <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
+                      <CentuariTooltip message="When enabled, your position will automatically renew with the best terms when it ends.">
                         <Info
                           size={16}
                           className="ml-1 inline-block text-muted-foreground"

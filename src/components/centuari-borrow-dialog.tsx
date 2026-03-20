@@ -413,7 +413,7 @@ export function CentuariBorrowDialog({
                         >
                           Borrow APR{" "}
                           <CentuariTooltip
-                            message={`The interest rate at which you can borrow ${token_symbol}.`}
+                            message={`The fixed interest rate you pay when borrowing.`}
                           >
                             <Info size={16} />
                           </CentuariTooltip>
@@ -432,7 +432,7 @@ export function CentuariBorrowDialog({
                         >
                           Lend APR{" "}
                           <CentuariTooltip
-                            message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}
+                            message={`The fixed return you earn when lending your assets.`}
                           >
                             <Info size={16} />
                           </CentuariTooltip>
@@ -558,7 +558,7 @@ export function CentuariBorrowDialog({
                       <div>
                         <Label className="mb-2 mt-4">
                           Health Factor{" "}
-                          <CentuariTooltip message="Your health factor indicates the safety of your borrowed position. Health Factor = (Total Collateral Value × Collateral Factor) / Total Borrowed Value">
+                          <CentuariTooltip message="The percentage of your asset’s value you can borrow against.">
                             <Info size={16} />
                           </CentuariTooltip>
                           {(() => {
@@ -633,9 +633,6 @@ export function CentuariBorrowDialog({
                         <div className="flex items-center justify-between border-b border-dashed pb-2">
                           <p className="flex text-muted-foreground items-center gap-2">
                             Transaction Fee{" "}
-                            <CentuariTooltip message="Coming Soon">
-                              <Info size={12} />
-                            </CentuariTooltip>
                           </p>
                           <div className="flex items-center gap-1">
                             <p>
@@ -664,9 +661,6 @@ export function CentuariBorrowDialog({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             In the future you'll pay{" "}
-                            <CentuariTooltip message="Coming Soon">
-                              <Info size={12} />
-                            </CentuariTooltip>{" "}
                           </div>
                           <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
                             {numericAmount > 0
@@ -792,6 +786,7 @@ export function CentuariBorrowDialog({
                     <CentuariInput
                       id="amount"
                       label="Deposit Amount"
+                      showTooltip={false}
                       size="large"
                       placeholder="Amount"
                       leftIcon={<IcDollarCentuari size={16} />}

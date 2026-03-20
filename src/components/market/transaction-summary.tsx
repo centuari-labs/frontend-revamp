@@ -43,11 +43,6 @@ export function TransactionSummary({
           >
             <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1 text-muted-foreground">
               {label}{" "}
-              {i === 0 && (
-                <CentuariTooltip message="Coming Soon">
-                  <Info size={12} />
-                </CentuariTooltip>
-              )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <p>{value}</p>
@@ -60,9 +55,6 @@ export function TransactionSummary({
         <div className="flex flex-row items-center justify-between gap-4 min-h-[2rem]">
           <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
             In the future you'll get{" "}
-            <CentuariTooltip message="Coming Soon">
-              <Info size={12} />
-            </CentuariTooltip>{" "}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">

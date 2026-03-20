@@ -477,6 +477,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnFilters,
@@ -598,12 +599,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
             onClick={() => {
               if (isServerPagination) {
-                onPageChange(Math.max(1, (serverPage ?? 1) - 1));
+                onPageChange(Math.max(1, Number(serverPage ?? 1) - 1));
               } else {
                 table.previousPage();
               }
             }}
-            disabled={isServerPagination ? (serverPage ?? 1) <= 1 : !table.getCanPreviousPage()}
+            disabled={isServerPagination ? Number(serverPage ?? 1) <= 1 : !table.getCanPreviousPage()}
           >
             <ArrowLeft size={16} className="text-white" />
           </Button>
@@ -613,12 +614,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
             className="w-8 h-8 rounded-lg bg-white/5 border-none hover:bg-white/10"
             onClick={() => {
               if (isServerPagination) {
-                onPageChange(Math.min((totalPages ?? 1), (serverPage ?? 1) + 1));
+                onPageChange(Math.min(Number(totalPages ?? 1), Number(serverPage ?? 1) + 1));
               } else {
                 table.nextPage();
               }
             }}
-            disabled={isServerPagination ? (serverPage ?? 1) >= (totalPages ?? 1) : !table.getCanNextPage()}
+            disabled={isServerPagination ? Number(serverPage ?? 1) >= Number(totalPages ?? 1) : !table.getCanNextPage()}
           >
             <ArrowRight size={16} className="text-white" />
           </Button>

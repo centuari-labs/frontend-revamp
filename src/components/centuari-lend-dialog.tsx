@@ -452,7 +452,7 @@ export function CentuariLendDialog({
                         >
                           Lend APR{" "}
                           <CentuariTooltip
-                            message={`The annual percentage rate for borrowing ${token_symbol} after fees.`}
+                            message={`The fixed return you earn when lending your assets.`}
                           >
                             <Info size={16} />
                           </CentuariTooltip>
@@ -479,6 +479,7 @@ export function CentuariLendDialog({
                       label="Amount to Lend"
                       size="large"
                       placeholder="1,000"
+                      tooltipMessage="The amount you currently have that is available to use."
                       leftIcon={
                         <Image
                           src={token_image}
@@ -599,9 +600,6 @@ export function CentuariLendDialog({
                       <div className="flex items-center justify-between border-b border-dashed pb-2">
                         <p className="flex text-muted-foreground items-center gap-2">
                           Transaction Fee{" "}
-                          <CentuariTooltip message="Coming Soon">
-                            <Info size={12} />
-                          </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
                           <p>
@@ -614,9 +612,6 @@ export function CentuariLendDialog({
                       <div className="flex items-center justify-between">
                         <p className="flex text-muted-foreground items-center gap-2">
                           Amount to Pay Now
-                          <CentuariTooltip message="Coming Soon">
-                            <Info size={12} />
-                          </CentuariTooltip>
                         </p>
                         <div className="flex items-center gap-1">
                           <p>
@@ -632,9 +627,6 @@ export function CentuariLendDialog({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           In the future you'll get{" "}
-                          <CentuariTooltip message="Coming Soon">
-                            <Info size={12} />
-                          </CentuariTooltip>{" "}
                         </div>
                         <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
                           {numericAmount > 0
@@ -821,6 +813,8 @@ export function CentuariLendDialog({
                       id={`deposit-amount-${reactId}`}
                       label="Deposit Amount"
                       size="large"
+                      showTooltip={false}
+                      // tooltipMessage="The amount that you want to fund"
                       placeholder="0"
                       leftIcon={
                         <Image

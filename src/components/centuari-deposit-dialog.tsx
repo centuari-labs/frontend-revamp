@@ -306,6 +306,7 @@ export function CentuariDepositDialog() {
                   label="Deposit Amount"
                   size="large"
                   placeholder="0"
+                  // tooltipMessage="The amount you want to funds."
                   leftIcon={<TokenIcon />}
                   className="mt-0"
                   containerClassName="mt-3.5"

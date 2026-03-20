@@ -220,10 +220,10 @@ export async function getMyPositions(
 	const meta = json.meta ?? {};
 	return {
 		data: json.data ?? [],
-		page: meta.page ?? page,
-		limit: meta.limit ?? limit,
-		totalData: meta.totalData ?? 0,
-		totalPages: meta.totalPages ?? 0,
+		page: Number(meta.page) || page,
+		limit: Number(meta.limit) || limit,
+		totalData: Number(meta.totalData) || 0,
+		totalPages: Number(meta.totalPages) || 0,
 	};
 }
 
@@ -333,10 +333,10 @@ export async function getMyAssets(
 	const meta = json.meta ?? {};
 	return {
 		data: json.data ?? [],
-		page: meta.page ?? page,
-		limit: meta.limit ?? limit,
-		totalData: meta.totalData ?? 0,
-		totalPages: meta.totalPages ?? 0,
+		page: Number(meta.page) || page,
+		limit: Number(meta.limit) || limit,
+		totalData: Number(meta.totalData) || 0,
+		totalPages: Number(meta.totalPages) || 0,
 	};
 }
 
