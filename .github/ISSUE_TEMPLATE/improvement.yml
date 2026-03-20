@@ -1,0 +1,64 @@
+name: Improvement / Enhancement
+description: Suggest an improvement to existing frontend functionality
+title: "[Improvement]: "
+labels: ["improvement", "frontend"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggest an improvement to an existing feature or workflow.
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behavior
+      description: Describe how the feature currently works.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed Improvement
+      description: How should it work instead? What would be better?
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / Benefit
+      description: Why is this improvement valuable? (UX, performance, accessibility, etc.)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Improvement Type
+      description: What kind of improvement is this?
+      options:
+        - UX / Usability
+        - Performance
+        - Accessibility
+        - Responsive Design
+        - Code Quality / Refactor
+        - Developer Experience
+        - Testing
+        - SEO
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: breaking
+    attributes:
+      label: Breaking Changes
+      options:
+        - label: This improvement may introduce breaking changes to existing UI
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any benchmarks, screenshots, or related issues.
