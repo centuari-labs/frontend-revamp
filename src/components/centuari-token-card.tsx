@@ -73,10 +73,10 @@ export const CentuariTokenCard = ({
       <CardContent id={`tour-token-card-${id}-content`} className="px-0">
         <div className="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5 flex flex-col gap-3 md:gap-4">
           {[
-            { label: "Borrow APR", value: rates.borrowAPR },
-            { label: "Lend APR", value: rates.lendAPR },
-            { label: "Collateral Factor", value: rates.collateralFactor },
-          ].map(({ label, value }, i) => (
+            { label: "Borrow APR", value: rates.borrowAPR, tooltipMessage: "The fixed interest rate you pay when borrowing." },
+            { label: "Lend APR", value: rates.lendAPR, tooltipMessage: "The fixed return you earn when lending your assets." },
+            { label: "Collateral Factor", value: rates.collateralFactor, tooltipMessage: "The percentage of your asset’s value you can borrow against." },
+          ].map(({ label, value, tooltipMessage }, i) => (
             <div
               key={label}
               className={`flex items-center justify-between ${i < 2 ? "border-b border-dashed pb-2" : ""
@@ -85,7 +85,7 @@ export const CentuariTokenCard = ({
               <p className="text-xs md:text-sm">{label}</p>
               <div className="flex items-center gap-1">
                 <p className="text-xs md:text-sm">{value}</p>
-                <CentuariTooltip message="Coming Soon">
+                <CentuariTooltip message={tooltipMessage}>
                   <InfoIcon size={12} />
                 </CentuariTooltip>
               </div>

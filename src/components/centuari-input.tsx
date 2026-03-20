@@ -19,6 +19,8 @@ interface CentuariInputProps
   helperText?: string;
   containerClassName?: string;
   label?: string;
+  tooltipMessage?: string;
+  showTooltip?: boolean;
   readonly?: boolean;
   disabled?: boolean;
 }
@@ -55,6 +57,8 @@ export function CentuariInput({
   variant,
   className,
   label,
+  tooltipMessage = "Coming Soon",
+  showTooltip = true,
   readOnly,
   disabled,
   ...props
@@ -70,10 +74,15 @@ export function CentuariInput({
               balanceText && "items-center gap-1"
             )}
           >
-            Available <span className="text-white">{balanceText}</span>{" "}
-            <CentuariTooltip message="Coming Soon">
-              <InfoIcon size={12} />
-            </CentuariTooltip>
+            Available <span className="text-white">{balanceText}</span>
+            {showTooltip && (
+              <>
+                {" "}
+                <CentuariTooltip message={tooltipMessage}>
+                  <InfoIcon size={12} />
+                </CentuariTooltip>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -34,10 +34,10 @@ export default function PortfolioPage() {
   const { authenticated, ready } = usePrivy();
   const [loginOpen, setLoginOpen] = useState(false);
   const [assetsPage, setAssetsPage] = useState(1);
-  const ASSETS_PAGE_SIZE = 3;
+  const ASSETS_PAGE_SIZE = 10;
   const [positionsPage, setPositionsPage] = useState(1);
   const [positionsTab, setPositionsTab] = useState<"lend" | "borrow">("lend");
-  const POSITIONS_PAGE_SIZE = 3;
+  const POSITIONS_PAGE_SIZE = 10;
 
   // ─── API mode hooks ────────────────────────────────────────────────
   const { portfolio: apiPortfolio, isLoading: isPortfolioLoading, isError: isPortfolioError, refetch: refetchPortfolio } =
@@ -326,15 +326,19 @@ export default function PortfolioPage() {
                 <p className="text-sm">Health Factor</p>
                 <Badge
                   variant={
-                    healthFactorStatus === "Safe" ||
-                    healthFactorStatus === "Good"
-                      ? "success"
-                      : healthFactorStatus === "Warning"
-                        ? "warning"
-                        : "destructive"
+                    healthFactorValue === 0
+                      ? "secondary"
+                      : healthFactorStatus === "Safe" ||
+                          healthFactorStatus === "Good"
+                        ? "success"
+                        : healthFactorStatus === "Warning"
+                          ? "warning"
+                          : "destructive"
                   }
                 >
-                  {healthFactor} ~ {healthFactorStatus}
+                  {healthFactorValue === 0
+                    ? "No Data"
+                    : `${healthFactor} ~ ${healthFactorStatus}`}
                 </Badge>
               </div>
             </div>
