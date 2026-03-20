@@ -62,6 +62,7 @@ function PositionCard({
     processing: "bg-blue-500",
     success: "bg-green-500",
     failed: "bg-red-500",
+    cancelled: "bg-red-500",
   };
 
   const handleDelete = () => {
@@ -199,6 +200,7 @@ function LendPositionTable({
           processing: "bg-blue-500",
           success: "bg-green-500",
           failed: "bg-red-500",
+          cancelled: "bg-red-500",
         };
         return (
           <div className="flex items-center gap-2">
@@ -381,6 +383,7 @@ function UnifiedPositionTable({
   hideEdit = false,
   hideStatus = false,
   hideActions = false,
+  emptyMessage = "No results.",
 }: {
   positions: Position[];
   onDelete: (id: string) => void;
@@ -388,6 +391,7 @@ function UnifiedPositionTable({
   hideEdit?: boolean;
   hideStatus?: boolean;
   hideActions?: boolean;
+  emptyMessage?: string;
 }) {
   const columns: ColumnDef<Position>[] = useMemo(() => [
     {
@@ -466,6 +470,7 @@ function UnifiedPositionTable({
           processing: "bg-blue-500",
           success: "bg-green-500",
           failed: "bg-red-500",
+          cancelled: "bg-red-500",
         };
         return (
           <div className="flex items-center gap-2">
@@ -564,7 +569,7 @@ function UnifiedPositionTable({
                 colSpan={columns.length}
                 className="h-24 text-center"
               >
-                No results.
+                {emptyMessage}
               </TableCell>
             </TableRow>
           )}
@@ -666,6 +671,7 @@ function BorrowPositionTable({
           processing: "bg-blue-500",
           success: "bg-green-500",
           failed: "bg-red-500",
+          cancelled: "bg-red-500",
         };
         return (
           <div className="flex items-center gap-2">
@@ -853,7 +859,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       tokenValue: t.asset.symbol.toLowerCase(),
       tokenSymbol: t.asset.symbol,
       maturity: new Date(t.maturity).getTime(),
-      status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "failed" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
+      status: t.status === "FILLED" ? "success" as const : t.status === "CANCELLED" ? "cancelled" as const : t.status === "OPEN" ? "pending" as const : "processing" as const,
       createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       timestamp: Date.now(),
       orderType: t.orderType?.toLowerCase() as OrderType | undefined,
@@ -1059,7 +1065,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                     </div>
                   ))}
                 </div>
-              ) : filteredPositions.length > 0 ? (
+              ) : (
                 <UnifiedPositionTable
                   positions={filteredPositions}
                   onDelete={handleDelete}
@@ -1067,11 +1073,8 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   hideEdit
                   hideStatus={tab === "active_position"}
                   hideActions={tab === "active_position"}
+                  emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : tab === "order_history" ? "No order history found" : "No transactions found"}
                 />
-              ) : (
-                <div className="py-8 text-center text-muted-foreground">
-                  {tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : tab === "order_history" ? "No order history found" : "No transactions found"}
-                </div>
               )}
             </TabsContent>
           ))}

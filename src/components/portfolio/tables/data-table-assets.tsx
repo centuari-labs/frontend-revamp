@@ -57,6 +57,7 @@ export type AssetProps = {
 interface DataTableAssetsProps {
   assets?: AssetProps[];
   onToggleCollateral?: (assetId: string, isCollateral: boolean) => Promise<void> | void;
+  onToggleAllCollateral?: (assetIds: string[], isCollateral: boolean) => Promise<void> | void;
   // Server-side pagination
   page?: number;
   totalData?: number;
@@ -65,7 +66,7 @@ interface DataTableAssetsProps {
   pageSize?: number;
 }
 
-export function DataTableAssets({ assets: externalAssets, onToggleCollateral, page: serverPage, totalData, totalPages, onPageChange, pageSize = 10 }: DataTableAssetsProps = {}) {
+export function DataTableAssets({ assets: externalAssets, onToggleCollateral, onToggleAllCollateral, page: serverPage, totalData, totalPages, onPageChange, pageSize = 10 }: DataTableAssetsProps = {}) {
   // Portfolio state - sync with borrow dialog (mock mode only)
   const [portfolio, setPortfolio] = React.useState<Record<string, number>>(() => {
     if (externalAssets) return {};
@@ -253,20 +254,28 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
   );
 
   // Select all / deselect all collateral (toggle)
-  const handleSelectAllCollateral = React.useCallback(() => {
+  const handleSelectAllCollateral = React.useCallback(async () => {
     if (data.length === 0) return;
     const allSelected = data.every((d) => d.isCollateral);
+    const newIsCollateral = !allSelected;
+
+    if (onToggleAllCollateral) {
+      const assetIds = data.map((d) => d.id);
+      await onToggleAllCollateral(assetIds, newIsCollateral);
+      return;
+    }
+
     setCollateralStatus((prev) => {
       const next = { ...prev };
       for (const d of data) {
-        next[d.tokenValue] = !allSelected;
+        next[d.tokenValue] = newIsCollateral;
       }
       if (typeof window !== "undefined") {
         localStorage.setItem("centuari_collateral", JSON.stringify(next));
       }
       return next;
     });
-  }, [data]);
+  }, [data, onToggleAllCollateral]);
 
   // Collateral header click: open confirmation when enabling all, direct toggle when disabling all
   const handleCollateralHeaderClick = React.useCallback(() => {
@@ -508,8 +517,13 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, pa
         open={showUseAllCollateralDialog}
         onOpenChange={setShowUseAllCollateralDialog}
         assets={data.map((d) => ({ logo: d.assetImg, label: d.assetName }))}
-        onConfirm={() => {
-          handleSelectAllCollateral();
+        onConfirm={async () => {
+          try {
+            await handleSelectAllCollateral();
+            toast.success("Collateral updated successfully");
+          } catch {
+            toast.error("Failed to update collateral");
+          }
           setShowUseAllCollateralDialog(false);
         }}
       />

@@ -109,6 +109,16 @@ export default function PortfolioPage() {
     });
   };
 
+  const handleToggleAllCollateral = async (
+    assetIds: string[],
+    isCollateral: boolean,
+  ) => {
+    await setCollateralMutation.mutateAsync({
+      assetIds,
+      isCollateral,
+    });
+  };
+
   // ─── Map API positions → DataTableAllPosition props ────────────────
   const positionTableData: PositionProps[] = useMemo(() => {
     return apiPositions.map((p) => ({
@@ -353,6 +363,7 @@ export default function PortfolioPage() {
             <DataTableAssets
               assets={assetTableData}
               onToggleCollateral={handleToggleCollateral}
+              onToggleAllCollateral={handleToggleAllCollateral}
               page={currentAssetsPage}
               totalData={assetsTotalData}
               totalPages={assetsTotalPages}

@@ -3,7 +3,7 @@
  * Used by hooks and adapter for lend/borrow operations.
  */
 
-export type PositionStatus = "pending" | "processing" | "success" | "failed";
+export type PositionStatus = "pending" | "processing" | "success" | "failed" | "cancelled";
 export type OrderType = "limit" | "market";
 
 export interface LendPosition {

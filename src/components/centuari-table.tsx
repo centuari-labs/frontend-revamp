@@ -140,7 +140,7 @@ type PositionForDialog =
     tokenValue: string;
     tokenSymbol: string;
     maturity: number;
-    status: "pending" | "processing" | "success" | "failed";
+    status: "pending" | "processing" | "success" | "failed" | "cancelled";
     createdAt: string;
     timestamp: number;
     orderType?: "limit" | "market";
@@ -155,7 +155,7 @@ type PositionForDialog =
     tokenValue: string;
     tokenSymbol: string;
     maturity: number;
-    status: "pending" | "processing" | "success" | "failed";
+    status: "pending" | "processing" | "success" | "failed" | "cancelled";
     createdAt: string;
     timestamp: number;
     orderType?: "limit" | "market";

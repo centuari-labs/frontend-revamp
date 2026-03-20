@@ -19,7 +19,7 @@ import {
 import Image from "next/image";
 import { CentuariBadge } from "@/components/centuari-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useOpenOrders } from "@/hooks/use-open-orders";
 import type { OpenOrderItem } from "@/lib/api";
 import { format } from "date-fns";
@@ -115,9 +115,6 @@ const columns: ColumnDef<OpenOrderItem>[] = [
     header: "Actions",
     cell: () => (
       <div className="flex items-center gap-2">
-        <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-          <Edit2 size={14} className="text-white" />
-        </button>
         <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
           <Trash2 size={14} className="text-red-400" />
         </button>
