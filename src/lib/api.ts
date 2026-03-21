@@ -605,7 +605,15 @@ export interface OrderHistoryResponse {
 
 export async function getOrderHistory(
 	token: string,
-	params?: { page?: number; limit?: number; assetId?: string },
+	params?: {
+		page?: number;
+		limit?: number;
+		assetId?: string;
+		side?: string;
+		status?: string;
+		startDate?: string;
+		endDate?: string;
+	},
 ): Promise<OrderHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -614,6 +622,10 @@ export async function getOrderHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
+	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.startDate) searchParams.set("startDate", params.startDate);
+	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",
@@ -667,7 +679,14 @@ export interface TransactionHistoryResponse {
 
 export async function getTransactionHistory(
 	token: string,
-	params?: { page?: number; limit?: number; assetId?: string },
+	params?: {
+		page?: number;
+		limit?: number;
+		assetId?: string;
+		side?: string;
+		startDate?: string;
+		endDate?: string;
+	},
 ): Promise<TransactionHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -676,6 +695,9 @@ export async function getTransactionHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
+	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
+	if (params?.startDate) searchParams.set("startDate", params.startDate);
+	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",
@@ -713,7 +735,7 @@ export interface OpenOrderItem {
 	rate: number;
 	amount: string;
 	filledQuantity: string | null;
-	status: "OPEN" | "PARTIALLY_FILLED";
+	status: "OPEN" | "FILLED" | "PARTIALLY_FILLED" | "CANCELLED";
 	maturity: string;
 	asset: OrderHistoryAsset;
 	createdAt: string;
@@ -732,7 +754,15 @@ export interface OpenOrdersResponse {
 
 export async function getOpenOrders(
 	token: string,
-	params?: { page?: number; limit?: number; assetId?: string },
+	params?: {
+		page?: number;
+		limit?: number;
+		assetId?: string;
+		side?: string;
+		status?: string;
+		startDate?: string;
+		endDate?: string;
+	},
 ): Promise<OpenOrdersResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -741,6 +771,10 @@ export async function getOpenOrders(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
+	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.startDate) searchParams.set("startDate", params.startDate);
+	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",

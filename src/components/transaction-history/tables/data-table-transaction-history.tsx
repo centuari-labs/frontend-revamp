@@ -120,14 +120,22 @@ function TableSkeleton() {
 	);
 }
 
-export function DataTableTransactionHistory() {
+export function DataTableTransactionHistory({
+	filters,
+}: {
+	filters?: {
+		side?: string;
+		startDate?: string;
+		endDate?: string;
+	};
+}) {
 	const [page, setPage] = React.useState(1);
 	const limit = 10;
-	const { transactions, total, totalPages, isLoading } =
-		useTransactionHistory({
-			page,
-			limit,
-		});
+	const { transactions, total, totalPages, isLoading } = useTransactionHistory({
+		page,
+		limit,
+		...filters,
+	});
 
 	const table = useReactTable({
 		data: transactions,

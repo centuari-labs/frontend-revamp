@@ -149,12 +149,22 @@ function TableSkeleton() {
   );
 }
 
-export function DataTableOpenOrders() {
+export function DataTableOpenOrders({
+  filters,
+}: {
+  filters?: {
+    side?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+}) {
   const [page, setPage] = React.useState(1);
   const limit = 10;
   const { orders, totalData, totalPages, isLoading } = useOpenOrders({
     page,
     limit,
+    ...filters,
   });
 
   const table = useReactTable({
