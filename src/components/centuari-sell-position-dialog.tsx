@@ -47,6 +47,8 @@ interface CentuariSellPositionDialogProps {
   moneyDeposited: number; // Original deposit amount
   profitReturn: number; // Profit amount
   apr?: number; // APR as percentage (e.g., 10 for 10%)
+  totalShares?: number; // Total shares from backend
+  baseAmount?: number; // Base amount from backend
   onSuccess?: () => void; // Callback after successful sell
   /** When set, parent shows success dialog; use when row may unmount (e.g. full withdraw). */
   onWithdrawComplete?: (message: WithdrawSuccessMessage) => void;
@@ -63,6 +65,8 @@ export function CentuariSellPositionDialog({
   moneyDeposited,
   profitReturn,
   apr = 10, // Default 10% APR
+  totalShares,
+  baseAmount,
   onSuccess,
   onWithdrawComplete,
 }: CentuariSellPositionDialogProps) {
@@ -95,21 +99,21 @@ export function CentuariSellPositionDialog({
   // Withdraw Shares = the input amount
   const withdrawShares = numericAmount > 0 ? numericAmount : 0;
 
-  // Calculate profit: elapsed (startDate → now) when startDate set, else future (now → maturity)
+  // Calculate profit: exact formula using proportional base amount
   const normalizedMaturity = normalizeMaturity(maturityDate);
   const calculatedProfitReturn =
-    startDate != null
-      ? calculateProfitAmount(withdrawShares, apr, startDate)
-      : calculateFutureAmount(withdrawShares, apr, normalizedMaturity) - withdrawShares;
+    availableFunds > 0
+      ? withdrawShares * (1 - moneyDeposited / availableFunds)
+      : 0;
 
-  // Total amount after withdraw = Withdraw Shares + Profit Return
-  const totalAfterWithdraw = withdrawShares + calculatedProfitReturn;
+  // Principal portion = Total Withdraw - Profit Return
+  const principalPart = withdrawShares - calculatedProfitReturn;
 
-  // Format available funds with currency and CBT suffix
-  const formattedAvailableFunds = `${formatNumberWithSeparator(availableFunds)} CBT`;
+  // Total amount after withdraw is the input amount
+  const totalAfterWithdraw = withdrawShares;
 
-  // Format APR for display
-  // const formattedAPR = `${(apr * 100).toFixed(1).replace(".", ",")}%`;
+  // Format available funds with currency and token suffix
+  const formattedAvailableFunds = `${formatNumberWithSeparator(availableFunds)} ${token_symbol}`;
 
   // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -330,7 +334,7 @@ export function CentuariSellPositionDialog({
                     <div className="bg-white/5 py-3 px-4 text-sm rounded-xl border border-white/5 flex flex-col gap-2 mt-5">
                       <div className="flex items-center justify-between border-b border-dashed pb-2">
                         <p className="text-muted-foreground">Withdraw shares</p>
-                        <p>{formatNumberWithSeparator(withdrawShares)} CBT</p>
+                        <p>{formatNumberWithSeparator(principalPart)} {token_symbol}</p>
                       </div>
                       <div className="flex items-center justify-between border-b border-dashed pb-2">
                         <p className="flex text-muted-foreground items-center gap-2">

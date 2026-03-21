@@ -173,6 +173,7 @@ export interface MyPositionItem {
 	symbol: string;
 	name: string;
 	shares: number;
+	baseAmount: number;
 	amountInUsd: number;
 	apr: number | string;
 	isCollateral: boolean;

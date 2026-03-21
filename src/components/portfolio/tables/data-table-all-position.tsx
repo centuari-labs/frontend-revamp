@@ -42,6 +42,8 @@ export type PositionProps = {
   assetImg: string;
   assetName: string;
   amount: number;
+  shares?: number;
+  baseAmount?: number;
   apr: number;
   type?: "lend" | "borrow";
   tokenValue?: string;
@@ -204,6 +206,8 @@ export function DataTableAllPosition({
                   moneyDeposited={position.amount * 0.9}
                   profitReturn={position.amount * 0.1}
                   apr={position.apr ?? 0}
+                  totalShares={position.shares}
+                  baseAmount={position.baseAmount}
                   onWithdrawComplete={(message) => setWithdrawSuccess(message)}
                   onSuccess={() => {
                     if (typeof window !== "undefined") {
