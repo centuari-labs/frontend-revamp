@@ -136,8 +136,8 @@ const columns: ColumnDef<OrderHistoryItem>[] = [
 		},
 	},
 	{
-		accessorKey: "createdAt",
-		header: "Created At",
+		accessorKey: "maturity",
+		header: "Maturity",
 		cell: ({ row }) => {
 			if (!row.original.createdAt) return "-";
 			const date = new Date(row.original.createdAt);
