@@ -7,19 +7,25 @@ import { Calendar } from "@/components/ui/calendar";
 import { MaturityToggle } from "./maturity-toggle";
 import { Button } from "./ui/button";
 
-export function CentuariCalender() {
-  const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
-    from: new Date(2025, 5, 12),
-    to: new Date(2025, 6, 15),
-  });
+export function CentuariCalender({
+  value,
+  onChange,
+  onApply,
+  onCancel,
+}: {
+  value?: DateRange;
+  onChange?: (range: DateRange | undefined) => void;
+  onApply?: () => void;
+  onCancel?: () => void;
+}) {
 
   return (
     <div className="bg-white/5 rounded-lg border">
       <Calendar
         mode="range"
-        defaultMonth={dateRange?.from}
-        selected={dateRange}
-        onSelect={setDateRange}
+        defaultMonth={value?.from}
+        selected={value}
+        onSelect={onChange}
         numberOfMonths={2}
         className="shadow-sm bg-transparent"
         classNames={{
@@ -48,8 +54,8 @@ export function CentuariCalender() {
       />
 
       <div className="flex items-center justify-end px-4 py-3 border-t border-white/5">
-        <Button variant={"secondary"}>Cancel</Button>
-        <Button variant={"primary"} className="ml-2">
+        <Button variant={"secondary"} onClick={onCancel}>Cancel</Button>
+        <Button variant={"primary"} className="ml-2" onClick={onApply}>
           Apply
         </Button>
       </div>

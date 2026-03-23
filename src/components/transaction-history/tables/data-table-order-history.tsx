@@ -176,14 +176,23 @@ function TableSkeleton() {
 	);
 }
 
-export function DataTableOrderHistory() {
+export function DataTableOrderHistory({
+	filters,
+}: {
+	filters?: {
+		side?: string;
+		status?: string;
+		startDate?: string;
+		endDate?: string;
+	};
+}) {
 	const [page, setPage] = React.useState(1);
 	const limit = 10;
-	const { transactions, total, totalPages, isLoading } =
-		useOrderHistory({
-			page,
-			limit,
-		});
+	const { transactions, total, totalPages, isLoading } = useOrderHistory({
+		page,
+		limit,
+		...filters,
+	});
 
 	const table = useReactTable({
 		data: transactions,
@@ -207,23 +216,21 @@ export function DataTableOrderHistory() {
 								{headerGroup.headers.map((header) => (
 									<TableHead
 										key={header.id}
-										className={`text-sm text-muted-foreground font-normal ${
-											headerGroup.headers[0].id === header.id
-												? "rounded-l-sm"
-												: ""
-										} ${
-											headerGroup.headers[headerGroup.headers.length - 1]
+										className={`text-sm text-muted-foreground font-normal ${headerGroup.headers[0].id === header.id
+											? "rounded-l-sm"
+											: ""
+											} ${headerGroup.headers[headerGroup.headers.length - 1]
 												.id === header.id
 												? "rounded-r-sm"
 												: ""
-										}`}
+											}`}
 									>
 										{header.isPlaceholder
 											? null
 											: flexRender(
-													header.column.columnDef.header,
-													header.getContext(),
-												)}
+												header.column.columnDef.header,
+												header.getContext(),
+											)}
 									</TableHead>
 								))}
 							</TableRow>
