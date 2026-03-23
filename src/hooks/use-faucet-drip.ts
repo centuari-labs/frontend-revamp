@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useWallets } from "@privy-io/react-auth";
 import { requestFaucetTokens, type FaucetResponse } from "@/lib/api";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
+import { useWalletAddress } from "@/hooks/use-wallet-address";
 
 export type FaucetDripStatus = "idle" | "loading" | "success" | "error";
 
 export function useFaucetDrip() {
-	const { wallets } = useWallets();
+	const address = useWalletAddress();
 	const [status, setStatus] = useState<FaucetDripStatus>("idle");
 	const [error, setError] = useState<string | null>(null);
 
@@ -20,17 +20,13 @@ export function useFaucetDrip() {
 			setError(null);
 
 			try {
-				const wallet =
-					wallets.find((w) => w.walletClientType !== "privy") ??
-					wallets.find((w) => w.walletClientType === "privy") ??
-					wallets[0];
-				if (!wallet?.address) {
+				if (!address) {
 					throw new Error("No wallet connected");
 				}
 
 				const result = await requestFaucetTokens(
 					ACTIVE_CHAIN.id,
-					wallet.address,
+					address,
 					tokenValues,
 				);
 				setStatus("success");
@@ -43,7 +39,7 @@ export function useFaucetDrip() {
 				return null;
 			}
 		},
-		[wallets],
+		[address],
 	);
 
 	const reset = useCallback(() => {

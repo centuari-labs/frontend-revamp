@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useWriteContract, usePublicClient, useAccount } from "wagmi";
+import { useWriteContract, usePublicClient } from "wagmi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseUnits, erc20Abi } from "viem";
 import { treasuryAbi } from "@/../abis/treasury";
 import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { useWalletAddress } from "@/hooks/use-wallet-address";
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
 
@@ -29,7 +30,7 @@ interface DepositResult {
 }
 
 export function useDeposit() {
-  const { address } = useAccount();
+  const address = useWalletAddress();
   const publicClient = usePublicClient();
   const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();

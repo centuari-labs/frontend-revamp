@@ -30,7 +30,7 @@ export function TransactionSuccessDialog({
   description,
   primaryActionLabel,
   onPrimaryAction,
-  secondaryActionLabel = "Done",
+  secondaryActionLabel,
   onSecondaryAction,
 }: TransactionSuccessDialogProps) {
   const handlePrimary = () => {
@@ -70,22 +70,29 @@ export function TransactionSuccessDialog({
           </div>
         </DialogHeader>
         <DialogFooter className="flex flex-row items-center justify-center gap-2 px-6 pb-6">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 rounded-lg border-white/10 bg-white/5 text-white hover:bg-white/10"
-            onClick={handleSecondary}
-          >
-            {secondaryActionLabel}
-          </Button>
-          <CentuariButton
-            type="button"
-            variant="primary"
-            className="flex-1"
-            onClick={handlePrimary}
-          >
-            {primaryActionLabel}
-          </CentuariButton>
+          {
+            secondaryActionLabel &&
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 rounded-lg border-white/10 bg-white/5 text-white hover:bg-white/10"
+              onClick={handleSecondary}
+            >
+              {secondaryActionLabel}
+            </Button>
+          }
+          {
+            primaryActionLabel &&
+            <CentuariButton
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={handlePrimary}
+            >
+              {primaryActionLabel}
+            </CentuariButton>
+
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>

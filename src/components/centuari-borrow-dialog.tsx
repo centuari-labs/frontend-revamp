@@ -853,9 +853,9 @@ export function CentuariBorrowDialog({
             ? `You have successfully borrowed ${successAmount} ${token_symbol} from the vault.`
             : `Your ${token_symbol} borrow has been completed successfully.`
         }
-        primaryActionLabel="Start Earning"
-        onPrimaryAction={() => router.push("/")}
-        secondaryActionLabel="Done"
+        primaryActionLabel="Done"
+        onPrimaryAction={() => setShowSuccessDialog(false)}
+        // secondaryActionLabel="Done"
       />
     </>
   );

@@ -949,9 +949,9 @@ export function CentuariLendDialog({
             ? `You have successfully lent ${successAmount} ${token_symbol} to the vault.`
             : `Your ${token_symbol} lend has been completed successfully.`
         }
-        primaryActionLabel="Start Earning"
-        onPrimaryAction={() => router.push("/")}
-        secondaryActionLabel="Done"
+        primaryActionLabel="Done"
+        onPrimaryAction={() => setShowSuccessDialog(false)}
+        // secondaryActionLabel="Done"
       />
     </>
   );
