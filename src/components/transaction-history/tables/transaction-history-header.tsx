@@ -13,7 +13,7 @@ export function TransactionHistoryHeader() {
       </Link>
       <Button
         variant={"primary"}
-        className="w-full md:w-auto flex items-center gap-2"
+        className="w-full md:w-auto flex items-center gap-2 hidden"
       >
         <Download className="w-4 h-4" />
         Download .CSV

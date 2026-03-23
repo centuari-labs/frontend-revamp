@@ -16,6 +16,7 @@ import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { useTokenPrice } from "@/contexts/price-context";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -46,6 +47,7 @@ export function useBorrowForm({
     "usdt"
   );
   const { portfolio, totalDebt, collateralStatus, collateralTokenList, userHealthFactor, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, isLoading: portfolioLoading } = useBorrowPortfolioData();
+  const borrowTokenPrice = useTokenPrice(assetIdProp) ?? 0;
 
   const limitAmountInput = useAmountInput();
   const marketAmountInput = useAmountInput();
@@ -122,6 +124,7 @@ export function useBorrowForm({
     apiCollateralUsd,
     apiSettledDebtUsd,
     apiWeightedLtv,
+    borrowTokenPrice,
   );
   const marketCalcs = useBorrowCalculations(
     portfolio,
@@ -132,6 +135,7 @@ export function useBorrowForm({
     apiCollateralUsd,
     apiSettledDebtUsd,
     apiWeightedLtv,
+    borrowTokenPrice,
   );
 
   useEffect(() => {

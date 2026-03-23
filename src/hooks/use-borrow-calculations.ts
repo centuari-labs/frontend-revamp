@@ -16,14 +16,16 @@ export function useBorrowCalculations(
   apiCollateralUsd = 0,
   apiSettledDebtUsd = 0,
   apiWeightedLtv = 0,
+  borrowTokenPrice = 0,
 ) {
   // Uses backend values (collateralUsd, settledDebtUsd, weightedLtv) from user-details API
-  // to match backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmount)
+  // to match backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmountUsd)
   const calculateHealthFactor = useCallback(
     (amt: number, collaterals: string[]): number => {
       if (amt <= 0 || collaterals.length === 0 || apiCollateralUsd <= 0) return 0;
 
-      const projectedDebt = apiSettledDebtUsd + amt;
+      const borrowAmountUsd = amt * borrowTokenPrice;
+      const projectedDebt = apiSettledDebtUsd + borrowAmountUsd;
       if (projectedDebt <= 0) return 0;
 
       const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
@@ -32,7 +34,7 @@ export function useBorrowCalculations(
       if (!Number.isFinite(healthFactor) || healthFactor < 0) return 0;
       return healthFactor;
     },
-    [apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv]
+    [apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, borrowTokenPrice]
   );
 
   const totalPortfolioValue = useMemo(

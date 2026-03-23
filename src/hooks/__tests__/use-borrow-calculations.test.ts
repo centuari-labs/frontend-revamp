@@ -23,14 +23,14 @@ describe("useBorrowCalculations", () => {
 
   it("returns 0 health factor when amount is 0", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 0, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 0, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactor).toBe(0);
   });
 
   it("returns 0 health factor when no collaterals", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactor).toBe(0);
   });
@@ -39,7 +39,7 @@ describe("useBorrowCalculations", () => {
     // HF = ((apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv) / (apiSettledDebtUsd + borrowAmount)
     // HF = ((165000 - 0) * 0.75) / (0 + 10000) = 123750 / 10000 = 12.375
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 10000, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 10000, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactor).toBeCloseTo(12.375, 2);
   });
@@ -47,7 +47,7 @@ describe("useBorrowCalculations", () => {
   it("does not cap health factor", () => {
     // HF = ((165000 - 0) * 0.75) / (0 + 1) = 123750
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactor).toBeGreaterThan(10);
   });
@@ -56,7 +56,7 @@ describe("useBorrowCalculations", () => {
     const settledDebt = 20000;
     // HF = ((165000 - 20000) * 0.75) / (20000 + 5000) = 108750 / 25000 = 4.35
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 20000, 5000, ["btc"], tokenList, apiCollateralUsd, settledDebt, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 20000, 5000, ["btc"], tokenList, apiCollateralUsd, settledDebt, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactor).toBeCloseTo(4.35, 2);
   });
@@ -65,21 +65,21 @@ describe("useBorrowCalculations", () => {
     // BTC: 100k, LTV 0.75; ETH: 50k, LTV 0.80
     // Weighted: (100000*0.75 + 50000*0.80) / 150000 = 115000/150000 = 0.7667
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, ["btc", "eth"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, ["btc", "eth"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.weightedLTV).toBeCloseTo(0.7667, 3);
   });
 
   it("returns default LTV when no collaterals selected", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.weightedLTV).toBe(0.85);
   });
 
   it("calculates totalPortfolioValue from selected collaterals", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, ["btc", "usdc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, ["btc", "usdc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.totalPortfolioValue).toBe(115000);
   });
@@ -88,7 +88,7 @@ describe("useBorrowCalculations", () => {
     // BTC: 100k, LTV 0.75 => max borrow = 75000
     // existing debt = 20000 => available = 55000
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 20000, 5000, ["btc"], tokenList, apiCollateralUsd, 20000, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 20000, 5000, ["btc"], tokenList, apiCollateralUsd, 20000, apiWeightedLtv, 1),
     );
     expect(result.current.availableQuota).toBe(55000);
   });
@@ -96,14 +96,14 @@ describe("useBorrowCalculations", () => {
   it("availableQuota is never negative", () => {
     // debt exceeds capacity
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 200000, 1000, ["usdc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 200000, 1000, ["usdc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.availableQuota).toBeGreaterThanOrEqual(0);
   });
 
   it("healthFactorPercentage is a number between 0 and 100", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 10000, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 10000, ["btc"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.healthFactorPercentage).toBeGreaterThanOrEqual(0);
     expect(result.current.healthFactorPercentage).toBeLessThanOrEqual(100);
@@ -111,7 +111,7 @@ describe("useBorrowCalculations", () => {
 
   it("getLiquidationThresholdDisplay returns weighted LT", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, ["btc", "eth"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, ["btc", "eth"], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     // BTC: 100k, LT=0.80; ETH: 50k, LT=0.82
     // Weighted: (100000*0.80 + 50000*0.82) / 150000 = 121000/150000 = 0.8067
@@ -124,7 +124,7 @@ describe("useBorrowCalculations", () => {
 
   it("getLiquidationThresholdDisplay returns 0 when no collaterals", () => {
     const { result } = renderHook(() =>
-      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv),
+      useBorrowCalculations(portfolio, 0, 1000, [], tokenList, apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, 1),
     );
     expect(result.current.getLiquidationThresholdDisplay([], 0)).toBe(0);
   });

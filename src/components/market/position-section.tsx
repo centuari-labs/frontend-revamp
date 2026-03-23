@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CentuariTable } from "@/components/centuari-table";
 import { useOpenOrders } from "@/hooks/use-open-orders";
 import { useMyPositions } from "@/hooks/use-my-positions";
 import { useTransactionHistory } from "@/hooks/use-transaction-history";
@@ -30,27 +29,28 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
-import { formatCurrency, formatNumber, parseMaturity } from "@/lib/utils";
+import { formatNumber, parseMaturity } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
-import { Badge } from "../ui/badge";
-import { CentuariBadge } from "../centuari-badge";
 import { CentuariTypography } from "../centuari-typography";
-import type { LendPosition, BorrowPosition, Position, OrderType, PositionStatus } from "@/types/positions";
-
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: "Open",
-  FILLED: "Filled",
-  CANCELLED: "Cancelled",
-  PARTIALLY_FILLED: "Partially Filled",
-};
+import type { Position, OrderType, PositionStatus } from "@/types/positions";
+import {
+  createDateColumn,
+  createLoanTokenColumn,
+  createSideColumn,
+  createOrderTypeColumn,
+  createAmountColumn,
+  createFeeColumn,
+  createTargetAprColumn,
+  createAprColumn,
+  createMaturityColumn,
+  createStatusColumn,
+} from "@/components/tables/shared-columns";
 
 function PositionCard({
   position,
@@ -137,174 +137,6 @@ function PositionCard({
           <Trash2 size={16} className="text-red-400" />
         </button>
       </div>
-    </div>
-  );
-}
-
-// Lend Position Table Component
-function LendPositionTable({
-  positions,
-  onDelete,
-  onUpdate
-}: {
-  positions: LendPosition[];
-  onDelete: (id: string) => void;
-  onUpdate?: (updatedPosition: LendPosition) => void;
-}) {
-  const columns: ColumnDef<LendPosition>[] = useMemo(() => [
-    {
-      accessorKey: "tokenSymbol",
-      header: "Token",
-      cell: ({ row }) => {
-        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
-        return (
-          <div className="flex items-center gap-2">
-            <Image
-              src={logoPath}
-              alt={row.original.tokenSymbol}
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span>{row.original.tokenSymbol}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
-    },
-    {
-      accessorKey: "apr",
-      header: "Target APR %",
-      cell: ({ row }) => {
-        const aprValue = row.original.apr ?? 0;
-        const aprPercent = (aprValue * 100).toFixed(1);
-        return aprPercent.replace(".", ",") + "%";
-      },
-    },
-    {
-      accessorKey: "maturity",
-      header: "Maturity",
-      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created at",
-      cell: ({ row }) => row.original.createdAt,
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const statusColors = {
-          OPEN: "bg-blue-500",
-          FILLED: "bg-green-500",
-          CANCELLED: "bg-red-500",
-          PARTIALLY_FILLED: "bg-yellow-500",
-        };
-        return (
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-            <span>{STATUS_LABELS[status] ?? status}</span>
-          </div>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2">
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos as LendPosition) : undefined}
-              trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
-              }
-            />
-            <button
-              onClick={() => onDelete(row.original.id)}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={14} className="text-red-400" />
-            </button>
-          </div>
-        );
-      },
-    },
-  ], [onDelete, onUpdate]);
-
-  const table = useReactTable({
-    data: positions,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
-  return (
-    <div className="overflow-hidden rounded-md">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-white/5">
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="text-sm text-muted-foreground font-normal"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="border border-transparent py-1"
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
     </div>
   );
 }
@@ -397,104 +229,17 @@ function UnifiedPositionTable({
   emptyMessage?: string;
   activeTab?: string;
 }) {
-  // Shared column definitions
-  const colDate = {
-    accessorKey: "createdAt" as const,
-    header: "Date",
-    cell: ({ row }: { row: { original: Position } }) => row.original.createdAt || "-",
-  };
-  const colToken = {
-    accessorKey: "tokenSymbol" as const,
-    header: "Loan Token",
-    cell: ({ row }: { row: { original: Position } }) => {
-      const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
-      return (
-        <div className="flex items-center gap-2">
-          <Image src={logoPath} alt={row.original.tokenSymbol} width={24} height={24} className="rounded-full" />
-          <span>{row.original.tokenSymbol}</span>
-        </div>
-      );
-    },
-  };
-  const colSide = {
-    accessorKey: "type" as const,
-    header: "Side",
-    cell: ({ row }: { row: { original: Position } }) => {
-      const type = row.original.type;
-      return <CentuariBadge variant={type === "lend" ? "primary" : "warning"} className="capitalize">{type === "lend" ? "Lend" : "Borrow"}</CentuariBadge>;
-    },
-  };
-  const colOrderType = {
-    accessorKey: "orderType" as const,
-    header: "Order Type",
-    cell: ({ row }: { row: { original: Position } }) => (
-      <span className="capitalize">{row.original.orderType ?? "-"}</span>
-    ),
-  };
-  const colAmount = {
-    accessorKey: "amount" as const,
-    header: "Amount",
-    cell: ({ row }: { row: { original: Position } }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
-  };
-  const colFilledAmount = {
-    accessorKey: "filledQuantity" as const,
-    header: "Filled Amount",
-    cell: ({ row }: { row: { original: Position } }) => {
-      if (!row.original.filledQuantity) return "-";
-      return `${formatNumber(row.original.filledQuantity, 2)} ${row.original.tokenSymbol}`;
-    },
-  };
-  const colFee = {
-    accessorKey: "fee" as const,
-    header: "Fee",
-    cell: ({ row }: { row: { original: Position } }) => {
-      if (!row.original.fee) return "-";
-      return `${formatNumber(row.original.fee, 2)} ${row.original.tokenSymbol}`;
-    },
-  };
-  const colTargetApr = {
-    accessorKey: "apr" as const,
-    header: "Target APR %",
-    cell: ({ row }: { row: { original: Position } }) => {
-      if (row.original.orderType === "market") return "-";
-      const aprValue = row.original.apr ?? 0;
-      const aprPercent = (aprValue * 100).toFixed(1);
-      return aprPercent.replace(".", ",") + "%";
-    },
-  };
-  const colApr = {
-    id: "aprPercent" as const,
-    header: "APR %",
-    cell: ({ row }: { row: { original: Position } }) => {
-      const aprValue = row.original.apr ?? 0;
-      const aprPercent = (aprValue * 100).toFixed(1);
-      return aprPercent.replace(".", ",") + "%";
-    },
-  };
-  const colMaturity = {
-    accessorKey: "maturity" as const,
-    header: "Maturity",
-    cell: ({ row }: { row: { original: Position } }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
-  };
-  const colStatus = {
-    id: "status" as const,
-    header: "Status",
-    cell: ({ row }: { row: { original: Position } }) => {
-      const status = row.original.status;
-      const statusColors: Record<string, string> = {
-        OPEN: "bg-blue-500",
-        FILLED: "bg-green-500",
-        CANCELLED: "bg-red-500",
-        PARTIALLY_FILLED: "bg-yellow-500",
-      };
-      return (
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-          <span>{STATUS_LABELS[status] ?? status}</span>
-        </div>
-      );
-    },
-  };
+  // Shared column definitions from shared-columns.tsx
+  const colDate = createDateColumn<Position>();
+  const colToken = createLoanTokenColumn<Position>();
+  const colSide = createSideColumn<Position>();
+  const colOrderType = createOrderTypeColumn<Position>();
+  const colAmount = createAmountColumn<Position>();
+  const colTargetApr = createTargetAprColumn<Position>();
+  const colApr = createAprColumn<Position>();
+  const colMaturity = createMaturityColumn<Position>();
+  const colStatus = createStatusColumn<Position>();
+  const colFee = createFeeColumn<Position>();
   const colActions = {
     id: "actions" as const,
     header: "Actions",
@@ -597,202 +342,6 @@ function UnifiedPositionTable({
                 className="h-24 text-center"
               >
                 {emptyMessage}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
-// Borrow Position Table Component
-function BorrowPositionTable({
-  positions,
-  onDelete,
-  onUpdate
-}: {
-  positions: BorrowPosition[];
-  onDelete: (id: string) => void;
-  onUpdate?: (updatedPosition: BorrowPosition) => void;
-}) {
-  const columns: ColumnDef<BorrowPosition>[] = useMemo(() => [
-    {
-      accessorKey: "collateralToken",
-      header: "Collateral Token",
-      cell: ({ row }) => {
-        const collateralTokens = row.original.collateralTokens || [];
-        const firstCollateral = collateralTokens[0];
-        if (!firstCollateral) return "-";
-
-        const logoPath = getTokenLogo(firstCollateral);
-        const tokenName = firstCollateral.toUpperCase().slice(0, 4);
-
-        return (
-          <div className="flex items-center gap-2">
-            <Image
-              src={logoPath}
-              alt={tokenName}
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span>{tokenName}</span>
-            {collateralTokens.length > 1 && (
-              <span className="text-xs text-muted-foreground">+{collateralTokens.length - 1}</span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "tokenSymbol",
-      header: "Loan Token",
-      cell: ({ row }) => {
-        const logoPath = getTokenLogo(row.original.tokenValue, row.original.assetImg);
-        return (
-          <div className="flex items-center gap-2">
-            <Image
-              src={logoPath}
-              alt={row.original.tokenSymbol}
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span>{row.original.tokenSymbol}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "amount",
-      header: "Amount Borrowed",
-      cell: ({ row }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
-    },
-    {
-      accessorKey: "apr",
-      header: "Target APR %",
-      cell: ({ row }) => {
-        const aprValue = row.original.apr ?? 0;
-        const aprPercent = (aprValue * 100).toFixed(1);
-        return aprPercent.replace(".", ",") + "%";
-      },
-    },
-    {
-      accessorKey: "maturity",
-      header: "Maturity",
-      cell: ({ row }) => formatMaturityTimestamp(normalizeMaturity(row.original.maturity)),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Created at",
-      cell: ({ row }) => row.original.createdAt,
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const statusColors = {
-          OPEN: "bg-blue-500",
-          FILLED: "bg-green-500",
-          CANCELLED: "bg-red-500",
-          PARTIALLY_FILLED: "bg-yellow-500",
-        };
-        return (
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 ${statusColors[status]} rounded-full`}></span>
-            <span>{STATUS_LABELS[status] ?? status}</span>
-          </div>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2">
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos as BorrowPosition) : undefined}
-              trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
-              }
-            />
-            <button
-              onClick={() => onDelete(row.original.id)}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={14} className="text-red-400" />
-            </button>
-          </div>
-        );
-      },
-    },
-  ], [onDelete, onUpdate]);
-
-  const table = useReactTable({
-    data: positions,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
-  return (
-    <div className="overflow-hidden rounded-md">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-white/5">
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="text-sm text-muted-foreground font-normal"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="border border-transparent py-1"
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="h-24 text-center"
-              >
-                No results.
               </TableCell>
             </TableRow>
           )}

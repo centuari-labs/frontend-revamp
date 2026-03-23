@@ -108,8 +108,8 @@ export function CentuariRepayDialog({
   const newTotalDebtUsd = Math.max(0, totalDebtUsd - repayAmountUsd);
 
   const newHealthFactor = newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
-    ? Math.min(((collateralUsd - newTotalDebtUsd) * weightedLtv) / newTotalDebtUsd, 10)
-    : collateralUsd > 0 ? 999 : 0;
+    ? ((collateralUsd - totalDebtUsd) * weightedLtv) / newTotalDebtUsd
+    : collateralUsd > 0 ? Infinity : 0;
 
   const currentHealthFactorPercentage =
     currentHealthFactor <= 0 || isNaN(currentHealthFactor)

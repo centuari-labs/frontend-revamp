@@ -35,6 +35,7 @@ import {
   getHealthFactorPercentage,
   getHealthFactorDisplayStatus,
 } from "@/lib/utils";
+import { useTokenPrice } from "@/contexts/price-context";
 import {
   getDefaultMaturityTimestamp,
   formatMaturityTimestamp,
@@ -80,6 +81,7 @@ export function CentuariBorrowDialog({
   const { submitMarket, isPending } = useSubmitBorrow();
   const { getToken } = useAuthToken();
   const queryClient = useQueryClient();
+  const borrowTokenPrice = useTokenPrice(asset_id) ?? 0;
 
   // Bridge hook: reads localStorage in mock mode, API in real mode
   const {
@@ -180,7 +182,8 @@ export function CentuariBorrowDialog({
     apiCollateralUsd > 0 &&
     selectedCollaterals.length > 0
       ? (() => {
-          const projectedDebt = apiSettledDebtUsd + numericAmount;
+          const borrowAmountUsd = numericAmount * borrowTokenPrice;
+          const projectedDebt = apiSettledDebtUsd + borrowAmountUsd;
           if (projectedDebt <= 0) return 0;
           const numerator =
             (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
