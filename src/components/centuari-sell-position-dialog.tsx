@@ -23,8 +23,6 @@ import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
   formatCurrency,
-  calculateFutureAmount,
-  calculateProfitAmount,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
@@ -43,12 +41,10 @@ interface CentuariSellPositionDialogProps {
   token_symbol: string;
   maturityDate?: number;
   startDate?: number; // Position start as Unix timestamp (ms); when set, profit uses elapsed time
-  availableFunds: number; // Available funds in USD (current position value)
-  moneyDeposited: number; // Original deposit amount
-  profitReturn: number; // Profit amount
+  availableFunds: number; // Available funds in token (shares)
   apr?: number; // APR as percentage (e.g., 10 for 10%)
   totalShares?: number; // Total shares from backend
-  baseAmount?: number; // Base amount from backend
+  baseAmount?: number; // Base amount (original deposit) from backend
   onSuccess?: () => void; // Callback after successful sell
   /** When set, parent shows success dialog; use when row may unmount (e.g. full withdraw). */
   onWithdrawComplete?: (message: WithdrawSuccessMessage) => void;
@@ -62,8 +58,6 @@ export function CentuariSellPositionDialog({
   maturityDate,
   startDate,
   availableFunds,
-  moneyDeposited,
-  profitReturn,
   apr = 10, // Default 10% APR
   totalShares,
   baseAmount,
@@ -95,25 +89,24 @@ export function CentuariSellPositionDialog({
 
   // Calculate derived values
   const numericAmount = parseFloat(withdrawAmount) || 0;
+  const withdrawAmountClamped = numericAmount > 0 ? numericAmount : 0;
 
-  // Withdraw Shares = the input amount
-  const withdrawShares = numericAmount > 0 ? numericAmount : 0;
-
-  // Calculate profit: exact formula using proportional base amount
   const normalizedMaturity = normalizeMaturity(maturityDate);
-  const calculatedProfitReturn =
-    availableFunds > 0
-      ? withdrawShares * (1 - moneyDeposited / availableFunds)
-      : 0;
 
-  // Principal portion = Total Withdraw - Profit Return
-  const principalPart = withdrawShares - calculatedProfitReturn;
+  // Principal portion in token: proportional to baseAmount/totalShares
+  const principalPart =
+    totalShares && totalShares > 0
+      ? withdrawAmountClamped * ((baseAmount ?? totalShares) / totalShares)
+      : withdrawAmountClamped;
 
-  // Total amount after withdraw is the input amount
-  const totalAfterWithdraw = withdrawShares;
+  // Profit portion (≈ USD for stablecoins)
+  const calculatedProfitReturn = withdrawAmountClamped - principalPart;
+
+  // Total after withdraw (≈ USD for stablecoins)
+  const totalAfterWithdraw = withdrawAmountClamped;
 
   // Format available funds with currency and token suffix
-  const formattedAvailableFunds = `${formatNumberWithSeparator(availableFunds)} ${token_symbol}`;
+  const formattedAvailableFunds = `${formatNumberWithSeparator(Number(availableFunds.toFixed(3)))} ${token_symbol}`;
 
   // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,7 +280,7 @@ export function CentuariSellPositionDialog({
                         className="flex items-center gap-1 text-muted-foreground"
                         variant="b3"
                       >
-                        Available Shares{" "}
+                        Available Amount{" "}
                         <CentuariTooltip message="The total amount available for withdrawal including your deposit and profit.">
                           <Info size={16} />
                         </CentuariTooltip>
@@ -315,7 +308,13 @@ export function CentuariSellPositionDialog({
                       size="large"
                       placeholder="Enter amount"
                       leftIcon={
-                        <span className="text-muted-foreground">$</span>
+                        <Image
+                          src={token_image}
+                          alt={token_symbol}
+                          width={16}
+                          height={16}
+                          className="w-4 h-4"
+                        />
                       }
                       rightIcon={
                         <Button
@@ -333,8 +332,8 @@ export function CentuariSellPositionDialog({
 
                     <div className="bg-white/5 py-3 px-4 text-sm rounded-xl border border-white/5 flex flex-col gap-2 mt-5">
                       <div className="flex items-center justify-between border-b border-dashed pb-2">
-                        <p className="text-muted-foreground">Withdraw shares</p>
-                        <p>{formatNumberWithSeparator(principalPart)} {token_symbol}</p>
+                        <p className="text-muted-foreground">Withdraw amount</p>
+                        <p>{formatNumberWithSeparator(withdrawAmountClamped)} {token_symbol}</p>
                       </div>
                       <div className="flex items-center justify-between border-b border-dashed pb-2">
                         <p className="flex text-muted-foreground items-center gap-2">
@@ -343,7 +342,7 @@ export function CentuariSellPositionDialog({
                             <Info size={12} />
                           </CentuariTooltip>
                         </p>
-                        <p>{formatCurrency(calculatedProfitReturn)}</p>
+                        <span className="text-primary-blue-base font-semibold">{formatCurrency(calculatedProfitReturn)}</span>
                       </div>
                       <div className="flex items-center justify-between pt-2">
                         <p className="flex text-muted-foreground items-center gap-2">

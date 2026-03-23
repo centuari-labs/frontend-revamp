@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useWriteContract, usePublicClient } from "wagmi";
+import { usePublicClient } from "wagmi";
+import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { parseUnits, erc20Abi } from "viem";
+import {
+  parseUnits,
+  erc20Abi,
+  createWalletClient,
+  custom,
+  type WalletClient,
+} from "viem";
 import { treasuryAbi } from "@/../abis/treasury";
 import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
 
@@ -31,9 +39,9 @@ interface DepositResult {
 
 export function useDeposit() {
   const address = useWalletAddress();
+  const { wallets } = useWallets();
   const publicClient = usePublicClient();
   const queryClient = useQueryClient();
-  const { writeContractAsync } = useWriteContract();
   const { getToken } = useAuthToken();
   const [status, setStatus] = useState<DepositStatus>("idle");
 
@@ -66,6 +74,28 @@ export function useDeposit() {
         const tokenAddress = token.tokenAddress as `0x${string}`;
         const depositAmount = parseUnits(amount, decimals);
 
+        // Get the wallet client directly from Privy's wallet provider.
+        // This bypasses wagmi's active connector, ensuring we always sign
+        // with the correct wallet (login wallet for external, embedded for social).
+        const targetWallet =
+          wallets.find(
+            (w) =>
+              w.walletClientType !== "privy" &&
+              w.address.toLowerCase() === address.toLowerCase(),
+          ) ??
+          wallets.find((w) => w.walletClientType === "privy");
+
+        if (!targetWallet) {
+          throw new Error("No wallet available for signing");
+        }
+
+        const provider = await targetWallet.getEthereumProvider();
+        const walletClient: WalletClient = createWalletClient({
+          account: address,
+          chain: ACTIVE_CHAIN,
+          transport: custom(provider),
+        });
+
         // Step 1: Check current allowance
         const currentAllowance = await publicClient.readContract({
           address: tokenAddress,
@@ -84,7 +114,9 @@ export function useDeposit() {
         // Step 2: Approve if needed (exact amount)
         if (currentAllowance < depositAmount) {
           setStatus("approving");
-          const approveTxHash = await writeContractAsync({
+          const approveTxHash = await walletClient.writeContract({
+            account: address,
+            chain: ACTIVE_CHAIN,
             address: tokenAddress,
             abi: erc20Abi,
             functionName: "approve",
@@ -113,7 +145,9 @@ export function useDeposit() {
         const latestMaxPriorityFeePerGas =
           (latestBaseFee * BigInt(25)) / BigInt(100);
 
-        const depositTxHash = await writeContractAsync({
+        const depositTxHash = await walletClient.writeContract({
+          account: address,
+          chain: ACTIVE_CHAIN,
           address: TREASURY_ADDRESS,
           abi: treasuryAbi,
           functionName: "deposit",

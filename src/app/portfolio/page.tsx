@@ -131,6 +131,7 @@ export default function PortfolioPage() {
       apr: Number(p.apr) || 0,
       type: p.side.toLowerCase() as "lend" | "borrow",
       tokenValue: p.symbol.toLowerCase(),
+      tokenSymbol: p.symbol,
       maturity: p.maturity ? p.maturity * 1000 : undefined,
     }));
   }, [apiPositions]);

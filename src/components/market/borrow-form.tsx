@@ -191,6 +191,7 @@ export function BorrowForm({
                   amountToPay={form.limitAmountToPay}
                   futureAmount={form.limitFutureAmount}
                   futureLabel="In the future you'll pay"
+                  tokenSymbol={form.selectedToken.label}
                 />
               </ScrollArea>
               <Button
@@ -357,6 +358,7 @@ export function BorrowForm({
                   amountToPay={form.marketAmountToPay}
                   futureAmount={form.marketFutureAmount}
                   futureLabel="In the future you'll pay"
+                  tokenSymbol={form.selectedToken.label}
                 />
               </ScrollArea>
               <Button

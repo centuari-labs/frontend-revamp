@@ -11,6 +11,7 @@ export function useFaucetDrip() {
 	const address = useWalletAddress();
 	const [status, setStatus] = useState<FaucetDripStatus>("idle");
 	const [error, setError] = useState<string | null>(null);
+	const [transactionHash, setTransactionHash] = useState<string | null>(null);
 
 	const requestDrip = useCallback(
 		async (tokenValues: string[]): Promise<FaucetResponse | null> => {
@@ -18,6 +19,7 @@ export function useFaucetDrip() {
 
 			setStatus("loading");
 			setError(null);
+			setTransactionHash(null);
 
 			try {
 				if (!address) {
@@ -30,6 +32,7 @@ export function useFaucetDrip() {
 					tokenValues,
 				);
 				setStatus("success");
+				setTransactionHash(result.transactionHash);
 				return result;
 			} catch (err) {
 				const message =
@@ -45,7 +48,8 @@ export function useFaucetDrip() {
 	const reset = useCallback(() => {
 		setStatus("idle");
 		setError(null);
+		setTransactionHash(null);
 	}, []);
 
-	return { requestDrip, status, error, reset };
+	return { requestDrip, status, error, transactionHash, reset };
 }

@@ -10,6 +10,7 @@ import { FaucetErrorPage } from "./faucet-error-page";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import type { DepositToken } from "@/lib/api";
 
 const DRIP_AMOUNTS: Record<string, number> = {
@@ -30,7 +31,7 @@ export function FaucetTokenGrid() {
   const { authenticated } = usePrivy();
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  const { requestDrip, status, error, reset } = useFaucetDrip();
+  const { requestDrip, status, error, transactionHash, reset } = useFaucetDrip();
   const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
 
   const tokens = useMemo(() => {
@@ -79,7 +80,7 @@ export function FaucetTokenGrid() {
   // Auto-reset success/error status after 3 seconds
   useEffect(() => {
     if (status === "success" || status === "error") {
-      const timer = setTimeout(reset, 3000);
+      const timer = setTimeout(reset, 8000);
       return () => clearTimeout(timer);
     }
   }, [status, reset]);
@@ -122,12 +123,23 @@ export function FaucetTokenGrid() {
                     <CentuariTypography variant="title-md" className="font-semibold">
                       Tokens Dripped Successfully
                     </CentuariTypography>
-                    <CentuariTypography
-                      variant="subheading-sm"
-                      className="text-emerald-300/60 uppercase tracking-wider"
-                    >
-                      Check your wallet
-                    </CentuariTypography>
+                    {transactionHash ? (
+                      <a
+                        href={`${ACTIVE_CHAIN.blockExplorers.default.url}/tx/${transactionHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-300/80 hover:text-emerald-200 text-xs uppercase tracking-wider underline underline-offset-2 transition-colors"
+                      >
+                        Tx: {transactionHash.slice(0, 6)}...{transactionHash.slice(-4)}
+                      </a>
+                    ) : (
+                      <CentuariTypography
+                        variant="subheading-sm"
+                        className="text-emerald-300/60 uppercase tracking-wider"
+                      >
+                        Check your wallet
+                      </CentuariTypography>
+                    )}
                   </>
                 ) : status === "error" ? (
                   <>

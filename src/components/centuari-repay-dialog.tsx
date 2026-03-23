@@ -41,7 +41,6 @@ interface CentuariRepayDialogProps {
   token_image: string;
   token_name: string;
   token_symbol: string;
-  amountBorrowed: number; // Amount borrowed in USD
   apr: number; // APR as number (e.g., 4.9 for 4.9%)
   maturityDate?: number;
   onSuccess?: () => void; // Callback after successful repay
@@ -52,7 +51,6 @@ export function CentuariRepayDialog({
   token_image,
   token_name,
   token_symbol,
-  amountBorrowed,
   apr,
   maturityDate,
   onSuccess,
@@ -81,13 +79,17 @@ export function CentuariRepayDialog({
   const userAsset = userDetails?.assets.find(a => a.symbol.toLowerCase() === tokenValue);
   const availableBalance = userAsset?.availableBalance ?? 0;
 
-  // Derive token price from user-details data
+  // Look up debt amount from user details (already in token units)
+  const userDebt = userDetails?.debts.find(d => {
+    const debtAsset = userDetails?.assets.find(a => a.assetId === d.assetId);
+    return debtAsset?.symbol.toLowerCase() === tokenValue;
+  });
+  const debtAmount = userDebt?.debtAmount ?? 0;
+
+  // Derive token price for health factor calculation
   const tokenPrice = userAsset && userAsset.availableBalance > 0 && userAsset.availableBalanceUsd > 0
     ? userAsset.availableBalanceUsd / userAsset.availableBalance
     : 0;
-
-  // Convert amountBorrowed from USD to token units
-  const amountBorrowedInToken = tokenPrice > 0 ? amountBorrowed / tokenPrice : 0;
 
   // Health factor from backend
   const currentHealthFactor = userDetails?.healthFactor ?? 0;
@@ -121,8 +123,8 @@ export function CentuariRepayDialog({
   // Format APR with comma as decimal separator
   const formattedAPR = apr.toFixed(1).replace(".", ",") + "%";
 
-  // Format amount borrowed in token units
-  const formattedAmountBorrowed = formatNumberWithSeparator(amountBorrowedInToken.toFixed(3));
+  // Format debt amount in token units
+  const formattedAmountBorrowed = formatNumberWithSeparator(debtAmount.toFixed(3));
 
   // Format available balance in token units
   const formattedAvailableBalance = formatNumberWithSeparator(availableBalance.toFixed(3));
@@ -137,7 +139,7 @@ export function CentuariRepayDialog({
 
   // Handle Max button - set amount to minimum of available balance or amount borrowed (both in token units)
   const handleMaxClick = () => {
-    const maxAmount = Math.min(availableBalance, amountBorrowedInToken).toString();
+    const maxAmount = Math.min(availableBalance, debtAmount).toString();
     const formattedMax = formatNumberWithSeparator(maxAmount);
     setRepayAmount(maxAmount);
     setDisplayAmount(formattedMax);
@@ -177,7 +179,7 @@ export function CentuariRepayDialog({
     if (numericAmount <= 0) return;
 
     if (futureAmount > availableBalance) return;
-    if (numericAmount > amountBorrowedInToken) return;
+    if (numericAmount > debtAmount) return;
 
     try {
       await getAccessToken();
@@ -413,7 +415,7 @@ export function CentuariRepayDialog({
                   isPending ||
                   numericAmount <= 0 ||
                   futureAmount > availableBalance ||
-                  numericAmount > amountBorrowedInToken
+                  numericAmount > debtAmount
                 }
               >
                 {isPending ? (

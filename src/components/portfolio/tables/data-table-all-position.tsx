@@ -16,7 +16,7 @@ import {
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { calculateFutureAmount, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,7 @@ export type PositionProps = {
   apr: number;
   type?: "lend" | "borrow";
   tokenValue?: string;
+  tokenSymbol?: string;
   timestamp?: number;
   collateralTokens?: string[];
   maturity?: number;
@@ -125,8 +126,6 @@ export function DataTableAllPosition({
         cell: ({ row }) => {
           const amount = row.original.amount;
           const formatted = new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
             minimumFractionDigits: 3,
             maximumFractionDigits: 3,
           }).format(amount);
@@ -137,6 +136,7 @@ export function DataTableAllPosition({
             <div className="font-medium text-white">
               {main}
               <span className="text-white/40">.{cents}</span>
+              {" "}{row.original.tokenSymbol ?? row.original.assetName}
             </div>
           );
         },
@@ -180,8 +180,7 @@ export function DataTableAllPosition({
                   positionId={position.id}
                   token_image={position.assetImg}
                   token_name={position.assetName}
-                  token_symbol={position.assetName}
-                  amountBorrowed={position.amount}
+                  token_symbol={position.tokenSymbol ?? position.assetName}
                   apr={position.apr ?? 0}
                   maturityDate={normalizeMaturity(position.maturity)}
                   onSuccess={() => {
@@ -195,16 +194,10 @@ export function DataTableAllPosition({
                   positionId={position.id}
                   token_image={position.assetImg}
                   token_name={position.assetName}
-                  token_symbol={position.assetName}
+                  token_symbol={position.tokenSymbol ?? position.assetName}
                   maturityDate={normalizeMaturity(position.maturity)}
                   startDate={position.timestamp}
-                  availableFunds={calculateFutureAmount(
-                    position.amount,
-                    position.apr ?? 0,
-                    normalizeMaturity(position.maturity)
-                  )}
-                  moneyDeposited={position.amount * 0.9}
-                  profitReturn={position.amount * 0.1}
+                  availableFunds={position.shares ?? 0}
                   apr={position.apr ?? 0}
                   totalShares={position.shares}
                   baseAmount={position.baseAmount}

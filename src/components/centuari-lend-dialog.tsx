@@ -25,6 +25,7 @@ import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import {
   formatNumberWithSeparator,
   parseNumberFromSeparator,
+  formatNumber,
   formatCurrency,
   calculateFutureAmount,
   truncateBalance,
@@ -608,8 +609,8 @@ export function CentuariLendDialog({
                         <div className="flex items-center gap-1">
                           <p>
                             {numericAmount > 0
-                              ? formatCurrency(transactionFee)
-                              : "$0.00"}
+                              ? `${formatNumber(transactionFee)} ${token_symbol}`
+                              : `0.000 ${token_symbol}`}
                           </p>
                         </div>
                       </div>
@@ -620,8 +621,8 @@ export function CentuariLendDialog({
                         <div className="flex items-center gap-1">
                           <p>
                             {numericAmount > 0
-                              ? formatCurrency(amountToPay)
-                              : "$0.00"}
+                              ? `${formatNumber(amountToPay)} ${token_symbol}`
+                              : `0.000 ${token_symbol}`}
                           </p>
                         </div>
                       </div>
@@ -634,8 +635,8 @@ export function CentuariLendDialog({
                         </div>
                         <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
                           {numericAmount > 0
-                            ? formatCurrency(futureAmount - transactionFee)
-                            : "$0.00"}
+                            ? `${formatNumber(futureAmount - transactionFee)} ${token_symbol}`
+                            : `0.000 ${token_symbol}`}
                         </span>
                       </div>
                     </div>

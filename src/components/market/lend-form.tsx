@@ -134,6 +134,7 @@ export function LendForm({
                 transactionFee={form.limitTransactionFee}
                 amountToPay={form.limitAmountToPay}
                 futureAmount={form.limitFutureAmount}
+                tokenSymbol={form.selectedToken.label}
               />
             </ScrollArea>
             <Button
@@ -258,6 +259,7 @@ export function LendForm({
                 transactionFee={form.marketTransactionFee}
                 amountToPay={form.marketAmountToPay}
                 futureAmount={form.marketFutureAmount}
+                tokenSymbol={form.selectedToken.label}
               />
             </ScrollArea>
             <Button

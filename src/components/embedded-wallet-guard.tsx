@@ -60,8 +60,11 @@ export function EmbeddedWalletGuard({
 		});
 	}, [ready, authenticated, wallets, createWallet, hasExternalWallet]);
 
-	// Set the active wallet in wagmi so hooks like useAccount/useBalance
-	// return the correct address and writeContractAsync signs with the right wallet.
+	// Set embedded wallet as default active wallet.
+	// For external wallet users, we intentionally do NOT set the login wallet
+	// as active here — that would trigger a MetaMask connect popup on every
+	// page refresh. Instead, the login wallet is activated on-demand when
+	// the user initiates a transaction (see useDeposit).
 	useEffect(() => {
 		if (!ready || !authenticated || wallets.length === 0) return;
 
@@ -69,35 +72,10 @@ export function EmbeddedWalletGuard({
 			(w) => w.walletClientType === "privy",
 		);
 
-		if (hasExternalWallet && linkedWalletAddress) {
-			// Find the wallet used during SIWE login
-			const loginWallet = wallets.find(
-				(w) =>
-					w.walletClientType !== "privy" &&
-					w.address.toLowerCase() === linkedWalletAddress,
-			);
-
-			if (loginWallet && loginWallet.walletClientType !== "metamask") {
-				// Non-MetaMask external wallets (Rabby, Phantom, etc.) auto-approve
-				// reconnection, so it's safe to set them as active.
-				setActiveWallet(loginWallet);
-			} else if (embeddedWallet) {
-				// MetaMask or unknown: fall back to embedded wallet to avoid
-				// triggering a MetaMask connect popup on every page refresh.
-				setActiveWallet(embeddedWallet);
-			}
-		} else if (embeddedWallet) {
-			// Social login users: always set embedded wallet as active
+		if (embeddedWallet) {
 			setActiveWallet(embeddedWallet);
 		}
-	}, [
-		ready,
-		authenticated,
-		wallets,
-		hasExternalWallet,
-		linkedWalletAddress,
-		setActiveWallet,
-	]);
+	}, [ready, authenticated, wallets, setActiveWallet]);
 
 	// Reset when user logs out
 	useEffect(() => {

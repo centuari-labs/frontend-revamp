@@ -37,7 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
@@ -105,7 +105,7 @@ function PositionCard({
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Amount</span>
-          <span className="text-white font-semibold">{formatCurrency(position.amount)}</span>
+          <span className="text-white font-semibold">{formatNumber(position.amount, 2)} {position.tokenSymbol}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Target APR %</span>
@@ -174,7 +174,7 @@ function LendPositionTable({
     {
       accessorKey: "amount",
       header: "Amount",
-      cell: ({ row }) => formatCurrency(row.original.amount, 2),
+      cell: ({ row }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
     },
     {
       accessorKey: "apr",
@@ -434,14 +434,14 @@ function UnifiedPositionTable({
   const colAmount = {
     accessorKey: "amount" as const,
     header: "Amount",
-    cell: ({ row }: { row: { original: Position } }) => `${formatCurrency(row.original.amount, 2)} ${row.original.tokenSymbol}`,
+    cell: ({ row }: { row: { original: Position } }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
   };
   const colFilledAmount = {
     accessorKey: "filledQuantity" as const,
     header: "Filled Amount",
     cell: ({ row }: { row: { original: Position } }) => {
       if (!row.original.filledQuantity) return "-";
-      return `${formatCurrency(row.original.filledQuantity, 2)} ${row.original.tokenSymbol}`;
+      return `${formatNumber(row.original.filledQuantity, 2)} ${row.original.tokenSymbol}`;
     },
   };
   const colFee = {
@@ -449,7 +449,7 @@ function UnifiedPositionTable({
     header: "Fee",
     cell: ({ row }: { row: { original: Position } }) => {
       if (!row.original.fee) return "-";
-      return `${formatCurrency(row.original.fee, 2)} ${row.original.tokenSymbol}`;
+      return `${formatNumber(row.original.fee, 2)} ${row.original.tokenSymbol}`;
     },
   };
   const colTargetApr = {
@@ -667,7 +667,7 @@ function BorrowPositionTable({
     {
       accessorKey: "amount",
       header: "Amount Borrowed",
-      cell: ({ row }) => formatCurrency(row.original.amount, 2),
+      cell: ({ row }) => `${formatNumber(row.original.amount, 2)} ${row.original.tokenSymbol}`,
     },
     {
       accessorKey: "apr",
@@ -902,7 +902,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       (pos) =>
         pos.tokenSymbol?.toLowerCase().includes(query) ||
         pos.assetName?.toLowerCase().includes(query) ||
-        formatCurrency(pos.amount).toLowerCase().includes(query)
+        formatNumber(pos.amount).toLowerCase().includes(query)
     );
   }, [tabPositions, searchQuery]);
 

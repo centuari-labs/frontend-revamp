@@ -44,6 +44,24 @@ export function formatCurrency(value: number, decimalPlaces: number = 3) {
   return formatted;
 }
 
+/**
+ * Format a number with thousand separators but no currency symbol.
+ * Use this when displaying amounts alongside a token symbol (e.g. "1,000.00 USDC").
+ */
+export function formatNumber(value: number, decimalPlaces: number = 3): string {
+  if (value > 0 && value < 0.01) {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 6,
+    }).format(value);
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+  }).format(value);
+}
+
 export function formatCompactCurrency(
   value: number,
   decimalPlaces: number = 2,

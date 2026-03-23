@@ -1,6 +1,6 @@
 import { CentuariTooltip } from "@/components/centuari-tooltip";
 import { Info } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 
 interface TransactionSummaryProps {
   transactionFee?: number;
@@ -9,6 +9,7 @@ interface TransactionSummaryProps {
   items?: Array<{ label: string; value: string }>;
   futurePayment?: string;
   futureLabel?: string;
+  tokenSymbol?: string;
 }
 
 export function TransactionSummary({
@@ -18,20 +19,23 @@ export function TransactionSummary({
   items,
   futurePayment,
   futureLabel = "In the future you'll get",
+  tokenSymbol,
 }: TransactionSummaryProps) {
+  const suffix = tokenSymbol ? ` ${tokenSymbol}` : "";
+
   // Use provided values or fallback to items prop (for backward compatibility)
   const displayItems = items || [
     {
       label: "Transaction Fee",
-      value: transactionFee !== undefined ? formatCurrency(transactionFee) : "$0.00",
+      value: (transactionFee !== undefined ? formatNumber(transactionFee) : "0.000") + suffix,
     },
     {
       label: "Amount to Pay Now",
-      value: amountToPay !== undefined ? formatCurrency(amountToPay) : "$0.00",
+      value: (amountToPay !== undefined ? formatNumber(amountToPay) : "0.000") + suffix,
     },
   ];
 
-  const displayFuturePayment = futurePayment || (futureAmount !== undefined ? formatCurrency(futureAmount) : "$0.00");
+  const displayFuturePayment = futurePayment || ((futureAmount !== undefined ? formatNumber(futureAmount) : "0.000") + suffix);
 
   return (
     <>

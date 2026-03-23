@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -71,6 +71,17 @@ const CustomDot = (props: {
 export function CentuariChart({ data }: CentuariChartProps) {
   const chartData = data && data.length > 0 ? data : fallbackData;
 
+  const { yDomain, yTicks } = useMemo(() => {
+    const maxValue = Math.max(...chartData.map((d) => d.value));
+    const upperBound = Math.max(10, Math.ceil((maxValue * 1.5) / 10) * 10);
+    const tickCount = 6;
+    const step = upperBound / (tickCount - 1);
+    const ticks = Array.from({ length: tickCount }, (_, i) =>
+      Math.round(i * step),
+    );
+    return { yDomain: [0, upperBound] as [number, number], yTicks: ticks };
+  }, [chartData]);
+
   return (
     <div className="h-96 mt-10">
       <ResponsiveContainer width="100%" height="100%">
@@ -105,8 +116,8 @@ export function CentuariChart({ data }: CentuariChartProps) {
             tick={{ fill: "#FFFFFF", fontSize: 12 }}
             tickLine={false}
             axisLine={false}
-            domain={[0, 100]}
-            ticks={[0, 20, 40, 60, 80, 100]}
+            domain={yDomain}
+            ticks={yTicks}
           />
 
           <Tooltip
