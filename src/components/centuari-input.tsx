@@ -15,6 +15,7 @@ interface CentuariInputProps
   size: "small" | "medium" | "large";
   leftIcon?: React.ReactNode | string;
   rightIcon?: React.ReactNode | string;
+  suffix?: React.ReactNode;
   balanceText?: React.ReactNode;
   helperText?: string;
   containerClassName?: string;
@@ -49,6 +50,7 @@ export function CentuariInput({
   id,
   leftIcon,
   rightIcon,
+  suffix,
   balanceText,
   helperText,
   containerClassName,
@@ -101,13 +103,19 @@ export function CentuariInput({
             (readOnly || disabled) && "cursor-not-allowed opacity-50",
             inputVariants({ variant, size }),
             leftIcon && "pl-10",
-            rightIcon && "pr-10",
+            (rightIcon || suffix) && "pr-10",
+            rightIcon && suffix && "pr-24",
             className
           )}
           {...props}
         />
-        {rightIcon && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+        {(suffix || rightIcon) && (
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1.5 pr-3">
+            {suffix && (
+              <span className="text-muted-foreground text-sm select-none">
+                {suffix}
+              </span>
+            )}
             {rightIcon}
           </div>
         )}

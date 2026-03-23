@@ -37,7 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, parseMaturity } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
 import { Badge } from "../ui/badge";
@@ -843,9 +843,9 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       type: o.side.toLowerCase() as "lend" | "borrow",
       tokenValue: o.asset.symbol.toLowerCase(),
       tokenSymbol: o.asset.symbol,
-      maturity: new Date(o.maturity).getTime(),
+      maturity: o.maturity ? parseMaturity(o.maturity) : 0,
       status: o.status as PositionStatus,
-      createdAt: new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date(o.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
       timestamp: Date.now(),
       orderType: o.orderType?.toLowerCase() as OrderType | undefined,
       filledQuantity: o.filledQuantity ? Number(o.filledQuantity) : undefined,
@@ -881,9 +881,9 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       type: t.side.toLowerCase() as "lend" | "borrow",
       tokenValue: t.asset.symbol.toLowerCase(),
       tokenSymbol: t.asset.symbol,
-      maturity: new Date(t.maturity).getTime(),
+      maturity: t.maturity ? parseMaturity(t.maturity) : 0,
       status: "FILLED" as const,
-      createdAt: new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date(t.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
       timestamp: Date.now(),
       fee: t.fee ? Number(t.fee) : undefined,
       ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),

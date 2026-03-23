@@ -478,6 +478,7 @@ export function CentuariBorrowDialog({
                             className="w-4 h-4"
                           />
                         }
+                        suffix={token_symbol}
                         // rightIcon={
                         //   <Button
                         //     variant="link"

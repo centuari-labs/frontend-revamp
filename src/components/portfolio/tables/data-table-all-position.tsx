@@ -122,21 +122,24 @@ export function DataTableAllPosition({
       },
       {
         accessorKey: "amount",
-        header: "Amount",
+        header: "Amount in USD",
         cell: ({ row }) => {
           const amount = row.original.amount;
           const formatted = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
             minimumFractionDigits: 3,
             maximumFractionDigits: 3,
           }).format(amount);
 
-          const [main, cents] = formatted.split(".");
+          const dotIndex = formatted.indexOf(".");
+          const main = formatted.slice(0, dotIndex);
+          const cents = formatted.slice(dotIndex + 1);
 
           return (
             <div className="font-medium text-white">
               {main}
               <span className="text-white/40">.{cents}</span>
-              {" "}{row.original.tokenSymbol ?? row.original.assetName}
             </div>
           );
         },

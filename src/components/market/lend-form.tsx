@@ -81,6 +81,7 @@ export function LendForm({
                     className="w-4 h-4"
                   />
                 }
+                suffix={form.selectedToken.label}
                 rightIcon={
                   <Button
                     variant="link"
@@ -185,6 +186,7 @@ export function LendForm({
                     className="w-4 h-4"
                   />
                 }
+                suffix={form.selectedToken.label}
                 rightIcon={
                   <Button
                     variant="link"

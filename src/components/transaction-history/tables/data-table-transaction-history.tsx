@@ -21,15 +21,21 @@ import { CentuariBadge } from "@/components/centuari-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactionHistory } from "@/hooks/use-transaction-history";
 import type { TransactionHistoryItem } from "@/lib/api";
-import { format } from "date-fns";
+import { parseMaturity } from "@/lib/utils";
 
 const columns: ColumnDef<TransactionHistoryItem>[] = [
 	{
 		accessorKey: "createdAt",
 		header: "Date",
 		cell: ({ row }) => {
-			const date = new Date(row.original.createdAt);
-			return format(date, "MMM d, yyyy HH:mm:ss");
+			return new Date(row.original.createdAt).toLocaleString("en-US", {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: true,
+			});
 		},
 	},
 	{
@@ -99,9 +105,13 @@ const columns: ColumnDef<TransactionHistoryItem>[] = [
 		header: "Maturity",
 		cell: ({ row }) => {
 			if (!row.original.maturity) return "-";
-			const date = new Date(row.original.maturity);
-			if (Number.isNaN(date.getTime())) return "-";
-			return format(date, "MMM d, yyyy");
+			const ms = parseMaturity(row.original.maturity);
+			if (Number.isNaN(ms)) return "-";
+			return new Date(ms).toLocaleDateString("en-US", {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			});
 		},
 	},
 ];

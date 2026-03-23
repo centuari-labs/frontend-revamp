@@ -444,6 +444,26 @@ export function formatDate(date: Date | number): string {
 }
 
 /**
+ * Parse a maturity value that may be an ISO string, epoch seconds number/string, or epoch ms.
+ * Values below ~2100 in seconds (4_102_444_800) are treated as epoch seconds and multiplied by 1000.
+ * @returns milliseconds suitable for new Date()
+ * @example
+ * parseMaturity(1743465600)      // epoch seconds → ms
+ * parseMaturity("1743465600")    // numeric string → ms
+ * parseMaturity("2026-04-01T00:00:00.000Z") // ISO string → ms
+ */
+export function parseMaturity(value: string | number): number {
+  if (typeof value === "number") {
+    return value < 4_102_444_800 ? value * 1000 : value;
+  }
+  const num = Number(value);
+  if (!Number.isNaN(num) && /^\d+$/.test(value)) {
+    return num < 4_102_444_800 ? num * 1000 : num;
+  }
+  return new Date(value).getTime();
+}
+
+/**
  * Parse date string from "DD MMM YYYY" format (e.g., "1 Feb 2026") to Date object
  * @param dateString - Date string in "DD MMM YYYY" format
  * @returns Date object or null if invalid
