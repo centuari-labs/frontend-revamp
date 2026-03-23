@@ -107,9 +107,12 @@ export function CentuariRepayDialog({
   const repayAmountUsd = numericAmount * tokenPrice;
   const newTotalDebtUsd = Math.max(0, totalDebtUsd - repayAmountUsd);
 
-  const newHealthFactor = newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
-    ? ((collateralUsd - totalDebtUsd) * weightedLtv) / newTotalDebtUsd
-    : collateralUsd > 0 ? Infinity : 0;
+  const isFullRepayment = numericAmount >= debtAmount && debtAmount > 0;
+  const newHealthFactor = isFullRepayment
+    ? Infinity
+    : newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
+      ? ((collateralUsd - totalDebtUsd) * weightedLtv) / newTotalDebtUsd
+      : collateralUsd > 0 ? Infinity : 0;
 
   const currentHealthFactorPercentage =
     currentHealthFactor <= 0 || isNaN(currentHealthFactor)
@@ -203,11 +206,13 @@ export function CentuariRepayDialog({
   };
 
   const healthFactorChange = newHealthFactor - currentHealthFactor;
-  const healthFactorChangeText = healthFactorChange > 0
-    ? `+${healthFactorChange.toFixed(2)}`
-    : healthFactorChange < 0
-      ? healthFactorChange.toFixed(2)
-      : "0.0";
+  const healthFactorChangeText = isFullRepayment
+    ? "Debt Free"
+    : healthFactorChange > 0
+      ? `+${healthFactorChange.toFixed(2)}`
+      : healthFactorChange < 0
+        ? healthFactorChange.toFixed(2)
+        : "0.0";
 
   return (
     <>
@@ -350,10 +355,18 @@ export function CentuariRepayDialog({
                         </div>
                         <div className="flex items-center justify-between border-t border-dashed pt-2 mt-1">
                           <p className="text-muted-foreground text-xs">
-                            Principal: {formatNumberWithSeparator(numericAmount.toFixed(3))} {token_symbol}
+                            Principal
                           </p>
                           <p className="text-muted-foreground text-xs">
-                            Interest: {formatNumberWithSeparator((futureAmount - numericAmount).toFixed(3))} {token_symbol}
+                            {formatNumberWithSeparator(numericAmount.toFixed(3))} {token_symbol}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-dashed pt-2 mt-1">
+                          <p className="text-muted-foreground text-xs">
+                            Interest
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatNumberWithSeparator((futureAmount - numericAmount).toFixed(3))} {token_symbol}
                           </p>
                         </div>
                       </div>
@@ -378,7 +391,9 @@ export function CentuariRepayDialog({
                           }
                         >
                           {numericAmount > 0
-                            ? `${healthFactorChangeText} - ${getHealthFactorDisplayStatus(newHealthFactor).status}`
+                            ? isFullRepayment
+                              ? "Debt Free"
+                              : `${healthFactorChangeText} - ${getHealthFactorDisplayStatus(newHealthFactor).status}`
                             : `${currentHealthFactor.toFixed(2)} - ${getHealthFactorDisplayStatus(currentHealthFactor).status}`}
                         </Badge>
                       </div>

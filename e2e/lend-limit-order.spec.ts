@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const TEST_WALLET = "0xcA2E021f8FEA9E3fb5F86A68A3158315404e6157";
+const TEST_WALLET = "0x63f799163222e9CfC4afbddE7a632599AE0F1298";
 const AUTH_HEADER = `Bearer DEV_TOKEN_${TEST_WALLET}`;
 
 test.describe("Lend Limit Order E2E", () => {
@@ -28,7 +28,7 @@ test.describe("Lend Limit Order E2E", () => {
 			headers: { Authorization: AUTH_HEADER },
 			data: {
 				assetId,
-				amount: "1000",
+				amount: "100",
 				marketIds: [marketId],
 				rate: 650,
 				autoRollover: true,
@@ -56,7 +56,7 @@ test.describe("Lend Limit Order E2E", () => {
 			headers: { Authorization: AUTH_HEADER },
 			data: {
 				assetId,
-				amount: "1000",
+				amount: "100",
 				marketIds: [marketId],
 				rate: 650,
 				autoRollover: true,
@@ -74,7 +74,7 @@ test.describe("Lend Limit Order E2E", () => {
 		// rate: 650 bps input → 6.5% in response
 		expect(order.rate).toBe(6.5);
 
-		expect(order.originalAmount).toBe("1000");
+		expect(order.originalAmount).toBe("100");
 		expect(order.autoRollover).toBe(true);
 		expect(order.walletAddress).toBe(TEST_WALLET);
 		expect(order.assetId).toBe(assetId);
