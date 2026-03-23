@@ -139,8 +139,8 @@ const columns: ColumnDef<OrderHistoryItem>[] = [
 		accessorKey: "maturity",
 		header: "Maturity",
 		cell: ({ row }) => {
-			if (!row.original.createdAt) return "-";
-			const date = new Date(row.original.createdAt);
+			if (!row.original.maturity) return "-";
+			const date = new Date(row.original.maturity);
 			if (Number.isNaN(date.getTime())) return "-";
 			return format(date, "MMM d, yyyy");
 		},
