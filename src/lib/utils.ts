@@ -537,10 +537,13 @@ export function calculateFutureAmount(
   const currentDate = new Date();
   const maturityDateObj = new Date(maturityTimestamp);
 
-  const days = calculateDaysDifference(currentDate, maturityDateObj);
+  // Match smart contract day-count convention: floor(days) - 1
+  const timeDiff = maturityDateObj.getTime() - currentDate.getTime();
+  const rawDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const days = rawDays > 0 ? rawDays - 1 : 0;
   if (days <= 0) return amount;
 
-  return Number((amount + (amount * (aprPercent / 100) / 365 * days)).toFixed(2));
+  return Number((amount + ((amount * (aprPercent / 100)) / 365) * days).toFixed(2));
 }
 
 /**

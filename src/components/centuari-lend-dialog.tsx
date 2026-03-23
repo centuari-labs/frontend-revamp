@@ -636,7 +636,7 @@ export function CentuariLendDialog({
                         </div>
                         <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
                           {numericAmount > 0
-                            ? `${formatNumber(futureAmount - transactionFee)} ${token_symbol}`
+                            ? `${formatNumber(futureAmount)} ${token_symbol}`
                             : `0.000 ${token_symbol}`}
                         </span>
                       </div>
