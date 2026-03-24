@@ -52,7 +52,7 @@ export type PositionProps = {
   collateralTokens?: string[];
   maturity?: number;
   assetId?: string;
-  marketId?: string;
+  marketId: string;
 };
 
 interface DataTableAllPositionProps {
@@ -180,7 +180,7 @@ export function DataTableAllPosition({
             <div className="flex items-center gap-4">
               {isBorrow ? (
                 <CentuariRepayDialog
-                  positionId={position.id}
+                  marketId={position.marketId}
                   token_image={position.assetImg}
                   token_name={position.assetName}
                   token_symbol={position.tokenSymbol ?? position.assetName}
@@ -196,7 +196,7 @@ export function DataTableAllPosition({
                 />
               ) : (
                 <CentuariSellPositionDialog
-                  positionId={position.id}
+                  positionId={position.marketId}
                   token_image={position.assetImg}
                   token_name={position.assetName}
                   token_symbol={position.tokenSymbol ?? position.assetName}

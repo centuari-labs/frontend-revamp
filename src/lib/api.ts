@@ -169,7 +169,7 @@ export function getLendBorrowAssets(
 
 export interface MyPositionItem {
 	id: string;
-	marketId?: string;
+	marketId: string;
 	symbol: string;
 	name: string;
 	shares: number;
@@ -557,13 +557,13 @@ export interface RepayResponse {
 }
 
 export function submitRepay(
-	positionId: string,
+	marketId: string,
 	amount: string,
 	token: string,
 ): Promise<RepayResponse> {
 	return apiClient<RepayResponse>("/portfolio/repay", {
 		method: "POST",
-		body: { positionId, amount },
+		body: { marketId, amount },
 		token,
 	});
 }
@@ -814,14 +814,14 @@ export interface WithdrawLendPositionResponse {
 }
 
 export function withdrawLendPosition(
-	positionId: string,
+	marketId: string,
 	token: string,
 ): Promise<WithdrawLendPositionResponse> {
 	return apiClient<WithdrawLendPositionResponse>(
 		"/portfolio/withdraw-lend-position",
 		{
 			method: "POST",
-			body: { positionId },
+			body: { marketId },
 			token,
 		},
 	);

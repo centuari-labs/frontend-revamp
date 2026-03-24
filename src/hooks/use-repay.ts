@@ -13,7 +13,7 @@ export function useRepay() {
     mutationFn: async (params: RepayBorrowParams) => {
       const token = await getToken();
       if (!token) throw new Error("Authentication required");
-      return submitRepay(params.positionId, String(params.amount), token);
+      return submitRepay(params.marketId, String(params.amount), token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });

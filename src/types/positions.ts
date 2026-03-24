@@ -105,13 +105,13 @@ export interface SubmitBorrowMarketParams {
 }
 
 export interface WithdrawLendParams {
-  positionId: string;
+  marketId: string;
   amount: number;
   tokenValue: string;
 }
 
 export interface RepayBorrowParams {
-  positionId: string;
+  marketId: string;
   amount: number;
   futureAmount: number;
   tokenValue: string;

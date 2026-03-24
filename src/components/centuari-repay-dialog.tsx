@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface CentuariRepayDialogProps {
-  positionId: string;
+  marketId: string;
   token_image: string;
   token_name: string;
   token_symbol: string;
@@ -46,7 +46,7 @@ interface CentuariRepayDialogProps {
 }
 
 export function CentuariRepayDialog({
-  positionId,
+  marketId,
   token_image,
   token_name,
   token_symbol,
@@ -104,10 +104,11 @@ export function CentuariRepayDialog({
   // Total debt from shares (includes accrued interest)
   const debt = shares ?? debtAmount;
 
-  // Proportional principal/interest breakdown
-  const principal = debt > 0 && baseAmount != null
-    ? numericAmount * (baseAmount / debt)
-    : numericAmount;
+  // Proportional principal/interest breakdown (clamped to prevent baseAmount > debt after partial repays)
+  const ratio = debt > 0 && baseAmount != null
+    ? Math.min(baseAmount / debt, 1)
+    : 1;
+  const principal = numericAmount * ratio;
   const interest = numericAmount - principal;
 
   // Calculate new health factor after repayment
@@ -198,7 +199,7 @@ export function CentuariRepayDialog({
       await getAccessToken();
 
       await repay({
-        positionId,
+        marketId,
         amount: numericAmount,
         futureAmount: numericAmount,
         tokenValue,
