@@ -46,23 +46,16 @@ export function WelcomeDialog({
             Welcome to Centuari
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm mt-2">
-            Welcome aboard you've just joined Centuari, the fixed-APR lending
-            protocol built for the next generation of DeFi. Your journey starts
-            here:
+            You can lend or borrow using the assets you already own, with rates
+            and terms set from the start.
           </DialogDescription>
           <ul className="ps-3 my-4 space-y-1 list-disc list-inside text-white text-sm">
-            <li>Earn stable yield by lending your assets to curated vaults.</li>
-            <li>
-              Borrow safely with transparent APR and live health tracking.
-            </li>
-            <li>
-              Climb the Leagues and earn Centuari Points to boost your Astral
-              Score every season.
-            </li>
+            <li>Earn fixed returns by lending your assets</li>
+            <li>Borrow with clear, predictable costs</li>
+            <li>Choose your rate and duration upfront</li>
           </ul>
           <p className="text-muted-foreground text-sm">
-            You now have your own vault within the Centuari network, your orbit
-            to earn, borrow, and grow your capital.
+            Everything is designed to help you plan with confidence.
           </p>
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
             <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />

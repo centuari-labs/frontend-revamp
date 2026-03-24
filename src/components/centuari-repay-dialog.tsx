@@ -405,7 +405,7 @@ export function CentuariRepayDialog({
                       <div className="mb-2 flex items-center justify-between">
                         <Label>
                           Changes in health factors{" "}
-                          <CentuariTooltip message="Your health factor indicates the safety of your borrowed position. A higher number means lower liquidation risk.">
+                          <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                             <Info size={16} />
                           </CentuariTooltip>
                         </Label>

@@ -42,7 +42,7 @@ export function CentuariAddDialog() {
               <div>
                 <Label className="mb-2 mt-4">
                   Health Factor{" "}
-                  <CentuariTooltip message="Your health factor indicates the safety of your borrowed position.">
+                  <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                     <InfoIcon size={16} />
                   </CentuariTooltip>
                   <Badge variant={"success"}>0.0 ~ Safe</Badge>

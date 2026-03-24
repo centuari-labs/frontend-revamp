@@ -42,3 +42,5 @@ yarn-error.log*
 next-env.d.tspackage-lock.json
 
 test-results
+
+playwright-report

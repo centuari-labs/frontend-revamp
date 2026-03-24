@@ -119,7 +119,7 @@ export function LendForm({
                   label={
                     <>
                       Auto Rollover
-                      <CentuariTooltip message="When enabled, your position will automatically renew at maturity.">
+                      <CentuariTooltip message="When enabled, your position will automatically renew with the best terms when it ends.">
                         <Info
                           size={16}
                           className="ml-1 inline-block text-muted-foreground"
