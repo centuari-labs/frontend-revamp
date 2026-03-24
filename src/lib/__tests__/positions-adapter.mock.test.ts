@@ -328,13 +328,13 @@ describe("deleteFilledPosition", () => {
 
 describe("withdrawLendPosition", () => {
   it("reduces position amount", async () => {
-    const pos = makeLendPosition({ id: "w1", amount: 1000 });
+    const pos = makeLendPosition({ id: "w1", marketId: "market-w1", amount: 1000 });
     const p1 = submitFilledLendPosition(pos, { amountInUsd: 1000, tokenValue: "usdc" });
     await advanceDelay();
     await p1;
 
     const p2 = withdrawLendPosition({
-      positionId: "w1",
+      marketId: "market-w1",
       amount: 400,
       tokenValue: "usdc",
     });
@@ -347,13 +347,13 @@ describe("withdrawLendPosition", () => {
   });
 
   it("removes position when amount below 0.01", async () => {
-    const pos = makeLendPosition({ id: "w2", amount: 5 });
+    const pos = makeLendPosition({ id: "w2", marketId: "market-w2", amount: 5 });
     const p1 = submitFilledLendPosition(pos, { amountInUsd: 5, tokenValue: "usdc" });
     await advanceDelay();
     await p1;
 
     const p2 = withdrawLendPosition({
-      positionId: "w2",
+      marketId: "market-w2",
       amount: 5,
       tokenValue: "usdc",
     });
@@ -365,13 +365,13 @@ describe("withdrawLendPosition", () => {
 
   it("increases portfolio balance", async () => {
     localStorage.setItem("centuari_portfolio", JSON.stringify({ usdc: 1000 }));
-    const pos = makeLendPosition({ id: "w3", amount: 500 });
+    const pos = makeLendPosition({ id: "w3", marketId: "market-w3", amount: 500 });
     const p1 = submitFilledLendPosition(pos, { amountInUsd: 500, tokenValue: "usdc" });
     await advanceDelay();
     await p1;
 
     const p2 = withdrawLendPosition({
-      positionId: "w3",
+      marketId: "market-w3",
       amount: 200,
       tokenValue: "usdc",
     });
@@ -387,13 +387,13 @@ describe("withdrawLendPosition", () => {
 
 describe("repayBorrowPosition", () => {
   it("reduces borrow amount", async () => {
-    const pos = makeBorrowPosition({ id: "r1", amount: 1000 });
+    const pos = makeBorrowPosition({ id: "r1", marketId: "market-r1", amount: 1000 });
     const p1 = submitFilledBorrowPosition(pos, { amount: 1000 });
     await advanceDelay();
     await p1;
 
     const p2 = repayBorrowPosition({
-      positionId: "r1",
+      marketId: "market-r1",
       amount: 300,
       futureAmount: 310,
       tokenValue: "usdc",
@@ -407,13 +407,13 @@ describe("repayBorrowPosition", () => {
   });
 
   it("removes position when amount below 0.01", async () => {
-    const pos = makeBorrowPosition({ id: "r2", amount: 10 });
+    const pos = makeBorrowPosition({ id: "r2", marketId: "market-r2", amount: 10 });
     const p1 = submitFilledBorrowPosition(pos, { amount: 10 });
     await advanceDelay();
     await p1;
 
     const p2 = repayBorrowPosition({
-      positionId: "r2",
+      marketId: "market-r2",
       amount: 10,
       futureAmount: 10.5,
       tokenValue: "usdc",
@@ -426,13 +426,13 @@ describe("repayBorrowPosition", () => {
 
   it("reduces total debt", async () => {
     localStorage.setItem("centuari_total_debt", "5000");
-    const pos = makeBorrowPosition({ id: "r3", amount: 1000 });
+    const pos = makeBorrowPosition({ id: "r3", marketId: "market-r3", amount: 1000 });
     const p1 = submitFilledBorrowPosition(pos, { amount: 1000 });
     await advanceDelay();
     await p1;
 
     const p2 = repayBorrowPosition({
-      positionId: "r3",
+      marketId: "market-r3",
       amount: 400,
       futureAmount: 420,
       tokenValue: "usdc",

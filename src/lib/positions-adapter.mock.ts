@@ -295,7 +295,7 @@ export async function withdrawLendPosition(params: WithdrawLendParams): Promise<
   const existing = getAllTransactions();
   const updated = existing
     .map((pos) => {
-      if (pos.id !== params.positionId || pos.type !== "lend") return pos;
+      if (pos.marketId !== params.marketId || pos.type !== "lend") return pos;
       const newAmount = Math.max(0, pos.amount - params.amount);
       if (newAmount < 0.01) return null;
       return { ...pos, amount: newAmount };
@@ -327,7 +327,7 @@ export async function repayBorrowPosition(params: RepayBorrowParams): Promise<vo
   const existing = getAllTransactions();
   const updated = existing
     .map((pos) => {
-      if (pos.id !== params.positionId || pos.type !== "borrow") return pos;
+      if (pos.marketId !== params.marketId || pos.type !== "borrow") return pos;
       const newAmount = Math.max(0, pos.amount - params.amount);
       if (newAmount < 0.01) return null;
       return { ...pos, amount: newAmount };
