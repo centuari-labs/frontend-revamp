@@ -172,8 +172,8 @@ export function CentuariBorrowDialog({
   // Calculate available quota = Max Borrow Capacity - Total Debt
   const availableQuota = maxBorrowCapacity - totalDebt;
 
-  // Calculate new total debt after this borrow (current debt + new borrow amount)
-  const newTotalDebt = totalDebt + numericAmount;
+  // Calculate new total debt after this borrow (current debt + new borrow amount in USD)
+  const newTotalDebt = totalDebt + numericAmount * borrowTokenPrice;
 
   // Health Factor — uses backend values (collateralUsd, settledDebtUsd, weightedLtv)
   // to match the backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmount)
@@ -244,7 +244,7 @@ export function CentuariBorrowDialog({
 
   // Handle Max button - set amount to available quota
   const handleMaxClick = () => {
-    const maxAmount = Math.max(0, availableQuota);
+    const maxAmount = borrowTokenPrice > 0 ? Math.max(0, availableQuota / borrowTokenPrice) : 0;
     // Format to preserve decimals if needed
     const maxAmountStr = maxAmount.toString();
     const formattedMax = formatNumberWithSeparator(maxAmountStr);
@@ -321,7 +321,7 @@ export function CentuariBorrowDialog({
 
   const handleBorrow = async () => {
     if (viewMode === "borrow") {
-      if (numericAmount <= 0 || numericAmount > availableQuota) return;
+      if (numericAmount <= 0 || numericAmount * borrowTokenPrice > availableQuota) return;
       if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
       if (healthFactor < 1.0) return;
 
@@ -823,7 +823,7 @@ export function CentuariBorrowDialog({
                   dataLoading ||
                   (viewMode === "borrow" &&
                     (numericAmount <= 0 ||
-                      numericAmount > availableQuota ||
+                      numericAmount * borrowTokenPrice > availableQuota ||
                       selectedCollaterals.length === 0 ||
                       totalPortfolioValue === 0 ||
                       healthFactor < 1.0))

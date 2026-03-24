@@ -168,7 +168,7 @@ export function BorrowForm({
                             <span className="text-white font-medium">
                               below{" "}
                               {formatCurrency(
-                                (form.totalDebt + form.limitNumericAmount) /
+                                (form.totalDebt + form.limitNumericAmount * form.borrowTokenPrice) /
                                   form.getLiquidationThresholdDisplay(
                                     form.limitSelectedCollaterals,
                                     form.limitTotalPortfolioValue
@@ -202,7 +202,7 @@ export function BorrowForm({
                 disabled={
                   form.isPending ||
                   form.limitNumericAmount <= 0 ||
-                  form.limitNumericAmount > form.limitAvailableQuota ||
+                  form.limitNumericAmount * form.borrowTokenPrice > form.limitAvailableQuota ||
                   form.limitSelectedCollaterals.length === 0 ||
                   form.limitTotalPortfolioValue === 0 ||
                   form.limitHealthFactor < 1.0 ||
@@ -336,7 +336,7 @@ export function BorrowForm({
                             <span className="text-white font-medium">
                               below{" "}
                               {formatCurrency(
-                                (form.totalDebt + form.marketNumericAmount) /
+                                (form.totalDebt + form.marketNumericAmount * form.borrowTokenPrice) /
                                   form.getLiquidationThresholdDisplay(
                                     form.marketSelectedCollaterals,
                                     form.marketTotalPortfolioValue
@@ -370,7 +370,7 @@ export function BorrowForm({
                 disabled={
                   form.isPending ||
                   form.marketNumericAmount <= 0 ||
-                  form.marketNumericAmount > form.marketAvailableQuota ||
+                  form.marketNumericAmount * form.borrowTokenPrice > form.marketAvailableQuota ||
                   form.marketSelectedCollaterals.length === 0 ||
                   form.marketTotalPortfolioValue === 0 ||
                   form.marketHealthFactor < 1.0 ||

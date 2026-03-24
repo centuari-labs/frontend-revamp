@@ -200,7 +200,7 @@ export function useBorrowForm({
       const numericAmount = parseFloat(limitAmountInput.amount) || 0;
 
       if (numericAmount <= 0 || isPending) return;
-      if (numericAmount > limitCalcs.availableQuota) return;
+      if (numericAmount * borrowTokenPrice > limitCalcs.availableQuota) return;
       if (limitSelectedCollaterals.length === 0) return;
       if (limitCalcs.totalPortfolioValue === 0) return;
       if (limitCalcs.healthFactor < 1.0) return;
@@ -267,7 +267,7 @@ export function useBorrowForm({
       const numericAmount = parseFloat(marketAmountInput.amount) || 0;
 
       if (numericAmount <= 0 || isPending) return;
-      if (numericAmount > marketCalcs.availableQuota) return;
+      if (numericAmount * borrowTokenPrice > marketCalcs.availableQuota) return;
       if (marketSelectedCollaterals.length === 0) return;
       if (marketCalcs.totalPortfolioValue === 0) return;
       if (marketCalcs.healthFactor < 1.0) return;
@@ -322,14 +322,14 @@ export function useBorrowForm({
   );
 
   const handleLimitMaxClick = useCallback(() => {
-    const maxAmount = Math.max(0, limitCalcs.availableQuota);
+    const maxAmount = borrowTokenPrice > 0 ? Math.max(0, limitCalcs.availableQuota / borrowTokenPrice) : 0;
     limitAmountInput.setMax(maxAmount);
-  }, [limitCalcs.availableQuota, limitAmountInput]);
+  }, [limitCalcs.availableQuota, limitAmountInput, borrowTokenPrice]);
 
   const handleMarketMaxClick = useCallback(() => {
-    const maxAmount = Math.max(0, marketCalcs.availableQuota);
+    const maxAmount = borrowTokenPrice > 0 ? Math.max(0, marketCalcs.availableQuota / borrowTokenPrice) : 0;
     marketAmountInput.setMax(maxAmount);
-  }, [marketCalcs.availableQuota, marketAmountInput]);
+  }, [marketCalcs.availableQuota, marketAmountInput, borrowTokenPrice]);
 
   return {
     selectedToken,
@@ -384,5 +384,6 @@ export function useBorrowForm({
     successTokenSymbol,
     isPending,
     availableMaturities,
+    borrowTokenPrice,
   };
 }
