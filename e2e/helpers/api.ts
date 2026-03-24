@@ -189,11 +189,11 @@ export async function submitRepay(
 export async function submitWithdrawLendPosition(
 	request: APIRequestContext,
 	authHeader: string,
-	positionId: string,
+	marketId: string,
 ) {
 	const res = await request.post("/portfolio/withdraw-lend-position", {
 		headers: { Authorization: authHeader },
-		data: { positionId },
+		data: { marketId },
 	});
 	return { status: res.status(), body: await res.json() };
 }

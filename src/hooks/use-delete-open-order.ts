@@ -15,6 +15,7 @@ export function useDeleteOpenOrder() {
       return cancelOrder(orderId, token);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["open-orders"] });
       queryClient.invalidateQueries({ queryKey: ["my-positions"] });
       queryClient.invalidateQueries({ queryKey: ["my-assets"] });
       queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });

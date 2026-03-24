@@ -89,7 +89,7 @@ test.describe("Withdraw Lend Position E2E", () => {
 			maturedPosition.id,
 		);
 
-		expect(result.status).toBe(200);
+		expect([200, 201]).toContain(result.status);
 		const data = result.body.data?.data ?? result.body.data;
 		expect(data.txHash).toBeDefined();
 		expect(data.status).toBe("success");

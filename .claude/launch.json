@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "playwright-report",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "playwright", "show-report", "--host", "0.0.0.0"],
+      "port": 9323
+    }
+  ]
+}
