@@ -22,19 +22,16 @@ import { Badge } from "./ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   formatNumberWithSeparator,
-  parseNumberFromSeparator,
-  formatCurrency,
-  calculateFutureAmount,
   getHealthFactorPercentage,
   handleNumberInputChange,
   getHealthFactorDisplayStatus,
 } from "@/lib/utils";
-import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { useUserDetailsContext } from "@/contexts/user-details-context";
 import { useRepay } from "@/hooks/use-repay";
 import HealthFactor from "./centuari-health-factor";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface CentuariRepayDialogProps {
   positionId: string;
@@ -43,6 +40,8 @@ interface CentuariRepayDialogProps {
   token_symbol: string;
   apr: number; // APR as number (e.g., 4.9 for 4.9%)
   maturityDate?: number;
+  shares?: number; // Debt from position shares
+  baseAmount?: number; // Original borrowed amount
   onSuccess?: () => void; // Callback after successful repay
 }
 
@@ -53,6 +52,8 @@ export function CentuariRepayDialog({
   token_symbol,
   apr,
   maturityDate,
+  shares,
+  baseAmount,
   onSuccess,
 }: CentuariRepayDialogProps) {
   const reactId = useId();
@@ -100,14 +101,20 @@ export function CentuariRepayDialog({
   // Calculate derived values
   const numericAmount = parseFloat(repayAmount) || 0;
 
-  const normalizedMaturity = normalizeMaturity(maturityDate);
-  const futureAmount = calculateFutureAmount(numericAmount, apr, normalizedMaturity);
+  // Total debt from shares (includes accrued interest)
+  const debt = shares ?? debtAmount;
+
+  // Proportional principal/interest breakdown
+  const principal = debt > 0 && baseAmount != null
+    ? numericAmount * (baseAmount / debt)
+    : numericAmount;
+  const interest = numericAmount - principal;
 
   // Calculate new health factor after repayment
   const repayAmountUsd = numericAmount * tokenPrice;
   const newTotalDebtUsd = Math.max(0, totalDebtUsd - repayAmountUsd);
 
-  const isFullRepayment = numericAmount >= debtAmount && debtAmount > 0;
+  const isFullRepayment = numericAmount >= debt && debt > 0;
   const newHealthFactor = isFullRepayment
     ? Infinity
     : newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
@@ -126,8 +133,11 @@ export function CentuariRepayDialog({
   // Format APR with comma as decimal separator
   const formattedAPR = apr.toFixed(1).replace(".", ",") + "%";
 
-  // Format debt amount in token units
-  const formattedAmountBorrowed = formatNumberWithSeparator(debtAmount.toFixed(3));
+  // Format debt from shares
+  const formattedDebt = shares != null ? formatNumberWithSeparator(shares.toFixed(3)) : formatNumberWithSeparator(debtAmount.toFixed(3));
+
+  // Format original borrowed amount
+  const formattedAmountBorrowed = baseAmount != null ? formatNumberWithSeparator(baseAmount.toFixed(3)) : formatNumberWithSeparator(debtAmount.toFixed(3));
 
   // Format available balance in token units
   const formattedAvailableBalance = formatNumberWithSeparator(availableBalance.toFixed(3));
@@ -140,9 +150,9 @@ export function CentuariRepayDialog({
     });
   };
 
-  // Handle Max button - set amount to minimum of available balance or amount borrowed (both in token units)
+  // Handle Max button - set amount to minimum of available balance or total debt (both in token units)
   const handleMaxClick = () => {
-    const maxAmount = Math.min(availableBalance, debtAmount).toString();
+    const maxAmount = Math.min(availableBalance, debt).toString();
     const formattedMax = formatNumberWithSeparator(maxAmount);
     setRepayAmount(maxAmount);
     setDisplayAmount(formattedMax);
@@ -181,8 +191,8 @@ export function CentuariRepayDialog({
   const handleRepay = async () => {
     if (numericAmount <= 0) return;
 
-    if (futureAmount > availableBalance) return;
-    if (numericAmount > debtAmount) return;
+    if (numericAmount > availableBalance) return;
+    if (numericAmount > debt) return;
 
     try {
       await getAccessToken();
@@ -190,18 +200,22 @@ export function CentuariRepayDialog({
       await repay({
         positionId,
         amount: numericAmount,
-        futureAmount,
+        futureAmount: numericAmount,
         tokenValue,
       });
 
-      setSuccessAmount(formatNumberWithSeparator(futureAmount));
+      setSuccessAmount(formatNumberWithSeparator(numericAmount.toFixed(3)));
       setRepayAmount("");
       setDisplayAmount("");
       setIsDialogOpen(false);
       setShowSuccessDialog(true);
       onSuccess?.();
     } catch (error) {
-      console.error("Transaction failed:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Repay failed. Please try again.";
+      toast.error(message);
     }
   };
 
@@ -272,8 +286,22 @@ export function CentuariRepayDialog({
                         className="flex items-center gap-1 text-muted-foreground"
                         variant="b3"
                       >
+                        Debt{" "}
+                        <CentuariTooltip message="The total debt including accrued interest, calculated from your position shares.">
+                          <Info size={16} />
+                        </CentuariTooltip>
+                      </CentuariTypography>
+                      <CentuariTypography variant="h5" className="text-center">
+                        {formattedDebt} {token_symbol}
+                      </CentuariTypography>
+                    </div>
+                    <div>
+                      <CentuariTypography
+                        className="flex items-center gap-1 text-muted-foreground"
+                        variant="b3"
+                      >
                         Amount borrowed{" "}
-                        <CentuariTooltip message="The total amount you have borrowed.">
+                        <CentuariTooltip message="The original amount you borrowed.">
                           <Info size={16} />
                         </CentuariTooltip>
                       </CentuariTypography>
@@ -339,18 +367,18 @@ export function CentuariRepayDialog({
                       You can repay partially or fully
                     </p>
 
-                    {/* Future Amount Section */}
+                    {/* Repay Amount Breakdown */}
                     {numericAmount > 0 && (
                       <div className="bg-white/5 py-3 px-4 text-sm rounded-xl border border-white/5 flex flex-col gap-2 mt-5">
                         <div className="flex items-center justify-between">
                           <p className="flex text-muted-foreground items-center gap-2">
                             Amount to repay{" "}
-                            <CentuariTooltip message="The amount you will repay including interest calculated until maturity date.">
+                            <CentuariTooltip message="The total amount that will be deducted from your available balance.">
                               <Info size={12} />
                             </CentuariTooltip>
                           </p>
                           <span className="text-transparent font-semibold bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-                            {formatNumberWithSeparator(futureAmount.toFixed(3))} {token_symbol}
+                            {formatNumberWithSeparator(numericAmount.toFixed(3))} {token_symbol}
                           </span>
                         </div>
                         <div className="flex items-center justify-between border-t border-dashed pt-2 mt-1">
@@ -358,7 +386,7 @@ export function CentuariRepayDialog({
                             Principal
                           </p>
                           <p className="text-muted-foreground text-xs">
-                            {formatNumberWithSeparator(numericAmount.toFixed(3))} {token_symbol}
+                            {formatNumberWithSeparator(principal.toFixed(3))} {token_symbol}
                           </p>
                         </div>
                         <div className="flex items-center justify-between border-t border-dashed pt-2 mt-1">
@@ -366,7 +394,7 @@ export function CentuariRepayDialog({
                             Interest
                           </p>
                           <p className="text-muted-foreground text-xs">
-                            {formatNumberWithSeparator((futureAmount - numericAmount).toFixed(3))} {token_symbol}
+                            {formatNumberWithSeparator(interest.toFixed(3))} {token_symbol}
                           </p>
                         </div>
                       </div>
@@ -429,8 +457,8 @@ export function CentuariRepayDialog({
                 disabled={
                   isPending ||
                   numericAmount <= 0 ||
-                  futureAmount > availableBalance ||
-                  numericAmount > debtAmount
+                  numericAmount > availableBalance ||
+                  numericAmount > debt
                 }
               >
                 {isPending ? (

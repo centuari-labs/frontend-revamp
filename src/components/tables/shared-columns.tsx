@@ -25,6 +25,7 @@ export interface OrderTableRow {
 	filledQuantity?: string | number | null;
 	maturity?: string | number | null;
 	status?: string;
+	cancelReason?: "USER_CANCELLED" | "IOC" | null;
 	// API shape (OpenOrderItem, OrderHistoryItem, TransactionHistoryItem)
 	asset?: { symbol: string; imageUrl?: string | null };
 	// Position shape (mapped from API)
@@ -255,6 +256,15 @@ export function createMaturityColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	};
 }
 
+function getStatusLabel(row: OrderTableRow): string {
+	const status = row.status;
+	if (!status) return "-";
+	if (status === "CANCELLED" && row.cancelReason === "IOC") {
+		return "Cancelled (IOC)";
+	}
+	return STATUS_LABELS[status] ?? status.toLowerCase().replace("_", " ");
+}
+
 export function createStatusColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	return {
 		id: "status",
@@ -267,7 +277,7 @@ export function createStatusColumn<T extends OrderTableRow>(): ColumnDef<T> {
 					<span
 						className={`w-2 h-2 ${STATUS_DOT_COLORS[status] ?? "bg-gray-500"} rounded-full`}
 					/>
-					<span>{STATUS_LABELS[status] ?? status.toLowerCase().replace("_", " ")}</span>
+					<span>{getStatusLabel(row.original)}</span>
 				</div>
 			);
 		},

@@ -44,7 +44,7 @@ export const CentuariTokenCard = ({
   const rates = {
     borrowAPR: `${borrow_rate}%`,
     lendAPR: `${lend_rate}%`,
-    collateralFactor: `${collateral_factor}%`,
+    collateralFactor: `${Math.ceil(collateral_factor)}%`,
   };
 
   const [vaultTotal] = useState(() => randomIntInRange(50000, 500000));

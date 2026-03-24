@@ -197,3 +197,340 @@ export async function submitWithdrawLendPosition(
 	});
 	return { status: res.status(), body: await res.json() };
 }
+
+// ---------------------------------------------------------------------------
+// Market detail helpers
+// ---------------------------------------------------------------------------
+
+export async function getMarketDetail(
+	request: APIRequestContext,
+	assetId: string,
+) {
+	const res = await request.get(`/market/${assetId}`);
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getRateHistory(
+	request: APIRequestContext,
+	assetId: string,
+) {
+	const res = await request.get(`/market/${assetId}/rate-history`);
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Market order helpers
+// ---------------------------------------------------------------------------
+
+interface CreateMarketOrderParams {
+	assetId: string;
+	marketId: string;
+	amount: string;
+	autoRollover?: boolean;
+}
+
+export async function createLendMarketOrder(
+	request: APIRequestContext,
+	authHeader: string,
+	params: CreateMarketOrderParams,
+) {
+	const res = await request.post("/orders/lend/market", {
+		headers: { Authorization: authHeader },
+		data: {
+			assetId: params.assetId,
+			amount: params.amount,
+			marketIds: [params.marketId],
+			autoRollover: params.autoRollover ?? true,
+		},
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function createBorrowMarketOrder(
+	request: APIRequestContext,
+	authHeader: string,
+	params: CreateMarketOrderParams,
+) {
+	const res = await request.post("/orders/borrow/market", {
+		headers: { Authorization: authHeader },
+		data: {
+			assetId: params.assetId,
+			amount: params.amount,
+			marketIds: [params.marketId],
+			autoRollover: params.autoRollover ?? false,
+		},
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Cancel order helper
+// ---------------------------------------------------------------------------
+
+export async function cancelOrder(
+	request: APIRequestContext,
+	authHeader: string,
+	orderId: string,
+) {
+	const res = await request.post(`/orders/${orderId}/cancel`, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Portfolio read helpers
+// ---------------------------------------------------------------------------
+
+export async function getMyPortfolio(
+	request: APIRequestContext,
+	authHeader: string,
+) {
+	const res = await request.get("/portfolio/my-portfolio", {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getMyAssets(
+	request: APIRequestContext,
+	authHeader: string,
+	query?: { page?: number; limit?: number },
+) {
+	const params = new URLSearchParams();
+	if (query?.page) params.set("page", String(query.page));
+	if (query?.limit) params.set("limit", String(query.limit));
+	const qs = params.toString();
+	const url = qs ? `/portfolio/my-assets?${qs}` : "/portfolio/my-assets";
+	const res = await request.get(url, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getLendBorrowAssets(
+	request: APIRequestContext,
+	authHeader: string,
+	days?: number,
+) {
+	const url = days
+		? `/portfolio/lend-borrow-assets?days=${days}`
+		: "/portfolio/lend-borrow-assets";
+	const res = await request.get(url, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getHealthFactor(
+	request: APIRequestContext,
+	authHeader: string,
+) {
+	const res = await request.get("/portfolio/my-health-factor", {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getUserDetails(
+	request: APIRequestContext,
+	authHeader: string,
+) {
+	const res = await request.get("/portfolio/user-details", {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function setCollateral(
+	request: APIRequestContext,
+	authHeader: string,
+	params: { assetIds: string[]; isCollateral: boolean },
+) {
+	const res = await request.put("/portfolio/is-collateral", {
+		headers: { Authorization: authHeader },
+		data: params,
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getOpenOrders(
+	request: APIRequestContext,
+	authHeader: string,
+	query?: {
+		page?: number;
+		limit?: number;
+		side?: string;
+		status?: string;
+		assetId?: string;
+	},
+) {
+	const params = new URLSearchParams();
+	if (query?.page) params.set("page", String(query.page));
+	if (query?.limit) params.set("limit", String(query.limit));
+	if (query?.side) params.set("side", query.side);
+	if (query?.status) params.set("status", query.status);
+	if (query?.assetId) params.set("assetId", query.assetId);
+	const qs = params.toString();
+	const url = qs
+		? `/portfolio/open-orders?${qs}`
+		: "/portfolio/open-orders";
+	const res = await request.get(url, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getOrderHistory(
+	request: APIRequestContext,
+	authHeader: string,
+	query?: {
+		page?: number;
+		limit?: number;
+		side?: string;
+		status?: string;
+	},
+) {
+	const params = new URLSearchParams();
+	if (query?.page) params.set("page", String(query.page));
+	if (query?.limit) params.set("limit", String(query.limit));
+	if (query?.side) params.set("side", query.side);
+	if (query?.status) params.set("status", query.status);
+	const qs = params.toString();
+	const url = qs
+		? `/portfolio/order-history?${qs}`
+		: "/portfolio/order-history";
+	const res = await request.get(url, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getTransactionHistory(
+	request: APIRequestContext,
+	authHeader: string,
+	query?: { page?: number; limit?: number; side?: string },
+) {
+	const params = new URLSearchParams();
+	if (query?.page) params.set("page", String(query.page));
+	if (query?.limit) params.set("limit", String(query.limit));
+	if (query?.side) params.set("side", query.side);
+	const qs = params.toString();
+	const url = qs
+		? `/portfolio/transaction-history?${qs}`
+		: "/portfolio/transaction-history";
+	const res = await request.get(url, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Deposit helpers
+// ---------------------------------------------------------------------------
+
+export async function getDepositTokens(request: APIRequestContext) {
+	const res = await request.get("/deposit/tokens");
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function getDepositBalance(
+	request: APIRequestContext,
+	authHeader: string,
+	assetId: string,
+) {
+	const res = await request.get(`/deposit/balance/${assetId}`, {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function confirmDeposit(
+	request: APIRequestContext,
+	authHeader: string,
+	txHash: string,
+) {
+	const res = await request.post("/deposit/confirm", {
+		headers: { Authorization: authHeader },
+		data: { txHash },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Withdraw helpers
+// ---------------------------------------------------------------------------
+
+export async function submitWithdraw(
+	request: APIRequestContext,
+	authHeader: string,
+	params: { assetId: string; amount: string },
+) {
+	const res = await request.post("/withdraw", {
+		headers: { Authorization: authHeader },
+		data: params,
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Faucet helpers
+// ---------------------------------------------------------------------------
+
+export async function getFaucetTokens(
+	request: APIRequestContext,
+	chainId: number,
+) {
+	const res = await request.get(`/faucet/all-tokens/${chainId}`);
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function requestFaucetTokens(
+	request: APIRequestContext,
+	params: {
+		chainId: number;
+		recipientAddress: string;
+		token: string | string[];
+	},
+) {
+	const res = await request.post("/faucet/request-tokens", {
+		data: params,
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+// ---------------------------------------------------------------------------
+// Auth helpers
+// ---------------------------------------------------------------------------
+
+export async function validateWallet(
+	request: APIRequestContext,
+	walletAddress: string,
+) {
+	const res = await request.post("/auth/validate", {
+		data: { wallet_address: walletAddress },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function login(
+	request: APIRequestContext,
+	authHeader: string,
+) {
+	const res = await request.post("/auth/login", {
+		headers: { Authorization: authHeader },
+	});
+	return { status: res.status(), body: await res.json() };
+}
+
+export async function updateName(
+	request: APIRequestContext,
+	authHeader: string,
+	name: string,
+) {
+	const res = await request.patch("/auth/name", {
+		headers: { Authorization: authHeader },
+		data: { name },
+	});
+	return { status: res.status(), body: await res.json() };
+}

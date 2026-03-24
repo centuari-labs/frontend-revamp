@@ -20,6 +20,10 @@ export function useRepay() {
       queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
       queryClient.invalidateQueries({ queryKey: ["my-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-details"] });
+    },
+    onError: (error: Error) => {
+      console.error("Repay mutation error:", error);
     },
   });
 

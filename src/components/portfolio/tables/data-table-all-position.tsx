@@ -122,7 +122,7 @@ export function DataTableAllPosition({
       },
       {
         accessorKey: "amount",
-        header: "Amount in USD",
+        header: activeTab === "borrow" ? "Debt in USD" : "Amount in USD",
         cell: ({ row }) => {
           const amount = row.original.amount;
           const formatted = new Intl.NumberFormat("en-US", {
@@ -186,6 +186,8 @@ export function DataTableAllPosition({
                   token_symbol={position.tokenSymbol ?? position.assetName}
                   apr={position.apr ?? 0}
                   maturityDate={normalizeMaturity(position.maturity)}
+                  shares={position.shares}
+                  baseAmount={position.baseAmount}
                   onSuccess={() => {
                     if (typeof window !== "undefined") {
                       window.dispatchEvent(new Event("storage"));
@@ -224,7 +226,7 @@ export function DataTableAllPosition({
         },
       },
     ],
-    [setWithdrawSuccess]
+    [setWithdrawSuccess, activeTab]
   );
 
   // Reset pagination to first page when tab changes
