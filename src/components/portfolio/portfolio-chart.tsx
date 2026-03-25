@@ -81,7 +81,7 @@ export function PortfolioChart({ availableBalance, suppliedAssets, borrowedAsset
           <Pie
             data={chartData}
             dataKey="visitors"
-            nameKey="browser"
+            nameKey="name"
             innerRadius="65%"
             strokeWidth={5}
             legendType="circle"

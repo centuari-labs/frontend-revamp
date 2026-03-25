@@ -123,6 +123,7 @@ export default function PortfolioPage() {
   const positionTableData: PositionProps[] = useMemo(() => {
     return apiPositions.map((p) => ({
       id: p.id,
+      assetId: p.assetId,
       marketId: p.marketId,
       assetImg: p.imageUrl ?? "/tokens/default-token.svg",
       assetName: p.symbol,

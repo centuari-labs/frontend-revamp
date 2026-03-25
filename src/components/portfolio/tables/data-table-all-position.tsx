@@ -172,9 +172,7 @@ export function DataTableAllPosition({
           const position = row.original;
           console.log("posiiton", position)
           const isBorrow = position.type === "borrow";
-          const marketLink = position.id
-            ? `/market?token=${position.id}`
-            : `/market?token=${(position.tokenValue ?? position.assetName).toLowerCase()}`;
+          const marketLink = `/market?token=${position.assetId}`
 
           return (
             <div className="flex items-center gap-4">

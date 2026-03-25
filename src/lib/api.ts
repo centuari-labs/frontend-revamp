@@ -169,6 +169,7 @@ export function getLendBorrowAssets(
 
 export interface MyPositionItem {
 	id: string;
+	assetId?: string;
 	marketId: string;
 	symbol: string;
 	name: string;
