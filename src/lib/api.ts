@@ -73,7 +73,19 @@ export interface AccountResponse {
 	privy_user_id: string;
 	user_wallet: string;
 	name: string | null;
+	access_granted: boolean;
 	created_at: string;
+}
+
+export function redeemAccessCode(
+	code: string,
+	token: string,
+): Promise<{ granted: boolean }> {
+	return apiClient<{ granted: boolean }>("/auth/redeem-access-code", {
+		method: "POST",
+		body: { code },
+		token,
+	});
 }
 
 export function updateAccountName(

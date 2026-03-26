@@ -5,6 +5,7 @@ import { Provider } from "@/components/provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { switzer } from "@/components/ui/fonts";
 import { TourProvider } from "@/components/product-tour/tour-context";
+import { AccessCodeGate } from "@/components/access-code-gate";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -41,11 +42,13 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Provider>
-              <TourProvider>
-                <CentuariNavbar />
-                {children}
-                <Toaster theme="dark" position="bottom-right" richColors />
-              </TourProvider>
+              <AccessCodeGate>
+                <TourProvider>
+                  <CentuariNavbar />
+                  {children}
+                  <Toaster theme="dark" position="bottom-right" richColors />
+                </TourProvider>
+              </AccessCodeGate>
             </Provider>
           </ThemeProvider>
         </main>

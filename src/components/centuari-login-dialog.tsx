@@ -40,10 +40,12 @@ export function CentuariLoginDialog({
   open,
   onOpenChange,
   showTrigger = true,
+  showCloseButton = true,
 }: {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  showCloseButton?: boolean;
 }) {
   const id = useId();
   const { authenticated } = usePrivy();
@@ -194,7 +196,7 @@ export function CentuariLoginDialog({
           </CentuariButton>
         </DialogTrigger>
       )}
-      <DialogContent className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 z-[200]">
+      <DialogContent showCloseButton={showCloseButton} className="flex max-h-[min(600px,80vh)] p-6 flex-col gap-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 z-[200]">
         <DialogHeader className="contents space-y-0 text-left">
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
             <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />

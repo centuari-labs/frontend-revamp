@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { CentuariButton } from "./centuari-button";
 import { CentuariInput } from "./centuari-input";
 import { formatAddress } from "@/lib/utils";
+import { useAccessContext } from "@/contexts/access-context";
 
 const LS_USERNAME_KEY = "centuari_username";
 
@@ -67,6 +68,7 @@ export function CentuariUserMenu() {
   const { disconnect } = useDisconnect();
   const { wallets } = useWallets();
   const queryClient = useQueryClient();
+  const { resetAccess } = useAccessContext();
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"main" | "edit-username">("main");
@@ -134,11 +136,12 @@ export function CentuariUserMenu() {
 
   const handleLogout = useCallback(() => {
     setOpen(false);
+    resetAccess();
     logout();
     disconnect();
     queryClient.clear();
     localStorage.removeItem(LS_USERNAME_KEY);
-  }, [logout, disconnect, queryClient]);
+  }, [resetAccess, logout, disconnect, queryClient]);
 
   const formattedBalance = balanceData
     ? `${Number(formatUnits(balanceData.value, balanceData.decimals)).toFixed(4)} ${balanceData.symbol}`

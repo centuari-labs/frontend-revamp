@@ -6,6 +6,7 @@ import { useDisconnect } from "wagmi";
 import { apiClient } from "@/lib/api-client";
 import type { AccountResponse } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { useAccessContext } from "@/contexts/access-context";
 
 const LS_USERNAME_KEY = "centuari_username";
 
@@ -14,6 +15,7 @@ export function useSyncAccount() {
 	const { wallets } = useWallets();
 	const { getToken } = useAuthToken();
 	const { disconnect } = useDisconnect();
+	const { setHasAccess } = useAccessContext();
 	const hasSynced = useRef(false);
 
 	useEffect(() => {
@@ -30,6 +32,8 @@ export function useSyncAccount() {
 			if (!token) return;
 			apiClient<AccountResponse>("/auth/login", { method: "POST", token })
 				.then((account) => {
+					setHasAccess(account.access_granted);
+
 					const storedName = localStorage.getItem(LS_USERNAME_KEY);
 					if (!storedName && account.name) {
 						localStorage.setItem(LS_USERNAME_KEY, account.name);
@@ -44,7 +48,7 @@ export function useSyncAccount() {
 					localStorage.removeItem(LS_USERNAME_KEY);
 				});
 		});
-	}, [ready, authenticated, wallets, getToken, logout, disconnect]);
+	}, [ready, authenticated, wallets, getToken, logout, disconnect, setHasAccess]);
 
 	// Reset when user logs out
 	useEffect(() => {
