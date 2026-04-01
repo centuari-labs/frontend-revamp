@@ -177,38 +177,23 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           cursor: pointer !important;
         }
 
-        .centuari-tour-theme .driver-popover-next-btn,
-        .centuari-tour-theme .driver-popover-close-btn:last-child {
-          background: linear-gradient(
-            135deg,
-            #6366f1 0%,
-            #4f46e5 100%
-          ) !important;
+        .centuari-tour-theme .driver-popover-navigation-btns .driver-popover-next-btn {
+          background: #3361EF !important;
+          background-image: radial-gradient(120% 180% at 50% 0%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 65%), linear-gradient(180deg, #3361EF 0%, #2546B8 100%) !important;
           color: white !important;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+          box-shadow: 0 4px 12px rgba(51, 97, 239, 0.3) !important;
+          position: relative !important;
+          overflow: hidden !important;
         }
 
-        .centuari-tour-theme .driver-popover-next-btn:hover,
-        .centuari-tour-theme .driver-popover-close-btn:last-child:hover {
-          background: linear-gradient(
-            135deg,
-            #4f46e5 0%,
-            #4338ca 100%
-          ) !important;
-          transform: translateY(-1px) !important;
-          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
+        .centuari-tour-theme .driver-popover-navigation-btns .driver-popover-next-btn:hover {
+          filter: brightness(1.1) !important;
+          transform: none !important;
+          box-shadow: 0 6px 16px rgba(51, 97, 239, 0.4) !important;
         }
 
-        .centuari-tour-theme .driver-popover-prev-btn {
-          background-color: transparent !important;
-          color: #94a3b8 !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
-
-        .centuari-tour-theme .driver-popover-prev-btn:hover {
-          background-color: rgba(255, 255, 255, 0.04) !important;
-          color: white !important;
-          border-color: rgba(255, 255, 255, 0.12) !important;
+        .centuari-tour-theme .driver-popover-navigation-btns .driver-popover-prev-btn {
+          display: none !important;
         }
 
         /* Close Button (X) */

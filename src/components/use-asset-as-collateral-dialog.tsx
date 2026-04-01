@@ -11,6 +11,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { CentuariTypography } from "@/components/centuari-typography";
 
 export type UseAssetAsCollateralDialogAsset = {
@@ -90,7 +91,7 @@ export function UseAssetAsCollateralDialog({
         </DialogHeader>
         <DialogFooter className="flex-row gap-2 items-center px-6 py-4">
           <DialogClose asChild>
-            <Button variant="secondary" className="flex-1" disabled={loading}>Cancel</Button>
+            <CentuariButton variant="secondary" className="flex-1" disabled={loading}>Cancel</CentuariButton>
           </DialogClose>
           <Button variant="primary" onClick={handleConfirm} className="flex-1" disabled={loading}>
             {loading ? (

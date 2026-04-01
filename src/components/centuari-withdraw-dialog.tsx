@@ -196,9 +196,9 @@ export function CentuariWithdrawDialog() {
     <>
       <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
         <DialogTrigger asChild>
-          <Button variant="secondary" className="flex-1" size={"lg"}>
+          <CentuariButton variant="secondary" className="flex-1" size={"lg"}>
             Withdraw <IcCreditCardUploadCentuari />
-          </Button>
+          </CentuariButton>
         </DialogTrigger>
         <DialogContent
           className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600"

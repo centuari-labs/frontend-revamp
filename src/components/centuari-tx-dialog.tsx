@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "./ui/button";
+import { CentuariButton } from "./centuari-button";
 import { Headphones } from "lucide-react";
 import Image from "next/image";
 import { CentuariTypography } from "./centuari-typography";
@@ -76,9 +77,9 @@ export function CentuariTxDialog({
         {type === "success" ? (
           <DialogFooter className="flex-row items-center justify-end px-6 py-4">
             <DialogClose asChild>
-              <Button variant="secondary" className="flex-1">
+              <CentuariButton variant="secondary" className="flex-1">
                 Done
-              </Button>
+              </CentuariButton>
             </DialogClose>
             <Button type="button" variant={"primary"} className="flex-1">
               View Portfolio
@@ -87,9 +88,9 @@ export function CentuariTxDialog({
         ) : (
           <DialogFooter className="flex-row items-center justify-end px-6 py-4">
             <DialogClose asChild>
-              <Button variant="secondary">
+              <CentuariButton variant="secondary">
                 <Headphones /> Contact Support
-              </Button>
+              </CentuariButton>
             </DialogClose>
             <Button type="button" variant={"primary"} className="flex-1">
               Try Again

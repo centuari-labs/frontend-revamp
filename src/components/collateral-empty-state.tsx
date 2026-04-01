@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { CentuariTypography } from "@/components/centuari-typography";
 
 export function CollateralEmptyState({ compact = false }: { compact?: boolean }) {
@@ -26,9 +26,9 @@ export function CollateralEmptyState({ compact = false }: { compact?: boolean })
         </CentuariTypography>
       </div>
       <Link href="/portfolio" className="shrink-0">
-        <Button variant="secondary" size="sm" className={compact ? "rounded-lg bg-white/5 hover:bg-white/10 text-xs" : "rounded-lg bg-white/5 hover:bg-white/10"}>
+        <CentuariButton variant="secondary" size="sm" className={compact ? "rounded-lg bg-white/5 hover:bg-white/10 text-xs" : "rounded-lg bg-white/5 hover:bg-white/10"}>
           Add Assets
-        </Button>
+        </CentuariButton>
       </Link>
     </div>
   );

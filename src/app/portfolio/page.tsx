@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getHealthFactorStatus } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { useMyPortfolio } from "@/hooks/use-my-portfolio";
 import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";
 import { useMyPositions } from "@/hooks/use-my-positions";
@@ -293,9 +293,9 @@ export default function PortfolioPage() {
                   </div>
                 ))}
                 <Link href="/portfolio/transaction-history">
-                  <Button variant="secondary" size={"sm"} className="w-full mt-4">
+                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4">
                     See All Transaction
-                  </Button>
+                  </CentuariButton>
                 </Link>
               </div>
               {/* Chart Section */}

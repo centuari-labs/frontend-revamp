@@ -366,9 +366,9 @@ export function CentuariBorrowDialog({
     <>
       <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
         <DialogTrigger asChild>
-          <Button variant="secondary" className="flex-1">
+          <CentuariButton variant="secondary" className="flex-1">
             Borrow
-          </Button>
+          </CentuariButton>
         </DialogTrigger>
         <DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
           <DialogHeader className="contents space-y-0 text-left">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import {
   Drawer,
   DrawerContent,
@@ -30,20 +30,20 @@ export function MobileLendBorrowButtons({
     <>
       <div className="fixed bottom-0 left-0 right-0 md:hidden z-50 bg-background/10 backdrop-blur-sm border-t border-white/10 p-3 pb-safe">
         <div className="flex gap-2 max-w-md mx-auto mb-3">
-          <Button
+          <CentuariButton
             variant="secondary"
             className="flex-1 text-base font-medium"
             onClick={() => setIsBorrowOpen(true)}
           >
             Borrow
-          </Button>
-          <Button
+          </CentuariButton>
+          <CentuariButton
             variant="primary"
             className="flex-1 text-base font-medium"
             onClick={() => setIsLendOpen(true)}
           >
             Lend
-          </Button>
+          </CentuariButton>
         </div>
       </div>
 

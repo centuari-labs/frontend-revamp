@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import {
   Dialog,
   DialogContent,
@@ -64,12 +64,12 @@ export function WelcomeDialog({
           <div className="mt-6 px-6 flex items-center justify-center flex-col gap-4"></div>
         </DialogHeader>
         <DialogFooter className="flex-row justify-end gap-2">
-          <Button variant="secondary" onClick={onSkip} className="flex-1">
+          <CentuariButton variant="secondary" onClick={onSkip} className="flex-1">
             I'll do it by myself
-          </Button>
-          <Button onClick={onStartTour} variant={"primary"} className="flex-1">
+          </CentuariButton>
+          <CentuariButton onClick={onStartTour} variant="primary" className="flex-1">
             Start Tour
-          </Button>
+          </CentuariButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
