@@ -40,6 +40,7 @@ import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidateUserQueries } from "@/lib/query-keys";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
@@ -203,9 +204,7 @@ export function CentuariLendDialog({
         resetDepositHook();
         setViewMode("lend");
         // Refresh balances
-        queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-        queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-        queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
+        invalidateUserQueries(queryClient);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Deposit failed";

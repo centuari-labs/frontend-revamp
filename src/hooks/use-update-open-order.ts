@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateOrder } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { invalidateUserQueries } from "@/lib/query-keys";
 import type { Position } from "@/types/positions";
 
 export function useUpdateOpenOrder() {
@@ -22,11 +23,7 @@ export function useUpdateOpenOrder() {
         token,
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-    },
+    onSuccess: () => invalidateUserQueries(queryClient),
   });
 
   return {

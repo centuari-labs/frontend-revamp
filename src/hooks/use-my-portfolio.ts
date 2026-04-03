@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMyPortfolio, type MyPortfolioResponse } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 export function useMyPortfolio() {
@@ -11,7 +12,7 @@ export function useMyPortfolio() {
   const address = user?.wallet?.address;
 
   const query = useQuery<MyPortfolioResponse>({
-    queryKey: ["my-portfolio", address],
+    queryKey: [QUERY_KEYS.MY_PORTFOLIO, address],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");

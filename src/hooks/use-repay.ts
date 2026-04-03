@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { submitRepay } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { invalidateUserQueries } from "@/lib/query-keys";
 import type { RepayBorrowParams } from "@/types/positions";
 
 export function useRepay() {
@@ -15,13 +16,7 @@ export function useRepay() {
       if (!token) throw new Error("Authentication required");
       return submitRepay(params.marketId, String(params.amount), token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["user-details"] });
-    },
+    onSuccess: () => invalidateUserQueries(queryClient),
     onError: (error: Error) => {
       console.error("Repay mutation error:", error);
     },

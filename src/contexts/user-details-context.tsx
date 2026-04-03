@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 interface UserDetailsContextValue {
 	/** Full response from the user-details endpoint, null while loading or unauthenticated */
@@ -34,7 +35,7 @@ export function UserDetailsProvider({ children }: { children: ReactNode }) {
 	const address = user?.wallet?.address;
 
 	const query = useQuery<UserDetailsResponse>({
-		queryKey: ["user-details", address],
+		queryKey: [QUERY_KEYS.USER_DETAILS, address],
 		queryFn: async () => {
 			const token = await getToken();
 			if (!token) throw new Error("No auth token");

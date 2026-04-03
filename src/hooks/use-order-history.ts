@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const EMPTY: OrderHistoryItem[] = [];
 
@@ -37,7 +38,7 @@ export function useOrderHistory(options?: {
 
   const query = useQuery<OrderHistoryResponse>({
     queryKey: [
-      "order-history",
+      QUERY_KEYS.ORDER_HISTORY,
       address,
       assetId,
       page,
