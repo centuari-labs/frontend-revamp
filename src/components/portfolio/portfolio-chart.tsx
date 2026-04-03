@@ -103,7 +103,7 @@ export function PortfolioChart({ availableBalance, suppliedAssets, borrowedAsset
                         y={viewBox.cy}
                         className="fill-foreground text-xl font-bold"
                       >
-                        {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(total)}
+                        {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total)}
                       </tspan>
                       <tspan
                         x={viewBox.cx}

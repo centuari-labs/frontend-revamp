@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const EMPTY: OpenOrderItem[] = [];
 
@@ -37,7 +38,7 @@ export function useOpenOrders(options?: {
 
   const query = useQuery<OpenOrdersResponse>({
     queryKey: [
-      "open-orders",
+      QUERY_KEYS.OPEN_ORDERS,
       address,
       assetId,
       page,

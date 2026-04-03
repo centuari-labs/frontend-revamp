@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthToken } from "./use-auth-token";
 import { submitWithdraw } from "@/lib/api";
+import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useWithdraw() {
   const { getToken } = useAuthToken();
@@ -23,14 +24,7 @@ export function useWithdraw() {
 
       return await submitWithdraw(assetId, amount, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-details"] });
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({
-        queryKey: ["lend-borrow-assets"],
-      });
-    },
+    onSuccess: () => invalidateUserQueries(queryClient),
   });
 
   return {

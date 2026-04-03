@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyPositions, type MyPositionItem } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 const EMPTY_POSITIONS: MyPositionItem[] = [];
@@ -23,7 +24,7 @@ export function useMyPositions(options?: UseMyPositionsOptions) {
   const address = user?.wallet?.address;
 
   const query = useQuery({
-    queryKey: ["my-positions", address, type, page, limit, assetId],
+    queryKey: [QUERY_KEYS.MY_POSITIONS, address, type, page, limit, assetId],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");

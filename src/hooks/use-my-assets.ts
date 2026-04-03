@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyAssets, type MyAssetItem } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 const EMPTY_ASSETS: MyAssetItem[] = [];
@@ -20,7 +21,7 @@ export function useMyAssets(options?: UseMyAssetsOptions) {
   const address = user?.wallet?.address;
 
   const query = useQuery({
-    queryKey: ["my-assets", address, page, limit],
+    queryKey: [QUERY_KEYS.MY_ASSETS, address, page, limit],
     queryFn: async () => {
       const token = await getToken();
       if (!token) throw new Error("No auth token");

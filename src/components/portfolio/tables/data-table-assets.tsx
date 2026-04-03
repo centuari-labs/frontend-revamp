@@ -329,7 +329,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
         return (
           <div className="flex items-center gap-1.5">
             <span className="text-white font-medium">
-              {truncateBalance(asset.walletBalance)}
+              {truncateBalance(asset.walletBalance, 2)}
             </span>
             <span className="text-white/40">{asset.assetSymbol.toUpperCase()}</span>
           </div>
@@ -344,8 +344,8 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(amount);
 
         const [main, cents] = formatted.split(".");

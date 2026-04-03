@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { setAssetAsCollateral } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useSetCollateral() {
   const { getToken } = useAuthToken();
@@ -20,10 +21,6 @@ export function useSetCollateral() {
       if (!token) throw new Error("No auth token");
       return setAssetAsCollateral(assetIds, isCollateral, token);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-    },
+    onSuccess: () => invalidateUserQueries(queryClient),
   });
 }
