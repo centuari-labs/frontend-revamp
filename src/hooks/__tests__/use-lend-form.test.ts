@@ -6,6 +6,7 @@ import { makeLendPosition } from "@/__tests__/helpers/fixtures/positions";
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: vi.fn(() => ({
     getToken: vi.fn(async () => "mock-token"),
+    authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")),
   })),
 }));
 

@@ -39,7 +39,7 @@ export function useBorrowForm({
 }: UseBorrowFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
   const { lendOrders } = useOrderbook({ assetId: assetIdProp });
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -210,9 +210,8 @@ export function useBorrowForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
-        const result = await submitLimit(
+        const result = await authFetch(async (token) => submitLimit(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -224,8 +223,8 @@ export function useBorrowForm({
             autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -252,7 +251,7 @@ export function useBorrowForm({
       limitCalcs,
       isPending,
       selectedToken,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitLimit,
@@ -273,9 +272,8 @@ export function useBorrowForm({
       if (marketCalcs.healthFactor < 1.0) return;
 
       try {
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
-        const result = await submitMarket(
+        const result = await authFetch(async (token) => submitMarket(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -286,8 +284,8 @@ export function useBorrowForm({
             autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -312,7 +310,7 @@ export function useBorrowForm({
       marketCalcs,
       isPending,
       selectedToken,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitMarket,

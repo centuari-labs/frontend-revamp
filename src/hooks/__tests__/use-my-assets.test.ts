@@ -12,6 +12,7 @@ vi.mock("@/lib/api", () => ({
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: () => ({
     getToken: vi.fn().mockResolvedValue("test-jwt-token"),
+    authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("test-jwt-token")),
   }),
 }));
 

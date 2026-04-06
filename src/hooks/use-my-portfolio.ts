@@ -7,17 +7,13 @@ import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 export function useMyPortfolio() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery<MyPortfolioResponse>({
     queryKey: [QUERY_KEYS.MY_PORTFOLIO, address],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getMyPortfolio(token);
-    },
+    queryFn: () => authFetch((token) => getMyPortfolio(token)),
     staleTime: 10_000,
     refetchInterval: 15_000,
     enabled: !!address,

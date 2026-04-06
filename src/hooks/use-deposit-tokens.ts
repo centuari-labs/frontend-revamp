@@ -11,7 +11,6 @@ export function useDepositTokens() {
 		queryKey: ["deposit-tokens"],
 		queryFn: async () => {
 			const jwt = await getToken();
-			// We no longer throw error if !jwt to allow unauthenticated viewing
 			return getDepositTokens(jwt ?? "");
 		},
 		staleTime: 5 * 60 * 1000,

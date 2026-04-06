@@ -6,21 +6,17 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useSetCollateral() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       assetIds,
       isCollateral,
     }: {
       assetIds: string[];
       isCollateral: boolean;
-    }) => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return setAssetAsCollateral(assetIds, isCollateral, token);
-    },
+    }) => authFetch((token) => setAssetAsCollateral(assetIds, isCollateral, token)),
     onSuccess: () => invalidateUserQueries(queryClient),
   });
 }

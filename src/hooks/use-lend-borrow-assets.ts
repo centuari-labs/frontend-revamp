@@ -7,17 +7,13 @@ import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 export function useLendBorrowAssets() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery<LendBorrowAssetsResponse>({
     queryKey: [QUERY_KEYS.LEND_BORROW_ASSETS, address],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getLendBorrowAssets(token);
-    },
+    queryFn: () => authFetch((token) => getLendBorrowAssets(token)),
     staleTime: 10_000,
     enabled: !!address,
   });

@@ -6,24 +6,17 @@ import { submitWithdraw } from "@/lib/api";
 import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useWithdraw() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       assetId,
       amount,
     }: {
       assetId: string;
       amount: string;
-    }) => {
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Authentication required");
-      }
-
-      return await submitWithdraw(assetId, amount, token);
-    },
+    }) => authFetch((token) => submitWithdraw(assetId, amount, token)),
     onSuccess: () => invalidateUserQueries(queryClient),
   });
 
