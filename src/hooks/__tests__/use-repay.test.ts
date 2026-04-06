@@ -1,12 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act } from "@testing-library/react";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 import { useRepay } from "@/hooks/use-repay";
 
-vi.mock("@/lib/positions-adapter.mock", () => ({
-  repayBorrowPosition: vi.fn(async () => {}),
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
+    user: { wallet: { address: "0x123" } },
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  })),
 }));
 
-import { repayBorrowPosition } from "@/lib/positions-adapter.mock";
+vi.mock("@/hooks/use-auth-token", () => ({
+  useAuthToken: vi.fn(() => ({
+    getToken: vi.fn(async () => "mock-token"),
+  })),
+}));
+
+vi.mock("@/lib/api", () => ({
+  submitRepay: vi.fn(async () => ({ success: true })),
+}));
+
+import { submitRepay } from "@/lib/api";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -14,28 +28,23 @@ beforeEach(() => {
 
 describe("useRepay", () => {
   it("isPending starts as false", () => {
-    const { result } = renderHook(() => useRepay());
+    const { result } = renderHookWithProviders(() => useRepay());
     expect(result.current.isPending).toBe(false);
   });
 
-  it("repay calls repayBorrowPosition", async () => {
-    const { result } = renderHook(() => useRepay());
+  it("repay calls submitRepay via API", async () => {
+    const { result } = renderHookWithProviders(() => useRepay());
 
     await act(async () => {
       await result.current.repay({
-        positionId: "p1",
+        marketId: "m1",
         amount: 100,
         futureAmount: 105,
         tokenValue: "usdc",
       });
     });
 
-    expect(repayBorrowPosition).toHaveBeenCalledWith({
-      positionId: "p1",
-      amount: 100,
-      futureAmount: 105,
-      tokenValue: "usdc",
-    });
+    expect(submitRepay).toHaveBeenCalledWith("m1", "100", "mock-token");
     expect(result.current.isPending).toBe(false);
   });
 });
