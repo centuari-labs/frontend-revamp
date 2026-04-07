@@ -11,9 +11,11 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 
 const mockGetToken = vi.fn(async () => "mock-token");
+const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) => fn("mock-token"));
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: vi.fn(() => ({
 		getToken: mockGetToken,
+		authFetch: mockAuthFetch,
 	})),
 }));
 
