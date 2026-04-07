@@ -35,15 +35,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "./ui/label";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
-
-const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
+import { useNetworkSwitch } from "@/hooks/use-network-switch";
 
 export function CentuariDepositDialog() {
   const router = useRouter();
-  const { user } = usePrivy();
-  const { wallets } = useWallets();
   const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
   const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
 
@@ -72,29 +68,7 @@ export function CentuariDepositDialog() {
 
   const { balance: onChainBalance, isLoading: balanceLoading } = useOnChainBalance(selectedToken?.symbol ?? "");
 
-  // ─── Network detection ───────────────────────────────────────────────
-  const linkedAddress = user?.wallet?.address?.toLowerCase();
-  const loginWallet = linkedAddress
-    ? wallets.find(
-        (w) =>
-          w.walletClientType !== "privy" &&
-          w.address.toLowerCase() === linkedAddress,
-      )
-    : undefined;
-  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
-  const [switchingChain, setSwitchingChain] = useState(false);
-
-  const handleSwitchChain = async () => {
-    if (!loginWallet || switchingChain) return;
-    setSwitchingChain(true);
-    try {
-      await loginWallet.switchChain(ACTIVE_CHAIN.id);
-    } catch {
-      toast.error("Failed to switch network");
-    } finally {
-      setSwitchingChain(false);
-    }
-  };
+  const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
 
   const isProcessing =
     depositStatus === "checkingAllowance" ||

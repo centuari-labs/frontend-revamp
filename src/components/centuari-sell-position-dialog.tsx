@@ -13,9 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
 import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { CentuariTypography } from "./centuari-typography";
 import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariInput } from "./centuari-input";
+import { DialogTokenHeader } from "./dialog-token-header";
 import { CentuariButton } from "./centuari-button";
 import { Label } from "./ui/label";
 import { usePrivy } from "@privy-io/react-auth";
@@ -238,59 +238,17 @@ export function CentuariSellPositionDialog({
             </div>
             <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
               <div className="relative overflow-hidden min-h-[400px]">
-                <div className="flex flex-col items-center justify-center gap-2 mt-6">
-                  <Image
-                    src={token_image}
-                    alt={token_name}
-                    width={76.5}
-                    height={76.5}
-                  />
-                  <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
-                  <div className="flex w-full items-center justify-around mt-4 px-6">
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Maturity Date{" "}
-                        <CentuariTooltip message="The date when you can withdraw your funds.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {formatMaturityTimestamp(normalizedMaturity)}
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        APR{" "}
-                        <CentuariTooltip message="Annual Percentage Rate for this position.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {apr.toFixed(1).replace(".", ",")}%
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Available Amount{" "}
-                        <CentuariTooltip message="The total amount available for withdrawal including your deposit and profit.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {formattedAvailableFunds}
-                      </CentuariTypography>
-                    </div>
-                  </div>
-                </div>
+                <DialogTokenHeader
+                  tokenImage={token_image}
+                  tokenName={token_name}
+                  tokenSymbol={token_symbol}
+                  showMarketBanner={false}
+                  stats={[
+                    { label: "Maturity Date", tooltip: "The date when you can withdraw your funds.", value: formatMaturityTimestamp(normalizedMaturity) },
+                    { label: "APR", tooltip: "Annual Percentage Rate for this position.", value: `${apr.toFixed(1).replace(".", ",")}%` },
+                    { label: "Available Amount", tooltip: "The total amount available for withdrawal including your deposit and profit.", value: formattedAvailableFunds },
+                  ]}
+                />
 
                 <div className="mt-4 px-6">
                   <form action="">

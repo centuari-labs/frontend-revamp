@@ -1,10 +1,11 @@
 "use client";
 
-import { gsap } from "gsap";
 import { ArrowLeft, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
+import { useNetworkSwitch } from "@/hooks/use-network-switch";
 import {
   Dialog,
   DialogContent,
@@ -24,12 +25,9 @@ import { getChainIcon } from "@/lib/chains";
 import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
 import type { UserAssetDetail } from "@/lib/api";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { toast } from "sonner";
-import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
 
 const ARBITRUM_ICON = getChainIcon("arbitrum");
-const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 type Step = "select-token" | "enter-amount";
 
@@ -55,31 +53,7 @@ export function CentuariWithdrawDialog() {
 
   const isProcessing = isPending;
 
-  // ─── Network detection ───────────────────────────────────────────────
-  const { user: privyUser } = usePrivy();
-  const { wallets: privyWallets } = useWallets();
-  const linkedAddr = privyUser?.wallet?.address?.toLowerCase();
-  const loginWallet = linkedAddr
-    ? privyWallets.find(
-        (w) =>
-          w.walletClientType !== "privy" &&
-          w.address.toLowerCase() === linkedAddr,
-      )
-    : undefined;
-  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
-  const [switchingChain, setSwitchingChain] = useState(false);
-
-  const handleSwitchChain = async () => {
-    if (!loginWallet || switchingChain) return;
-    setSwitchingChain(true);
-    try {
-      await loginWallet.switchChain(ACTIVE_CHAIN.id);
-    } catch {
-      toast.error("Failed to switch network");
-    } finally {
-      setSwitchingChain(false);
-    }
-  };
+  const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
 
   // Filter to assets with positive available balance
   const withdrawableAssets = (userDetails?.assets ?? []).filter(
@@ -128,48 +102,8 @@ export function CentuariWithdrawDialog() {
     }
   }, [dialogOpen, withdrawStatus]);
 
-  // Animate in when step changes
-  useEffect(() => {
-    const timeline = gsap.timeline();
-
-    if (
-      step === "select-token" &&
-      selectTokenViewRef.current &&
-      enterAmountViewRef.current
-    ) {
-      timeline
-        .to(enterAmountViewRef.current, {
-          x: 100,
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-        })
-        .fromTo(
-          selectTokenViewRef.current,
-          { x: -100, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15",
-        );
-    } else if (
-      step === "enter-amount" &&
-      selectTokenViewRef.current &&
-      enterAmountViewRef.current
-    ) {
-      timeline
-        .to(selectTokenViewRef.current, {
-          x: -100,
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-        })
-        .fromTo(
-          enterAmountViewRef.current,
-          { x: 100, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15",
-        );
-    }
-  }, [step]);
+  // Animate transitions between steps
+  useDialogViewAnimation(selectTokenViewRef, enterAmountViewRef, step === "select-token");
 
   const handleWithdraw = async () => {
     if (isProcessing || !withdrawAmount || !selectedAsset) return;
