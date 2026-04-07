@@ -1,104 +1,223 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
+
+vi.mock("@privy-io/react-auth", () => ({
+	usePrivy: vi.fn(() => ({
+		user: { wallet: { address: "0x123" } },
+		getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+	})),
+}));
+
+vi.mock("@/hooks/use-auth-token", () => ({
+	useAuthToken: vi.fn(() => ({
+		getToken: vi.fn(async () => "mock-token"),
+	})),
+}));
+
+vi.mock("@/hooks/use-my-positions", () => ({
+	useMyPositions: vi.fn(() => ({
+		positions: [],
+		isLoading: false,
+		isError: false,
+		refetch: vi.fn(),
+		page: 1,
+		totalData: 0,
+		totalPages: 0,
+	})),
+}));
+
 import { usePositions } from "@/hooks/use-positions";
-import { makeLendPosition, makeBorrowPosition } from "@/__tests__/helpers/fixtures/positions";
+import { useMyPositions } from "@/hooks/use-my-positions";
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  localStorage.clear();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
+	vi.clearAllMocks();
 });
 
 describe("usePositions", () => {
-  it("returns empty arrays when no data stored", () => {
-    const { result } = renderHook(() => usePositions());
-    expect(result.current.openOrders).toEqual([]);
-    expect(result.current.allTransactions).toEqual([]);
-    expect(result.current.positions).toEqual([]);
-  });
+	it("returns empty arrays when no data", () => {
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.openOrders).toEqual([]);
+		expect(result.current.allTransactions).toEqual([]);
+		expect(result.current.positions).toEqual([]);
+	});
 
-  it("reads open orders from localStorage", () => {
-    const order = makeLendPosition({ id: "open-1" });
-    localStorage.setItem("centuari_open_orders", JSON.stringify([order]));
+	it("maps backend positions to frontend format", () => {
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [
+				{
+					id: "pos-1",
+					marketId: "m1",
+					imageUrl: "/tokens/usdc.png",
+					name: "USDC",
+					amountInUsd: 1000,
+					apr: "5.5",
+					symbol: "USDC",
+					maturity: 1748736,
+					side: "LEND" as const,
+					walletBalance: 1000,
+					isCollateral: false,
+					ltv: 0,
+					liquidationThreshold: 0,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			refetch: vi.fn(),
+			page: 1,
+			totalData: 1,
+			totalPages: 1,
+		});
 
-    const { result } = renderHook(() => usePositions());
-    expect(result.current.openOrders).toHaveLength(1);
-    expect(result.current.openOrders[0].id).toBe("open-1");
-  });
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.positions).toHaveLength(1);
+		expect(result.current.positions[0].id).toBe("pos-1");
+		expect(result.current.positions[0].type).toBe("lend");
+		expect(result.current.allTransactions).toHaveLength(1);
+	});
 
-  it("reads filled positions from localStorage", () => {
-    const pos = makeBorrowPosition({ id: "filled-1" });
-    localStorage.setItem("centuari_positions", JSON.stringify([pos]));
+	it("maps borrow positions correctly", () => {
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [
+				{
+					id: "pos-2",
+					marketId: "m2",
+					imageUrl: null,
+					name: "ETH",
+					amountInUsd: 5000,
+					apr: "8.0",
+					symbol: "ETH",
+					maturity: 1748736,
+					side: "BORROW" as const,
+					walletBalance: 2,
+					isCollateral: true,
+					ltv: 0.75,
+					liquidationThreshold: 0.8,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			refetch: vi.fn(),
+			page: 1,
+			totalData: 1,
+			totalPages: 1,
+		});
 
-    const { result } = renderHook(() => usePositions());
-    expect(result.current.allTransactions).toHaveLength(1);
-  });
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.positions).toHaveLength(1);
+		expect(result.current.positions[0].type).toBe("borrow");
+	});
 
-  it("combines open orders and transactions in positions", () => {
-    localStorage.setItem("centuari_open_orders", JSON.stringify([makeLendPosition()]));
-    localStorage.setItem("centuari_positions", JSON.stringify([makeBorrowPosition()]));
+	it("returns loading state", () => {
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [],
+			isLoading: true,
+			isError: false,
+			refetch: vi.fn(),
+			page: 1,
+			totalData: 0,
+			totalPages: 0,
+		});
 
-    const { result } = renderHook(() => usePositions());
-    expect(result.current.positions).toHaveLength(2);
-  });
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.isLoading).toBe(true);
+	});
 
-  it("refreshes on 500ms polling interval", () => {
-    const { result } = renderHook(() => usePositions());
-    expect(result.current.openOrders).toHaveLength(0);
+	it("openOrders is always empty (no local storage)", () => {
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.openOrders).toEqual([]);
+	});
 
-    // Add data mid-lifecycle
-    localStorage.setItem(
-      "centuari_open_orders",
-      JSON.stringify([makeLendPosition()]),
-    );
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
+	it("refresh delegates to refetch", () => {
+		const mockRefetch = vi.fn();
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [],
+			isLoading: false,
+			isError: false,
+			refetch: mockRefetch,
+			page: 1,
+			totalData: 0,
+			totalPages: 0,
+		});
 
-    expect(result.current.openOrders).toHaveLength(1);
-  });
+		const { result } = renderHookWithProviders(() => usePositions());
+		result.current.refresh();
+		expect(mockRefetch).toHaveBeenCalled();
+	});
 
-  it("responds to storage event", () => {
-    const { result } = renderHook(() => usePositions());
+	it("combines multiple positions", () => {
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [
+				{
+					id: "pos-a",
+					marketId: "m1",
+					imageUrl: null,
+					name: "USDC",
+					amountInUsd: 1000,
+					apr: "5.0",
+					symbol: "USDC",
+					maturity: 1748736,
+					side: "LEND" as const,
+					walletBalance: 1000,
+					isCollateral: false,
+					ltv: 0,
+					liquidationThreshold: 0,
+				},
+				{
+					id: "pos-b",
+					marketId: "m2",
+					imageUrl: null,
+					name: "ETH",
+					amountInUsd: 5000,
+					apr: "8.0",
+					symbol: "ETH",
+					maturity: 1748736,
+					side: "BORROW" as const,
+					walletBalance: 2,
+					isCollateral: true,
+					ltv: 0.75,
+					liquidationThreshold: 0.8,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			refetch: vi.fn(),
+			page: 1,
+			totalData: 2,
+			totalPages: 1,
+		});
 
-    localStorage.setItem(
-      "centuari_positions",
-      JSON.stringify([makeLendPosition()]),
-    );
-    act(() => {
-      window.dispatchEvent(new Event("storage"));
-    });
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.positions).toHaveLength(2);
+	});
 
-    expect(result.current.allTransactions).toHaveLength(1);
-  });
+	it("allTransactions equals mapped positions", () => {
+		vi.mocked(useMyPositions).mockReturnValue({
+			positions: [
+				{
+					id: "pos-c",
+					marketId: "m1",
+					imageUrl: null,
+					name: "USDC",
+					amountInUsd: 1000,
+					apr: "5.0",
+					symbol: "USDC",
+					maturity: 1748736,
+					side: "LEND" as const,
+					walletBalance: 1000,
+					isCollateral: false,
+					ltv: 0,
+					liquidationThreshold: 0,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			refetch: vi.fn(),
+			page: 1,
+			totalData: 1,
+			totalPages: 1,
+		});
 
-  it("responds to centuari-positions-updated event", () => {
-    const { result } = renderHook(() => usePositions());
-
-    localStorage.setItem(
-      "centuari_open_orders",
-      JSON.stringify([makeLendPosition(), makeBorrowPosition()]),
-    );
-    act(() => {
-      window.dispatchEvent(new CustomEvent("centuari-positions-updated"));
-    });
-
-    expect(result.current.openOrders).toHaveLength(2);
-  });
-
-  it("refresh function can be called manually", () => {
-    const { result } = renderHook(() => usePositions());
-    localStorage.setItem(
-      "centuari_positions",
-      JSON.stringify([makeLendPosition()]),
-    );
-
-    act(() => {
-      result.current.refresh();
-    });
-    expect(result.current.allTransactions).toHaveLength(1);
-  });
+		const { result } = renderHookWithProviders(() => usePositions());
+		expect(result.current.allTransactions).toEqual(result.current.positions);
+	});
 });

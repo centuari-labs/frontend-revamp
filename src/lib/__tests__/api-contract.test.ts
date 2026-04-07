@@ -79,8 +79,8 @@ describe("apiClient envelope unwrapping", () => {
 	});
 });
 
-describe("getMyAssets returns MyAssetItem[] directly", () => {
-	it("returns a flat array after apiClient unwraps paginated response", async () => {
+describe("getMyAssets returns paginated response", () => {
+	it("returns { data, page, totalData, totalPages } after unwrapping", async () => {
 		mockFetch.mockResolvedValue({
 			ok: true,
 			json: async () => MY_ASSETS_WIRE_RESPONSE,
@@ -90,11 +90,11 @@ describe("getMyAssets returns MyAssetItem[] directly", () => {
 		const { getMyAssets } = await import("@/lib/api");
 		const result = await getMyAssets("test-token");
 
-		expect(Array.isArray(result)).toBe(true);
-		expect(result).toHaveLength(2);
-		expect(result[0].symbol).toBe("USDC");
-		// No .data property on the result (that was the bug)
-		expect((result as any).data).toBeUndefined();
+		expect(Array.isArray(result.data)).toBe(true);
+		expect(result.data).toHaveLength(2);
+		expect(result.data[0].symbol).toBe("USDC");
+		expect(result.page).toBe(1);
+		expect(result.totalData).toBe(2);
 	});
 });
 

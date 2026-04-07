@@ -1,15 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act } from "@testing-library/react";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { makeLendPosition } from "@/__tests__/helpers/fixtures/positions";
 
-vi.mock("@/lib/positions-adapter.mock", () => ({
-  updateOpenOrder: vi.fn(async () => {}),
-  updateFilledPosition: vi.fn(async () => {}),
-  getOpenOrders: vi.fn(() => []),
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
+    user: { wallet: { address: "0x123" } },
+    getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+  })),
 }));
 
-import * as adapter from "@/lib/positions-adapter.mock";
+vi.mock("@/hooks/use-auth-token", () => ({
+  useAuthToken: vi.fn(() => ({
+    getToken: vi.fn(async () => "mock-token"),
+    authFetch: vi.fn(async (fn: (t: string) => Promise<unknown>) => fn("mock-token")),
+  })),
+}));
+
+vi.mock("@/lib/api", () => ({
+  updateOrder: vi.fn(async () => ({ success: true })),
+}));
+
+import { updateOrder } from "@/lib/api";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -17,42 +30,29 @@ beforeEach(() => {
 
 describe("useUpdateOpenOrder", () => {
   it("isPending starts as false", () => {
-    const { result } = renderHook(() => useUpdateOpenOrder());
+    const { result } = renderHookWithProviders(() => useUpdateOpenOrder());
     expect(result.current.isPending).toBe(false);
   });
 
-  it("updates open order when found there", async () => {
+  it("updates order via API", async () => {
     const pos = makeLendPosition({ id: "open-upd" });
-    vi.mocked(adapter.getOpenOrders).mockReturnValue([pos]);
 
-    const { result } = renderHook(() => useUpdateOpenOrder());
+    const { result } = renderHookWithProviders(() => useUpdateOpenOrder());
     const updated = { ...pos, amount: 999 };
 
     await act(async () => {
       await result.current.update(updated);
     });
 
-    expect(adapter.updateOpenOrder).toHaveBeenCalledWith(updated);
-    expect(adapter.updateFilledPosition).not.toHaveBeenCalled();
-  });
-
-  it("updates filled position when not in open orders", async () => {
-    vi.mocked(adapter.getOpenOrders).mockReturnValue([]);
-    const pos = makeLendPosition({ id: "filled-upd" });
-
-    const { result } = renderHook(() => useUpdateOpenOrder());
-
-    await act(async () => {
-      await result.current.update(pos);
-    });
-
-    expect(adapter.updateFilledPosition).toHaveBeenCalledWith(pos);
-    expect(adapter.updateOpenOrder).not.toHaveBeenCalled();
+    expect(updateOrder).toHaveBeenCalledWith(
+      "open-upd",
+      { amount: "999", rate: updated.apr * 10000 },
+      "mock-token",
+    );
   });
 
   it("isPending returns to false after update", async () => {
-    vi.mocked(adapter.getOpenOrders).mockReturnValue([]);
-    const { result } = renderHook(() => useUpdateOpenOrder());
+    const { result } = renderHookWithProviders(() => useUpdateOpenOrder());
 
     await act(async () => {
       await result.current.update(makeLendPosition());

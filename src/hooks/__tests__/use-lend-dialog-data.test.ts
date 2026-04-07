@@ -1,70 +1,123 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 
-// Mock mode = true
-vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
-
-vi.mock("@/hooks/use-my-assets", () => ({
-  useMyAssets: vi.fn(() => ({ assets: [], isLoading: false, isError: false })),
+vi.mock("@privy-io/react-auth", () => ({
+	usePrivy: vi.fn(() => ({
+		user: { wallet: { address: "0x123" } },
+		getAccessToken: vi.fn().mockResolvedValue("mock-token"),
+	})),
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
-  useAuthToken: vi.fn(() => ({ getToken: vi.fn(), authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")) })),
+	useAuthToken: vi.fn(() => ({ getToken: vi.fn(), authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")) })),
 }));
 
-vi.mock("@privy-io/react-auth", () => ({
-  usePrivy: vi.fn(() => ({ getAccessToken: vi.fn() })),
+vi.mock("@/hooks/use-my-assets", () => ({
+	useMyAssets: vi.fn(() => ({ assets: [], isLoading: false, isError: false })),
 }));
 
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
+import { useMyAssets } from "@/hooks/use-my-assets";
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  localStorage.clear();
+	vi.clearAllMocks();
 });
 
-describe("useLendDialogData (mock mode)", () => {
-  it("returns default balance from defaultPortfolio for known token", () => {
-    const { result } = renderHook(() => useLendDialogData("USDC"));
-    // defaultPortfolio.usdc = 15000, price = 1 -> balance = 15000
-    expect(result.current.availableBalance).toBe(15000);
-    expect(result.current.tokenPrice).toBe(1);
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.isError).toBe(false);
-  });
+describe("useLendDialogData", () => {
+	it("returns 0 balance when no matching asset", () => {
+		const { result } = renderHookWithProviders(() => useLendDialogData("UNKNOWN"));
+		expect(result.current.availableBalance).toBe(0);
+		expect(result.current.tokenPrice).toBe(0);
+	});
 
-  it("returns localStorage portfolio balance when set", () => {
-    localStorage.setItem(
-      "centuari_portfolio",
-      JSON.stringify({ usdc: 5000 }),
-    );
-    const { result } = renderHook(() => useLendDialogData("USDC"));
-    // 5000 USD / price 1 = 5000 tokens
-    expect(result.current.availableBalance).toBe(5000);
-  });
+	it("returns wallet balance and price for matching asset", () => {
+		vi.mocked(useMyAssets).mockReturnValue({
+			assets: [
+				{
+					symbol: "USDC",
+					name: "USD Coin",
+					walletBalance: 15000,
+					amountInUsd: 15000,
+					isCollateral: false,
+					imageUrl: null,
+					ltv: 0,
+					liquidationThreshold: 0,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			page: 1,
+			totalData: 1,
+			totalPages: 1,
+			refetch: vi.fn(),
+		} as any);
 
-  it("returns 0 balance for unknown token", () => {
-    const { result } = renderHook(() => useLendDialogData("UNKNOWN"));
-    expect(result.current.availableBalance).toBe(0);
-    expect(result.current.tokenPrice).toBe(0);
-  });
+		const { result } = renderHookWithProviders(() => useLendDialogData("USDC"));
+		expect(result.current.availableBalance).toBe(15000);
+		expect(result.current.tokenPrice).toBe(1);
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.isError).toBe(false);
+	});
 
-  it("reads totalSupply from localStorage", () => {
-    localStorage.setItem("centuari_total_supply", "12345");
-    const { result } = renderHook(() => useLendDialogData("USDC"));
-    expect(result.current.totalSupply).toBe(12345);
-  });
+	it("derives balance correctly for high-price token", () => {
+		vi.mocked(useMyAssets).mockReturnValue({
+			assets: [
+				{
+					symbol: "BTC",
+					name: "Bitcoin",
+					walletBalance: 2.222,
+					amountInUsd: 100000,
+					isCollateral: false,
+					imageUrl: null,
+					ltv: 0,
+					liquidationThreshold: 0,
+				},
+			],
+			isLoading: false,
+			isError: false,
+			page: 1,
+			totalData: 1,
+			totalPages: 1,
+			refetch: vi.fn(),
+		} as any);
 
-  it("returns 0 totalSupply when localStorage is empty", () => {
-    const { result } = renderHook(() => useLendDialogData("USDC"));
-    expect(result.current.totalSupply).toBe(0);
-  });
+		const { result } = renderHookWithProviders(() => useLendDialogData("BTC"));
+		expect(result.current.availableBalance).toBe(2.222);
+		expect(result.current.tokenPrice).toBeCloseTo(100000 / 2.222, 1);
+	});
 
-  it("derives balance correctly for high-price token", () => {
-    // BTC: defaultPortfolio.btc = 100000, price = 45000
-    const { result } = renderHook(() => useLendDialogData("BTC"));
-    const expected = 100000 / 45000;
-    expect(result.current.availableBalance).toBeCloseTo(expected, 4);
-    expect(result.current.tokenPrice).toBe(45000);
-  });
+	it("returns totalSupply as 0", () => {
+		const { result } = renderHookWithProviders(() => useLendDialogData("USDC"));
+		expect(result.current.totalSupply).toBe(0);
+	});
+
+	it("returns loading state from assets", () => {
+		vi.mocked(useMyAssets).mockReturnValue({
+			assets: [],
+			isLoading: true,
+			isError: false,
+			page: 1,
+			totalData: 0,
+			totalPages: 0,
+			refetch: vi.fn(),
+		} as any);
+
+		const { result } = renderHookWithProviders(() => useLendDialogData("USDC"));
+		expect(result.current.isLoading).toBe(true);
+	});
+
+	it("returns error state from assets", () => {
+		vi.mocked(useMyAssets).mockReturnValue({
+			assets: [],
+			isLoading: false,
+			isError: true,
+			page: 1,
+			totalData: 0,
+			totalPages: 0,
+			refetch: vi.fn(),
+		} as any);
+
+		const { result } = renderHookWithProviders(() => useLendDialogData("USDC"));
+		expect(result.current.isError).toBe(true);
+	});
 });

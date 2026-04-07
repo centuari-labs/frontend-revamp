@@ -3,10 +3,9 @@
  * and the correct unwrapping of the double-envelope response.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { MarketItem, OrderResponseData } from "@/lib/api";
+import type { OrderResponseData } from "@/lib/api";
 import {
 	aprToBasisPoints,
-	resolveMarketForAsset,
 	normalizeOrderToLendPosition,
 } from "@/lib/positions-adapter.api";
 import { MARKET_RESPONSE, ORDER_RESPONSE_DATA } from "@/__tests__/fixtures/api-responses";
@@ -23,7 +22,11 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-const MARKETS: MarketItem[] = MARKET_RESPONSE.markets as MarketItem[];
+const MARKET_IDS = {
+	assetId: "b0000000-0000-0000-0000-000000000001",
+	marketId: "c0000000-0000-0000-0000-000000000001",
+	tokenSymbol: "USDC",
+};
 
 describe("order submission DTO shape", () => {
 	it("rate is sent as basis points in DTO (not percentage or decimal)", () => {
@@ -40,30 +43,13 @@ describe("order submission DTO shape", () => {
 		expect(typeof dtoAmount).toBe("string");
 		expect(dtoAmount).toBe("1000");
 	});
-
-	it("resolves correct assetId and marketId from token symbol", () => {
-		const { assetId, marketId } = resolveMarketForAsset("USDC", MARKETS);
-		expect(assetId).toBe("b0000000-0000-0000-0000-000000000001");
-		expect(marketId).toBe("c0000000-0000-0000-0000-000000000001");
-	});
-
-	it("resolves case-insensitively", () => {
-		const { assetId } = resolveMarketForAsset("usdc", MARKETS);
-		expect(assetId).toBe("b0000000-0000-0000-0000-000000000001");
-	});
-
-	it("throws for unknown token", () => {
-		expect(() => resolveMarketForAsset("UNKNOWN", MARKETS)).toThrow(
-			'No asset found for token "UNKNOWN"',
-		);
-	});
 });
 
 describe("response normalization to LendPosition", () => {
 	it("converts rate from percentage to decimal APR", () => {
 		const position = normalizeOrderToLendPosition(
 			ORDER_RESPONSE_DATA as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
 		// BE returns rate=6.5 (percentage), FE converts to 0.065 (decimal APR)
 		expect(position.apr).toBe(0.065);
@@ -72,60 +58,60 @@ describe("response normalization to LendPosition", () => {
 	it("converts maturity from seconds to milliseconds", () => {
 		const position = normalizeOrderToLendPosition(
 			ORDER_RESPONSE_DATA as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
-		// BE: 1748736000 seconds → FE: 1748736000000 milliseconds
+		// BE: 1748736000 seconds -> FE: 1748736000000 milliseconds
 		expect(position.maturity).toBe(1748736000 * 1000);
 	});
 
-	it("maps OPEN status to pending", () => {
+	it("maps OPEN status to OPEN", () => {
 		const position = normalizeOrderToLendPosition(
 			{ ...ORDER_RESPONSE_DATA, status: "OPEN" } as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
-		expect(position.status).toBe("pending");
+		expect(position.status).toBe("OPEN");
 	});
 
-	it("maps FILLED status to success", () => {
+	it("maps FILLED status to FILLED", () => {
 		const position = normalizeOrderToLendPosition(
 			{ ...ORDER_RESPONSE_DATA, status: "FILLED" } as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
-		expect(position.status).toBe("success");
+		expect(position.status).toBe("FILLED");
 	});
 
-	it("maps CANCELLED status to failed", () => {
+	it("maps CANCELLED status to CANCELLED", () => {
 		const position = normalizeOrderToLendPosition(
 			{ ...ORDER_RESPONSE_DATA, status: "CANCELLED" } as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
-		expect(position.status).toBe("failed");
+		expect(position.status).toBe("CANCELLED");
 	});
 
-	it("maps PARTIALLY_FILLED status to processing", () => {
+	it("maps PARTIALLY_FILLED status to PARTIALLY_FILLED", () => {
 		const position = normalizeOrderToLendPosition(
 			{
 				...ORDER_RESPONSE_DATA,
 				status: "PARTIALLY_FILLED",
 			} as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
-		expect(position.status).toBe("processing");
+		expect(position.status).toBe("PARTIALLY_FILLED");
 	});
 
 	it("parses originalAmount as number", () => {
 		const position = normalizeOrderToLendPosition(
 			ORDER_RESPONSE_DATA as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
 		expect(position.amount).toBe(1000);
 		expect(typeof position.amount).toBe("number");
 	});
 
-	it("resolves token symbol from assetId", () => {
+	it("uses passed token symbol", () => {
 		const position = normalizeOrderToLendPosition(
 			ORDER_RESPONSE_DATA as OrderResponseData,
-			MARKETS,
+			"USDC",
 		);
 		expect(position.tokenSymbol).toBe("USDC");
 		expect(position.tokenValue).toBe("usdc");
@@ -152,7 +138,7 @@ describe("full submission chain (mocked API)", () => {
 				maturity: 1748736000000,
 				autoRollover: false,
 			},
-			MARKETS,
+			MARKET_IDS,
 			"jwt-token",
 		);
 
