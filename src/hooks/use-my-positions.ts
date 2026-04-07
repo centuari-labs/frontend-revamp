@@ -19,17 +19,14 @@ export interface UseMyPositionsOptions {
 
 export function useMyPositions(options?: UseMyPositionsOptions) {
   const { type, page = 1, limit = 10, assetId, enabled = true } = options ?? {};
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.MY_POSITIONS, address, type, page, limit, assetId],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getMyPositions(token, { type, page, limit, assetId });
-    },
+    queryFn: () =>
+      authFetch((token) => getMyPositions(token, { type, page, limit, assetId })),
     staleTime: 10_000,
     refetchInterval: 15_000,
     enabled: !!address && enabled,

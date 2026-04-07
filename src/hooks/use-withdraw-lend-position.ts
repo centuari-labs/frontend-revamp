@@ -6,15 +6,12 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useWithdrawLendPosition() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (marketId: string) => {
-      const token = await getToken();
-      if (!token) throw new Error("Authentication required");
-      return withdrawLendPosition(marketId, token);
-    },
+    mutationFn: (marketId: string) =>
+      authFetch((token) => withdrawLendPosition(marketId, token)),
     onSuccess: () => invalidateUserQueries(queryClient),
   });
 

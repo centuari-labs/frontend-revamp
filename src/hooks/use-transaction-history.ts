@@ -29,7 +29,7 @@ export function useTransactionHistory(options?: {
 		endDate,
 		enabled = true,
 	} = options ?? {};
-	const { getToken } = useAuthToken();
+	const { authFetch } = useAuthToken();
 	const { user } = usePrivy();
 	const address = user?.wallet?.address;
 
@@ -44,18 +44,17 @@ export function useTransactionHistory(options?: {
 			startDate,
 			endDate,
 		],
-		queryFn: async () => {
-			const token = await getToken();
-			if (!token) throw new Error("No auth token");
-			return getTransactionHistory(token, {
-				page,
-				limit,
-				assetId,
-				side,
-				startDate,
-				endDate,
-			});
-		},
+		queryFn: () =>
+			authFetch((token) =>
+				getTransactionHistory(token, {
+					page,
+					limit,
+					assetId,
+					side,
+					startDate,
+					endDate,
+				}),
+			),
 		staleTime: 10_000,
 		enabled: !!address && enabled,
 		placeholderData: (prev) => prev,

@@ -43,7 +43,7 @@ export function useDeposit() {
   const { wallets } = useWallets();
   const publicClient = usePublicClient();
   const queryClient = useQueryClient();
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const [status, setStatus] = useState<DepositStatus>("idle");
 
   const mutation = useMutation({
@@ -169,11 +169,7 @@ export function useDeposit() {
         }
 
         // Step 5: Confirm deposit with backend
-        const jwt = await getToken();
-        if (!jwt) {
-          throw new Error("Not authenticated");
-        }
-        await confirmDeposit(depositTxHash, jwt);
+        await authFetch((jwt) => confirmDeposit(depositTxHash, jwt));
 
         setStatus("success");
         return {

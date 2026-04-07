@@ -32,7 +32,7 @@ export function useOpenOrders(options?: {
     endDate,
     enabled = true,
   } = options ?? {};
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
@@ -48,19 +48,18 @@ export function useOpenOrders(options?: {
       startDate,
       endDate,
     ],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getOpenOrders(token, {
-        page,
-        limit,
-        assetId,
-        side,
-        status,
-        startDate,
-        endDate,
-      });
-    },
+    queryFn: () =>
+      authFetch((token) =>
+        getOpenOrders(token, {
+          page,
+          limit,
+          assetId,
+          side,
+          status,
+          startDate,
+          endDate,
+        }),
+      ),
     staleTime: 10_000,
     enabled: !!address && enabled,
     placeholderData: (prev) => prev,

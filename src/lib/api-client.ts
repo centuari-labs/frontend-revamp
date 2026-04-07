@@ -5,6 +5,13 @@ interface ApiResponse<T> {
 	data: T;
 }
 
+export class AuthError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "AuthError";
+	}
+}
+
 export async function apiClient<T>(
 	path: string,
 	options: { method?: string; body?: unknown; token?: string } = {},
@@ -40,6 +47,10 @@ export async function apiClient<T>(
 			}
 		} catch {
 			// response body is not JSON — keep the default message
+		}
+
+		if (res.status === 401) {
+			throw new AuthError(message);
 		}
 		throw new Error(message);
 	}

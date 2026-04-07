@@ -8,6 +8,7 @@ vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: vi.fn(() => ({
     getToken: vi.fn(async () => "mock-token"),
+    authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")),
   })),
 }));
 

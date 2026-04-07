@@ -13,7 +13,7 @@ const LS_USERNAME_KEY = "centuari_username";
 export function useSyncAccount() {
 	const { authenticated, ready, logout } = usePrivy();
 	const { wallets } = useWallets();
-	const { getToken } = useAuthToken();
+	const { authFetch } = useAuthToken();
 	const { disconnect } = useDisconnect();
 	const { setHasAccess } = useAccessContext();
 	const hasSynced = useRef(false);
@@ -28,27 +28,26 @@ export function useSyncAccount() {
 
 		hasSynced.current = true;
 
-		getToken().then((token) => {
-			if (!token) return;
-			apiClient<AccountResponse>("/auth/login", { method: "POST", token })
-				.then((account) => {
-					setHasAccess(account.access_granted);
+		authFetch((token) =>
+			apiClient<AccountResponse>("/auth/login", { method: "POST", token }),
+		)
+			.then((account) => {
+				setHasAccess(account.access_granted);
 
-					const storedName = localStorage.getItem(LS_USERNAME_KEY);
-					if (!storedName && account.name) {
-						localStorage.setItem(LS_USERNAME_KEY, account.name);
-						window.dispatchEvent(new Event("centuari_username_changed"));
-					}
-				})
-				.catch((err) => {
-					console.error("Failed to sync account:", err);
-					hasSynced.current = false;
-					logout();
-					disconnect();
-					localStorage.removeItem(LS_USERNAME_KEY);
-				});
-		});
-	}, [ready, authenticated, wallets, getToken, logout, disconnect, setHasAccess]);
+				const storedName = localStorage.getItem(LS_USERNAME_KEY);
+				if (!storedName && account.name) {
+					localStorage.setItem(LS_USERNAME_KEY, account.name);
+					window.dispatchEvent(new Event("centuari_username_changed"));
+				}
+			})
+			.catch((err) => {
+				console.error("Failed to sync account:", err);
+				hasSynced.current = false;
+				logout();
+				disconnect();
+				localStorage.removeItem(LS_USERNAME_KEY);
+			});
+	}, [ready, authenticated, wallets, authFetch, logout, disconnect, setHasAccess]);
 
 	// Reset when user logs out
 	useEffect(() => {

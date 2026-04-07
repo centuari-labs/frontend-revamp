@@ -7,15 +7,14 @@ import { invalidateUserQueries } from "@/lib/query-keys";
 import type { RepayBorrowParams } from "@/types/positions";
 
 export function useRepay() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (params: RepayBorrowParams) => {
-      const token = await getToken();
-      if (!token) throw new Error("Authentication required");
-      return submitRepay(params.marketId, String(params.amount), token);
-    },
+    mutationFn: (params: RepayBorrowParams) =>
+      authFetch((token) =>
+        submitRepay(params.marketId, String(params.amount), token),
+      ),
     onSuccess: () => invalidateUserQueries(queryClient),
     onError: (error: Error) => {
       console.error("Repay mutation error:", error);

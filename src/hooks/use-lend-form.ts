@@ -41,7 +41,7 @@ export function useLendForm({
 }: UseLendFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
   const { borrowOrders } = useOrderbook({ assetId: assetIdProp });
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { submitLimit, submitMarket, isPending } = useSubmitLend();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -185,9 +185,8 @@ export function useLendForm({
           parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
-        const result = await submitLimit(
+        const result = await authFetch(async (token) => submitLimit(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -199,8 +198,8 @@ export function useLendForm({
             autoRollover,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -226,7 +225,7 @@ export function useLendForm({
       isPending,
       selectedToken,
       getTokenInfo,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitLimit,
@@ -247,9 +246,8 @@ export function useLendForm({
       try {
         const amountInUsd = numericAmount * tokenInfo.price;
 
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
-        const result = await submitMarket(
+        const result = await authFetch(async (token) => submitMarket(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -259,8 +257,8 @@ export function useLendForm({
             maturity: marketMaturity,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
@@ -283,7 +281,7 @@ export function useLendForm({
       isPending,
       selectedToken,
       getTokenInfo,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitMarket,
