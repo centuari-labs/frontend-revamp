@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Derive token price from USD value and wallet balance.
+ * Returns 0 when either value is non-positive (avoids division by zero).
+ */
+export function getTokenPrice(amountInUsd: number, walletBalance: number): number {
+	return amountInUsd > 0 && walletBalance > 0 ? amountInUsd / walletBalance : 0;
+}
+
 export function formatAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars + 2)}..${address.slice(-chars)}`;
 }

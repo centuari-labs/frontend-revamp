@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   formatNumberWithSeparator,
   calculateFutureAmount,
+  getTokenPrice,
 } from "@/lib/utils";
 import {
   getDefaultMaturityTimestamp,
@@ -105,10 +106,7 @@ export function useLendForm({
       (a) => a.symbol.toLowerCase() === value.toLowerCase(),
     );
     if (!asset) return undefined;
-    const price =
-      asset.amountInUsd > 0 && asset.walletBalance > 0
-        ? asset.amountInUsd / asset.walletBalance
-        : 0;
+    const price = getTokenPrice(asset.amountInUsd, asset.walletBalance);
     return { value: asset.symbol.toLowerCase(), label: asset.name, price };
   }, [myAssets]);
 
