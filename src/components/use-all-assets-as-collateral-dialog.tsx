@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -21,7 +22,7 @@ interface UseAllAssetsAsCollateralDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assets: UseAllAssetsAsCollateralDialogAsset[];
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   /** Tampilkan tombol close (X) di pojok kanan atas. Default: true */
   showCloseButton?: boolean;
 }
@@ -33,9 +34,16 @@ export function UseAllAssetsAsCollateralDialog({
   onConfirm,
   showCloseButton = false,
 }: UseAllAssetsAsCollateralDialogProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onOpenChange(false);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsPending(true);
+    try {
+      await onConfirm();
+      onOpenChange(false);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const displayAssets = assets.slice(0, 5);
@@ -85,8 +93,8 @@ export function UseAllAssetsAsCollateralDialog({
           <DialogClose asChild>
             <CentuariButton variant="secondary" className="flex-1">Cancel</CentuariButton>
           </DialogClose>
-          <Button variant="primary" onClick={handleConfirm} className="flex-1">
-            Confirm
+          <Button variant="primary" onClick={handleConfirm} disabled={isPending} className="flex-1">
+            {isPending ? "Confirming..." : "Confirm"}
           </Button>
         </DialogFooter>
       </DialogContent>
