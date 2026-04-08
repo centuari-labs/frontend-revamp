@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { getTokenPrice } from "@/lib/utils";
 import { type TokenInfo } from "@/lib/portfolio-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useUserDetailsContext } from "@/contexts/user-details-context";
@@ -37,10 +38,7 @@ export function useBorrowDialogData(): BorrowDialogData {
         value: key,
         label: asset.name,
         ltv: asset.ltv,
-        price:
-          asset.amountInUsd > 0 && asset.walletBalance > 0
-            ? asset.amountInUsd / asset.walletBalance
-            : 0,
+        price: getTokenPrice(asset.amountInUsd, asset.walletBalance),
         liquidationThreshold: asset.liquidationThreshold,
       });
     }
