@@ -55,7 +55,6 @@ export function useTransactionHistory(options?: {
 					endDate,
 				}),
 			),
-		staleTime: 10_000,
 		enabled: !!address && enabled,
 		placeholderData: (prev) => prev,
 	});

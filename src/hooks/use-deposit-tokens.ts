@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDepositTokens, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { QUERY_CONFIG } from "@/lib/query-config";
 
 export function useDepositTokens() {
 	const { getToken } = useAuthToken();
@@ -13,7 +14,7 @@ export function useDepositTokens() {
 			const jwt = await getToken();
 			return getDepositTokens(jwt ?? "");
 		},
-		staleTime: 5 * 60 * 1000,
+		staleTime: QUERY_CONFIG.DEPOSIT_TOKENS_STALE_TIME,
 		retry: 1,
 	});
 }

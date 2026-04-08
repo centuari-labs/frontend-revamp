@@ -5,7 +5,6 @@ export function useMarketData() {
 	const query = useQuery({
 		queryKey: ["market"],
 		queryFn: getMarket,
-		staleTime: 10_000,
 		retry: 1,
 	});
 
