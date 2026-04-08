@@ -52,7 +52,7 @@ vi.mock("@/contexts/user-details-context", () => ({
   })),
 }));
 
-import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
+import { useBorrowDialogData } from "@/hooks/use-borrow-portfolio-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useUserDetailsContext } from "@/contexts/user-details-context";
 

@@ -26,7 +26,7 @@ import { getDefaultMaturityTimestamp } from "@/lib/maturity";
 import { calculateFees } from "@/lib/fee-calculations";
 import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
-import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
+import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 
 type ViewMode = "borrow" | "deposit-collateral";
@@ -72,7 +72,7 @@ export function CentuariBorrowDialog({
 		apiSettledDebtUsd,
 		apiWeightedLtv,
 		isLoading: dataLoading,
-	} = useBorrowDialogData();
+	} = useBorrowPortfolioData();
 
 	// Form state
 	const [amountToBorrow, setAmountToBorrow] = useState("");
