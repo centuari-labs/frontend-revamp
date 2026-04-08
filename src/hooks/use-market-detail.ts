@@ -29,7 +29,6 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 			return getMarketDetail(assetId);
 		},
 		enabled: Boolean(assetId),
-		staleTime: 10_000,
 		retry: 1,
 	});
 

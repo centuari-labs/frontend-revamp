@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyPortfolio, type MyPortfolioResponse } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { usePrivy } from "@privy-io/react-auth";
 
 export function useMyPortfolio() {
@@ -14,8 +15,7 @@ export function useMyPortfolio() {
   const query = useQuery<MyPortfolioResponse>({
     queryKey: [QUERY_KEYS.MY_PORTFOLIO, address],
     queryFn: () => authFetch((token) => getMyPortfolio(token)),
-    staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: QUERY_CONFIG.POLLING_INTERVAL,
     enabled: !!address,
   });
 

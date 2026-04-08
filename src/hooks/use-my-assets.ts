@@ -23,7 +23,6 @@ export function useMyAssets(options?: UseMyAssetsOptions) {
   const query = useQuery({
     queryKey: [QUERY_KEYS.MY_ASSETS, address, page, limit],
     queryFn: () => authFetch((token) => getMyAssets(token, { page, limit })),
-    staleTime: 10_000,
     enabled: !!address,
     placeholderData: (prev) => prev,
   });

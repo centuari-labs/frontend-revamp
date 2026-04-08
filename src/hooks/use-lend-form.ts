@@ -19,6 +19,8 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { useTransactionFees } from "@/hooks/use-transaction-fees";
+import { useSuccessDialog } from "@/hooks/use-success-dialog";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -90,9 +92,13 @@ export function useLendForm({
   }, [availableMaturities]);
 
   const [autoRollover, setAutoRollover] = useState(true);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successAmount, setSuccessAmount] = useState("");
-  const [successTokenSymbol, setSuccessTokenSymbol] = useState("");
+  const {
+    showSuccessDialog,
+    setShowSuccessDialog,
+    successAmount,
+    successTokenSymbol,
+    setSuccess,
+  } = useSuccessDialog();
 
   const getTokenInfo = useCallback((value: string) => {
     const asset = myAssets.find(
@@ -137,18 +143,8 @@ export function useLendForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPosition, tokenList]);
 
-  // Fee constants (must mirror matching engine / backend)
-  const SETTLEMENT_FEE_BPS = 1; // 0.01%
-  const SETTLEMENT_FEE_MAX_USD = 0.05;
-  const MAKER_FEE_BPS = 10; // 0.1%
-  const TAKER_FEE_BPS = 20; // 0.2%
-
   const limitNumericAmount = parseFloat(limitAmountInput.amount) || 0;
-  const limitSettlementFee = Math.min(limitNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
-  const limitTradeFee = limitNumericAmount * (MAKER_FEE_BPS / 10000);
-  const limitTotalFee = limitSettlementFee + limitTradeFee;
-  const limitTransactionFee = limitTotalFee;
-  const limitAmountToPay = limitNumericAmount + limitTotalFee;
+  const limitFees = useTransactionFees(limitNumericAmount, "limit");
   const limitTargetAPRNumeric =
     parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
   const limitFutureAmount = calculateFutureAmount(
@@ -158,11 +154,7 @@ export function useLendForm({
   );
 
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
-  const marketSettlementFee = Math.min(marketNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
-  const marketTradeFee = marketNumericAmount * (TAKER_FEE_BPS / 10000);
-  const marketTotalFee = marketSettlementFee + marketTradeFee;
-  const marketTransactionFee = marketTotalFee;
-  const marketAmountToPay = marketNumericAmount + marketTotalFee;
+  const marketFees = useTransactionFees(marketNumericAmount, "market");
   const bestLendRate = (borrowOrders[0]?.apr ?? 0) * 100;
   const marketFutureAmount = calculateFutureAmount(
     marketNumericAmount,
@@ -206,11 +198,12 @@ export function useLendForm({
           return;
         }
 
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
         limitAmountInput.reset();
         setLimitTargetAPR("");
-        setShowSuccessDialog(true);
+        setSuccess(
+          formatNumberWithSeparator(numericAmount),
+          selectedToken.label.toUpperCase().slice(0, 4),
+        );
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Transaction failed";
@@ -231,6 +224,7 @@ export function useLendForm({
       submitLimit,
       editingPosition,
       onUpdate,
+      setSuccess,
     ]
   );
 
@@ -265,10 +259,11 @@ export function useLendForm({
           return;
         }
 
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
         marketAmountInput.reset();
-        setShowSuccessDialog(true);
+        setSuccess(
+          formatNumberWithSeparator(numericAmount),
+          selectedToken.label.toUpperCase().slice(0, 4),
+        );
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Transaction failed";
@@ -287,6 +282,7 @@ export function useLendForm({
       submitMarket,
       editingPosition,
       onUpdate,
+      setSuccess,
     ]
   );
 
@@ -312,11 +308,11 @@ export function useLendForm({
     setLimitTargetAPR,
     handleLimitAmountChange: limitAmountInput.handleChange,
     handleLimitSubmit,
-    limitSettlementFee,
-    limitTradeFee,
-    limitTotalFee,
-    limitTransactionFee,
-    limitAmountToPay,
+    limitSettlementFee: limitFees.settlementFee,
+    limitTradeFee: limitFees.tradeFee,
+    limitTotalFee: limitFees.totalFee,
+    limitTransactionFee: limitFees.totalFee,
+    limitAmountToPay: limitFees.amountToPay,
     limitFutureAmount,
     marketAmount: marketAmountInput.amount,
     marketDisplayAmount: marketAmountInput.displayAmount,
@@ -324,11 +320,11 @@ export function useLendForm({
     setMarketMaturity,
     handleMarketAmountChange: marketAmountInput.handleChange,
     handleMarketSubmit,
-    marketSettlementFee,
-    marketTradeFee,
-    marketTotalFee,
-    marketTransactionFee,
-    marketAmountToPay,
+    marketSettlementFee: marketFees.settlementFee,
+    marketTradeFee: marketFees.tradeFee,
+    marketTotalFee: marketFees.totalFee,
+    marketTransactionFee: marketFees.totalFee,
+    marketAmountToPay: marketFees.amountToPay,
     marketFutureAmount,
     autoRollover,
     setAutoRollover,

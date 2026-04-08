@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMyPositions, type MyPositionItem } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { usePrivy } from "@privy-io/react-auth";
 
 const EMPTY_POSITIONS: MyPositionItem[] = [];
@@ -27,8 +28,7 @@ export function useMyPositions(options?: UseMyPositionsOptions) {
     queryKey: [QUERY_KEYS.MY_POSITIONS, address, type, page, limit, assetId],
     queryFn: () =>
       authFetch((token) => getMyPositions(token, { type, page, limit, assetId })),
-    staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: QUERY_CONFIG.POLLING_INTERVAL,
     enabled: !!address && enabled,
     placeholderData: (prev) => prev,
   });

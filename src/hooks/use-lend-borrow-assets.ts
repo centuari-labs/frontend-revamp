@@ -14,7 +14,6 @@ export function useLendBorrowAssets() {
   const query = useQuery<LendBorrowAssetsResponse>({
     queryKey: [QUERY_KEYS.LEND_BORROW_ASSETS, address],
     queryFn: () => authFetch((token) => getLendBorrowAssets(token)),
-    staleTime: 10_000,
     enabled: !!address,
   });
 
