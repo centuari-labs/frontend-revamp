@@ -112,7 +112,7 @@ export function SubmitProofDialog() {
               Cancel
             </CentuariButton>
           </DialogClose>
-          <Button type="button" variant={"primary"} className="flex-1">
+          <Button type="button" variant={"primary"} className="flex-1" disabled={files.length === 0}>
             Submit
           </Button>
         </DialogFooter>

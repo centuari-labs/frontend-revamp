@@ -21,45 +21,6 @@ function isPathAllowed(path: string): boolean {
 	);
 }
 
-/**
- * Simple in-memory rate limiter: max requests per window per IP.
- */
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 100;
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-	const now = Date.now();
-	const entry = rateLimitMap.get(ip);
-
-	if (!entry || now >= entry.resetAt) {
-		rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-		return false;
-	}
-
-	entry.count += 1;
-	return entry.count > RATE_LIMIT_MAX_REQUESTS;
-}
-
-// Periodically clean up expired entries to prevent memory leaks
-setInterval(() => {
-	const now = Date.now();
-	for (const [ip, entry] of rateLimitMap) {
-		if (now >= entry.resetAt) {
-			rateLimitMap.delete(ip);
-		}
-	}
-}, RATE_LIMIT_WINDOW_MS);
-
-function getClientIp(req: NextRequest): string {
-	return (
-		req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-		req.headers.get("x-real-ip") ||
-		"unknown"
-	);
-}
-
 async function handler(
 	req: NextRequest,
 	{ params }: { params: Promise<{ path: string[] }> },
@@ -80,15 +41,6 @@ async function handler(
 		return NextResponse.json(
 			{ error: "Endpoint not allowed" },
 			{ status: 403 },
-		);
-	}
-
-	// Rate limiting
-	const clientIp = getClientIp(req);
-	if (isRateLimited(clientIp)) {
-		return NextResponse.json(
-			{ error: "Too many requests" },
-			{ status: 429 },
 		);
 	}
 

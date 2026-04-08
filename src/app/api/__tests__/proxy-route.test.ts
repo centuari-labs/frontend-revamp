@@ -1,12 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 // Mock fetch before importing the handler
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
-
-// The route module uses setInterval at module scope — we need to control timers
-vi.useFakeTimers();
 
 const { GET, POST, PUT, PATCH, DELETE } = await import(
 	"@/app/api/[...path]/route"
@@ -48,10 +45,6 @@ function mockBackendResponse(
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockBackendResponse();
-});
-
-afterEach(() => {
-	vi.clearAllTimers();
 });
 
 // ─── Path Whitelist ─────────────────────────────────────────────────────────
@@ -202,94 +195,6 @@ describe("SSRF prevention", () => {
 		expect(fetchOptions.headers).not.toHaveProperty("cookie");
 		expect(fetchOptions.headers).not.toHaveProperty("x-custom-header");
 		expect(fetchOptions.headers).not.toHaveProperty("host");
-	});
-});
-
-// ─── Rate Limiting ──────────────────────────────────────────────────────────
-
-describe("rate limiting", () => {
-	it("allows requests up to the limit", async () => {
-		for (let i = 0; i < 100; i++) {
-			const req = makeRequest("market", {
-				headers: { "x-forwarded-for": "10.0.0.1" },
-			});
-			const res = await GET(req, makeParams("market"));
-			expect(res.status).toBe(200);
-		}
-	});
-
-	it("blocks requests exceeding 100 per minute from same IP", async () => {
-		// Exhaust the limit
-		for (let i = 0; i < 100; i++) {
-			const req = makeRequest("market", {
-				headers: { "x-forwarded-for": "10.0.0.99" },
-			});
-			await GET(req, makeParams("market"));
-		}
-
-		// 101st request should be blocked
-		const req = makeRequest("market", {
-			headers: { "x-forwarded-for": "10.0.0.99" },
-		});
-		const res = await GET(req, makeParams("market"));
-
-		expect(res.status).toBe(429);
-		const body = await res.json();
-		expect(body.error).toBe("Too many requests");
-	});
-
-	it("does not rate limit different IPs independently", async () => {
-		// Fill up limit for IP A
-		for (let i = 0; i < 100; i++) {
-			const req = makeRequest("market", {
-				headers: { "x-forwarded-for": "10.0.0.200" },
-			});
-			await GET(req, makeParams("market"));
-		}
-
-		// IP B should still be allowed
-		const req = makeRequest("market", {
-			headers: { "x-forwarded-for": "10.0.0.201" },
-		});
-		const res = await GET(req, makeParams("market"));
-		expect(res.status).toBe(200);
-	});
-
-	it("resets rate limit after the time window", async () => {
-		// Exhaust the limit
-		for (let i = 0; i < 100; i++) {
-			const req = makeRequest("market", {
-				headers: { "x-forwarded-for": "10.0.0.50" },
-			});
-			await GET(req, makeParams("market"));
-		}
-
-		// Advance time past the window (60s)
-		vi.advanceTimersByTime(61_000);
-
-		// Should be allowed again
-		const req = makeRequest("market", {
-			headers: { "x-forwarded-for": "10.0.0.50" },
-		});
-		const res = await GET(req, makeParams("market"));
-		expect(res.status).toBe(200);
-	});
-
-	it("uses x-real-ip when x-forwarded-for is not present", async () => {
-		// Fill limit for this IP via x-real-ip
-		for (let i = 0; i < 101; i++) {
-			const req = makeRequest("market", {
-				headers: { "x-real-ip": "192.168.1.1" },
-			});
-			await GET(req, makeParams("market"));
-		}
-
-		// Next request should be blocked
-		const req = makeRequest("market", {
-			headers: { "x-real-ip": "192.168.1.1" },
-		});
-		const res = await GET(req, makeParams("market"));
-		expect(res.status).toBe(429);
 	});
 });
 
