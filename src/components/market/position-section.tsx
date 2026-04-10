@@ -508,7 +508,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
           <TabsContent value="open_orders" className="mt-0">
             {filteredPositions.length > 0 ? (
               filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} hideEdit />
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
               ))
             ) : (
               <div className="px-4 py-8 text-center text-muted-foreground">
@@ -599,7 +599,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   positions={filteredPositions}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
-                  hideEdit
                   hideActions={tab === "active_position" || tab === "all_transactions"}
                   activeTab={tab}
                   emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
