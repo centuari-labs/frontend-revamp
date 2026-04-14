@@ -57,12 +57,10 @@ function PositionCard({
   position,
   onDelete,
   onUpdate,
-  hideEdit
 }: {
   position: Position;
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
-  hideEdit?: boolean;
 }) {
   const statusColors = {
     OPEN: "bg-blue-500",
@@ -119,18 +117,16 @@ function PositionCard({
       </div>
 
       <div className="flex gap-2 justify-end">
-        {!hideEdit && (
-          <AmendDialog
-            position={position}
-            tokenList={MARKET_TOKEN_LIST}
-            onUpdate={onUpdate}
-            trigger={
-              <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                <Edit2 size={16} className="text-white" />
-              </button>
-            }
-          />
-        )}
+        <AmendDialog
+          position={position}
+          tokenList={MARKET_TOKEN_LIST}
+          onUpdate={onUpdate}
+          trigger={
+            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+              <Edit2 size={16} className="text-white" />
+            </button>
+          }
+        />
         <button
           onClick={handleDelete}
           className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
@@ -217,7 +213,6 @@ function UnifiedPositionTable({
   positions,
   onDelete,
   onUpdate,
-  hideEdit = false,
   hideActions = false,
   emptyMessage = "No results.",
   activeTab = "open_orders",
@@ -225,7 +220,6 @@ function UnifiedPositionTable({
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
-  hideEdit?: boolean;
   hideActions?: boolean;
   emptyMessage?: string;
   activeTab?: string;
@@ -247,18 +241,16 @@ function UnifiedPositionTable({
     cell: ({ row }: { row: { original: Position } }) => {
       return (
         <div className="flex items-center gap-2">
-          {!hideEdit && (
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
-              trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
-              }
-            />
-          )}
+          <AmendDialog
+            position={row.original}
+            tokenList={MARKET_TOKEN_LIST}
+            onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+            trigger={
+              <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                <Edit2 size={14} className="text-white" />
+              </button>
+            }
+          />
           <CancelOrderDialog
             onConfirm={() => onDelete(row.original.id)}
             trigger={
@@ -283,7 +275,7 @@ function UnifiedPositionTable({
     }
     // Transaction History: Date, Loan Token, Side, Amount, Fee, APR%, Maturity
     return [colDate, colToken, colSide, colAmount, colFee, colApr, colMaturity];
-  }, [activeTab, hideActions, onDelete, onUpdate, hideEdit]);
+  }, [activeTab, hideActions, onDelete, onUpdate]);
 
   const table = useReactTable({
     data: positions,
@@ -508,7 +500,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
           <TabsContent value="open_orders" className="mt-0">
             {filteredPositions.length > 0 ? (
               filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} hideEdit />
+                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
               ))
             ) : (
               <div className="px-4 py-8 text-center text-muted-foreground">
@@ -599,7 +591,6 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   positions={filteredPositions}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
-                  hideEdit
                   hideActions={tab === "active_position" || tab === "all_transactions"}
                   activeTab={tab}
                   emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
