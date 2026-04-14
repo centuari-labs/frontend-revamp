@@ -16,6 +16,7 @@ import { CentuariLoginDialog } from "./centuari-login-dialog";
 import { CentuariUserMenu } from "./centuari-user-menu";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
 import { glassStyle, glassBorderGradient } from "@/components/ui/glass-card";
+import { CentuariGlassLayers } from "./centuari-glass-surface";
 
 interface NavItem {
   name: string;
@@ -195,14 +196,15 @@ export default function CentuariNavbar() {
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
         <div className="px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
-            <div className="flex items-center gap-6 bg-black/5 px-2 py-1 rounded-lg md:rounded-xl border border-white/10 backdrop-blur-sm">
+            <div className="group/glass relative isolate flex items-center gap-6 overflow-hidden bg-transparent px-2 py-1 rounded-lg md:rounded-xl">
+              <CentuariGlassLayers intensity="soft" sheen={false} />
               <img
                 src="/centuari-logo.png"
                 alt="Logo"
-                className="w-6 h-6 md:w-8 md:h-8 ml-0 md:ml-2"
+                className="relative z-20 w-6 h-6 md:w-8 md:h-8 ml-0 md:ml-2"
               />
 
-              <div className="hidden md:flex items-center space-x-2 relative">
+              <div className="relative z-20 hidden md:flex items-center space-x-2">
                 <div
                   ref={indicatorRef}
                   className="absolute h-10 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"

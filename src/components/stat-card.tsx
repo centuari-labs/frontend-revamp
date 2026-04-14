@@ -1,5 +1,6 @@
 "use client";
 
+import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ export interface StatCardProps {
   iconWrapperClassName?: string;
   className?: string;
   id?: string;
+  glass?: boolean;
 }
 
 export function StatCard({
@@ -25,6 +27,7 @@ export function StatCard({
   iconWrapperClassName,
   className,
   id,
+  glass = false,
 }: StatCardProps) {
   const isCentered = variant === "centered";
   const withIcon = (variant === "withIcon" || variant === "centered") && icon;
@@ -39,18 +42,26 @@ export function StatCard({
         className,
       )}
     >
-      {withIcon && (
-        <div
-          className={cn(
-            iconAlwaysBoxed
-              ? "p-3 bg-white/10 rounded-lg border border-white/5"
-              : "p-4 md:p-0 bg-white/10 md:bg-transparent rounded-2xl md:rounded-none border border-white/5 md:border-0",
-            iconWrapperClassName,
-          )}
-        >
-          {icon}
-        </div>
-      )}
+      {withIcon &&
+        (glass ? (
+          <CentuariGlassSurface
+            intensity="soft"
+            className={cn("p-3 rounded-xl flex items-center", iconWrapperClassName)}
+          >
+            {icon}
+          </CentuariGlassSurface>
+        ) : (
+          <div
+            className={cn(
+              iconAlwaysBoxed
+                ? "p-3 bg-white/10 rounded-lg border border-white/5"
+                : "p-4 md:p-0 bg-white/10 md:bg-transparent rounded-2xl md:rounded-none border border-white/5 md:border-0",
+              iconWrapperClassName,
+            )}
+          >
+            {icon}
+          </div>
+        ))}
       <div className={cn(isCentered && "text-center md:text-left")}>
         <CentuariTypography
           className={cn(
