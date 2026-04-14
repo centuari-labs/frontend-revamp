@@ -40,23 +40,14 @@ export function GlassDistortionFilter() {
 }
 
 export interface CentuariGlassLayersProps {
-  /** Bevel intensity — "soft" for large surfaces (cards), "crisp" for small (buttons). */
   intensity?: "soft" | "crisp";
-  /** Enable the sweeping sheen on hover (via group/glass on parent). */
   sheen?: boolean;
   className?: string;
 }
 
-/**
- * Injects the 5-layer liquid-glass visual stack into its parent.
- * Parent MUST be `relative isolate overflow-hidden` and (optionally) have
- * `group/glass` class if `sheen` is true. Content after <CentuariGlassLayers />
- * should carry `relative z-20` to sit above the layers.
- */
 export function CentuariGlassLayers({
   intensity = "crisp",
   sheen = true,
-  className,
 }: CentuariGlassLayersProps) {
   const bevelSoft = [
     "inset 0 0 0 1px rgba(255,255,255,0.05)",
@@ -79,45 +70,17 @@ export function CentuariGlassLayers({
 
   return (
     <>
-      {/* <GlassDistortionFilter /> */}
-
-      {/* Distortion: warps background pixels like real glass. */}
-      {/* <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0 rounded-[inherit]",
-          className,
-        )}
-        style={{
-          backdropFilter: `url(#${FILTER_ID}) blur(2px) saturate(180%)`,
-          WebkitBackdropFilter: `url(#${FILTER_ID}) blur(2px) saturate(180%)`,
-        }}
-      /> */}
-
-      {/* Tint */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[inherit] bg-white/0"
       />
 
-      {/* Specular highlight (plus-lighter) */}
-      {/* <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[inherit] mix-blend-plus-lighter opacity-80"
-        style={{
-          backgroundImage:
-            "radial-gradient(130% 85% at 18% 8%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 55%)",
-        }}
-      /> */}
-
-      {/* Inner bevel */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[inherit] z-10"
         style={{ boxShadow: intensity === "soft" ? bevelSoft : bevelCrisp }}
       />
 
-      {/* Sheen sweep */}
       {sheen && (
         <span
           aria-hidden
@@ -136,15 +99,9 @@ export interface CentuariGlassSurfaceProps
   extends React.HTMLAttributes<HTMLDivElement> {
   intensity?: "soft" | "crisp";
   sheen?: boolean;
-  /** Element tag to render. Defaults to "div". */
   as?: "div" | "span" | "section" | "header" | "article";
 }
 
-/**
- * Ready-to-use glass surface container. Handles the required wrapper classes
- * (`relative isolate overflow-hidden group/glass`) and injects the glass layers
- * automatically. Children are rendered above the layers at `z-20`.
- */
 export function CentuariGlassSurface({
   intensity = "crisp",
   sheen = false,

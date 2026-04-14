@@ -21,7 +21,6 @@ export function HomeHeader() {
 
   return (
     <div className="group/glass relative isolate flex flex-col justify-between items-center md:items-start gap-6 overflow-hidden px-6 md:px-12 py-8 rounded-xl border border-white/10 bg-[#05070D]">
-      {/* Base dark gradient — near-black fading across */}
       <div
         className="pointer-events-none absolute inset-0 -z-20 hidden md:block"
         style={{
@@ -36,24 +35,8 @@ export function HomeHeader() {
         alt="centuari-home-header"
       />
 
-      {/* Bright blue glow concentrated on the right */}
-      {/* <div className="pointer-events-none absolute -z-10 -right-40 top-1/2 -translate-y-1/2 w-[680px] h-[680px] rounded-full bg-[#2E6BFF] opacity-70 blur-[140px]" />
-      <div className="pointer-events-none absolute -z-10 -right-10 top-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full bg-[#5B8CFF] opacity-50 blur-[100px]" /> */}
-
-      {/* Organic curved shape (decorative) on the far right — hidden on mobile */}
-      {/* <div
-        aria-hidden
-        className="hidden md:block pointer-events-none absolute -z-10 -right-24 -top-16 w-[520px] h-[420px] opacity-80"
-        style={{
-          background:
-            "radial-gradient(60% 80% at 70% 40%, rgba(80,130,255,0.9) 0%, rgba(30,60,180,0.5) 35%, rgba(10,20,60,0) 70%)",
-          filter: "blur(30px)",
-        }}
-      /> */}
-
       <CentuariGlassLayers intensity="soft" sheen={false} />
 
-      {/* Header Text - centered on mobile, left-aligned on desktop */}
       <div className="relative z-20 text-center md:text-left w-full">
         {authenticated && <CentuariTypography className="text-primary-blue-30 font-semibold text-2xl md:text-4xl pb-1">
           Hi{name ? ` ${name}` : ""}!,
@@ -63,7 +46,6 @@ export function HomeHeader() {
         </CentuariTypography>
       </div>
 
-      {/* Balance Cards - 2 column grid on mobile, horizontal on desktop */}
       <div id={"tour-home-header"} className="relative z-20 w-full md:w-auto">
         <StatRow
           items={[
@@ -85,7 +67,6 @@ export function HomeHeader() {
           showSeparator
           layout="grid"
           statCardVariant="centered"
-          glass
         />
       </div>
     </div>

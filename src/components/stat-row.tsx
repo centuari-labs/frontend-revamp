@@ -17,7 +17,6 @@ export interface StatRowProps {
   layout?: "grid" | "flex";
   statCardVariant?: "default" | "withIcon" | "compact" | "centered";
   className?: string;
-  glass?: boolean;
 }
 
 export function StatRow({
@@ -26,7 +25,6 @@ export function StatRow({
   layout = "flex",
   statCardVariant = "centered",
   className,
-  glass = false,
 }: StatRowProps) {
   return (
     <div
@@ -54,7 +52,6 @@ export function StatRow({
             label={item.label}
             value={item.value}
             variant={statCardVariant}
-            glass={glass}
           />
         </span>
       ))}
