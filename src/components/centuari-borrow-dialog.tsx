@@ -219,7 +219,7 @@ export function CentuariBorrowDialog({
 		<>
 			<Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
 				<DialogTrigger asChild>
-					<CentuariButton variant="secondary" className="flex-1">
+					<CentuariButton variant="ghost" className="flex-1">
 						Borrow
 					</CentuariButton>
 				</DialogTrigger>

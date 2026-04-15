@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { CentuariButton } from "./centuari-button";
+import { CentuariGlassButton } from "./centuari-glass-button";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { LendMainView } from "./lend-main-view";
 import { LendDepositView } from "./lend-deposit-view";
@@ -250,9 +251,9 @@ export function CentuariLendDialog({
 		<>
 			<Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
 				<DialogTrigger asChild>
-					<Button variant="primary-dark" className="flex-1">
+					<CentuariGlassButton className="flex-1">
 						Start Earning
-					</Button>
+					</CentuariGlassButton>
 				</DialogTrigger>
 				<DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
 					<DialogHeader className="contents space-y-0 text-left">
