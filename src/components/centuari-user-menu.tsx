@@ -168,7 +168,7 @@ export function CentuariUserMenu() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="group/glass relative isolate overflow-hidden z-200 w-72 p-0 bg-transparent border-0 rounded-xl shadow-2xl"
+        className="group/glass relative isolate overflow-hidden z-200 w-72 p-0 bg-black/40 backdrop-blur-2xl border-0 rounded-xl shadow-2xl"
       >
         <CentuariGlassLayers intensity="soft" sheen={false} />
         <div className="relative z-20">
