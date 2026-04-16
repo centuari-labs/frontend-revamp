@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { cn, truncateBalance } from "@/lib/utils";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -527,7 +528,8 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
           setShowUseAllCollateralDialog(false);
         }}
       />
-      <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+      <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-2xl bg-transparent border-0 isolate">
+        <CentuariGlassLayers intensity="soft" />
       <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
       <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
         <Table className="w-full">
@@ -594,8 +596,10 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
-        <div className="flex items-center gap-2 text-sm">
+      {/* Footer table assets */}
+      <div className="group/glass relative flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-2 px-6 border-t border-white/5 gap-4 sm:gap-0 isolate overflow-hidden">
+        <CentuariGlassLayers intensity="soft" />
+        <div className="relative z-20 flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {isServerPagination ? (serverPage ?? 1) : table.getState().pagination.pageIndex + 1} of {isServerPagination ? (totalPages ?? 1) : (table.getPageCount() || 1)}
           </span>
@@ -604,7 +608,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             Showing {table.getRowModel().rows.length} of {isServerPagination ? (totalData ?? 0) : data.length} Data
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="relative z-20 flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
