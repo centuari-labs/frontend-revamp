@@ -4,6 +4,7 @@ import React from "react";
 import { gsap } from "gsap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ArrowUp } from "lucide-react";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { ScrollArea } from "../ui/scroll-area";
 import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
 import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
@@ -266,22 +267,29 @@ export const OrderBookCard: React.FC<{
     return (
       <div
         ref={cardRef}
-        className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px] overflow-hidden"
+        className="group/glass relative bg-transparent border-0 rounded-xl p-3 sm:p-4 md:p-[18px] overflow-hidden isolate"
         style={{ height }}
       >
-        <Tabs defaultValue="orderbook" className="w-full h-full flex flex-col">
+        <CentuariGlassLayers intensity="soft" />
+        <Tabs defaultValue="orderbook" className="relative z-20 w-full h-full flex flex-col">
           <TabsList className="bg-white/5 w-full shrink-0">
             <TabsTrigger
               value="orderbook"
-              className="data-[state=active]:!border-none"
+              className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
             >
-              Order Book
+              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                <CentuariGlassLayers intensity="soft" />
+              </span>
+              <span className="relative z-20">Order Book</span>
             </TabsTrigger>
             <TabsTrigger
               value="trades"
-              className="data-[state=active]:!border-none"
+              className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
             >
-              Recent Trades
+              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                <CentuariGlassLayers intensity="soft" />
+              </span>
+              <span className="relative z-20">Recent Trades</span>
             </TabsTrigger>
           </TabsList>
 

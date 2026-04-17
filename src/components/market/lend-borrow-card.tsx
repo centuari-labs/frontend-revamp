@@ -4,6 +4,7 @@ import { LendForm } from "@/components/market/lend-form";
 import { BorrowForm } from "@/components/market/borrow-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TokenOption } from "@/types";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 interface LendBorrowCardProps {
   tokenList: TokenOption[];
@@ -20,7 +21,8 @@ export function LendBorrowCard({
 }: LendBorrowCardProps) {
   return (
     <div className="col-span-1 hidden md:block">
-      <div className="bg-white/5 rounded-md h-auto md:h-[500px] md:flex md:flex-col">
+      <div className="group/glass relative bg-transparent border-0 rounded-xl h-auto md:h-[500px] md:flex md:flex-col overflow-hidden isolate">
+        <CentuariGlassLayers intensity="soft" />
         <Tabs
           defaultValue="lend"
           className="rounded-t-md gap-0 md:flex md:flex-col md:flex-1 md:min-h-0"

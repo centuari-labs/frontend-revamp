@@ -62,7 +62,7 @@ export default function TransactionHistoryPage() {
     <PageContainer innerClassName="2xl:min-h-0">
       <TransactionHistoryHeader />
       {/* Transaction History Container */}
-      <div className="group/glass relative bg-transparent border-0 rounded-2xl p-4 md:p-6 isolate overflow-hidden">
+      <div className="group/glass relative bg-transparent border-0 rounded-xl p-4 md:p-6 isolate overflow-hidden">
         <CentuariGlassLayers intensity="soft" />
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
@@ -123,7 +123,7 @@ export default function TransactionHistoryPage() {
                     <ChevronDown className="w-4 h-4 text-white/50 ml-1" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="group/glass relative w-auto bg-black/40 backdrop-blur-2xl border-0 p-0 isolate overflow-hidden rounded-2xl" align="end">
+                <PopoverContent className="group/glass relative w-auto bg-black/40 backdrop-blur-2xl border-0 p-0 isolate overflow-hidden rounded-xl" align="end">
                   <CentuariGlassLayers intensity="soft" />
                   <CentuariCalender
                     value={tempDateRange}
