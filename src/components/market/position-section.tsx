@@ -8,6 +8,7 @@ import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CentuariGlassLayers, CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import {
   Table,
   TableBody,
@@ -23,7 +24,7 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit2, Loader2, Search, Trash2 } from "lucide-react";
+import { ArrowLeftRight, ClipboardList, Edit2, Layers, Loader2, Search, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -332,9 +333,20 @@ function UnifiedPositionTable({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center"
+                className="h-48"
               >
-                {emptyMessage}
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                    {activeTab === "open_orders" ? (
+                      <ClipboardList size={22} className="text-white/40" />
+                    ) : activeTab === "active_position" ? (
+                      <Layers size={22} className="text-white/40" />
+                    ) : (
+                      <ArrowLeftRight size={22} className="text-white/40" />
+                    )}
+                  </CentuariGlassSurface>
+                  <span className="text-sm text-white/40">{emptyMessage}</span>
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -455,7 +467,8 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : setTxHistoryPage;
 
   return (
-    <div className="mt-2 bg-white/5 rounded-md md:p-4">
+    <div className="group/glass relative mt-2 bg-transparent border-0 rounded-xl md:p-4 overflow-hidden isolate">
+      <CentuariGlassLayers intensity="soft" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="md:hidden">
           <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 px-3 pt-3 pb-2 border-b border-white/10">
@@ -475,63 +488,46 @@ export function PositionSection({ assetId }: { assetId?: string }) {
             </div>
 
             <TabsList className="bg-white/5 w-full grid grid-cols-3 mb-3">
-              <TabsTrigger
-                value="open_orders"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                Open Orders
-              </TabsTrigger>
-              <TabsTrigger
-                value="active_position"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                Positions
-              </TabsTrigger>
-              <TabsTrigger
-                value="all_transactions"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                All Transaction
-              </TabsTrigger>
+              {[
+                { value: "open_orders", label: "Open Orders" },
+                { value: "active_position", label: "Positions" },
+                { value: "all_transactions", label: "All Transaction" },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none! text-xs"
+                >
+                  <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                    <CentuariGlassLayers intensity="soft" />
+                  </span>
+                  <span className="relative z-20">{tab.label}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
 
           </div>
 
-          <TabsContent value="open_orders" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No open orders found
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="active_position" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No active positions found
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="all_transactions" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No transactions found
-              </div>
-            )}
-          </TabsContent>
+          {[
+            { value: "open_orders", message: "You don't have any open orders yet", icon: ClipboardList },
+            { value: "active_position", message: "You don't have any active positions yet", icon: Layers },
+            { value: "all_transactions", message: "You don't have any transactions yet", icon: ArrowLeftRight },
+          ].map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="mt-0">
+              {filteredPositions.length > 0 ? (
+                filteredPositions.map((position) => (
+                  <PositionCard key={position.id} position={position} onDelete={handleDelete} />
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 py-12">
+                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                    <tab.icon size={22} className="text-white/40" />
+                  </CentuariGlassSurface>
+                  <span className="text-sm text-white/40">{tab.message}</span>
+                </div>
+              )}
+            </TabsContent>
+          ))}
         </div>
 
         <div className="hidden md:block p-2 sm:p-3">
@@ -551,24 +547,22 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 />
               </div>
               <TabsList className="bg-white/5 h-9 p-1">
-                <TabsTrigger
-                  value="open_orders"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  Open Orders
-                </TabsTrigger>
-                <TabsTrigger
-                  value="active_position"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  Active Position
-                </TabsTrigger>
-                <TabsTrigger
-                  value="all_transactions"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  All Transaction
-                </TabsTrigger>
+                {[
+                  { value: "open_orders", label: "Open Orders" },
+                  { value: "active_position", label: "Active Position" },
+                  { value: "all_transactions", label: "All Transaction" },
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none! text-xs sm:text-sm px-4 h-full"
+                  >
+                    <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                      <CentuariGlassLayers intensity="soft" />
+                    </span>
+                    <span className="relative z-20">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
           </div>
@@ -593,7 +587,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   onUpdate={handleUpdate}
                   hideActions={tab === "active_position" || tab === "all_transactions"}
                   activeTab={tab}
-                  emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
+                  emptyMessage={tab === "open_orders" ? "You don't have any open orders yet" : tab === "active_position" ? "You don't have any active positions yet" : "You don't have any transactions yet"}
                 />
               )}
             </TabsContent>
