@@ -11,7 +11,6 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Info, Loader2 } from "lucide-react";
 import { useLendForm } from "@/hooks/use-lend-form";
 import type { LendPosition } from "@/types/positions";
@@ -55,7 +54,7 @@ export function LendForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+        className="w-full p-2.5 md:h-full md:flex md:flex-col"
       >
         <TabsContent
           value="limit"
@@ -63,9 +62,8 @@ export function LendForm({
         >
           <form
             onSubmit={form.handleLimitSubmit}
-            className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div>
               <CentuariInput
                 id="limit-amount"
                 label="Supply"
@@ -137,11 +135,11 @@ export function LendForm({
                 futureAmount={form.limitFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
+            </div>
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
+              className="w-full mt-3.5"
               disabled={
                 !form.limitAmount ||
                 parseFloat(form.limitAmount) <= 0 ||
@@ -169,9 +167,8 @@ export function LendForm({
         >
           <form
             onSubmit={form.handleMarketSubmit}
-            className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div>
               <CentuariInput
                 id="market-amount"
                 label="Supply"
@@ -263,11 +260,11 @@ export function LendForm({
                 futureAmount={form.marketFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
+            </div>
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
+              className="w-full mt-3.5"
               disabled={
                 !form.marketAmount ||
                 parseFloat(form.marketAmount) <= 0 ||

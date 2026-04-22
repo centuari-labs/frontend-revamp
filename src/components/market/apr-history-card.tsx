@@ -21,8 +21,8 @@ interface APRHistoryCardProps {
 
 function APRHistoryCardSkeleton() {
   return (
-    <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden">
-      <div className="hidden md:flex px-6 lg:px-8 py-4 items-center justify-between w-full">
+    <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden p-4 flex flex-col md:h-full">
+      <div className="hidden md:flex items-center justify-between w-full shrink-0">
         <Skeleton className="h-5 w-24" />
         <div className="flex gap-2">
           {Array.from({ length: RANGE_TABS.length }).map((_, i) => (
@@ -30,8 +30,8 @@ function APRHistoryCardSkeleton() {
           ))}
         </div>
       </div>
-      <div className="px-6 pb-6">
-        <Skeleton className="h-[300px] w-full rounded-md" />
+      <div className="flex-1 min-h-0 mt-4">
+        <Skeleton className="h-full w-full rounded-md" />
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
 
   if (rateHistory.length === 0) {
     return (
-      <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate flex flex-col items-center justify-center min-h-[300px] gap-3">
+      <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate flex flex-col items-center justify-center min-h-[500px] md:h-full gap-3 p-4">
         <CentuariGlassLayers intensity="soft" />
         <BarChart3 size={40} className="relative z-20 text-white/20" />
         <span className="relative z-20 text-sm text-white/40">No Data</span>
@@ -101,10 +101,10 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
   }
 
   return (
-    <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate">
+    <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate p-4 flex flex-col md:h-full">
       <CentuariGlassLayers intensity="soft" />
       {/* Desktop Header - Only visible on md+ */}
-      <div className="hidden md:flex px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4 items-center gap-3 sm:gap-6 lg:gap-10 justify-between w-full">
+      <div className="hidden md:flex items-center gap-3 sm:gap-6 lg:gap-10 justify-between w-full shrink-0">
         <CentuariTypography className="inline-block text-sm sm:text-base">
           APR History
         </CentuariTypography>
@@ -114,10 +114,17 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
       </div>
 
       {/* Chart */}
-      <CentuariChart data={chartData} />
+      <CentuariChart
+        data={chartData}
+        yAxisWidth={30}
+        yAxisOrientation="right"
+        yTickCount={9}
+        margin={{ top: 10, right: 0, left: 0, bottom: 0 }}
+        className="h-[450px] md:h-auto md:flex-1 md:min-h-0 mt-4"
+      />
 
       {/* Mobile Tabs - Only visible on mobile, below chart */}
-      <div className="md:hidden px-4 pb-4">
+      <div className="md:hidden">
         <RangeTabs value={range} onChange={setRange} variant="mobile" />
       </div>
     </div>

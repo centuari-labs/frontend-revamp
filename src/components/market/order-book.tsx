@@ -18,8 +18,7 @@ const OrderRowView: React.FC<{
   maxAmount: number;
 }> = ({ order, maxAmount }) => {
   const isBorrow = order.side === "borrow";
-  const widthPct =
-    maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
+  const widthPct = maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
 
   const barRef = React.useRef<HTMLDivElement>(null);
 
@@ -37,17 +36,17 @@ const OrderRowView: React.FC<{
       {/* Per-row liquidity bar — anchored left */}
       <div
         ref={barRef}
-        className={`absolute inset-y-0 left-0 ${isBorrow
-          ? "bg-[rgba(255,59,68,0.18)]"
-          : "bg-[rgba(61,229,122,0.18)]"
-          }`}
+        className={`absolute inset-y-0 left-0 ${
+          isBorrow ? "bg-[rgba(255,59,68,0.18)]" : "bg-[rgba(61,229,122,0.18)]"
+        }`}
         style={{ width: "0%" }}
       />
 
       {/* APR */}
       <div
-        className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
-          }`}
+        className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
+          isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
+        }`}
       >
         {formatAPR(order.apr)}
       </div>
@@ -60,7 +59,10 @@ const OrderRowView: React.FC<{
   );
 };
 
-const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({ orders, side }) => {
+const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
+  orders,
+  side,
+}) => {
   const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -81,7 +83,7 @@ const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+      className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40 p-3 sm:p-4 md:p-4"
     >
       {side === "borrow" ? (
         <div className="flex flex-col justify-end min-h-full">
@@ -110,8 +112,9 @@ const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
             {trade.time}
           </div>
           <div
-            className={`col-span-3 text-left font-semibold z-10 shrink-0 ${trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
-              }`}
+            className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
+              trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
+            }`}
           >
             {trade.type}
           </div>
@@ -151,7 +154,10 @@ const OrderBookContent: React.FC<{
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm shrink-0">
+      <div className="border-b py-1 shrink-0">
+        <span className="text-sm p-3 sm:p-4 md:p-4">Borrow</span>
+      </div>
+      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm shrink-0 px-3 sm:px-4 md:px-4">
         <div className="col-span-6 text-white/80 text-start font-semibold pl-2">
           APR
         </div>
@@ -166,7 +172,7 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* MID APR */}
-      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4 shrink-0">
+      <div className="my-2 bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
         <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
           <ArrowUp color="#3de57a" size={16} />
           <span>{formatAPR(midApr)}</span>
@@ -179,6 +185,10 @@ const OrderBookContent: React.FC<{
       {/* LEND — rows start from top */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <OrderTable orders={displayLend} side="lend" />
+      </div>
+
+      <div className="border-t py-1 shrink-0">
+        <span className="text-sm p-3 sm:p-4 md:p-4">Lend</span>
       </div>
     </div>
   );
@@ -201,7 +211,9 @@ const RecentTradesContent: React.FC<{
 
     const recalc = () => {
       const cardH = card.clientHeight;
-      const cardPadding = parseFloat(getComputedStyle(card).paddingTop) + parseFloat(getComputedStyle(card).paddingBottom);
+      const cardPadding =
+        parseFloat(getComputedStyle(card).paddingTop) +
+        parseFloat(getComputedStyle(card).paddingBottom);
       const tabsH = tabsList?.getBoundingClientRect().height ?? 0;
       const headerH = header?.offsetHeight ?? 0;
       // gap-2 from Tabs = 8px, mt-2.5 from header = 10px, mb-3 = 12px
@@ -217,16 +229,17 @@ const RecentTradesContent: React.FC<{
 
   return (
     <>
-      <div ref={headerRef} className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center">
+      <div
+        ref={headerRef}
+        className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center px-3 sm:px-4 md:px-4"
+      >
         <div className="col-span-3 text-white/80 font-semibold text-left">
           Time
         </div>
         <div className="col-span-3 text-white/80 text-left font-semibold">
           Type
         </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          Amount
-        </div>
+        <div className="col-span-3 text-white/80 font-semibold">Amount</div>
         <div className="col-span-3 text-white/80 text-right font-semibold">
           APR
         </div>
@@ -234,14 +247,14 @@ const RecentTradesContent: React.FC<{
 
       {trades.length === 0 ? (
         <div
-          className="flex items-center justify-center text-sm text-white/40"
+          className="flex items-center justify-center text-sm text-white/40 px-3 sm:px-4 md:px-4"
           style={{ height: listHeight || undefined }}
         >
           No recent trades
         </div>
       ) : (
         <div
-          className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40"
+          className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40 px-3 sm:px-4 md:px-4"
           style={{ height: listHeight || undefined }}
         >
           <RecentTradeTable trades={trades} />
@@ -255,24 +268,24 @@ export const OrderBookCard: React.FC<{
   height?: string;
   assetId?: string;
   decimals?: number;
-}> = ({
-  height = "auto",
-  assetId,
-  decimals,
-}) => {
-    const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
-    const { trades } = useRecentTrades({ assetId, decimals });
-    const cardRef = React.useRef<HTMLDivElement>(null);
+}> = ({ height = "auto", assetId, decimals }) => {
+  const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
+  const { trades } = useRecentTrades({ assetId, decimals });
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
-    return (
-      <div
-        ref={cardRef}
-        className="group/glass relative bg-transparent border-0 rounded-xl p-3 sm:p-4 md:p-[18px] overflow-hidden isolate"
-        style={{ height }}
+  return (
+    <div
+      ref={cardRef}
+      className="group/glass relative bg-transparent border-0 rounded-xl overflow-hidden isolate"
+      style={{ height }}
+    >
+      <CentuariGlassLayers intensity="soft" />
+      <Tabs
+        defaultValue="orderbook"
+        className="relative z-20 w-full h-full flex flex-col"
       >
-        <CentuariGlassLayers intensity="soft" />
-        <Tabs defaultValue="orderbook" className="relative z-20 w-full h-full flex flex-col">
-          <TabsList className="bg-white/5 w-full shrink-0">
+        <div className="shrink-0 px-3 sm:px-4 md:px-4 pt-3 sm:pt-4 md:pt-4">
+          <TabsList className="bg-white/5 w-full">
             <TabsTrigger
               value="orderbook"
               className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
@@ -292,15 +305,19 @@ export const OrderBookCard: React.FC<{
               <span className="relative z-20">Recent Trades</span>
             </TabsTrigger>
           </TabsList>
+        </div>
 
-          <TabsContent value="orderbook" className="flex-1 min-h-0">
-            <OrderBookContent borrowOrders={borrowOrders} lendOrders={lendOrders} />
-          </TabsContent>
+        <TabsContent value="orderbook" className="flex-1 min-h-0">
+          <OrderBookContent
+            borrowOrders={borrowOrders}
+            lendOrders={lendOrders}
+          />
+        </TabsContent>
 
-          <TabsContent value="trades" className="flex-1 min-h-0">
-            <RecentTradesContent trades={trades} cardRef={cardRef} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  };
+        <TabsContent value="trades" className="flex-1 min-h-0">
+          <RecentTradesContent trades={trades} cardRef={cardRef} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};

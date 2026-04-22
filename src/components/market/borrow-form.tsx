@@ -11,7 +11,6 @@ import { MaturityToggle } from "@/components/maturity-toggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TabsContent } from "@/components/ui/tabs";
 import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -54,18 +53,15 @@ export function BorrowForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+        className="w-full p-2.5 md:h-full md:flex md:flex-col"
       >
         <TabsContent
           value="limit"
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
-          <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
-            <form
-              onSubmit={form.handleLimitSubmit}
-              className="md:h-full md:flex md:flex-col"
-            >
-              <ScrollArea className="h-auto md:flex-1 md:min-h-0">
+          <div className="text-center text-white/60">
+            <form onSubmit={form.handleLimitSubmit}>
+              <div>
                 <CentuariInput
                   id="limit-amount"
                   label="Amount to Borrow"
@@ -187,18 +183,18 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
-                <TransactionSummary
+                {/* <TransactionSummary
                   transactionFee={form.limitTransactionFee}
                   amountToPay={form.limitAmountToPay}
                   futureAmount={form.limitFutureAmount}
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
-                />
-              </ScrollArea>
+                /> */}
+              </div>
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3.5 md:shrink-0"
+                className="w-full mt-3.5"
                 disabled={
                   form.isPending ||
                   form.limitNumericAmount <= 0 ||
@@ -227,12 +223,9 @@ export function BorrowForm({
           value="market"
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
-          <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
-            <form
-              onSubmit={form.handleMarketSubmit}
-              className="md:h-full md:flex md:flex-col"
-            >
-              <ScrollArea className="h-auto md:flex-1 md:min-h-0">
+          <div className="text-center text-white/60">
+            <form onSubmit={form.handleMarketSubmit}>
+              <div>
                 <CentuariInput
                   id="market-amount"
                   label="Amount to Borrow"
@@ -355,18 +348,18 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
-                <TransactionSummary
+                {/* <TransactionSummary
                   transactionFee={form.marketTransactionFee}
                   amountToPay={form.marketAmountToPay}
                   futureAmount={form.marketFutureAmount}
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
-                />
-              </ScrollArea>
+                /> */}
+              </div>
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3.5 md:shrink-0"
+                className="w-full mt-3.5"
                 disabled={
                   form.isPending ||
                   form.marketNumericAmount <= 0 ||

@@ -75,12 +75,12 @@ export default function Page() {
 					<div className="col-span-1">
 						{assetId ? (
 							<OrderBookCard
-								height="500px"
+								height="600px"
 								assetId={assetId}
 								decimals={decimals ?? undefined}
 							/>
 						) : (
-							<div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+							<div className="h-[600px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
 								Market data unavailable.
 							</div>
 						)}
