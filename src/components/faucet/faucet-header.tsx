@@ -1,12 +1,15 @@
 "use client";
 
 import { CentuariTypography } from "@/components/centuari-typography";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 export function FaucetHeader() {
   return (
-    <div className="relative flex flex-col justify-between items-center md:items-start gap-4 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border border-white/10">
+    <div className="group/glass relative flex flex-col justify-between items-center md:items-start gap-4 bg-transparent border-0 overflow-hidden isolate px-6 md:px-12 py-8 rounded-xl">
+      <CentuariGlassLayers intensity="soft" />
+
       {/* Water droplet icon */}
-      <div className="hidden md:flex absolute top-6 right-8 items-center justify-center w-20 h-20 rounded-full bg-primary-blue-base/10">
+      <div className="hidden md:flex absolute top-6 right-8 items-center justify-center w-20 h-20 rounded-full bg-primary-blue-base/10 z-20">
         <svg
           width="40"
           height="40"
@@ -38,7 +41,7 @@ export function FaucetHeader() {
         </svg>
       </div>
 
-      <div className="text-center md:text-left w-full">
+      <div className="relative z-20 text-center md:text-left w-full">
       <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
           Token Faucet
         </CentuariTypography>
