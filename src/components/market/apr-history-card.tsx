@@ -21,7 +21,7 @@ interface APRHistoryCardProps {
 
 function APRHistoryCardSkeleton() {
   return (
-    <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden p-4 flex flex-col md:h-full">
+    <div className="md:col-span-2 lg:col-span-2 bg-white/5 rounded-md overflow-hidden p-4 flex flex-col md:h-[600px]">
       <div className="hidden md:flex items-center justify-between w-full shrink-0">
         <Skeleton className="h-5 w-24" />
         <div className="flex gap-2">
@@ -92,7 +92,7 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
 
   if (rateHistory.length === 0) {
     return (
-      <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate flex flex-col items-center justify-center min-h-[500px] md:h-full gap-3 p-4">
+      <div className="group/glass relative md:col-span-2  lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate flex flex-col items-center justify-center md:h-[600px] gap-3 p-4">
         <CentuariGlassLayers intensity="soft" />
         <BarChart3 size={40} className="relative z-20 text-white/20" />
         <span className="relative z-20 text-sm text-white/40">No Data</span>
@@ -101,7 +101,7 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
   }
 
   return (
-    <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate p-4 flex flex-col md:h-full">
+    <div className="group/glass relative md:col-span-2 lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate p-4 flex flex-col md:h-[600px]">
       <CentuariGlassLayers intensity="soft" />
       {/* Desktop Header - Only visible on md+ */}
       <div className="hidden md:flex items-center gap-3 sm:gap-6 lg:gap-10 justify-between w-full shrink-0">

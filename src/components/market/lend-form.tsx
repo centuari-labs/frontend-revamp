@@ -62,8 +62,9 @@ export function LendForm({
         >
           <form
             onSubmit={form.handleLimitSubmit}
+            className="md:h-full md:flex md:flex-col"
           >
-            <div>
+            <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
               <CentuariInput
                 id="limit-amount"
                 label="Supply"
@@ -139,7 +140,7 @@ export function LendForm({
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3.5"
+              className="w-full mt-3 md:shrink-0"
               disabled={
                 !form.limitAmount ||
                 parseFloat(form.limitAmount) <= 0 ||
@@ -167,8 +168,9 @@ export function LendForm({
         >
           <form
             onSubmit={form.handleMarketSubmit}
+            className="md:h-full md:flex md:flex-col"
           >
-            <div>
+            <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
               <CentuariInput
                 id="market-amount"
                 label="Supply"
@@ -264,7 +266,7 @@ export function LendForm({
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3.5"
+              className="w-full mt-3 md:shrink-0"
               disabled={
                 !form.marketAmount ||
                 parseFloat(form.marketAmount) <= 0 ||

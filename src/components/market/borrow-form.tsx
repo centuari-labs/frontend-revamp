@@ -59,9 +59,9 @@ export function BorrowForm({
           value="limit"
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
-          <div className="text-center text-white/60">
-            <form onSubmit={form.handleLimitSubmit}>
-              <div>
+          <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
+            <form onSubmit={form.handleLimitSubmit} className="md:h-full md:flex md:flex-col">
+              <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
                 <CentuariInput
                   id="limit-amount"
                   label="Amount to Borrow"
@@ -90,11 +90,11 @@ export function BorrowForm({
                   value={form.limitDisplayAmount}
                   onChange={form.handleLimitAmountChange}
                   className="mt-0"
-                  containerClassName="mt-3.5"
+                  containerClassName="mt-2"
                 />
-                <div className="mt-3">
-                  <Label className="mb-2">Collateral</Label>
-                  <div className="mt-1.5">
+                <div className="mt-2">
+                  <Label className="mb-1">Collateral</Label>
+                  <div className="mt-1">
                     {form.limitSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.limitSelectedCollaterals}
@@ -105,7 +105,7 @@ export function BorrowForm({
                     )}
                   </div>
                 </div>
-                <div className="w-full mt-3">
+                <div className="w-full mt-2">
                   <TargetAprMaturityInput
                     id="limit-target-apr"
                     value={form.limitTargetAPR}
@@ -117,7 +117,7 @@ export function BorrowForm({
                     label="Target APR"
                   />
                 </div>
-                <div className="mt-5">
+                <div className="mt-2">
                   <Checkbox
                     id="limit-auto-refinance"
                     label="Auto refinance"
@@ -126,7 +126,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-2 mt-2.5">
+                  <Label className="mb-1 mt-2">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -139,8 +139,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-2">
-                    <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.limitHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
@@ -153,7 +153,7 @@ export function BorrowForm({
                         }
                       />
                     </div>
-                    <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <div className="px-2 py-1.5 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                       <p className="text-xs text-muted-foreground text-center">
                         {form.limitHealthFactor > 0 &&
                         !isNaN(form.limitHealthFactor) &&
@@ -183,18 +183,18 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
-                {/* <TransactionSummary
+                <TransactionSummary
                   transactionFee={form.limitTransactionFee}
                   amountToPay={form.limitAmountToPay}
                   futureAmount={form.limitFutureAmount}
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
-                /> */}
+                />
               </div>
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3.5"
+                className="w-full mt-3 md:shrink-0"
                 disabled={
                   form.isPending ||
                   form.limitNumericAmount <= 0 ||
@@ -223,9 +223,9 @@ export function BorrowForm({
           value="market"
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
-          <div className="text-center text-white/60">
-            <form onSubmit={form.handleMarketSubmit}>
-              <div>
+          <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
+            <form onSubmit={form.handleMarketSubmit} className="md:h-full md:flex md:flex-col">
+              <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
                 <CentuariInput
                   id="market-amount"
                   label="Amount to Borrow"
@@ -254,11 +254,11 @@ export function BorrowForm({
                   value={form.marketDisplayAmount}
                   onChange={form.handleMarketAmountChange}
                   className="mt-0"
-                  containerClassName="mt-3.5"
+                  containerClassName="mt-2"
                 />
-                <div className="mt-3">
-                  <Label className="mb-2 mt-2.5">Collateral</Label>
-                  <div className="mt-1.5">
+                <div className="mt-2">
+                  <Label className="mb-1">Collateral</Label>
+                  <div className="mt-1">
                     {form.marketSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.marketSelectedCollaterals}
@@ -270,7 +270,7 @@ export function BorrowForm({
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-2 mt-3.5">
+                  <Label className="mb-1 mt-2">
                     Maturity{" "}
                     <CentuariTooltip message="Maturity is the duration for which you want to borrow assets.">
                       <Info size={16} />
@@ -282,7 +282,7 @@ export function BorrowForm({
                     options={form.availableMaturities}
                   />
                 </div>
-                <div className="mt-5">
+                <div className="mt-2">
                   <Checkbox
                     id="market-auto-refinance"
                     label="Auto refinance"
@@ -291,7 +291,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-2 mt-2.5">
+                  <Label className="mb-1 mt-2">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -304,8 +304,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-2">
-                    <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.marketHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
@@ -318,7 +318,7 @@ export function BorrowForm({
                         }
                       />
                     </div>
-                    <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <div className="px-2 py-1.5 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                       <p className="text-xs text-muted-foreground text-center">
                         {form.marketHealthFactor > 0 &&
                         !isNaN(form.marketHealthFactor) &&
@@ -348,18 +348,18 @@ export function BorrowForm({
                     </div>
                   </div>
                 </div>
-                {/* <TransactionSummary
+                <TransactionSummary
                   transactionFee={form.marketTransactionFee}
                   amountToPay={form.marketAmountToPay}
                   futureAmount={form.marketFutureAmount}
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
-                /> */}
+                />
               </div>
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3.5"
+                className="w-full mt-3 md:shrink-0"
                 disabled={
                   form.isPending ||
                   form.marketNumericAmount <= 0 ||
