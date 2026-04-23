@@ -21,7 +21,7 @@ export function LendBorrowCard({
 }: LendBorrowCardProps) {
   return (
     <div className="col-span-1 hidden md:block">
-      <div className="group/glass relative bg-transparent border-0 rounded-xl h-auto md:h-[500px] md:flex md:flex-col overflow-hidden isolate">
+      <div className="group/glass relative bg-transparent border-0 rounded-xl h-auto md:h-[600px] md:flex md:flex-col overflow-hidden isolate">
         <CentuariGlassLayers intensity="soft" />
         <Tabs
           defaultValue="lend"

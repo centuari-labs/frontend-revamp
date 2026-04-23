@@ -69,18 +69,18 @@ export default function Page() {
 					activeLoans={activeLoans}
 				/>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 gap">
 					<APRHistoryCard assetId={assetId} />
 
-					<div className="col-span-1">
+					<div className="col-span-1 md:h-full">
 						{assetId ? (
 							<OrderBookCard
-								height="500px"
+								height="600px"
 								assetId={assetId}
 								decimals={decimals ?? undefined}
 							/>
 						) : (
-							<div className="h-[500px] rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+							<div className="min-h-[600px] md:h-full rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
 								Market data unavailable.
 							</div>
 						)}
