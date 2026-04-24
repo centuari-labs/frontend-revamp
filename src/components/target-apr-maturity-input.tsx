@@ -39,7 +39,7 @@ export function TargetAprMaturityInput({
     <div className="w-full space-y-2">
       {label && (
         <div className="flex items-center justify-between">
-          <Label htmlFor={id}>{label}</Label>
+          <Label htmlFor={id} className="text-xs">{label}</Label>
         </div>
       )}
       <div className="flex items-center gap-0 rounded-md border border-[#2a2e38] bg-transparent h-9 overflow-hidden">

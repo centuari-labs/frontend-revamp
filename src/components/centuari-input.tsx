@@ -20,6 +20,7 @@ interface CentuariInputProps
   helperText?: string;
   containerClassName?: string;
   label?: string;
+  labelClassName?: string;
   tooltipMessage?: string;
   showTooltip?: boolean;
   readonly?: boolean;
@@ -59,6 +60,7 @@ export function CentuariInput({
   variant,
   className,
   label,
+  labelClassName,
   tooltipMessage = "Coming Soon",
   showTooltip = true,
   readOnly,
@@ -68,7 +70,11 @@ export function CentuariInput({
   return (
     <div className={containerClassName}>
       <div className={"mb-1.5 flex items-center justify-between"}>
-        {label && <Label htmlFor={id}>{label}</Label>}
+        {label && (
+          <Label htmlFor={id} className={cn(labelClassName)}>
+            {label}
+          </Label>
+        )}
         {balanceText && (
           <div
             className={cn(

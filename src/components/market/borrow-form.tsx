@@ -53,7 +53,7 @@ export function BorrowForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2.5 md:h-full md:flex md:flex-col"
+        className="w-full px-3 sm:px-4 md:px-2.5 md:h-full md:flex md:flex-col mt-2"
       >
         <TabsContent
           value="limit"
@@ -61,10 +61,11 @@ export function BorrowForm({
         >
           <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
             <form onSubmit={form.handleLimitSubmit} className="md:h-full md:flex md:flex-col">
-              <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
+              <div className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
                 <CentuariInput
                   id="limit-amount"
                   label="Amount to Borrow"
+                  labelClassName="text-xs"
                   size="large"
                   placeholder="1,000"
                   leftIcon={
@@ -93,7 +94,7 @@ export function BorrowForm({
                   containerClassName="mt-2"
                 />
                 <div className="mt-2">
-                  <Label className="mb-1">Collateral</Label>
+                  <Label className="mb-1 text-xs">Collateral</Label>
                   <div className="mt-1">
                     {form.limitSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
@@ -126,7 +127,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-1 mt-2">
+                  <Label className="mb-1 mt-2 text-xs">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -194,7 +195,7 @@ export function BorrowForm({
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3 md:shrink-0"
+                className="w-full md:shrink-0 mb-4"
                 disabled={
                   form.isPending ||
                   form.limitNumericAmount <= 0 ||
@@ -225,10 +226,11 @@ export function BorrowForm({
         >
           <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
             <form onSubmit={form.handleMarketSubmit} className="md:h-full md:flex md:flex-col">
-              <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
+              <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
                 <CentuariInput
                   id="market-amount"
                   label="Amount to Borrow"
+                  labelClassName="text-xs"
                   size="large"
                   placeholder="1,000"
                   leftIcon={
@@ -257,7 +259,7 @@ export function BorrowForm({
                   containerClassName="mt-2"
                 />
                 <div className="mt-2">
-                  <Label className="mb-1">Collateral</Label>
+                  <Label className="mb-1 text-xs">Collateral</Label>
                   <div className="mt-1">
                     {form.marketSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
@@ -270,7 +272,7 @@ export function BorrowForm({
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-1 mt-2">
+                  <Label className="mb-1 mt-2 text-xs">
                     Maturity{" "}
                     <CentuariTooltip message="Maturity is the duration for which you want to borrow assets.">
                       <Info size={16} />
@@ -291,7 +293,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-1 mt-2">
+                  <Label className="mb-1 mt-2 text-xs">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -359,7 +361,7 @@ export function BorrowForm({
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full mt-3 md:shrink-0"
+                className="w-full md:shrink-0 mb-4"
                 disabled={
                   form.isPending ||
                   form.marketNumericAmount <= 0 ||

@@ -54,7 +54,7 @@ export function LendForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2.5 md:h-full md:flex md:flex-col"
+        className="w-full px-3 sm:px-4 md:px-2.5 mt-2 md:h-full md:flex md:flex-col"
       >
         <TabsContent
           value="limit"
@@ -64,10 +64,11 @@ export function LendForm({
             onSubmit={form.handleLimitSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="limit-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 tooltipMessage="The amount you currently have that is available to use."
@@ -140,7 +141,7 @@ export function LendForm({
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3 md:shrink-0"
+              className="w-full mb-4 md:shrink-0"
               disabled={
                 !form.limitAmount ||
                 parseFloat(form.limitAmount) <= 0 ||
@@ -170,10 +171,11 @@ export function LendForm({
             onSubmit={form.handleMarketSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <div className="md:flex-1 md:min-h-0 md:overflow-y-auto">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="market-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 leftIcon={
@@ -206,7 +208,7 @@ export function LendForm({
                 <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
               )}
               <div>
-                <Label className="mb-1.5 mt-3.5">
+                <Label className="mb-1.5 mt-3.5 text-xs">
                   Maturity
                   <CentuariTooltip message="The date when your position ends and your funds are returned.">
                     <Info size={16} className="text-muted-foreground"/>
@@ -266,7 +268,7 @@ export function LendForm({
             <Button
               type="submit"
               variant="primary"
-              className="w-full mt-3 md:shrink-0"
+              className="w-full mb-4 md:shrink-0"
               disabled={
                 !form.marketAmount ||
                 parseFloat(form.marketAmount) <= 0 ||
