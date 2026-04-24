@@ -471,10 +471,12 @@ export function PositionSection({ assetId }: { assetId?: string }) {
       <CentuariGlassLayers intensity="soft" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="md:hidden">
-          <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 px-3 pt-3 pb-2 border-b border-white/10">
-            <h1 className="text-base font-medium mb-3">{currentTabConfig.label}</h1>
+          <div className="group/glass sticky top-0 z-10 relative isolate overflow-hidden bg-black/20 backdrop-blur-xl border-b border-white/10">
+            <CentuariGlassLayers intensity="soft" />
+            <div className="relative z-20 px-3 pt-3 pb-2">
+              <h1 className="text-base font-medium mb-3">{currentTabConfig.label}</h1>
 
-            <div className="relative mb-3">
+              <div className="relative mb-3">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 size={18}
@@ -505,7 +507,7 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 </TabsTrigger>
               ))}
             </TabsList>
-
+            </div>
           </div>
 
           {[

@@ -138,28 +138,30 @@ export function LendForm({
                 tokenSymbol={form.selectedToken.label}
               />
             </div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mb-4 md:shrink-0"
-              disabled={
-                !form.limitAmount ||
-                parseFloat(form.limitAmount) <= 0 ||
-                !form.limitTargetAPR ||
-                !form.limitMaturity ||
-                form.isPending ||
-                limitInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.limitAmount ||
+                  parseFloat(form.limitAmount) <= 0 ||
+                  !form.limitTargetAPR ||
+                  !form.limitMaturity ||
+                  form.isPending ||
+                  limitInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
 
@@ -265,27 +267,29 @@ export function LendForm({
                 tokenSymbol={form.selectedToken.label}
               />
             </div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mb-4 md:shrink-0"
-              disabled={
-                !form.marketAmount ||
-                parseFloat(form.marketAmount) <= 0 ||
-                !form.marketMaturity ||
-                form.isPending ||
-                marketInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.marketAmount ||
+                  parseFloat(form.marketAmount) <= 0 ||
+                  !form.marketMaturity ||
+                  form.isPending ||
+                  marketInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
       </OrderTypeTabs>

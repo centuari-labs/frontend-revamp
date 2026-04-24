@@ -192,30 +192,32 @@ export function BorrowForm({
                   tokenSymbol={form.selectedToken.label}
                 />
               </div>
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full md:shrink-0 mb-4"
-                disabled={
-                  form.isPending ||
-                  form.limitNumericAmount <= 0 ||
-                  form.limitNumericAmount * form.borrowTokenPrice > form.limitAvailableQuota ||
-                  form.limitSelectedCollaterals.length === 0 ||
-                  form.limitTotalPortfolioValue === 0 ||
-                  form.limitHealthFactor < 1.0 ||
-                  !form.limitTargetAPR ||
-                  !form.limitMaturity
-                }
-              >
-                {form.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Borrow"
-                )}
-              </Button>
+              <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full md:shrink-0 mb-4"
+                  disabled={
+                    form.isPending ||
+                    form.limitNumericAmount <= 0 ||
+                    form.limitNumericAmount * form.borrowTokenPrice > form.limitAvailableQuota ||
+                    form.limitSelectedCollaterals.length === 0 ||
+                    form.limitTotalPortfolioValue === 0 ||
+                    form.limitHealthFactor < 1.0 ||
+                    !form.limitTargetAPR ||
+                    !form.limitMaturity
+                  }
+                >
+                  {form.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Borrow"
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </TabsContent>
@@ -358,29 +360,31 @@ export function BorrowForm({
                   tokenSymbol={form.selectedToken.label}
                 />
               </div>
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full md:shrink-0 mb-4"
-                disabled={
-                  form.isPending ||
-                  form.marketNumericAmount <= 0 ||
-                  form.marketNumericAmount * form.borrowTokenPrice > form.marketAvailableQuota ||
-                  form.marketSelectedCollaterals.length === 0 ||
-                  form.marketTotalPortfolioValue === 0 ||
-                  form.marketHealthFactor < 1.0 ||
-                  !form.marketMaturity
-                }
-              >
-                {form.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Borrow"
-                )}
-              </Button>
+              <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full md:shrink-0 mb-4"
+                  disabled={
+                    form.isPending ||
+                    form.marketNumericAmount <= 0 ||
+                    form.marketNumericAmount * form.borrowTokenPrice > form.marketAvailableQuota ||
+                    form.marketSelectedCollaterals.length === 0 ||
+                    form.marketTotalPortfolioValue === 0 ||
+                    form.marketHealthFactor < 1.0 ||
+                    !form.marketMaturity
+                  }
+                >
+                  {form.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Borrow"
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </TabsContent>

@@ -99,6 +99,7 @@ export default function Page() {
 				<MobileLendBorrowButtons
 					tokenList={tokenList}
 					selectedToken={selectedToken}
+					maturityOptions={maturityOptions}
 					assetId={assetId}
 				/>
 			</PageContainer>
