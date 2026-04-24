@@ -67,31 +67,34 @@ export default function CentuariNavbar() {
 
   useEffect(() => {
     const updateIndicator = () => {
+      if (!indicatorRef.current) return;
       const activeIndex = NAV_ITEMS.findIndex((item) => isNavItemActive(item));
       const activeElement = desktopNavRef.current[activeIndex];
 
-      if (activeElement && indicatorRef.current) {
+      if (activeElement) {
         const { offsetLeft, offsetWidth } = activeElement;
-
         gsap.to(indicatorRef.current, {
           x: offsetLeft,
           width: offsetWidth,
+          opacity: 1,
           duration: 0.4,
-          ease: "power2.out",
+          ease: "power3.out",
         });
-      } else if (indicatorRef.current) {
+      } else {
         gsap.to(indicatorRef.current, {
-          x: 0,
-          width: 0,
+          opacity: 0,
           duration: 0.2,
           ease: "power2.in",
         });
       }
     };
 
-    updateIndicator();
+    const raf = requestAnimationFrame(updateIndicator);
     window.addEventListener("resize", updateIndicator);
-    return () => window.removeEventListener("resize", updateIndicator);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updateIndicator);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -196,73 +199,64 @@ export default function CentuariNavbar() {
       <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
         <div className="px-4 md:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
-            <div className="group/glass relative isolate flex items-center gap-6 overflow-hidden bg-transparent px-2 py-1 rounded-lg md:rounded-xl">
-              <CentuariGlassLayers intensity="soft" sheen={false} />
+            <Link href="/" className="flex items-center gap-2">
               <img
                 src="/centuari-logo.png"
-                alt="Logo"
-                className="relative z-20 w-6 h-6 md:w-8 md:h-8 ml-0 md:ml-2"
+                alt="Centuari"
+                className="w-6 h-6 md:w-8 md:h-8"
               />
+              <span className="text-white font-medium text-base md:text-lg hidden sm:inline">
+                Centuari
+              </span>
+            </Link>
 
-              <div className="relative z-20 hidden md:flex items-center space-x-2">
+            <div className="group/glass relative isolate hidden md:flex items-center gap-1 overflow-hidden bg-transparent p-1.5 rounded-lg md:rounded-xl">
+              <CentuariGlassLayers intensity="soft" sheen={false} />
+
+              <div
+                ref={indicatorRef}
+                aria-hidden
+                className="absolute inset-y-1.5 left-0 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"
+                style={{
+                  width: 0,
+                  opacity: 0,
+                  ...glassStyle,
+                  boxShadow: [
+                    "inset 0 1px 0 0 rgba(255,255,255,0.35)",
+                    "inset 0 -1px 0 0 rgba(255,255,255,0.08)",
+                    "0 6px 14px -4px rgba(0,0,0,0.35)",
+                  ].join(", "),
+                }}
+              >
                 <div
-                  ref={indicatorRef}
-                  className="absolute h-10 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"
+                  className="absolute inset-0 rounded-[inherit] pointer-events-none"
                   style={{
-                    left: 0,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 0,
-                    ...glassStyle,
+                    padding: "1px",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.06) 70%, rgba(255,255,255,0.25) 100%)",
+                    mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    maskComposite: "exclude",
+                    WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    WebkitMaskComposite: "xor",
                   }}
-                >
-                  <div
-                    className="absolute inset-0 rounded-[inherit] pointer-events-none"
-                    style={{
-                      padding: "0.5px",
-                      background: glassBorderGradient,
-                      mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                      maskComposite: "exclude",
-                      WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                      WebkitMaskComposite: "xor",
-                    }}
-                  />
-                </div>
-
-                {NAV_ITEMS.map((item, index) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    ref={(el) => {
-                      desktopNavRef.current[index] = el;
-                    }}
-                    className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isNavItemActive(item)
-                      ? "text-white font-semibold"
-                      : "text-white/70 hover:text-white"
-                      }`}
-                    onMouseEnter={(e) => {
-                      if (!isNavItemActive(item)) {
-                        gsap.to(e.currentTarget, {
-                          y: -2,
-                          duration: 0.18,
-                          ease: "power2.out",
-                        });
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isNavItemActive(item)) {
-                        gsap.to(e.currentTarget, {
-                          y: 0,
-                          duration: 0.18,
-                          ease: "power2.out",
-                        });
-                      }
-                    }}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                />
               </div>
+
+              {NAV_ITEMS.map((item, index) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  ref={(el) => {
+                    desktopNavRef.current[index] = el;
+                  }}
+                  className={`relative z-10 px-2 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isNavItemActive(item)
+                    ? "text-white font-semibold"
+                    : "text-white/70 hover:text-white"
+                    }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
             </div>
 
             <div className="hidden md:flex items-center gap-3">
