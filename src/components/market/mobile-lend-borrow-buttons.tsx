@@ -15,12 +15,14 @@ import type { TokenOption } from "@/types";
 interface MobileLendBorrowButtonsProps {
   tokenList: TokenOption[];
   selectedToken?: TokenOption;
+  maturityOptions?: number[];
   assetId?: string;
 }
 
 export function MobileLendBorrowButtons({
   tokenList,
   selectedToken,
+  maturityOptions,
   assetId,
 }: MobileLendBorrowButtonsProps) {
   const [isLendOpen, setIsLendOpen] = useState(false);
@@ -48,23 +50,51 @@ export function MobileLendBorrowButtons({
       </div>
 
       <Drawer open={isLendOpen} onOpenChange={setIsLendOpen}>
-        <DrawerContent className="max-h-[90vh]">
+        <DrawerContent
+          className="max-h-[90vh] !bg-white/[0.04] backdrop-blur-2xl border-t border-white/15"
+          style={{
+            boxShadow: [
+              "inset 0 1px 0 rgba(255,255,255,0.25)",
+              "inset 0 0 120px rgba(255,255,255,0.05)",
+              "0 -20px 50px -10px rgba(0,0,0,0.6)",
+            ].join(", "),
+          }}
+        >
           <DrawerHeader className="border-b border-white/10">
             <DrawerTitle className="text-xl">Lend</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto">
-            <LendForm tokenList={tokenList} selectedToken={selectedToken} assetId={assetId} />
+            <LendForm
+              tokenList={tokenList}
+              selectedToken={selectedToken}
+              maturityOptions={maturityOptions}
+              assetId={assetId}
+            />
           </div>
         </DrawerContent>
       </Drawer>
 
       <Drawer open={isBorrowOpen} onOpenChange={setIsBorrowOpen}>
-        <DrawerContent className="max-h-[90vh]">
+        <DrawerContent
+          className="max-h-[90vh] !bg-white/[0.04] backdrop-blur-2xl border-t border-white/15"
+          style={{
+            boxShadow: [
+              "inset 0 1px 0 rgba(255,255,255,0.25)",
+              "inset 0 0 120px rgba(255,255,255,0.05)",
+              "0 -20px 50px -10px rgba(0,0,0,0.6)",
+            ].join(", "),
+          }}
+        >
           <DrawerHeader className="border-b border-white/10">
             <DrawerTitle className="text-xl">Borrow</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto">
-            <BorrowForm tokenList={tokenList} selectedToken={selectedToken} assetId={assetId} />
+            <BorrowForm
+              tokenList={tokenList}
+              selectedToken={selectedToken}
+              maturityOptions={maturityOptions}
+              assetId={assetId}
+            />
           </div>
         </DrawerContent>
       </Drawer>

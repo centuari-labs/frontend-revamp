@@ -11,7 +11,6 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Info, Loader2 } from "lucide-react";
 import { useLendForm } from "@/hooks/use-lend-form";
 import type { LendPosition } from "@/types/positions";
@@ -55,7 +54,7 @@ export function LendForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+        className="w-full px-3 sm:px-4 md:px-2.5 mt-2 md:h-full md:flex md:flex-col"
       >
         <TabsContent
           value="limit"
@@ -65,10 +64,11 @@ export function LendForm({
             onSubmit={form.handleLimitSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="limit-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 tooltipMessage="The amount you currently have that is available to use."
@@ -137,29 +137,31 @@ export function LendForm({
                 futureAmount={form.limitFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
-              disabled={
-                !form.limitAmount ||
-                parseFloat(form.limitAmount) <= 0 ||
-                !form.limitTargetAPR ||
-                !form.limitMaturity ||
-                form.isPending ||
-                limitInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            </div>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.limitAmount ||
+                  parseFloat(form.limitAmount) <= 0 ||
+                  !form.limitTargetAPR ||
+                  !form.limitMaturity ||
+                  form.isPending ||
+                  limitInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
 
@@ -171,10 +173,11 @@ export function LendForm({
             onSubmit={form.handleMarketSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="market-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 leftIcon={
@@ -207,7 +210,7 @@ export function LendForm({
                 <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
               )}
               <div>
-                <Label className="mb-1.5 mt-3.5">
+                <Label className="mb-1.5 mt-3.5 text-xs">
                   Maturity
                   <CentuariTooltip message="The date when your position ends and your funds are returned.">
                     <Info size={16} className="text-muted-foreground"/>
@@ -263,28 +266,30 @@ export function LendForm({
                 futureAmount={form.marketFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
-              disabled={
-                !form.marketAmount ||
-                parseFloat(form.marketAmount) <= 0 ||
-                !form.marketMaturity ||
-                form.isPending ||
-                marketInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            </div>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.marketAmount ||
+                  parseFloat(form.marketAmount) <= 0 ||
+                  !form.marketMaturity ||
+                  form.isPending ||
+                  marketInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
       </OrderTypeTabs>

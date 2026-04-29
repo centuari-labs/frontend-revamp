@@ -13,6 +13,11 @@ import {
 
 interface CentuariChartProps {
   data?: { date: string; value: number }[];
+  yAxisWidth?: number;
+  yAxisOrientation?: "left" | "right";
+  yTickCount?: number;
+  margin?: { top?: number; right?: number; bottom?: number; left?: number };
+  className?: string;
 }
 
 const fallbackData = [
@@ -68,27 +73,30 @@ const CustomDot = (props: {
   return null;
 };
 
-export function CentuariChart({ data }: CentuariChartProps) {
+export function CentuariChart({
+  data,
+  yAxisWidth = 60,
+  yAxisOrientation = "left",
+  yTickCount = 6,
+  margin = { top: 10, right: 30, left: 0, bottom: 0 },
+  className = "h-[450px] mt-10",
+}: CentuariChartProps) {
   const chartData = data && data.length > 0 ? data : fallbackData;
 
   const { yDomain, yTicks } = useMemo(() => {
     const maxValue = Math.max(...chartData.map((d) => d.value));
     const upperBound = Math.max(10, Math.ceil((maxValue * 1.5) / 10) * 10);
-    const tickCount = 6;
-    const step = upperBound / (tickCount - 1);
-    const ticks = Array.from({ length: tickCount }, (_, i) =>
+    const step = upperBound / (yTickCount - 1);
+    const ticks = Array.from({ length: yTickCount }, (_, i) =>
       Math.round(i * step),
     );
     return { yDomain: [0, upperBound] as [number, number], yTicks: ticks };
-  }, [chartData]);
+  }, [chartData, yTickCount]);
 
   return (
-    <div className="h-96 mt-10">
+    <div className={className}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={chartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-        >
+        <AreaChart data={chartData} margin={margin}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#3361EF80" stopOpacity={0.8} />
@@ -118,6 +126,8 @@ export function CentuariChart({ data }: CentuariChartProps) {
             axisLine={false}
             domain={yDomain}
             ticks={yTicks}
+            width={yAxisWidth}
+            orientation={yAxisOrientation}
           />
 
           <Tooltip

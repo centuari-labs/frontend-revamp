@@ -198,7 +198,7 @@ export default function PortfolioPage() {
         )}
         {/* <PortfolioHeader /> */}
         <div className="mt-10 md:mt-20">
-          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-transparent border-0 rounded-2xl w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden isolate">
+          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-transparent border-0 rounded-xl w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden isolate">
             <CentuariGlassLayers intensity="soft" />
             <Image
               src="/assets/portfolio-gradient-card.svg"
@@ -309,7 +309,7 @@ export default function PortfolioPage() {
         </div>
         {/* Lend borrow assets container */}
         <div className="mt-3">
-          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between bg-transparent border-0 rounded-2xl overflow-hidden isolate p-6 lg:p-0 lg:pl-8">
+          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between bg-transparent border-0 rounded-xl overflow-hidden isolate p-6 lg:p-0 lg:pl-8">
             <CentuariGlassLayers intensity="soft" />
             <div>
               <h1 className="text-lg font-medium">Lend & Borrow Assets</h1>

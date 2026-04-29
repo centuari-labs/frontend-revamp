@@ -342,7 +342,7 @@ export function DataTableAllPosition({
   const canNext = isServerPagination ? Number(serverPage ?? 1) < Number(totalPages ?? 1) : table.getCanNextPage();
 
   return (
-    <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-2xl bg-transparent border-0 isolate">
+    <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-xl bg-transparent border-0 isolate">
       <CentuariGlassLayers intensity="soft" />
       <Tabs defaultValue="lend" className="w-full !gap-0 flex flex-col h-full" onValueChange={handleTabChange}>
         <div className="flex items-center justify-between py-2 px-6 shrink-0">

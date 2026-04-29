@@ -11,7 +11,6 @@ import { MaturityToggle } from "@/components/maturity-toggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TabsContent } from "@/components/ui/tabs";
 import { Info, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -54,21 +53,19 @@ export function BorrowForm({
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+        className="w-full px-3 sm:px-4 md:px-2.5 md:h-full md:flex md:flex-col mt-2"
       >
         <TabsContent
           value="limit"
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
           <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
-            <form
-              onSubmit={form.handleLimitSubmit}
-              className="md:h-full md:flex md:flex-col"
-            >
-              <ScrollArea className="h-auto md:flex-1 md:min-h-0">
+            <form onSubmit={form.handleLimitSubmit} className="md:h-full md:flex md:flex-col">
+              <div className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
                 <CentuariInput
                   id="limit-amount"
                   label="Amount to Borrow"
+                  labelClassName="text-xs"
                   size="large"
                   placeholder="1,000"
                   leftIcon={
@@ -94,11 +91,11 @@ export function BorrowForm({
                   value={form.limitDisplayAmount}
                   onChange={form.handleLimitAmountChange}
                   className="mt-0"
-                  containerClassName="mt-3.5"
+                  containerClassName="mt-2"
                 />
-                <div className="mt-3">
-                  <Label className="mb-2">Collateral</Label>
-                  <div className="mt-1.5">
+                <div className="mt-2">
+                  <Label className="mb-1 text-xs">Collateral</Label>
+                  <div className="mt-1">
                     {form.limitSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.limitSelectedCollaterals}
@@ -109,7 +106,7 @@ export function BorrowForm({
                     )}
                   </div>
                 </div>
-                <div className="w-full mt-3">
+                <div className="w-full mt-2">
                   <TargetAprMaturityInput
                     id="limit-target-apr"
                     value={form.limitTargetAPR}
@@ -121,7 +118,7 @@ export function BorrowForm({
                     label="Target APR"
                   />
                 </div>
-                <div className="mt-5">
+                <div className="mt-2">
                   <Checkbox
                     id="limit-auto-refinance"
                     label="Auto refinance"
@@ -130,7 +127,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-2 mt-2.5">
+                  <Label className="mb-1 mt-2 text-xs">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -143,8 +140,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-2">
-                    <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.limitHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
@@ -157,7 +154,7 @@ export function BorrowForm({
                         }
                       />
                     </div>
-                    <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <div className="px-2 py-1.5 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                       <p className="text-xs text-muted-foreground text-center">
                         {form.limitHealthFactor > 0 &&
                         !isNaN(form.limitHealthFactor) &&
@@ -194,31 +191,33 @@ export function BorrowForm({
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
                 />
-              </ScrollArea>
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full mt-3.5 md:shrink-0"
-                disabled={
-                  form.isPending ||
-                  form.limitNumericAmount <= 0 ||
-                  form.limitNumericAmount * form.borrowTokenPrice > form.limitAvailableQuota ||
-                  form.limitSelectedCollaterals.length === 0 ||
-                  form.limitTotalPortfolioValue === 0 ||
-                  form.limitHealthFactor < 1.0 ||
-                  !form.limitTargetAPR ||
-                  !form.limitMaturity
-                }
-              >
-                {form.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Borrow"
-                )}
-              </Button>
+              </div>
+              <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full md:shrink-0 mb-4"
+                  disabled={
+                    form.isPending ||
+                    form.limitNumericAmount <= 0 ||
+                    form.limitNumericAmount * form.borrowTokenPrice > form.limitAvailableQuota ||
+                    form.limitSelectedCollaterals.length === 0 ||
+                    form.limitTotalPortfolioValue === 0 ||
+                    form.limitHealthFactor < 1.0 ||
+                    !form.limitTargetAPR ||
+                    !form.limitMaturity
+                  }
+                >
+                  {form.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Borrow"
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </TabsContent>
@@ -228,14 +227,12 @@ export function BorrowForm({
           className="md:flex-1 md:min-h-0 md:flex md:flex-col"
         >
           <div className="text-center text-white/60 md:h-full md:flex md:flex-col">
-            <form
-              onSubmit={form.handleMarketSubmit}
-              className="md:h-full md:flex md:flex-col"
-            >
-              <ScrollArea className="h-auto md:flex-1 md:min-h-0">
+            <form onSubmit={form.handleMarketSubmit} className="md:h-full md:flex md:flex-col">
+              <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
                 <CentuariInput
                   id="market-amount"
                   label="Amount to Borrow"
+                  labelClassName="text-xs"
                   size="large"
                   placeholder="1,000"
                   leftIcon={
@@ -261,11 +258,11 @@ export function BorrowForm({
                   value={form.marketDisplayAmount}
                   onChange={form.handleMarketAmountChange}
                   className="mt-0"
-                  containerClassName="mt-3.5"
+                  containerClassName="mt-2"
                 />
-                <div className="mt-3">
-                  <Label className="mb-2 mt-2.5">Collateral</Label>
-                  <div className="mt-1.5">
+                <div className="mt-2">
+                  <Label className="mb-1 text-xs">Collateral</Label>
+                  <div className="mt-1">
                     {form.marketSelectedCollaterals.length > 0 ? (
                       <CollateralListDisplay
                         selectedCollaterals={form.marketSelectedCollaterals}
@@ -277,7 +274,7 @@ export function BorrowForm({
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-2 mt-3.5">
+                  <Label className="mb-1 mt-2 text-xs">
                     Maturity{" "}
                     <CentuariTooltip message="Maturity is the duration for which you want to borrow assets.">
                       <Info size={16} />
@@ -289,7 +286,7 @@ export function BorrowForm({
                     options={form.availableMaturities}
                   />
                 </div>
-                <div className="mt-5">
+                <div className="mt-2">
                   <Checkbox
                     id="market-auto-refinance"
                     label="Auto refinance"
@@ -298,7 +295,7 @@ export function BorrowForm({
                   />
                 </div>
                 <div>
-                  <Label className="mb-2 mt-2.5">
+                  <Label className="mb-1 mt-2 text-xs">
                     Health Factor{" "}
                     <CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
                       <Info size={16} />
@@ -311,8 +308,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-2">
-                    <div className="h-11 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.marketHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
@@ -325,7 +322,7 @@ export function BorrowForm({
                         }
                       />
                     </div>
-                    <div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
+                    <div className="px-2 py-1.5 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
                       <p className="text-xs text-muted-foreground text-center">
                         {form.marketHealthFactor > 0 &&
                         !isNaN(form.marketHealthFactor) &&
@@ -362,30 +359,32 @@ export function BorrowForm({
                   futureLabel="In the future you'll pay"
                   tokenSymbol={form.selectedToken.label}
                 />
-              </ScrollArea>
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full mt-3.5 md:shrink-0"
-                disabled={
-                  form.isPending ||
-                  form.marketNumericAmount <= 0 ||
-                  form.marketNumericAmount * form.borrowTokenPrice > form.marketAvailableQuota ||
-                  form.marketSelectedCollaterals.length === 0 ||
-                  form.marketTotalPortfolioValue === 0 ||
-                  form.marketHealthFactor < 1.0 ||
-                  !form.marketMaturity
-                }
-              >
-                {form.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Borrow"
-                )}
-              </Button>
+              </div>
+              <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full md:shrink-0 mb-4"
+                  disabled={
+                    form.isPending ||
+                    form.marketNumericAmount <= 0 ||
+                    form.marketNumericAmount * form.borrowTokenPrice > form.marketAvailableQuota ||
+                    form.marketSelectedCollaterals.length === 0 ||
+                    form.marketTotalPortfolioValue === 0 ||
+                    form.marketHealthFactor < 1.0 ||
+                    !form.marketMaturity
+                  }
+                >
+                  {form.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Borrow"
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </TabsContent>

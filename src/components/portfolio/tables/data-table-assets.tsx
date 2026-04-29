@@ -528,7 +528,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
           setShowUseAllCollateralDialog(false);
         }}
       />
-      <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-2xl bg-transparent border-0 isolate">
+      <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-xl bg-transparent border-0 isolate">
         <CentuariGlassLayers intensity="soft" />
       <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
       <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
