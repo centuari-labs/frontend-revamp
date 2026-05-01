@@ -22,6 +22,11 @@ import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useOrderbook } from "@/hooks/use-orderbook";
 import { useTransactionFees } from "@/hooks/use-transaction-fees";
 import { useSuccessDialog } from "@/hooks/use-success-dialog";
+import {
+  MAX_APR_PCT,
+  MIN_APR_PCT,
+  mapOrderErrorToFriendlyMessage,
+} from "@/lib/order-errors";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -166,13 +171,20 @@ export function useLendForm({
       const numericAmount = parseFloat(limitAmountInput.amount) || 0;
       if (numericAmount <= 0 || isPending) return;
 
+      const targetAPRNumeric =
+        parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
+      if (targetAPRNumeric <= 0 || targetAPRNumeric > MAX_APR_PCT) {
+        toast.error(
+          `Target APR must be between ${MIN_APR_PCT}% and ${MAX_APR_PCT}%`,
+        );
+        return;
+      }
+
       const tokenInfo = getTokenInfo(selectedToken.value);
       if (!tokenInfo) return;
 
       try {
         const amountInUsd = numericAmount * tokenInfo.price;
-        const targetAPRNumeric =
-          parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
@@ -203,9 +215,9 @@ export function useLendForm({
           selectedToken.label.toUpperCase().slice(0, 4),
         );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [
@@ -263,9 +275,9 @@ export function useLendForm({
           selectedToken.label.toUpperCase().slice(0, 4),
         );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [

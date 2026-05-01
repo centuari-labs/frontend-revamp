@@ -13,6 +13,7 @@ import {
 import {
   formatMaturityTimestamp,
 } from "@/lib/maturity";
+import { cn } from "@/lib/utils";
 
 export interface TargetAprMaturityInputProps {
   value: string;
@@ -23,6 +24,7 @@ export interface TargetAprMaturityInputProps {
   id?: string;
   placeholder?: string;
   label?: string;
+  errorText?: string | null;
 }
 
 export function TargetAprMaturityInput({
@@ -34,7 +36,10 @@ export function TargetAprMaturityInput({
   id = "target-apr",
   placeholder = "12.5",
   label = "Target APR",
+  errorText,
 }: TargetAprMaturityInputProps) {
+  const hasError = Boolean(errorText);
+
   return (
     <div className="w-full space-y-2">
       {label && (
@@ -42,7 +47,12 @@ export function TargetAprMaturityInput({
           <Label htmlFor={id} className="text-xs">{label}</Label>
         </div>
       )}
-      <div className="flex items-center gap-0 rounded-md border border-[#2a2e38] bg-transparent h-9 overflow-hidden">
+      <div
+        className={cn(
+          "flex items-center gap-0 rounded-md border bg-transparent h-9 overflow-hidden",
+          hasError ? "border-red-500" : "border-[#2a2e38]",
+        )}
+      >
         <Select
           value={maturity.toString()}
           onValueChange={(v) => onMaturityChange(Number(v))}
@@ -70,6 +80,7 @@ export function TargetAprMaturityInput({
               const v = e.target.value.replace(/[^\d.,]/g, "");
               onChange(v);
             }}
+            aria-invalid={hasError}
             className="h-full border-0 rounded-none text-base focus-visible:ring-0 focus-visible:ring-offset-0 py-5 pr-8 [&::-webkit-search-cancel-button]:appearance-none"
           />
           <span className="absolute inset-y-0 right-3 flex items-center text-muted-foreground">
@@ -77,6 +88,9 @@ export function TargetAprMaturityInput({
           </span>
         </div>
       </div>
+      {hasError && (
+        <p className="text-red-500 text-xs mt-1">{errorText}</p>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { TransactionSummary } from "@/components/market/transaction-summary";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
+import { MAX_APR_PCT, MIN_APR_PCT } from "@/lib/order-errors";
 
 
 interface BorrowFormProps {
@@ -48,6 +49,13 @@ export function BorrowForm({
     maturityOptions,
     assetId,
   });
+
+  const limitAprNumeric = parseFloat(form.limitTargetAPR.replace(",", ".")) || 0;
+  const limitAprError = form.limitTargetAPR && limitAprNumeric > MAX_APR_PCT
+    ? `Target APR cannot exceed ${MAX_APR_PCT}%`
+    : form.limitTargetAPR && limitAprNumeric > 0 && limitAprNumeric < MIN_APR_PCT
+      ? `Target APR must be at least ${MIN_APR_PCT}%`
+      : null;
 
   return (
     <>
@@ -116,6 +124,7 @@ export function BorrowForm({
                     maturityOptions={form.availableMaturities}
                     placeholder="Enter your APR amount"
                     label="Target APR"
+                    errorText={limitAprError}
                   />
                 </div>
                 <div className="mt-2">
@@ -205,6 +214,8 @@ export function BorrowForm({
                     form.limitTotalPortfolioValue === 0 ||
                     form.limitHealthFactor < 1.0 ||
                     !form.limitTargetAPR ||
+                    limitAprNumeric <= 0 ||
+                    limitAprError !== null ||
                     !form.limitMaturity
                   }
                 >
