@@ -19,10 +19,14 @@ import {
   ArrowUpDown,
   ChevronDown,
   MoreHorizontal,
+  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { cn, truncateBalance } from "@/lib/utils";
-import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
+import {
+  CentuariGlassLayers,
+  CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -587,9 +591,16 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-[300px] text-center"
+                  className="h-[300px]"
                 >
-                  No results.
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                      <Wallet size={22} className="text-white/40" />
+                    </CentuariGlassSurface>
+                    <span className="text-sm text-white/40">
+                      You don&apos;t have any assets yet
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

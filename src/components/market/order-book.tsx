@@ -3,8 +3,8 @@
 import React from "react";
 import { gsap } from "gsap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { ArrowUp } from "lucide-react";
-import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
+import { ArrowLeftRight, ArrowUp, BookOpen } from "lucide-react";
+import { CentuariGlassLayers, CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import { ScrollArea } from "../ui/scroll-area";
 import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
 import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
@@ -74,8 +74,11 @@ const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
 
   if (orders.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[195px] text-sm text-white/40">
-        No data
+      <div className="flex flex-col items-center justify-center gap-2 h-[195px]">
+        <CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+          <BookOpen size={18} className="text-white/40" />
+        </CentuariGlassSurface>
+        <span className="text-xs text-white/40">No orders yet</span>
       </div>
     );
   }
@@ -247,10 +250,13 @@ const RecentTradesContent: React.FC<{
 
       {trades.length === 0 ? (
         <div
-          className="flex items-center justify-center text-sm text-white/40 px-3 sm:px-4 md:px-4"
+          className="flex flex-col items-center justify-center gap-2 px-3 sm:px-4 md:px-4"
           style={{ height: listHeight || undefined }}
         >
-          No recent trades
+          <CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+            <ArrowLeftRight size={18} className="text-white/40" />
+          </CentuariGlassSurface>
+          <span className="text-xs text-white/40">No recent trades</span>
         </div>
       ) : (
         <div
