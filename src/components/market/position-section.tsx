@@ -173,7 +173,7 @@ function CancelOrderDialog({
           </div>
           <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Trash2 size={28} className="text-red-400" />
+              <Trash2 size={28} className="text-red-600" />
             </div>
             <CentuariTypography className="text-xl font-semibold">
               Cancel Order
@@ -185,7 +185,7 @@ function CancelOrderDialog({
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-5">
           <DialogClose asChild>
-            <CentuariButton variant="secondary" className="flex-1" disabled={isPending}>
+            <CentuariButton variant="ghost" className="flex-1" disabled={isPending}>
               No, keep it
             </CentuariButton>
           </DialogClose>
