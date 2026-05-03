@@ -318,11 +318,11 @@ export default function CentuariNavbar() {
     <nav
       ref={navRef}
       id="tour-home-nav"
-      className="fixed top-0 left-0 right-0 z-[100] translate-z-0 backface-hidden"
+      className="fixed top-0 left-0 right-0 z-[100] translate-z-0 backface-hidden pointer-events-none"
     >
       <div
         ref={pillRef}
-        className="mx-auto w-full border border-transparent"
+        className="mx-auto w-full border border-transparent pointer-events-auto"
         style={{
           backgroundColor: "rgba(8, 10, 18, 0)",
           backdropFilter: "blur(0px)",
