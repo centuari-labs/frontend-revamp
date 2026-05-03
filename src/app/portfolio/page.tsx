@@ -343,6 +343,7 @@ export default function PortfolioPage() {
                 <div className="space-y-1.5">
                   <p className="text-sm">Health Factor</p>
                   <Badge
+                    className="opacity-50"
                     variant={
                       healthFactorValue === 0
                         ? "secondary"

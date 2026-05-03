@@ -11,6 +11,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { CentuariGlassSurface } from "./centuari-glass-surface";
+
 interface CentuariChartProps {
   data?: { date: string; value: number }[];
   yAxisWidth?: number;
@@ -39,15 +41,17 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="relative">
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl px-4 py-2 shadow-2xl">
-          <p className="text-slate-400 text-sm mb-1 font-light">
+      <CentuariGlassSurface
+        intensity="soft"
+        className="rounded-2xl bg-black/40 backdrop-blur-2xl shadow-2xl"
+      >
+        <div className="flex flex-col items-start px-4 py-2 text-left">
+          <p className="text-sm font-light text-white/60">
             {payload[0].payload.date}
           </p>
-          <div className="absolute inset-x-0 h-px w-1/2 mx-auto top-0 shadow-2xl bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-          <p className="text-white text-xl font-light">{payload[0].value}%</p>
+          <p className="text-xl text-white">{payload[0].value}%</p>
         </div>
-      </div>
+      </CentuariGlassSurface>
     );
   }
   return null;

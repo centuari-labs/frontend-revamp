@@ -395,7 +395,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
                 handleCollateralHeaderClick();
               }}
               className={cn(
-                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 allSelected
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -403,12 +403,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {allSelected && (
                 <svg
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"
@@ -429,7 +429,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             <div
               onClick={() => handleCollateralCellClick(asset)}
               className={cn(
-                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 isCollateral
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -437,12 +437,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {isCollateral && (
                 <svg
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"

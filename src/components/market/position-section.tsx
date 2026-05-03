@@ -293,17 +293,23 @@ function UnifiedPositionTable({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-white/5">
               {headerGroup.headers.map((header) => {
+                const isFirst = headerGroup.headers[0].id === header.id;
+                const isLast =
+                  headerGroup.headers[headerGroup.headers.length - 1].id ===
+                  header.id;
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-sm text-muted-foreground font-normal"
+                    className={`text-sm text-muted-foreground font-normal ${
+                      isFirst ? "rounded-l-full pl-6" : ""
+                    } ${isLast ? "rounded-r-full pr-6" : ""}`}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 );
               })}
