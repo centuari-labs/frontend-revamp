@@ -229,7 +229,7 @@ export function CentuariDepositDialog() {
                     </button>
                   ) : (
                     <Select value={String(ACTIVE_CHAIN.id)} disabled>
-                      <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                      <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -238,8 +238,8 @@ export function CentuariDepositDialog() {
                             <img
                               src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
                               alt={ACTIVE_CHAIN_LABEL}
-                              width={16}
-                              height={16}
+                              width={32}
+                              height={32}
                               className="size-4 rounded-full object-cover"
                             />
                             {ACTIVE_CHAIN_LABEL}
@@ -256,7 +256,7 @@ export function CentuariDepositDialog() {
                     onValueChange={setSelectedTokenId}
                     disabled={tokensLoading}
                   >
-                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                    <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
                       <SelectValue placeholder={tokensLoading ? "Loading..." : "Select Token"} />
                     </SelectTrigger>
                     <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -265,9 +265,11 @@ export function CentuariDepositDialog() {
                           <SelectItem key={token.id} value={token.id}>
                             <Image
                               src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
-                              width={16}
-                              height={16}
+                              width={32}
+                              height={32}
                               alt={token.symbol}
+                              quality={100}
+                              className="size-4 rounded-full object-contain"
                             />
                             {token.symbol}
                           </SelectItem>
