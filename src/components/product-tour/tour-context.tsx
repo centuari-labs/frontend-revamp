@@ -65,6 +65,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           continuous
           scrollToFirstStep
           tooltipComponent={CentuariTourTooltip}
+          // floaterProps={{ hideArrow: true }}
           options={{
             // Skip beacon stage so the tour jumps straight to the tooltip on each step.
             skipBeacon: true,
