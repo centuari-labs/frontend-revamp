@@ -3,6 +3,15 @@ import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 import { useLendForm } from "@/hooks/use-lend-form";
 
+const mockToastError = vi.fn();
+vi.mock("sonner", () => ({
+	toast: {
+		error: (...args: unknown[]) => mockToastError(...args),
+		success: vi.fn(),
+		info: vi.fn(),
+	},
+}));
+
 const mockGetToken = vi.fn(async () => "mock-token");
 const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) => fn("mock-token"));
 vi.mock("@/hooks/use-auth-token", () => ({
@@ -199,6 +208,7 @@ describe("useLendForm", () => {
 			result.current.handleLimitAmountChange({
 				target: { value: "1000" },
 			} as React.ChangeEvent<HTMLInputElement>);
+			result.current.setLimitTargetAPR("8");
 		});
 
 		await act(async () => {
@@ -271,5 +281,104 @@ describe("useLendForm", () => {
 			useLendForm({ tokenList }),
 		);
 		expect(result.current.autoRollover).toBe(true);
+	});
+
+	describe("APR validation", () => {
+		it("blocks submit when target APR exceeds 100%", async () => {
+			const { result } = renderHookWithProviders(() =>
+				useLendForm({ tokenList }),
+			);
+
+			act(() => {
+				result.current.handleLimitAmountChange({
+					target: { value: "1000" },
+				} as React.ChangeEvent<HTMLInputElement>);
+				result.current.setLimitTargetAPR("1000");
+			});
+
+			await act(async () => {
+				await result.current.handleLimitSubmit({
+					preventDefault: vi.fn(),
+				} as unknown as React.FormEvent);
+			});
+
+			expect(mockSubmitLimit).not.toHaveBeenCalled();
+			expect(mockToastError).toHaveBeenCalledWith(
+				expect.stringContaining("Target APR must be between"),
+			);
+		});
+
+		it("blocks submit when target APR is zero", async () => {
+			const { result } = renderHookWithProviders(() =>
+				useLendForm({ tokenList }),
+			);
+
+			act(() => {
+				result.current.handleLimitAmountChange({
+					target: { value: "1000" },
+				} as React.ChangeEvent<HTMLInputElement>);
+				result.current.setLimitTargetAPR("0");
+			});
+
+			await act(async () => {
+				await result.current.handleLimitSubmit({
+					preventDefault: vi.fn(),
+				} as unknown as React.FormEvent);
+			});
+
+			expect(mockSubmitLimit).not.toHaveBeenCalled();
+			expect(mockToastError).toHaveBeenCalledWith(
+				expect.stringContaining("Target APR must be between"),
+			);
+		});
+
+		it("translates backend rate-too-big error to friendly toast", async () => {
+			mockSubmitLimit.mockRejectedValueOnce(
+				new Error("Rate must not exceed 10000 basis points (100%)"),
+			);
+
+			const { result } = renderHookWithProviders(() =>
+				useLendForm({ tokenList }),
+			);
+
+			act(() => {
+				result.current.handleLimitAmountChange({
+					target: { value: "1000" },
+				} as React.ChangeEvent<HTMLInputElement>);
+				result.current.setLimitTargetAPR("8");
+			});
+
+			await act(async () => {
+				await result.current.handleLimitSubmit({
+					preventDefault: vi.fn(),
+				} as unknown as React.FormEvent);
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith(
+				expect.stringContaining("Target APR cannot exceed"),
+			);
+		});
+
+		it("allows submit when target APR is exactly 100%", async () => {
+			const { result } = renderHookWithProviders(() =>
+				useLendForm({ tokenList }),
+			);
+
+			act(() => {
+				result.current.handleLimitAmountChange({
+					target: { value: "1000" },
+				} as React.ChangeEvent<HTMLInputElement>);
+				result.current.setLimitTargetAPR("100");
+			});
+
+			await act(async () => {
+				await result.current.handleLimitSubmit({
+					preventDefault: vi.fn(),
+				} as unknown as React.FormEvent);
+			});
+
+			expect(mockSubmitLimit).toHaveBeenCalledTimes(1);
+			expect(mockToastError).not.toHaveBeenCalled();
+		});
 	});
 });
