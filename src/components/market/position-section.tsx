@@ -46,7 +46,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CentuariButton } from "@/components/centuari-button";
 import Image from "next/image";
-import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
+import { getMarketTokenList, getTokenLogo } from "@/lib/tokens";
 import { formatNumber, parseMaturity } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
@@ -139,7 +139,7 @@ function PositionCard({
 			<div className="flex gap-2 justify-end">
 				<AmendDialog
 					position={position}
-					tokenList={MARKET_TOKEN_LIST}
+					tokenList={getMarketTokenList()}
 					onUpdate={onUpdate}
 					trigger={
 						<button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
@@ -268,7 +268,7 @@ function UnifiedPositionTable({
 				<div className="flex items-center gap-2">
 					<AmendDialog
 						position={row.original}
-						tokenList={MARKET_TOKEN_LIST}
+						tokenList={getMarketTokenList()}
 						onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
 						trigger={
 							<button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
