@@ -301,8 +301,8 @@ function UnifiedPositionTable({
                   <TableHead
                     key={header.id}
                     className={`text-sm text-muted-foreground font-normal ${
-                      isFirst ? "rounded-l-full pl-6" : ""
-                    } ${isLast ? "rounded-r-full pr-6" : ""}`}
+                      isFirst ? "rounded-l-lg pl-6" : ""
+                    } ${isLast ? "rounded-r-lg pr-6" : ""}`}
                   >
                     {header.isPlaceholder
                       ? null
