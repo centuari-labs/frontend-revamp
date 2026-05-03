@@ -7,7 +7,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3 } from "lucide-react";
 import { useRateHistory } from "@/hooks/use-rate-history";
-import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
+import {
+  CentuariGlassLayers,
+  CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
 import {
   buildRateChartData,
   DEFAULT_RANGE,
@@ -94,8 +97,15 @@ export function APRHistoryCard({ assetId }: APRHistoryCardProps) {
     return (
       <div className="group/glass relative md:col-span-2  lg:col-span-2 bg-transparent border-0 rounded-xl overflow-hidden isolate flex flex-col items-center justify-center md:h-[600px] gap-3 p-4">
         <CentuariGlassLayers intensity="soft" />
-        <BarChart3 size={40} className="relative z-20 text-white/20" />
-        <span className="relative z-20 text-sm text-white/40">No Data</span>
+        <CentuariGlassSurface
+          intensity="soft"
+          className="relative z-20 rounded-xl p-3"
+        >
+          <BarChart3 size={22} className="text-white/40" />
+        </CentuariGlassSurface>
+        <span className="relative z-20 text-sm text-white/40">
+          No APR history available yet
+        </span>
       </div>
     );
   }
