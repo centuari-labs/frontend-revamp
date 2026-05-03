@@ -321,8 +321,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-1">
-                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg overflow-hidden mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-b-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.marketHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
