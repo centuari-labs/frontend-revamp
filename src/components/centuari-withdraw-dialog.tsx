@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, AlertTriangle, Wallet } from "lucide-react";
+import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -232,10 +233,16 @@ export function CentuariWithdrawDialog() {
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                       </div>
                     ) : withdrawableAssets.length === 0 ? (
-                      <div className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center gap-3 py-8">
+                        <CentuariGlassSurface
+                          intensity="soft"
+                          className="rounded-xl p-3"
+                        >
+                          <Wallet size={22} className="text-white/40" />
+                        </CentuariGlassSurface>
                         <CentuariTypography
                           variant="b3"
-                          className="text-muted-foreground"
+                          className="text-white/40"
                         >
                           No withdrawable assets found
                         </CentuariTypography>
