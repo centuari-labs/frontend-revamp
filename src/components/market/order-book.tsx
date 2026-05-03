@@ -157,7 +157,7 @@ const OrderBookContent: React.FC<{
       <div className="border-b py-1 shrink-0">
         <span className="text-sm p-3 sm:p-4 md:p-4">Borrow</span>
       </div>
-      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm shrink-0 px-3 sm:px-4 md:px-4">
+      <div className="mt-2.5 grid grid-cols-12 text-sm shrink-0 px-3 sm:px-4 md:px-4">
         <div className="col-span-6 text-white/80 text-start font-semibold pl-2">
           APR
         </div>
@@ -172,7 +172,7 @@ const OrderBookContent: React.FC<{
       </div>
 
       {/* MID APR */}
-      <div className="my-2 bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
+      <div className="bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
         <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
           <ArrowUp color="#3de57a" size={16} />
           <span>{formatAPR(midApr)}</span>
