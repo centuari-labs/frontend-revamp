@@ -1,6 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { QUERY_KEYS, invalidateUserQueries } from "@/lib/query-keys";
 
+// Keys explicitly excluded from invalidateUserQueries because they are not
+// user-scoped (e.g. token list is shared across all users for the chain).
+const NON_USER_SCOPED_KEYS = new Set<string>([QUERY_KEYS.DEPOSIT_TOKENS]);
+
+const USER_SCOPED_KEYS = Object.values(QUERY_KEYS).filter(
+	(key) => !NON_USER_SCOPED_KEYS.has(key),
+);
+
 describe("QUERY_KEYS", () => {
 	it("exports all expected key constants", () => {
 		expect(QUERY_KEYS.MY_ASSETS).toBe("my-assets");
@@ -10,15 +18,16 @@ describe("QUERY_KEYS", () => {
 		expect(QUERY_KEYS.OPEN_ORDERS).toBe("open-orders");
 		expect(QUERY_KEYS.ORDER_HISTORY).toBe("order-history");
 		expect(QUERY_KEYS.USER_DETAILS).toBe("user-details");
+		expect(QUERY_KEYS.DEPOSIT_TOKENS).toBe("deposit-tokens");
 	});
 
-	it("contains exactly 7 keys", () => {
-		expect(Object.keys(QUERY_KEYS)).toHaveLength(7);
+	it("contains exactly 8 keys", () => {
+		expect(Object.keys(QUERY_KEYS)).toHaveLength(8);
 	});
 });
 
 describe("invalidateUserQueries", () => {
-	it("invalidates all 7 query keys", () => {
+	it("invalidates only user-scoped query keys", () => {
 		const mockInvalidateQueries = vi.fn();
 		const mockQueryClient = {
 			invalidateQueries: mockInvalidateQueries,
@@ -26,10 +35,12 @@ describe("invalidateUserQueries", () => {
 
 		invalidateUserQueries(mockQueryClient as never);
 
-		expect(mockInvalidateQueries).toHaveBeenCalledTimes(7);
+		expect(mockInvalidateQueries).toHaveBeenCalledTimes(
+			USER_SCOPED_KEYS.length,
+		);
 	});
 
-	it("passes each key wrapped in an array", () => {
+	it("passes each user-scoped key wrapped in an array", () => {
 		const mockInvalidateQueries = vi.fn();
 		const mockQueryClient = {
 			invalidateQueries: mockInvalidateQueries,
@@ -37,24 +48,14 @@ describe("invalidateUserQueries", () => {
 
 		invalidateUserQueries(mockQueryClient as never);
 
-		const expectedKeys = [
-			"my-assets",
-			"my-portfolio",
-			"lend-borrow-assets",
-			"my-positions",
-			"open-orders",
-			"order-history",
-			"user-details",
-		];
-
-		for (const key of expectedKeys) {
+		for (const key of USER_SCOPED_KEYS) {
 			expect(mockInvalidateQueries).toHaveBeenCalledWith({
 				queryKey: [key],
 			});
 		}
 	});
 
-	it("invalidation keys match QUERY_KEYS values exactly", () => {
+	it("does not invalidate non-user-scoped keys (e.g. token list)", () => {
 		const mockInvalidateQueries = vi.fn();
 		const mockQueryClient = {
 			invalidateQueries: mockInvalidateQueries,
@@ -66,6 +67,8 @@ describe("invalidateUserQueries", () => {
 			(call: [{ queryKey: string[] }]) => call[0].queryKey[0],
 		);
 
-		expect(calledKeys).toEqual(Object.values(QUERY_KEYS));
+		for (const excluded of NON_USER_SCOPED_KEYS) {
+			expect(calledKeys).not.toContain(excluded);
+		}
 	});
 });

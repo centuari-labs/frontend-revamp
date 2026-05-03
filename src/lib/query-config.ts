@@ -10,6 +10,7 @@ export const QUERY_CONFIG = {
 	POLLING_INTERVAL: 15_000,
 	/** Longer polling interval for less-critical data (30 s) */
 	LONG_POLLING_INTERVAL: 30_000,
-	/** Stale time for rarely-changing data like token lists (5 min) */
-	DEPOSIT_TOKENS_STALE_TIME: 5 * 60 * 1000,
+	/** Stale time for rarely-changing data like token lists (6 hours).
+	 * Also serves as the TTL for the localStorage token cache (src/lib/token-cache.ts). */
+	DEPOSIT_TOKENS_STALE_TIME: 6 * 60 * 60 * 1000,
 } as const;

@@ -8,6 +8,7 @@ export const QUERY_KEYS = {
 	OPEN_ORDERS: "open-orders",
 	ORDER_HISTORY: "order-history",
 	USER_DETAILS: "user-details",
+	DEPOSIT_TOKENS: "deposit-tokens",
 } as const;
 
 /** Invalidate all user-specific queries after a mutation */
