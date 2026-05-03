@@ -375,7 +375,7 @@ export function CentuariWithdrawDialog() {
                           id="withdraw-amount"
                           type="text"
                           placeholder="0.00"
-                          className="w-full text-center text-4xl font-bold bg-transparent border-white/10 focus:outline-none focus:border-white/20 pb-2"
+                          className="w-full text-center text-4xl font-bold bg-transparent border-input focus:outline-none focus:border-ring pb-2"
                           inputMode="decimal"
                           pattern="[0-9]*\.?[0-9]*"
                           value={withdrawAmount}

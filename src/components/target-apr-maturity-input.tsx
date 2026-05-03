@@ -49,8 +49,8 @@ export function TargetAprMaturityInput({
       )}
       <div
         className={cn(
-          "flex items-center gap-0 rounded-md border bg-transparent h-9 overflow-hidden",
-          hasError ? "border-red-500" : "border-[#2a2e38]",
+          "flex items-center gap-0 rounded-md border bg-transparent dark:bg-input/30 h-9 overflow-hidden",
+          hasError ? "border-red-500" : "border-input",
         )}
       >
         <Select

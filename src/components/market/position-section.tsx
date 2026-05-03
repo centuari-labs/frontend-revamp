@@ -83,9 +83,10 @@ function PositionCard({
           <Image
             src={getTokenLogo(position.tokenValue, position.assetImg)}
             alt={position.tokenSymbol}
-            width={32}
-            height={32}
-            className="rounded-full"
+            width={64}
+            height={64}
+            quality={100}
+            className="size-8 rounded-full object-contain"
           />
           <div>
             <p className="font-semibold text-white">{position.tokenSymbol}</p>

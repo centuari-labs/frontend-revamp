@@ -35,7 +35,7 @@ export function SelectToken({ value, onValueChange }: SelectTokenProps) {
     <div className="w-full space-y-2 mt-3.5">
       <Label htmlFor={id}>Select Token</Label>
       <Select value={selectedToken} onValueChange={handleValueChange}>
-        <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+        <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
           <SelectValue placeholder="Select Token" />
         </SelectTrigger>
         <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">

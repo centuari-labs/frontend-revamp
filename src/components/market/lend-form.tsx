@@ -84,9 +84,10 @@ export function LendForm({
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}
@@ -195,9 +196,10 @@ export function LendForm({
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}
