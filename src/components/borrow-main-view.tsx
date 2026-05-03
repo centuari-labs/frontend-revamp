@@ -172,8 +172,8 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 									{`${hfDisplay.value} ~ ${hfDisplay.status}`}
 								</Badge>
 							</Label>
-							<div className="border border-white/5 rounded-lg mt-2">
-								<div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
+							<div className="border border-white/5 rounded-md mt-2 overflow-hidden">
+								<div className="px-2 py-5 border-b rounded-b-md border-white/5 bg-white/10 z-50">
 									<HealthFactor
 										targetValue={displayPercentage}
 										healthFactor={
