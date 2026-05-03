@@ -83,12 +83,12 @@ export function CentuariDataTable<T>({
 										key={header.id}
 										className={`text-sm text-muted-foreground font-normal ${
 											headerGroup.headers[0].id === header.id
-												? "rounded-l-sm"
+												? "rounded-l-lg pl-6"
 												: ""
 										} ${
 											headerGroup.headers[headerGroup.headers.length - 1]
 												.id === header.id
-												? "rounded-r-sm"
+												? "rounded-r-lg pr-6"
 												: ""
 										}`}
 									>
