@@ -83,7 +83,7 @@ const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
   return (
     <div
       ref={scrollRef}
-      className="h-full overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40 p-3 sm:p-4 md:p-4"
+      className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 p-3 sm:p-4 md:p-4"
     >
       {side === "borrow" ? (
         <div className="flex flex-col justify-end min-h-full">
@@ -254,7 +254,7 @@ const RecentTradesContent: React.FC<{
         </div>
       ) : (
         <div
-          className="overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40 px-3 sm:px-4 md:px-4"
+          className="overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 px-3 sm:px-4 md:px-4"
           style={{ height: listHeight || undefined }}
         >
           <RecentTradeTable trades={trades} />

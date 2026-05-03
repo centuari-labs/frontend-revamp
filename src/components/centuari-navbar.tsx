@@ -73,7 +73,7 @@ export default function CentuariNavbar() {
       const isDesktop = window.matchMedia("(min-width: 768px)").matches;
       // Initial — full width hero state
       const initialMaxW = "100%";
-      const initialPadX = isDesktop ? 24 : 16;
+      const initialPadX = isDesktop ? 42 : 16;
       const initialPadY = isDesktop ? 2 : 2;
       const initialInnerH = isDesktop ? 80 : 64;
       const initialRadius = 0;
