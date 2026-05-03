@@ -295,7 +295,7 @@ export default function PortfolioPage() {
                   </div>
                 ))}
                 <Link href="/portfolio/transaction-history">
-                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4">
+                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4 opacity-60 hover:opacity-100 cursor-pointer">
                     See All Transaction
                   </CentuariButton>
                 </Link>
