@@ -27,7 +27,10 @@ export function DialogTokenHeader({
 }: DialogTokenHeaderProps) {
 	return (
 		<>
-			<div className="flex flex-col items-center justify-center gap-2 mt-6">
+			<div
+				id="tour-dialog-asset-overview"
+				className="flex flex-col items-center justify-center gap-2 mt-6"
+			>
 				<Image
 					src={tokenImage}
 					alt={tokenName}
@@ -55,7 +58,10 @@ export function DialogTokenHeader({
 				</div>
 			</div>
 			{showMarketBanner && (
-				<div className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/10 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md">
+				<div
+					id="tour-dialog-market-banner"
+					className="text-sm mt-3 text-primary-blue-20 bg-primary-blue-base/10 border border-primary-blue-base/10 py-2 text-center mx-6 self-stretch rounded-md"
+				>
 					Go to{" "}
 					<Link href="/market" className="font-medium !underline">
 						Market View

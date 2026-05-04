@@ -315,4 +315,17 @@
   .react-joyride__arrow {
     display: none !important;
   }
+
+  /* Ensure react-joyride tooltips remain interactive when a Radix modal
+     (Dialog / AlertDialog) sets pointer-events: none on the body. */
+  .__floater,
+  .__floater__body,
+  .__floater *,
+  [id^="react-joyride"],
+  [id^="react-joyride"] *,
+  .react-joyride__spotlight,
+  .react-joyride__overlay,
+  .react-joyride__tooltip {
+    pointer-events: auto !important;
+  }
 }
