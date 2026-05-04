@@ -17,6 +17,7 @@ import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 import Image from "next/image";
 import { formatNumberWithSeparator } from "@/lib/utils";
+import { MAX_APR_PCT, MIN_APR_PCT } from "@/lib/order-errors";
 
 interface LendFormProps {
   tokenList: TokenOption[];
@@ -50,6 +51,13 @@ export function LendForm({
   const limitInsufficientBalance = limitNumeric > 0 && limitNumeric > availableBalance;
   const marketInsufficientBalance = marketNumeric > 0 && marketNumeric > availableBalance;
 
+  const limitAprNumeric = parseFloat(form.limitTargetAPR.replace(",", ".")) || 0;
+  const limitAprError = form.limitTargetAPR && limitAprNumeric > MAX_APR_PCT
+    ? `Target APR cannot exceed ${MAX_APR_PCT}%`
+    : form.limitTargetAPR && limitAprNumeric > 0 && limitAprNumeric < MIN_APR_PCT
+      ? `Target APR must be at least ${MIN_APR_PCT}%`
+      : null;
+
   return (
     <>
       <OrderTypeTabs
@@ -76,9 +84,10 @@ export function LendForm({
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}
@@ -111,6 +120,7 @@ export function LendForm({
                   maturityOptions={form.availableMaturities}
                   placeholder="Enter your APR amount"
                   label="Target APR"
+                  errorText={limitAprError}
                 />
               </div>
               <div className="mt-5">
@@ -147,6 +157,8 @@ export function LendForm({
                   !form.limitAmount ||
                   parseFloat(form.limitAmount) <= 0 ||
                   !form.limitTargetAPR ||
+                  limitAprNumeric <= 0 ||
+                  limitAprError !== null ||
                   !form.limitMaturity ||
                   form.isPending ||
                   limitInsufficientBalance
@@ -184,9 +196,10 @@ export function LendForm({
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}

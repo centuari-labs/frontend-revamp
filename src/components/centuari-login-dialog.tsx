@@ -368,7 +368,7 @@ export function CentuariLoginDialog({
                         const pasted = e.clipboardData.getData("text");
                         handleOtpChange(index, pasted);
                       }}
-                      className="w-11 h-14 text-center text-lg font-medium rounded-xl border border-white/10 bg-white/5 text-white focus:border-primary-blue-base focus:ring-1 focus:ring-primary-blue-base/50 outline-none transition-colors placeholder:text-muted-foreground"
+                      className="w-11 h-14 text-center text-lg font-medium rounded-xl border border-input bg-white/5 text-white focus:border-primary-blue-base focus:ring-1 focus:ring-primary-blue-base/50 outline-none transition-colors placeholder:text-muted-foreground"
                     />
                   ))}
                 </div>

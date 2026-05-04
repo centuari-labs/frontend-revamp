@@ -19,6 +19,11 @@ import { useOrderbook } from "@/hooks/use-orderbook";
 import { useTransactionFees } from "@/hooks/use-transaction-fees";
 import { useSuccessDialog } from "@/hooks/use-success-dialog";
 import { useTokenPrice } from "@/contexts/price-context";
+import {
+  MAX_APR_PCT,
+  MIN_APR_PCT,
+  mapOrderErrorToFriendlyMessage,
+} from "@/lib/order-errors";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -198,9 +203,16 @@ export function useBorrowForm({
       if (limitCalcs.totalPortfolioValue === 0) return;
       if (limitCalcs.healthFactor < 1.0) return;
 
+      const targetAPRNumeric =
+        parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
+      if (targetAPRNumeric <= 0 || targetAPRNumeric > MAX_APR_PCT) {
+        toast.error(
+          `Target APR must be between ${MIN_APR_PCT}% and ${MAX_APR_PCT}%`,
+        );
+        return;
+      }
+
       try {
-        const targetAPRNumeric =
-          parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
@@ -232,9 +244,9 @@ export function useBorrowForm({
           selectedToken.label.toUpperCase().slice(0, 4),
         );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [
@@ -294,9 +306,9 @@ export function useBorrowForm({
           selectedToken.label.toUpperCase().slice(0, 4),
         );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [

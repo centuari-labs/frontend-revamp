@@ -93,40 +93,42 @@ export const LendMainView = forwardRef<HTMLDivElement, LendMainViewProps>(
 				/>
 
 				<div className="mt-4 px-6">
-					<CentuariInput
-						id={`amount-${reactId}`}
-						label="Amount to Lend"
-						size="large"
-						placeholder="1,000"
-						tooltipMessage="The amount you currently have that is available to use."
-						leftIcon={
-							<Image
-								src={tokenImage}
-								alt={tokenSymbol}
-								width={16}
-								height={16}
-								className="w-4 h-4"
-							/>
-						}
-						suffix={tokenSymbol}
-						rightIcon={
-							<Button
-								variant="link"
-								className="px-0"
-								type="button"
-								onClick={onMaxClick}
-							>
-								Max
-							</Button>
-						}
-						balanceText={
-							dataLoading
-								? "Loading..."
-								: `${tokenSymbol} ${formatNumberWithSeparator(availableBalance)}`
-						}
-						value={displayAmount}
-						onChange={onAmountChange}
-					/>
+					<div id="tour-lend-amount">
+						<CentuariInput
+							id={`amount-${reactId}`}
+							label="Amount to Lend"
+							size="large"
+							placeholder="1,000"
+							tooltipMessage="The amount you currently have that is available to use."
+							leftIcon={
+								<Image
+									src={tokenImage}
+									alt={tokenSymbol}
+									width={16}
+									height={16}
+									className="w-4 h-4"
+								/>
+							}
+							suffix={tokenSymbol}
+							rightIcon={
+								<Button
+									variant="link"
+									className="px-0"
+									type="button"
+									onClick={onMaxClick}
+								>
+									Max
+								</Button>
+							}
+							balanceText={
+								dataLoading
+									? "Loading..."
+									: `${tokenSymbol} ${formatNumberWithSeparator(availableBalance)}`
+							}
+							value={displayAmount}
+							onChange={onAmountChange}
+						/>
+					</div>
 
 					{numericAmount > availableBalance && (
 						<CentuariAlert
@@ -156,13 +158,15 @@ export const LendMainView = forwardRef<HTMLDivElement, LendMainViewProps>(
 						/>
 					)}
 
-					<TransactionSummary
-						transactionFee={numericAmount > 0 ? transactionFee : 0}
-						amountToPay={numericAmount > 0 ? amountToPay : 0}
-						futureAmount={numericAmount > 0 ? futureAmount : 0}
-						futureLabel="In the future you'll get"
-						tokenSymbol={tokenSymbol}
-					/>
+					<div id="tour-lend-summary">
+						<TransactionSummary
+							transactionFee={numericAmount > 0 ? transactionFee : 0}
+							amountToPay={numericAmount > 0 ? amountToPay : 0}
+							futureAmount={numericAmount > 0 ? futureAmount : 0}
+							futureLabel="In the future you'll get"
+							tokenSymbol={tokenSymbol}
+						/>
+					</div>
 
 					<CentuariTypography
 						variant="s4"

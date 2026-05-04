@@ -83,9 +83,10 @@ function PositionCard({
           <Image
             src={getTokenLogo(position.tokenValue, position.assetImg)}
             alt={position.tokenSymbol}
-            width={32}
-            height={32}
-            className="rounded-full"
+            width={64}
+            height={64}
+            quality={100}
+            className="size-8 rounded-full object-contain"
           />
           <div>
             <p className="font-semibold text-white">{position.tokenSymbol}</p>
@@ -172,7 +173,7 @@ function CancelOrderDialog({
           </div>
           <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Trash2 size={28} className="text-red-400" />
+              <Trash2 size={28} className="text-red-600" />
             </div>
             <CentuariTypography className="text-xl font-semibold">
               Cancel Order
@@ -184,7 +185,7 @@ function CancelOrderDialog({
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-5">
           <DialogClose asChild>
-            <CentuariButton variant="secondary" className="flex-1" disabled={isPending}>
+            <CentuariButton variant="ghost" className="flex-1" disabled={isPending}>
               No, keep it
             </CentuariButton>
           </DialogClose>
@@ -292,17 +293,23 @@ function UnifiedPositionTable({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-white/5">
               {headerGroup.headers.map((header) => {
+                const isFirst = headerGroup.headers[0].id === header.id;
+                const isLast =
+                  headerGroup.headers[headerGroup.headers.length - 1].id ===
+                  header.id;
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-sm text-muted-foreground font-normal"
+                    className={`text-sm text-muted-foreground font-normal ${
+                      isFirst ? "rounded-l-lg pl-6" : ""
+                    } ${isLast ? "rounded-r-lg pr-6" : ""}`}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 );
               })}

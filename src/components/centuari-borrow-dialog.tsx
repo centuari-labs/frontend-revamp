@@ -2,19 +2,23 @@
 
 import { useState, useRef, useId } from "react";
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, XIcon } from "lucide-react";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { CentuariButton } from "./centuari-button";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import { BorrowMainView } from "./borrow-main-view";
 import { BorrowDepositView } from "./borrow-deposit-view";
+import { BorrowDialogTour } from "./product-tour/borrow-dialog-tour";
 import {
 	formatNumberWithSeparator,
 	parseNumberFromSeparator,
@@ -217,14 +221,33 @@ export function CentuariBorrowDialog({
 
 	return (
 		<>
-			<Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-				<DialogTrigger asChild>
+			<AlertDialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+				<AlertDialogTrigger asChild>
 					<CentuariButton variant="ghost" className="flex-1">
 						Borrow
 					</CentuariButton>
-				</DialogTrigger>
-				<DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
-					<DialogHeader className="contents space-y-0 text-left">
+				</AlertDialogTrigger>
+				<AlertDialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:zoom-in-0! data-[state=open]:duration-600">
+					<AlertDialogTitle className="sr-only">
+						Borrow {token_symbol}
+					</AlertDialogTitle>
+					<AlertDialogDescription className="sr-only">
+						Borrow {token_symbol} against your collateral. Review your health factor before confirming.
+					</AlertDialogDescription>
+					<AlertDialogCancel className="rounded-full w-4 h-4 p-3 cursor-pointer" asChild>
+						<button
+							type="button"
+							aria-label="Close"
+							className="group/glass ring-offset-background focus:ring-ring absolute -top-2.5 -right-2.5 z-30 isolate overflow-hidden opacity-70"
+						>
+							<CentuariGlassLayers intensity="soft" />
+							<span className="relative z-20 flex">
+								<XIcon />
+							</span>
+							<span className="sr-only">Close</span>
+						</button>
+					</AlertDialogCancel>
+					<AlertDialogHeader className="contents space-y-0 text-left">
 						<div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
 							<div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
 							<div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
@@ -264,12 +287,12 @@ export function CentuariBorrowDialog({
 								/>
 							</div>
 						</ScrollArea>
-					</DialogHeader>
-					<DialogFooter className="flex !flex-col gap-2 pt-2 px-6">
+					</AlertDialogHeader>
+					<AlertDialogFooter id="tour-borrow-confirm" className="flex flex-col! gap-2 pt-2 px-6">
 						<div className="flex items-center gap-4">
-							<DialogClose asChild>
+							<AlertDialogCancel asChild>
 								<CentuariButton variant="secondary">Cancel</CentuariButton>
-							</DialogClose>
+							</AlertDialogCancel>
 							<CentuariButton
 								type="button"
 								variant="primary"
@@ -302,9 +325,11 @@ export function CentuariBorrowDialog({
 							This position is automatically refinanced. At maturity, it will
 							roll over to the next available term unless you take action.
 						</p>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<BorrowDialogTour open={isDialogOpen} />
 
 			<TransactionSuccessDialog
 				open={showSuccessDialog}

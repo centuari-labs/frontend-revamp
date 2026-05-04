@@ -108,9 +108,9 @@ export function FaucetTokenGrid() {
 
       {/* Sticky bottom bar */}
       {(selectedTokens.size > 0 || status === "success" || status === "error") && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6 flex items-center justify-center">
           <div className={cn(
-            "group/glass relative isolate overflow-hidden bg-black/40 backdrop-blur-2xl border-0 rounded-2xl shadow-2xl",
+            "group/glass relative isolate overflow-hidden bg-black/40 backdrop-blur-2xl border-0 rounded-2xl shadow-2xl w-1/3",
             status === "success" && "shadow-[0_0_24px_rgba(16,185,129,0.25)]",
             status === "error" && "shadow-[0_0_24px_rgba(239,68,68,0.25)]"
           )}>

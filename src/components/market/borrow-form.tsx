@@ -21,6 +21,7 @@ import { TransactionSummary } from "@/components/market/transaction-summary";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
+import { MAX_APR_PCT, MIN_APR_PCT } from "@/lib/order-errors";
 
 
 interface BorrowFormProps {
@@ -49,6 +50,13 @@ export function BorrowForm({
     assetId,
   });
 
+  const limitAprNumeric = parseFloat(form.limitTargetAPR.replace(",", ".")) || 0;
+  const limitAprError = form.limitTargetAPR && limitAprNumeric > MAX_APR_PCT
+    ? `Target APR cannot exceed ${MAX_APR_PCT}%`
+    : form.limitTargetAPR && limitAprNumeric > 0 && limitAprNumeric < MIN_APR_PCT
+      ? `Target APR must be at least ${MIN_APR_PCT}%`
+      : null;
+
   return (
     <>
       <OrderTypeTabs
@@ -72,9 +80,10 @@ export function BorrowForm({
                     <Image
                       src={form.selectedToken.logo}
                       alt={form.selectedToken.label}
-                      width={16}
-                      height={16}
-                      className="w-4 h-4"
+                      width={32}
+                      height={32}
+                      quality={100}
+                      className="w-4 h-4 object-contain"
                     />
                   }
                   suffix={form.selectedToken.label}
@@ -116,6 +125,7 @@ export function BorrowForm({
                     maturityOptions={form.availableMaturities}
                     placeholder="Enter your APR amount"
                     label="Target APR"
+                    errorText={limitAprError}
                   />
                 </div>
                 <div className="mt-2">
@@ -140,8 +150,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-1">
-                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg overflow-hidden mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-b-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.limitHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
@@ -205,6 +215,8 @@ export function BorrowForm({
                     form.limitTotalPortfolioValue === 0 ||
                     form.limitHealthFactor < 1.0 ||
                     !form.limitTargetAPR ||
+                    limitAprNumeric <= 0 ||
+                    limitAprError !== null ||
                     !form.limitMaturity
                   }
                 >
@@ -239,9 +251,10 @@ export function BorrowForm({
                     <Image
                       src={form.selectedToken.logo}
                       alt={form.selectedToken.label}
-                      width={16}
-                      height={16}
-                      className="w-4 h-4"
+                      width={32}
+                      height={32}
+                      quality={100}
+                      className="w-4 h-4 object-contain"
                     />
                   }
                   suffix={form.selectedToken.label}
@@ -308,8 +321,8 @@ export function BorrowForm({
                       }
                     />
                   </Label>
-                  <div className="border border-white/5 rounded-lg mt-1">
-                    <div className="h-8 flex items-center justify-center px-4 rounded-lg border-b border-white/5 bg-white/10 z-50">
+                  <div className="border border-white/5 rounded-lg overflow-hidden mt-1">
+                    <div className="h-8 flex items-center justify-center px-4 rounded-b-lg border-b border-white/5 bg-white/10 z-50">
                       <HealthFactor
                         targetValue={form.marketHealthFactorPercentage || (form.userHealthFactor > 0 ? getHealthFactorPercentage(form.userHealthFactor) : 0)}
                         healthFactor={
