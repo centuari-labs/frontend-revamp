@@ -7,27 +7,39 @@ import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { CentuariButton } from "@/components/centuari-button";
 import { cn } from "@/lib/utils";
 
+interface CentuariTourTooltipProps extends TooltipRenderProps {
+  onClose?: () => void;
+}
+
 export function CentuariTourTooltip({
   index,
   size,
   step,
   backProps,
   primaryProps,
-  closeProps,
   tooltipProps,
   isLastStep,
-}: TooltipRenderProps) {
+  onClose,
+}: CentuariTourTooltipProps) {
   const isFirst = index === 0;
 
   return (
     <div
       {...tooltipProps}
       className="relative w-96 max-w-[calc(100vw-32px)]"
+      style={{ pointerEvents: "auto" }}
     >
       <button
-        {...closeProps}
         type="button"
         aria-label="Close tour"
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose?.();
+        }}
+        style={{ pointerEvents: "auto" }}
         className="group/glass absolute -top-3 -right-3 z-30 isolate overflow-hidden p-1.5 rounded-full opacity-70 transition-opacity hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
       >
         <CentuariGlassLayers intensity="soft" />
@@ -75,7 +87,7 @@ export function CentuariTourTooltip({
             </div>
 
             <div className="flex items-center gap-2">
-              {!isFirst && (
+              {/* {!isFirst && (
                 <CentuariButton
                   {...backProps}
                   variant="secondary"
@@ -83,7 +95,7 @@ export function CentuariTourTooltip({
                 >
                   Previous
                 </CentuariButton>
-              )}
+              )} */}
               <CentuariButton
                 {...primaryProps}
                 variant="primary"

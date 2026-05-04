@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { Joyride, type EventData } from "react-joyride";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { Joyride, type EventData, type TooltipRenderProps } from "react-joyride";
 
 import { TOUR_STEPS } from "./tour-steps";
 import { CentuariTourTooltip } from "./centuari-tour-tooltip";
@@ -41,19 +41,41 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     setRun(true);
   };
 
-  const completeTour = () => {
+  const completeTour = useCallback(() => {
     localStorage.setItem(TOUR_STORAGE_KEY, "true");
     setHasSeenTour(true);
     setShowWelcome(false);
     setRun(false);
-  };
+  }, []);
+
+  // Custom ESC handler — bypasses Joyride's built-in handler which can fire
+  // mid-transition close events that prematurely terminate the tour.
+  useEffect(() => {
+    if (!run) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        completeTour();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [run, completeTour]);
 
   const handleEvent = (data: EventData) => {
-    // Only react to terminal statuses — ignore initial "ready"/"idle" events.
-    if (data.status === "finished" || data.status === "skipped") {
+    // Only treat the final "Done" click as terminal — the explicit X close
+    // button uses its own onClose callback, so we don't need status === "skipped".
+    if (data.status === "finished") {
       completeTour();
     }
   };
+
+  const TooltipComponent = useCallback(
+    (props: TooltipRenderProps) => (
+      <CentuariTourTooltip {...props} onClose={completeTour} />
+    ),
+    [completeTour]
+  );
 
   return (
     <TourContext.Provider value={{ startTour, hasSeenTour }}>
@@ -64,8 +86,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           run={run}
           continuous
           scrollToFirstStep
-          tooltipComponent={CentuariTourTooltip}
-          // floaterProps={{ hideArrow: true }}
+          tooltipComponent={TooltipComponent}
           options={{
             // Skip beacon stage so the tour jumps straight to the tooltip on each step.
             skipBeacon: true,

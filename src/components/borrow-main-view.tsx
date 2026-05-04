@@ -130,25 +130,27 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 
 				<div className="mt-4 px-6">
 					<form action="">
-						<CentuariInput
-							id={`amount-${reactId}`}
-							label="Amount to Borrow"
-							size="large"
-							placeholder="1,000"
-							leftIcon={
-								<Image
-									src={tokenImage}
-									alt={tokenSymbol}
-									width={16}
-									height={16}
-									className="w-4 h-4"
-								/>
-							}
-							suffix={tokenSymbol}
-							value={displayAmount}
-							onChange={onAmountChange}
-						/>
-						<div className="mt-5">
+						<div id="tour-borrow-amount">
+							<CentuariInput
+								id={`amount-${reactId}`}
+								label="Amount to Borrow"
+								size="large"
+								placeholder="1,000"
+								leftIcon={
+									<Image
+										src={tokenImage}
+										alt={tokenSymbol}
+										width={16}
+										height={16}
+										className="w-4 h-4"
+									/>
+								}
+								suffix={tokenSymbol}
+								value={displayAmount}
+								onChange={onAmountChange}
+							/>
+						</div>
+						<div id="tour-borrow-collateral" className="mt-5">
 							<Label>Collateral Used</Label>
 							<div className="mt-1.5">
 								{selectedCollaterals.length > 0 ? (
@@ -162,7 +164,7 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 							</div>
 						</div>
 
-						<div>
+						<div id="tour-borrow-health-factor">
 							<Label className="mb-2 mt-4">
 								Health Factor{" "}
 								<CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
@@ -218,13 +220,15 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 							/>
 						)}
 
-						<TransactionSummary
-							transactionFee={numericAmount > 0 ? transactionFee : 0}
-							amountToPay={numericAmount > 0 ? amountToPay : 0}
-							futureAmount={numericAmount > 0 ? futureAmount : 0}
-							futureLabel="In the future you'll pay"
-							tokenSymbol={tokenSymbol}
-						/>
+						<div id="tour-borrow-summary">
+							<TransactionSummary
+								transactionFee={numericAmount > 0 ? transactionFee : 0}
+								amountToPay={numericAmount > 0 ? amountToPay : 0}
+								futureAmount={numericAmount > 0 ? futureAmount : 0}
+								futureLabel="In the future you'll pay"
+								tokenSymbol={tokenSymbol}
+							/>
+						</div>
 
 						<CentuariTypography
 							variant="s4"
