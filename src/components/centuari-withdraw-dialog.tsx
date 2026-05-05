@@ -1,10 +1,12 @@
 "use client";
 
-import { gsap } from "gsap";
-import { ArrowLeft, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, AlertTriangle, Wallet } from "lucide-react";
+import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
+import { useNetworkSwitch } from "@/hooks/use-network-switch";
 import {
   Dialog,
   DialogContent,
@@ -24,12 +26,9 @@ import { getChainIcon } from "@/lib/chains";
 import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
 import type { UserAssetDetail } from "@/lib/api";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { toast } from "sonner";
-import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
 
 const ARBITRUM_ICON = getChainIcon("arbitrum");
-const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
 
 type Step = "select-token" | "enter-amount";
 
@@ -55,31 +54,7 @@ export function CentuariWithdrawDialog() {
 
   const isProcessing = isPending;
 
-  // ─── Network detection ───────────────────────────────────────────────
-  const { user: privyUser } = usePrivy();
-  const { wallets: privyWallets } = useWallets();
-  const linkedAddr = privyUser?.wallet?.address?.toLowerCase();
-  const loginWallet = linkedAddr
-    ? privyWallets.find(
-        (w) =>
-          w.walletClientType !== "privy" &&
-          w.address.toLowerCase() === linkedAddr,
-      )
-    : undefined;
-  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
-  const [switchingChain, setSwitchingChain] = useState(false);
-
-  const handleSwitchChain = async () => {
-    if (!loginWallet || switchingChain) return;
-    setSwitchingChain(true);
-    try {
-      await loginWallet.switchChain(ACTIVE_CHAIN.id);
-    } catch {
-      toast.error("Failed to switch network");
-    } finally {
-      setSwitchingChain(false);
-    }
-  };
+  const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
 
   // Filter to assets with positive available balance
   const withdrawableAssets = (userDetails?.assets ?? []).filter(
@@ -128,48 +103,8 @@ export function CentuariWithdrawDialog() {
     }
   }, [dialogOpen, withdrawStatus]);
 
-  // Animate in when step changes
-  useEffect(() => {
-    const timeline = gsap.timeline();
-
-    if (
-      step === "select-token" &&
-      selectTokenViewRef.current &&
-      enterAmountViewRef.current
-    ) {
-      timeline
-        .to(enterAmountViewRef.current, {
-          x: 100,
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-        })
-        .fromTo(
-          selectTokenViewRef.current,
-          { x: -100, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15",
-        );
-    } else if (
-      step === "enter-amount" &&
-      selectTokenViewRef.current &&
-      enterAmountViewRef.current
-    ) {
-      timeline
-        .to(selectTokenViewRef.current, {
-          x: -100,
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.in",
-        })
-        .fromTo(
-          enterAmountViewRef.current,
-          { x: 100, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" },
-          "-=0.15",
-        );
-    }
-  }, [step]);
+  // Animate transitions between steps
+  useDialogViewAnimation(selectTokenViewRef, enterAmountViewRef, step === "select-token");
 
   const handleWithdraw = async () => {
     if (isProcessing || !withdrawAmount || !selectedAsset) return;
@@ -196,9 +131,9 @@ export function CentuariWithdrawDialog() {
     <>
       <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
         <DialogTrigger asChild>
-          <Button variant="secondary" className="flex-1" size={"lg"}>
+          <CentuariButton variant="secondary" className="flex-1" size={"lg"}>
             Withdraw <IcCreditCardUploadCentuari />
-          </Button>
+          </CentuariButton>
         </DialogTrigger>
         <DialogContent
           className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600"
@@ -298,10 +233,16 @@ export function CentuariWithdrawDialog() {
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                       </div>
                     ) : withdrawableAssets.length === 0 ? (
-                      <div className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center gap-3 py-8">
+                        <CentuariGlassSurface
+                          intensity="soft"
+                          className="rounded-xl p-3"
+                        >
+                          <Wallet size={22} className="text-white/40" />
+                        </CentuariGlassSurface>
                         <CentuariTypography
                           variant="b3"
-                          className="text-muted-foreground"
+                          className="text-white/40"
                         >
                           No withdrawable assets found
                         </CentuariTypography>
@@ -441,7 +382,7 @@ export function CentuariWithdrawDialog() {
                           id="withdraw-amount"
                           type="text"
                           placeholder="0.00"
-                          className="w-full text-center text-4xl font-bold bg-transparent border-white/10 focus:outline-none focus:border-white/20 pb-2"
+                          className="w-full text-center text-4xl font-bold bg-transparent border-input focus:outline-none focus:border-ring pb-2"
                           inputMode="decimal"
                           pattern="[0-9]*\.?[0-9]*"
                           value={withdrawAmount}

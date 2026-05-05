@@ -2,10 +2,17 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+const SCROLL_THRESHOLD = 60;
 
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
@@ -16,6 +23,7 @@ import { CentuariLoginDialog } from "./centuari-login-dialog";
 import { CentuariUserMenu } from "./centuari-user-menu";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
 import { glassStyle, glassBorderGradient } from "@/components/ui/glass-card";
+import { CentuariGlassLayers } from "./centuari-glass-surface";
 
 interface NavItem {
   name: string;
@@ -38,13 +46,15 @@ const NAV_ITEMS: readonly NavItem[] = [
 export default function CentuariNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
 
   const pathname = usePathname();
 
   const { authenticated } = usePrivy();
 
+  const navRef = useRef<HTMLElement>(null);
+  const pillRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const navItemsRef = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -52,13 +62,130 @@ export default function CentuariNavbar() {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // GSAP-driven smart navbar — width-shrink to centered pill on scroll.
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const nav = navRef.current;
+    const pill = pillRef.current;
+    const inner = innerRef.current;
+    if (!nav || !pill || !inner) return;
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const ctx = gsap.context(() => {
+      const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+      // Initial — full width hero state
+      const initialMaxW = "100%";
+      const initialPadX = isDesktop ? 42 : 16;
+      const initialPadY = isDesktop ? 2 : 2;
+      const initialInnerH = isDesktop ? 80 : 64;
+      const initialRadius = 0;
+      const initialMarginTop = 0;
+      // Scrolled — centered floating pill
+      const scrolledMaxW = isDesktop ? "880px" : "calc(100% - 24px)";
+      const scrolledPadX = isDesktop ? 16 : 12;
+      const scrolledPadY = isDesktop ? 6 : 4;
+      const scrolledInnerH = isDesktop ? 56 : 48;
+      const scrolledRadius = 10;
+      const scrolledMarginTop = isDesktop ? 12 : 8;
+
+      gsap.set(nav, {
+        willChange: "transform",
+      });
+      gsap.set(pill, {
+        maxWidth: initialMaxW,
+        // marginTop: initialMarginTop,
+        paddingLeft: initialPadX,
+        paddingRight: initialPadX,
+        paddingTop: initialPadY,
+        paddingBottom: initialPadY,
+        borderRadius: initialRadius,
+        willChange: "max-width, margin, padding, border-radius, background-color, backdrop-filter",
+      });
+      gsap.set(inner, {
+        height: initialInnerH,
+        willChange: "height",
+      });
+
+      // 1. Mount intro — fade + slide down.
+      gsap.from(nav, {
+        y: -24,
+        opacity: 0,
+        duration: 0.7,
+        ease: "expo.out",
+      });
+
+      // 2. Scrolled state — width shrink + pill + glass.
+      const scrolledTl = gsap
+        .timeline({
+          paused: true,
+          defaults: { ease: "power2.out", duration: 0.45 },
+        })
+        .to(
+          pill,
+          {
+            maxWidth: scrolledMaxW,
+            marginTop: scrolledMarginTop,
+            paddingLeft: scrolledPadX,
+            paddingRight: scrolledPadX,
+            paddingTop: scrolledPadY,
+            paddingBottom: scrolledPadY,
+            borderRadius: scrolledRadius,
+            backgroundColor: "rgba(8, 10, 18, 0.6)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            borderColor: "rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 12px 40px -10px rgba(0,0,0,0.55)",
+          },
+          0,
+        )
+        .to(inner, { height: scrolledInnerH }, 0);
+
+      ScrollTrigger.create({
+        start: 0,
+        end: 99999,
+        onUpdate: (self) => {
+          if (self.scroll() > SCROLL_THRESHOLD) scrolledTl.play();
+          else scrolledTl.reverse();
+        },
+      });
+
+      // 3. Smart hide — scroll down hides, scroll up reveals.
+      // let lastY = 0;
+      // ScrollTrigger.create({
+      //   start: 0,
+      //   end: 99999,
+      //   onUpdate: (self) => {
+      //     const y = self.scroll();
+      //     const delta = y - lastY;
+      //     lastY = y;
+
+      //     if (y < SCROLL_THRESHOLD) {
+      //       gsap.to(nav, {
+      //         yPercent: 0,
+      //         duration: 0.3,
+      //         ease: "power2.out",
+      //         overwrite: "auto",
+      //       });
+      //       return;
+      //     }
+
+      //     if (delta > 4) {
+      //       gsap.to(nav, {
+      //         yPercent: -130,
+      //         duration: 0.4,
+      //         ease: "power2.in",
+      //         overwrite: "auto",
+      //       });
+      //     } else if (delta < -4) {
+      //       gsap.to(nav, {
+      //         yPercent: 0,
+      //         duration: 0.4,
+      //         ease: "power2.out",
+      //         overwrite: "auto",
+      //       });
+      //     }
+      //   },
+      // });
+    }, nav);
+
+    return () => ctx.revert();
   }, []);
 
   const isNavItemActive = (item: NavItem): boolean =>
@@ -66,31 +193,34 @@ export default function CentuariNavbar() {
 
   useEffect(() => {
     const updateIndicator = () => {
+      if (!indicatorRef.current) return;
       const activeIndex = NAV_ITEMS.findIndex((item) => isNavItemActive(item));
       const activeElement = desktopNavRef.current[activeIndex];
 
-      if (activeElement && indicatorRef.current) {
+      if (activeElement) {
         const { offsetLeft, offsetWidth } = activeElement;
-
         gsap.to(indicatorRef.current, {
           x: offsetLeft,
           width: offsetWidth,
+          opacity: 1,
           duration: 0.4,
-          ease: "power2.out",
+          ease: "power3.out",
         });
-      } else if (indicatorRef.current) {
+      } else {
         gsap.to(indicatorRef.current, {
-          x: 0,
-          width: 0,
+          opacity: 0,
           duration: 0.2,
           ease: "power2.in",
         });
       }
     };
 
-    updateIndicator();
+    const raf = requestAnimationFrame(updateIndicator);
     window.addEventListener("resize", updateIndicator);
-    return () => window.removeEventListener("resize", updateIndicator);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updateIndicator);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -186,81 +316,81 @@ export default function CentuariNavbar() {
 
   return (
     <nav
+      ref={navRef}
       id="tour-home-nav"
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
-        ? "bg-primary-blue-90/20 backdrop-blur-xl md:border-b md:border-white/10"
-        : ""
-        }`}
+      className="fixed top-0 left-0 right-0 z-[100] translate-z-0 backface-hidden pointer-events-none"
     >
-      <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
-        <div className="px-4 md:px-6">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            <div className="flex items-center gap-6 bg-black/5 px-2 py-1 rounded-lg md:rounded-xl border border-white/10 backdrop-blur-sm">
+      <div
+        ref={pillRef}
+        className="mx-auto w-full border border-transparent pointer-events-auto"
+        style={{
+          backgroundColor: "rgba(8, 10, 18, 0)",
+          backdropFilter: "blur(0px)",
+        }}
+      >
+        <div>
+          <div
+            ref={innerRef}
+            className="flex items-center justify-between"
+          >
+            <Link href="/" className="flex items-center gap-2">
               <img
                 src="/centuari-logo.png"
-                alt="Logo"
-                className="w-6 h-6 md:w-8 md:h-8 ml-0 md:ml-2"
+                alt="Centuari"
+                className="w-6 h-6 md:w-8 md:h-8"
               />
+              <span className="text-white font-medium text-base md:text-lg hidden sm:inline">
+                Centuari
+              </span>
+            </Link>
 
-              <div className="hidden md:flex items-center space-x-2 relative">
+            <div className="group/glass relative isolate hidden md:flex items-center gap-1 overflow-hidden bg-transparent p-1.5 rounded-lg md:rounded-xl">
+              <CentuariGlassLayers intensity="soft" sheen={false} />
+
+              <div
+                ref={indicatorRef}
+                aria-hidden
+                className="absolute inset-y-1.5 left-0 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"
+                style={{
+                  width: 0,
+                  opacity: 0,
+                  ...glassStyle,
+                  boxShadow: [
+                    "inset 0 1px 0 0 rgba(255,255,255,0.35)",
+                    "inset 0 -1px 0 0 rgba(255,255,255,0.08)",
+                    "0 6px 14px -4px rgba(0,0,0,0.35)",
+                  ].join(", "),
+                }}
+              >
                 <div
-                  ref={indicatorRef}
-                  className="absolute h-10 rounded-lg backdrop-blur-xl pointer-events-none overflow-hidden"
+                  className="absolute inset-0 rounded-[inherit] pointer-events-none"
                   style={{
-                    left: 0,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    zIndex: 0,
-                    ...glassStyle,
+                    padding: "1px",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.06) 70%, rgba(255,255,255,0.25) 100%)",
+                    mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    maskComposite: "exclude",
+                    WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    WebkitMaskComposite: "xor",
                   }}
-                >
-                  <div
-                    className="absolute inset-0 rounded-[inherit] pointer-events-none"
-                    style={{
-                      padding: "0.5px",
-                      background: glassBorderGradient,
-                      mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                      maskComposite: "exclude",
-                      WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                      WebkitMaskComposite: "xor",
-                    }}
-                  />
-                </div>
-
-                {NAV_ITEMS.map((item, index) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    ref={(el) => {
-                      desktopNavRef.current[index] = el;
-                    }}
-                    className={`relative z-10 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isNavItemActive(item)
-                      ? "text-white font-semibold"
-                      : "text-white/70 hover:text-white"
-                      }`}
-                    onMouseEnter={(e) => {
-                      if (!isNavItemActive(item)) {
-                        gsap.to(e.currentTarget, {
-                          y: -2,
-                          duration: 0.18,
-                          ease: "power2.out",
-                        });
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isNavItemActive(item)) {
-                        gsap.to(e.currentTarget, {
-                          y: 0,
-                          duration: 0.18,
-                          ease: "power2.out",
-                        });
-                      }
-                    }}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                />
               </div>
+
+              {NAV_ITEMS.map((item, index) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  ref={(el) => {
+                    desktopNavRef.current[index] = el;
+                  }}
+                  className={`relative z-10 px-2 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isNavItemActive(item)
+                    ? "text-white font-semibold"
+                    : "text-white/70 hover:text-white"
+                    }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
             </div>
 
             <div className="hidden md:flex items-center gap-3">

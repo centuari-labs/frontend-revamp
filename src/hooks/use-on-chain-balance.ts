@@ -4,6 +4,7 @@ import { useReadContract } from "wagmi";
 import { formatUnits, erc20Abi } from "viem";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { useMemo } from "react";
 
 /**
@@ -42,8 +43,7 @@ export function useOnChainBalance(tokenSymbol: string) {
 		args: address ? [address] : undefined,
 		query: {
 			enabled: !!tokenAddress && !!address,
-			refetchInterval: 15_000,
-			staleTime: 10_000,
+			refetchInterval: QUERY_CONFIG.POLLING_INTERVAL,
 		},
 	});
 

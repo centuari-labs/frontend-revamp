@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { Joyride, type EventData, type TooltipRenderProps } from "react-joyride";
+
 import { TOUR_STEPS } from "./tour-steps";
+import { CentuariTourTooltip } from "./centuari-tour-tooltip";
 import { WelcomeDialog } from "./welcome-dialog";
 
 interface TourContextType {
@@ -13,240 +14,93 @@ interface TourContextType {
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
 
+const TOUR_STORAGE_KEY = "centuari_tour_seen";
+
 export function TourProvider({ children }: { children: React.ReactNode }) {
-  const [hasSeenTour, setHasSeenTour] = useState(true); // Default to true to prevent flash
+  const [mounted, setMounted] = useState(false);
+  const [hasSeenTour, setHasSeenTour] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [run, setRun] = useState(false);
+
+  // Mount Joyride only after hydration completes — joyride uses DOM APIs
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    const seen = localStorage.getItem("centuari_tour_seen");
+    const seen = localStorage.getItem(TOUR_STORAGE_KEY);
     if (!seen) {
       setHasSeenTour(false);
-      // Small delay to ensure UI is ready
-      setTimeout(() => setShowWelcome(true), 1000);
+      const timer = setTimeout(() => setShowWelcome(true), 1000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
   const startTour = () => {
     setShowWelcome(false);
-
-    const driverObj = driver({
-      showProgress: true,
-      steps: TOUR_STEPS,
-      popoverClass: "centuari-tour-theme",
-      nextBtnText: "Next",
-      prevBtnText: "Previous",
-      doneBtnText: "Done",
-      onDestroyed: () => {
-        completeTour();
-      },
-      onHighlightStarted: (element, step, options) => {
-        setTimeout(() => updateProgressBars(driverObj), 100);
-      },
-      onPopoverRender: (popover, options) => {
-        setTimeout(() => updateProgressBars(driverObj), 100);
-      },
-    });
-
-    driverObj.drive();
+    setRun(true);
   };
 
-  const updateProgressBars = (driverObj: any) => {
-    if (!driverObj) return;
+  const completeTour = useCallback(() => {
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    setHasSeenTour(true);
+    setShowWelcome(false);
+    setRun(false);
+  }, []);
 
-    const progressText = document.querySelector(
-      ".driver-popover-progress-text"
-    );
-    if (!progressText) return;
-
-    const text = progressText.textContent || "";
-    const match = text.match(/(\d+)\s*of\s*(\d+)/);
-
-    if (match) {
-      const current = parseInt(match[1]);
-      const total = parseInt(match[2]);
-
-      // Clear existing bars
-      progressText.innerHTML = "";
-
-      // Create progress bars
-      for (let i = 1; i <= total; i++) {
-        const bar = document.createElement("div");
-        bar.style.cssText = `
-          width: 32px;
-          height: 4px;
-          background: ${i <= current ? "white" : "rgba(255, 255, 255, 0.15)"};
-          border-radius: 2px;
-          transition: all 0.3s ease;
-        `;
-        progressText.appendChild(bar);
+  // Custom ESC handler — bypasses Joyride's built-in handler which can fire
+  // mid-transition close events that prematurely terminate the tour.
+  useEffect(() => {
+    if (!run) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        completeTour();
       }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [run, completeTour]);
+
+  const handleEvent = (data: EventData) => {
+    // Only treat the final "Done" click as terminal — the explicit X close
+    // button uses its own onClose callback, so we don't need status === "skipped".
+    if (data.status === "finished") {
+      completeTour();
     }
   };
 
-  const completeTour = () => {
-    localStorage.setItem("centuari_tour_seen", "true");
-    setHasSeenTour(true);
-    setShowWelcome(false);
-  };
+  const TooltipComponent = useCallback(
+    (props: TooltipRenderProps) => (
+      <CentuariTourTooltip {...props} onClose={completeTour} />
+    ),
+    [completeTour]
+  );
 
   return (
     <TourContext.Provider value={{ startTour, hasSeenTour }}>
-      <style jsx global>{`
-        /* Modern Tour Theme - Matching Screenshot */
-        .centuari-tour-theme {
-          background: linear-gradient(
-            135deg,
-            #1a1d29 0%,
-            #0f1117 100%
-          ) !important;
-          color: white !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-          border-radius: 16px !important;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
-          padding: 0 !important;
-          max-width: 420px !important;
-        }
-
-        /* Popover Content Padding */
-        .centuari-tour-theme .driver-popover-title,
-        .centuari-tour-theme .driver-popover-description {
-          padding-left: 24px !important;
-          padding-right: 24px !important;
-        }
-
-        .centuari-tour-theme .driver-popover-title {
-          padding-top: 24px !important;
-          font-size: 1.375rem !important;
-          font-weight: 600 !important;
-          margin-bottom: 0.5rem !important;
-          color: white !important;
-          line-height: 1.3 !important;
-        }
-
-        .centuari-tour-theme .driver-popover-description {
-          color: #94a3b8 !important;
-          font-size: 0.9375rem !important;
-          line-height: 1.6 !important;
-          margin-bottom: 0 !important;
-          padding-bottom: 20px !important;
-        }
-
-        /* Progress Stepper */
-        .centuari-tour-theme .driver-popover-footer {
-          display: flex !important;
-          align-items: center !important;
-          justify-content: space-between !important;
-          padding: 16px 24px 20px !important;
-          margin: 0 !important;
-          border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
-        }
-
-        /* Progress Stepper Bar */
-        .centuari-tour-theme .driver-popover-progress-text {
-          display: flex !important;
-          align-items: center !important;
-          gap: 6px !important;
-          color: transparent !important;
-          font-size: 0 !important;
-          min-width: fit-content !important;
-          margin-right: 12px !important;
-        }
-
-        .centuari-tour-theme .driver-popover-progress-text > div {
-          width: 32px !important;
-          height: 4px !important;
-          border-radius: 2px !important;
-          transition: all 0.3s ease !important;
-        }
-
-        /* Navigation Buttons */
-        .centuari-tour-theme .driver-popover-navigation-btns {
-          display: flex !important;
-          gap: 10px !important;
-          margin-left: auto !important;
-        }
-
-        .centuari-tour-theme button {
-          border-radius: 10px !important;
-          padding: 9px 20px !important;
-          font-size: 0.9375rem !important;
-          font-weight: 500 !important;
-          transition: all 0.2s ease !important;
-          text-shadow: none !important;
-          border: none !important;
-          cursor: pointer !important;
-        }
-
-        .centuari-tour-theme .driver-popover-next-btn,
-        .centuari-tour-theme .driver-popover-close-btn:last-child {
-          background: linear-gradient(
-            135deg,
-            #6366f1 0%,
-            #4f46e5 100%
-          ) !important;
-          color: white !important;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
-        }
-
-        .centuari-tour-theme .driver-popover-next-btn:hover,
-        .centuari-tour-theme .driver-popover-close-btn:last-child:hover {
-          background: linear-gradient(
-            135deg,
-            #4f46e5 0%,
-            #4338ca 100%
-          ) !important;
-          transform: translateY(-1px) !important;
-          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
-        }
-
-        .centuari-tour-theme .driver-popover-prev-btn {
-          background-color: transparent !important;
-          color: #94a3b8 !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
-
-        .centuari-tour-theme .driver-popover-prev-btn:hover {
-          background-color: rgba(255, 255, 255, 0.04) !important;
-          color: white !important;
-          border-color: rgba(255, 255, 255, 0.12) !important;
-        }
-
-        /* Close Button (X) */
-        .centuari-tour-theme .driver-popover-close-btn {
-          position: absolute !important;
-          top: -10px !important;
-          right: -10px !important;
-          width: 32px !important;
-          height: 32px !important;
-          padding: 0 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          background: rgba(255, 255, 255, 0.05) !important;
-          color: #94a3b8 !important;
-          border-radius: 8px !important;
-          font-size: 18px !important;
-          transition: all 0.2s !important;
-          box-shadow: none !important;
-        }
-
-        .centuari-tour-theme .driver-popover-close-btn:hover {
-          background: rgba(255, 255, 255, 0.08) !important;
-          color: white !important;
-          transform: none !important;
-        }
-
-        /* Arrow styling */
-        .centuari-tour-theme .driver-popover-arrow {
-          border: none !important;
-        }
-
-        /* Progress dots with actual step tracking */
-        .centuari-tour-theme .driver-popover-footer {
-          position: relative !important;
-        }
-      `}</style>
       {children}
+      {mounted && (
+        <Joyride
+          steps={TOUR_STEPS}
+          run={run}
+          continuous
+          scrollToFirstStep
+          tooltipComponent={TooltipComponent}
+          options={{
+            // Skip beacon stage so the tour jumps straight to the tooltip on each step.
+            skipBeacon: true,
+            zIndex: 10000,
+            arrowColor: "rgba(0, 0, 0, 0.55)",
+            overlayColor: "rgba(10, 12, 20, 0.7)",
+            primaryColor: "#3361EF",
+            spotlightRadius: 18,
+            spotlightPadding: 8,
+            showProgress: true,
+          }}
+          onEvent={handleEvent}
+        />
+      )}
       <WelcomeDialog
         isOpen={showWelcome}
         onStartTour={startTour}

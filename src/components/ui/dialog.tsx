@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface"
 
 function Dialog({
   ...props
@@ -69,9 +70,12 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background bg-white/10 border-white/5 border focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute -top-3 -right-3 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 p-1.5 rounded-full backdrop-blur-2xl shadow-lg shadow-black/5"
+            className="group/glass ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute -top-3 -right-3 isolate overflow-hidden opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 p-1.5 rounded-full"
           >
-            <XIcon />
+            <CentuariGlassLayers intensity="soft" />
+            <span className="relative z-20">
+              <XIcon />
+            </span>
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

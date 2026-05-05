@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getHealthFactorStatus } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { useMyPortfolio } from "@/hooks/use-my-portfolio";
 import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";
 import { useMyPositions } from "@/hooks/use-my-positions";
@@ -29,6 +29,7 @@ import { CentuariLoginDialog } from "@/components/centuari-login-dialog";
 import { Lock } from "lucide-react";
 import { PortfolioPageSkeleton } from "@/components/portfolio/portfolio-skeleton";
 import { SectionErrorOverlay } from "@/components/ui/section-error";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 export default function PortfolioPage() {
   const { authenticated, ready } = usePrivy();
@@ -197,7 +198,8 @@ export default function PortfolioPage() {
         )}
         {/* <PortfolioHeader /> */}
         <div className="mt-10 md:mt-20">
-          <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white/5 border rounded-lg w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden">
+          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-transparent border-0 rounded-xl w-full px-6 md:px-8 py-8 lg:py-0 overflow-hidden isolate">
+            <CentuariGlassLayers intensity="soft" />
             <Image
               src="/assets/portfolio-gradient-card.svg"
               alt="portfolio-gradient-card"
@@ -293,9 +295,9 @@ export default function PortfolioPage() {
                   </div>
                 ))}
                 <Link href="/portfolio/transaction-history">
-                  <Button variant="secondary" size={"sm"} className="w-full mt-4">
+                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4 opacity-60 hover:opacity-100 cursor-pointer">
                     See All Transaction
-                  </Button>
+                  </CentuariButton>
                 </Link>
               </div>
               {/* Chart Section */}
@@ -305,8 +307,10 @@ export default function PortfolioPage() {
             </div>
           </div>
         </div>
+        {/* Lend borrow assets container */}
         <div className="mt-3">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between bg-white/5 border rounded-xl overflow-hidden p-6 lg:p-0 lg:pl-8">
+          <div className="group/glass relative flex flex-col lg:flex-row lg:items-center justify-between bg-transparent border-0 rounded-xl overflow-hidden isolate p-6 lg:p-0 lg:pl-8">
+            <CentuariGlassLayers intensity="soft" />
             <div>
               <h1 className="text-lg font-medium">Lend & Borrow Assets</h1>
               <div className="mt-8 lg:mt-12 flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
@@ -339,6 +343,7 @@ export default function PortfolioPage() {
                 <div className="space-y-1.5">
                   <p className="text-sm">Health Factor</p>
                   <Badge
+                    className="opacity-50"
                     variant={
                       healthFactorValue === 0
                         ? "secondary"

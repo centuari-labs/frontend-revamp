@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
-import type { FaucetToken } from "@/lib/faucet-tokens";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 interface FaucetTokenCardProps {
   token: {
@@ -38,14 +38,21 @@ export function FaucetTokenCard({
       type="button"
       onClick={() => onToggle(token.value)}
       className={cn(
-        "relative w-full flex items-stretch rounded-xl border bg-primary-blue-100/5 transition-all duration-200 hover:bg-white/[0.03] text-left group",
-        selected
-          ? "border-primary-blue-base shadow-[0_0_12px_rgba(59,130,246,0.15)]"
-          : "border-white/10"
+        "group/glass relative w-full flex items-stretch rounded-xl bg-transparent border-0 overflow-hidden isolate transition-all duration-200 text-left",
+        selected && "shadow-[0_0_12px_rgba(59,130,246,0.25)]"
       )}
     >
+      <CentuariGlassLayers intensity="soft" />
+
+      {selected && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-[inherit] z-10 ring-1 ring-primary-blue-base/70"
+        />
+      )}
+
       {/* Checkbox */}
-      <div className="absolute top-3 right-3">
+      <div className="absolute top-3 right-3 z-20">
         <div
           className={cn(
             "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
@@ -75,7 +82,7 @@ export function FaucetTokenCard({
       </div>
 
       {/* Left section - Token info */}
-      <div className="flex flex-col justify-center items-center gap-3 p-7 min-w-0">
+      <div className="relative z-20 flex flex-col justify-center items-center gap-3 p-7 min-w-0">
         <div className="w-12 h-12 rounded-full overflow-hidden bg-white/5 flex-shrink-0 flex items-center justify-center">
           <Image
             src={token.icon}
@@ -107,10 +114,10 @@ export function FaucetTokenCard({
       </div>
 
       {/* Divider */}
-      <div className="w-px bg-white/10" />
+      <div className="relative z-20 w-px bg-white/10" />
 
       {/* Right section - Drip amount */}
-      <div className="flex flex-col justify-center px-4 py-4 min-w-[120px]">
+      <div className="relative z-20 flex flex-col justify-center px-4 py-4 min-w-[120px]">
         <CentuariTypography
           variant="body-sm"
           className="text-white/40 uppercase tracking-wider"

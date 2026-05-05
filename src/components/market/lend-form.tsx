@@ -11,13 +11,13 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Info, Loader2 } from "lucide-react";
 import { useLendForm } from "@/hooks/use-lend-form";
 import type { LendPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 import Image from "next/image";
 import { formatNumberWithSeparator } from "@/lib/utils";
+import { MAX_APR_PCT, MIN_APR_PCT } from "@/lib/order-errors";
 
 interface LendFormProps {
   tokenList: TokenOption[];
@@ -51,11 +51,18 @@ export function LendForm({
   const limitInsufficientBalance = limitNumeric > 0 && limitNumeric > availableBalance;
   const marketInsufficientBalance = marketNumeric > 0 && marketNumeric > availableBalance;
 
+  const limitAprNumeric = parseFloat(form.limitTargetAPR.replace(",", ".")) || 0;
+  const limitAprError = form.limitTargetAPR && limitAprNumeric > MAX_APR_PCT
+    ? `Target APR cannot exceed ${MAX_APR_PCT}%`
+    : form.limitTargetAPR && limitAprNumeric > 0 && limitAprNumeric < MIN_APR_PCT
+      ? `Target APR must be at least ${MIN_APR_PCT}%`
+      : null;
+
   return (
     <>
       <OrderTypeTabs
         defaultValue="limit"
-        className="w-full p-2 sm:p-3 md:p-3.5 md:h-full md:flex md:flex-col"
+        className="w-full px-3 sm:px-4 md:px-2.5 mt-2 md:h-full md:flex md:flex-col"
       >
         <TabsContent
           value="limit"
@@ -65,10 +72,11 @@ export function LendForm({
             onSubmit={form.handleLimitSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="limit-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 tooltipMessage="The amount you currently have that is available to use."
@@ -76,9 +84,10 @@ export function LendForm({
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}
@@ -111,6 +120,7 @@ export function LendForm({
                   maturityOptions={form.availableMaturities}
                   placeholder="Enter your APR amount"
                   label="Target APR"
+                  errorText={limitAprError}
                 />
               </div>
               <div className="mt-5">
@@ -137,29 +147,33 @@ export function LendForm({
                 futureAmount={form.limitFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
-              disabled={
-                !form.limitAmount ||
-                parseFloat(form.limitAmount) <= 0 ||
-                !form.limitTargetAPR ||
-                !form.limitMaturity ||
-                form.isPending ||
-                limitInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            </div>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.limitAmount ||
+                  parseFloat(form.limitAmount) <= 0 ||
+                  !form.limitTargetAPR ||
+                  limitAprNumeric <= 0 ||
+                  limitAprError !== null ||
+                  !form.limitMaturity ||
+                  form.isPending ||
+                  limitInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
 
@@ -171,19 +185,21 @@ export function LendForm({
             onSubmit={form.handleMarketSubmit}
             className="md:h-full md:flex md:flex-col"
           >
-            <ScrollArea className="h-[300px] sm:h-[320px] md:flex-1 md:min-h-0">
+            <div className="md:flex-1 md:min-h-0 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
               <CentuariInput
                 id="market-amount"
                 label="Supply"
+                labelClassName="text-xs"
                 size="large"
                 placeholder="Amount"
                 leftIcon={
                   <Image
                     src={form.selectedToken.logo}
                     alt={form.selectedToken.label}
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
+                    width={32}
+                    height={32}
+                    quality={100}
+                    className="w-4 h-4 object-contain"
                   />
                 }
                 suffix={form.selectedToken.label}
@@ -207,7 +223,7 @@ export function LendForm({
                 <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
               )}
               <div>
-                <Label className="mb-1.5 mt-3.5">
+                <Label className="mb-1.5 mt-3.5 text-xs">
                   Maturity
                   <CentuariTooltip message="The date when your position ends and your funds are returned.">
                     <Info size={16} className="text-muted-foreground"/>
@@ -263,28 +279,30 @@ export function LendForm({
                 futureAmount={form.marketFutureAmount}
                 tokenSymbol={form.selectedToken.label}
               />
-            </ScrollArea>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-3.5 md:shrink-0"
-              disabled={
-                !form.marketAmount ||
-                parseFloat(form.marketAmount) <= 0 ||
-                !form.marketMaturity ||
-                form.isPending ||
-                marketInsufficientBalance
-              }
-            >
-              {form.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Supply"
-              )}
-            </Button>
+            </div>
+            <div className="md:contents max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-3 max-md:px-3 sm:max-md:-mx-4 sm:max-md:px-4 max-md:pt-3">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mb-4 md:shrink-0"
+                disabled={
+                  !form.marketAmount ||
+                  parseFloat(form.marketAmount) <= 0 ||
+                  !form.marketMaturity ||
+                  form.isPending ||
+                  marketInsufficientBalance
+                }
+              >
+                {form.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Supply"
+                )}
+              </Button>
+            </div>
           </form>
         </TabsContent>
       </OrderTypeTabs>

@@ -1,53 +1,42 @@
 "use client";
 
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { CentuariTypography } from "@/components/centuari-typography";
+import Image from "next/image";
 
 export function FaucetHeader() {
   return (
-    <div className="relative flex flex-col justify-between items-center md:items-start gap-4 bg-primary-blue-100/5 overflow-hidden px-6 md:px-12 py-8 rounded-xl border border-white/10">
-      {/* Water droplet icon */}
-      <div className="hidden md:flex absolute top-6 right-8 items-center justify-center w-20 h-20 rounded-full bg-primary-blue-base/10">
-        <svg
-          width="40"
-          height="40"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"
-            fill="url(#droplet-gradient)"
-            stroke="url(#droplet-gradient)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <defs>
-            <linearGradient
-              id="droplet-gradient"
-              x1="4"
-              y1="2"
-              x2="20"
-              y2="22"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stopColor="#3B82F6" />
-              <stop offset="1" stopColor="#06B6D4" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
+    <div className="group/glass relative isolate flex flex-col justify-between items-center md:items-start gap-6 overflow-hidden px-6 md:px-12 py-8 rounded-xl border border-white/10 bg-[#05070D]">
+      <div
+        className="pointer-events-none absolute inset-0 -z-20 hidden md:block"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, #05070D 0%, #070B18 45%, #0A1430 70%, #0E1D52 100%)",
+        }}
+      />
+      <Image
+        src={"/assets/centuari-faucet-header.png"}
+        fill
+        className="object-contain object-right z-50 hidden md:block"
+        alt="centuari-faucet-header"
+      />
 
-      <div className="text-center md:text-left w-full">
-      <CentuariTypography className="text-transparent font-semibold text-2xl md:text-4xl bg-clip-text bg-gradient-to-r from-primary-blue-base via-white to-primary-blue-base">
-          Token Faucet
+      <CentuariGlassLayers intensity="soft" sheen={false} />
+
+      <div className="relative z-20 text-center md:text-left w-full">
+        <CentuariTypography className="text-2xl md:text-4xl font-semibold mt-1 md:mt-2">
+          Request Your Testnet
+        </CentuariTypography>
+        <CentuariTypography
+          className="text-2xl md:text-4xl font-semibold bg-clip-text text-transparent bg-[linear-gradient(to_right,#508FFF,#B9CEFF,#3361EF,#B9CEFF,#508FFF)] bg-size-[200%_auto] animate-gradient"
+        >
+          Tokens Instantly
         </CentuariTypography>
         <CentuariTypography
           variant="b2"
-          className="text-white/60 mt-2 max-w-xl"
+          className="text-white/60 mt-12 max-w-xl"
         >
-          Get testnet tokens to experiment with the Centuari protocol. Select
-          the assets you need and request a drip instantly.
+          Get testnet tokens to experiment with the Centuari protocol. <br /> Select the assets you need and request a drip instantly.
         </CentuariTypography>
       </div>
     </div>

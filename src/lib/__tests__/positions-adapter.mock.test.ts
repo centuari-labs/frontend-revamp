@@ -461,7 +461,7 @@ describe("buildLendLimitPosition", () => {
     expect(pos.type).toBe("lend");
     expect(pos.orderType).toBe("limit");
     expect(pos.apr).toBe(0.065);
-    expect(pos.status).toBe("pending");
+    expect(pos.status).toBe("OPEN");
     expect(pos.id).toMatch(/^lend-usdc-/);
   });
 
@@ -493,7 +493,7 @@ describe("buildLendMarketPosition", () => {
     });
     expect(pos.type).toBe("lend");
     expect(pos.orderType).toBe("market");
-    expect(pos.status).toBe("success");
+    expect(pos.status).toBe("FILLED");
     // APR should be getBestLendAPR("usdc") / 100 = 0.065
     expect(pos.apr).toBeCloseTo(0.065, 3);
   });
@@ -513,7 +513,7 @@ describe("buildBorrowLimitPosition", () => {
     expect(pos.type).toBe("borrow");
     expect(pos.orderType).toBe("limit");
     expect(pos.collateralTokens).toEqual(["btc", "eth"]);
-    expect(pos.status).toBe("pending");
+    expect(pos.status).toBe("OPEN");
   });
 });
 
@@ -529,7 +529,7 @@ describe("buildBorrowMarketPosition", () => {
     });
     expect(pos.type).toBe("borrow");
     expect(pos.orderType).toBe("market");
-    expect(pos.status).toBe("success");
+    expect(pos.status).toBe("FILLED");
     expect(pos.apr).toBeCloseTo(0.101, 3);
   });
 });

@@ -74,8 +74,8 @@ export function TransactionSuccessDialog({
             secondaryActionLabel &&
             <Button
               type="button"
-              variant="outline"
-              className="flex-1 rounded-lg border-white/10 bg-white/5 text-white hover:bg-white/10"
+              variant="ghost"
+              className="flex-1"
               onClick={handleSecondary}
             >
               {secondaryActionLabel}

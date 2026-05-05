@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { getTokenPrice } from "@/lib/utils";
 import { useMyAssets } from "@/hooks/use-my-assets";
 
 export interface LendDialogData {
@@ -31,10 +32,7 @@ export function useLendDialogData(tokenSymbol: string): LendDialogData {
       };
     }
 
-    const tokenPrice =
-      asset.amountInUsd > 0 && asset.walletBalance > 0
-        ? asset.amountInUsd / asset.walletBalance
-        : 0;
+    const tokenPrice = getTokenPrice(asset.amountInUsd, asset.walletBalance);
 
     return {
       availableBalance: asset.walletBalance,

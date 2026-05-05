@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { CentuariTypography } from "@/components/centuari-typography";
 import { CentuariButton } from "@/components/centuari-button";
 import { CentuariLoginDialog } from "@/components/centuari-login-dialog";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { FaucetErrorPage } from "./faucet-error-page";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
@@ -107,16 +108,20 @@ export function FaucetTokenGrid() {
 
       {/* Sticky bottom bar */}
       {(selectedTokens.size > 0 || status === "success" || status === "error") && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6 flex items-center justify-center">
           <div className={cn(
-            "backdrop-blur-xl border rounded-2xl shadow-2xl shadow-black/40",
-            status === "success"
-              ? "bg-emerald-900/80 border-emerald-500/30"
-              : status === "error"
-                ? "bg-red-900/80 border-red-500/30"
-                : "bg-primary-blue-100/80 border-white/10"
+            "group/glass relative isolate overflow-hidden bg-black/40 backdrop-blur-2xl border-0 rounded-2xl shadow-2xl w-1/3",
+            status === "success" && "shadow-[0_0_24px_rgba(16,185,129,0.25)]",
+            status === "error" && "shadow-[0_0_24px_rgba(239,68,68,0.25)]"
           )}>
-            <div className="px-6 py-4 flex items-center justify-between">
+            <CentuariGlassLayers intensity="soft" />
+            {status === "success" && (
+              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] z-10 bg-emerald-500/10 ring-1 ring-emerald-400/30" />
+            )}
+            {status === "error" && (
+              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] z-10 bg-red-500/10 ring-1 ring-red-400/30" />
+            )}
+            <div className="relative z-20 px-6 py-4 flex items-center justify-between">
               <div>
                 {status === "success" ? (
                   <>

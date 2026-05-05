@@ -39,12 +39,12 @@ export function TransactionSummary({
 
   return (
     <>
-      <div className="bg-white/5 py-3 px-5 text-sm rounded-xl rounded-b-none border border-white/5 flex flex-col gap-2 mt-5">
+      <div className="bg-white/5 py-2 px-2 text-xs rounded-xl rounded-b-none border border-white/5 flex flex-col gap-1 mt-3">
         {displayItems.map(({ label, value }, i) => (
           <div
             key={label}
-            className={`flex flex-row items-center justify-between gap-4 min-h-[2rem] ${
-              i < displayItems.length - 1 ? "border-b border-dashed pb-3" : ""
+            className={`flex flex-row items-center justify-between gap-4 min-h-[1.5rem] ${
+              i < displayItems.length - 1 ? "border-b border-dashed pb-1.5" : ""
             }`}
           >
             <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1 text-muted-foreground">
@@ -57,8 +57,8 @@ export function TransactionSummary({
         ))}
       </div>
 
-      <div className="py-3 px-5 text-sm border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5 flex flex-col justify-center">
-        <div className="flex flex-row items-center justify-between gap-4 min-h-[2rem]">
+      <div className="py-2 px-2 text-xs border border-white/5 rounded-b-lg border-t-0 text-muted-foreground bg-white/5 flex flex-col justify-center">
+        <div className="flex flex-row items-center justify-between gap-4 min-h-[1.5rem]">
           <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
             {futureLabel}{" "}
           </div>

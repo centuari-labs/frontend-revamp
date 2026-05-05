@@ -23,12 +23,14 @@ vi.mock("socket.io-client", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
+  vi.useFakeTimers();
   mockSocket.connected = false;
   // Set env var for resolveWsUrl
   vi.stubEnv("NEXT_PUBLIC_WS_URL", "ws://localhost:3001");
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
 });
 
@@ -63,10 +65,13 @@ describe("socket.ts", () => {
     expect(mockSocket.disconnect).not.toHaveBeenCalled();
   });
 
-  it("releaseSocket disconnects when refCount reaches 0", async () => {
+  it("releaseSocket disconnects when refCount reaches 0 after delay", async () => {
     const { acquireSocket, releaseSocket } = await import("@/lib/socket");
     acquireSocket();
     releaseSocket();
+    // disconnect is delayed by 1000ms
+    expect(mockSocket.disconnect).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1000);
     expect(mockSocket.disconnect).toHaveBeenCalled();
   });
 

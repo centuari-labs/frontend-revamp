@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const EMPTY: OrderHistoryItem[] = [];
 
@@ -31,13 +32,13 @@ export function useOrderHistory(options?: {
     endDate,
     enabled = true,
   } = options ?? {};
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery<OrderHistoryResponse>({
     queryKey: [
-      "order-history",
+      QUERY_KEYS.ORDER_HISTORY,
       address,
       assetId,
       page,
@@ -47,20 +48,18 @@ export function useOrderHistory(options?: {
       startDate,
       endDate,
     ],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getOrderHistory(token, {
-        page,
-        limit,
-        assetId,
-        side,
-        status,
-        startDate,
-        endDate,
-      });
-    },
-    staleTime: 10_000,
+    queryFn: () =>
+      authFetch((token) =>
+        getOrderHistory(token, {
+          page,
+          limit,
+          assetId,
+          side,
+          status,
+          startDate,
+          endDate,
+        }),
+      ),
     enabled: !!address && enabled,
     placeholderData: (prev) => prev,
   });

@@ -8,15 +8,10 @@ import {
   DialogHeader,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
+import { CentuariButton } from "./centuari-button";
 import { InfoIcon } from "lucide-react";
-import Image from "next/image";
-import { CentuariTypography } from "./centuari-typography";
 import { CentuariTooltip } from "./centuari-tooltip";
-import { CentuariInput } from "./centuari-input";
-import { IcDollarCentuari } from "./icons/ic-dollar-centuari";
-import { MaturityToggle } from "./maturity-toggle";
 import { Label } from "./ui/label";
 import { SelectSingleToken } from "./select-single-token";
 import HealthFactor from "./centuari-health-factor";
@@ -65,7 +60,7 @@ export function CentuariAddDialog() {
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-4">
           <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <CentuariButton variant="secondary">Cancel</CentuariButton>
           </DialogClose>
           <Button type="button" variant={"primary"} className="flex-1">
             Confirm Borrow

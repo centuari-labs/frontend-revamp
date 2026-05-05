@@ -19,7 +19,6 @@ export function useRateHistory(
 			return getRateHistory(assetId);
 		},
 		enabled: Boolean(assetId),
-		staleTime: 10_000,
 		retry: 1,
 	});
 

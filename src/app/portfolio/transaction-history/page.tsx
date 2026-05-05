@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeftRight, Calendar, ChevronDown, Flag } from "lucide-react";
 import { TransactionHistorySkeleton } from "@/components/transaction-history/transaction-history-skeleton";
 import { useMyPortfolio } from "@/hooks/use-my-portfolio";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 import * as React from "react";
 import { type DateRange } from "react-day-picker";
@@ -60,27 +61,38 @@ export default function TransactionHistoryPage() {
   return (
     <PageContainer innerClassName="2xl:min-h-0">
       <TransactionHistoryHeader />
-      <div className="bg-white/5 rounded-lg p-4 md:p-6">
+      {/* Transaction History Container */}
+      <div className="group/glass relative bg-transparent border-0 rounded-xl p-4 md:p-6 isolate overflow-hidden">
+        <CentuariGlassLayers intensity="soft" />
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
             <TabsList className="bg-white/5 w-full lg:w-auto justify-start">
               <TabsTrigger
                 value="open_orders"
-                className="flex-1 lg:flex-none data-[state=active]:!border-none"
+                className="group/glass relative overflow-hidden isolate flex-1 lg:flex-none data-[state=active]:border-none! data-[state=active]:text-white !bg-transparent !shadow-none text-white/40"
               >
-                Open Orders
+                <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                  <CentuariGlassLayers intensity="soft" />
+                </span>
+                <span className="relative z-20">Open Orders</span>
               </TabsTrigger>
               <TabsTrigger
                 value="order_history"
-                className="flex-1 lg:flex-none data-[state=active]:!border-none"
+                className="group/glass relative overflow-hidden isolate flex-1 lg:flex-none data-[state=active]:border-none! data-[state=active]:text-white !bg-transparent !shadow-none text-white/40"
               >
-                Order History
+                <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                  <CentuariGlassLayers intensity="soft" />
+                </span>
+                <span className="relative z-20">Order History</span>
               </TabsTrigger>
               <TabsTrigger
                 value="transaction_history"
-                className="flex-1 lg:flex-none data-[state=active]:!border-none"
+                className="group/glass relative overflow-hidden isolate flex-1 lg:flex-none data-[state=active]:border-none! data-[state=active]:text-white !bg-transparent !shadow-none text-white/40"
               >
-                Transaction History
+                <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                  <CentuariGlassLayers intensity="soft" />
+                </span>
+                <span className="relative z-20">Transaction History</span>
               </TabsTrigger>
             </TabsList>
 
@@ -111,7 +123,8 @@ export default function TransactionHistoryPage() {
                     <ChevronDown className="w-4 h-4 text-white/50 ml-1" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto bg-[#1b2029] border-0 p-0" align="end">
+                <PopoverContent className="group/glass relative w-auto bg-black/40 backdrop-blur-2xl border-0 p-0 isolate overflow-hidden rounded-xl" align="end">
+                  <CentuariGlassLayers intensity="soft" />
                   <CentuariCalender
                     value={tempDateRange}
                     onChange={setTempDateRange}

@@ -8,6 +8,7 @@ import { useUpdateOpenOrder } from "@/hooks/use-update-open-order";
 import { useDeleteOpenOrder } from "@/hooks/use-delete-open-order";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CentuariGlassLayers, CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import {
   Table,
   TableBody,
@@ -23,7 +24,7 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Edit2, Loader2, Search, Trash2 } from "lucide-react";
+import { ArrowLeftRight, ClipboardList, Edit2, Layers, Loader2, Search, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
 import { formatNumber, parseMaturity } from "@/lib/utils";
@@ -56,12 +58,10 @@ function PositionCard({
   position,
   onDelete,
   onUpdate,
-  hideEdit
 }: {
   position: Position;
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
-  hideEdit?: boolean;
 }) {
   const statusColors = {
     OPEN: "bg-blue-500",
@@ -83,9 +83,10 @@ function PositionCard({
           <Image
             src={getTokenLogo(position.tokenValue, position.assetImg)}
             alt={position.tokenSymbol}
-            width={32}
-            height={32}
-            className="rounded-full"
+            width={64}
+            height={64}
+            quality={100}
+            className="size-8 rounded-full object-contain"
           />
           <div>
             <p className="font-semibold text-white">{position.tokenSymbol}</p>
@@ -118,18 +119,16 @@ function PositionCard({
       </div>
 
       <div className="flex gap-2 justify-end">
-        {!hideEdit && (
-          <AmendDialog
-            position={position}
-            tokenList={MARKET_TOKEN_LIST}
-            onUpdate={onUpdate}
-            trigger={
-              <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                <Edit2 size={16} className="text-white" />
-              </button>
-            }
-          />
-        )}
+        <AmendDialog
+          position={position}
+          tokenList={MARKET_TOKEN_LIST}
+          onUpdate={onUpdate}
+          trigger={
+            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+              <Edit2 size={16} className="text-white" />
+            </button>
+          }
+        />
         <button
           onClick={handleDelete}
           className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
@@ -174,7 +173,7 @@ function CancelOrderDialog({
           </div>
           <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Trash2 size={28} className="text-red-400" />
+              <Trash2 size={28} className="text-red-600" />
             </div>
             <CentuariTypography className="text-xl font-semibold">
               Cancel Order
@@ -186,9 +185,9 @@ function CancelOrderDialog({
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-5">
           <DialogClose asChild>
-            <Button variant="secondary" className="flex-1" disabled={isPending}>
+            <CentuariButton variant="ghost" className="flex-1" disabled={isPending}>
               No, keep it
-            </Button>
+            </CentuariButton>
           </DialogClose>
           <Button
             variant="destructive"
@@ -216,7 +215,6 @@ function UnifiedPositionTable({
   positions,
   onDelete,
   onUpdate,
-  hideEdit = false,
   hideActions = false,
   emptyMessage = "No results.",
   activeTab = "open_orders",
@@ -224,7 +222,6 @@ function UnifiedPositionTable({
   positions: Position[];
   onDelete: (id: string) => void;
   onUpdate?: (updatedPosition: Position) => void;
-  hideEdit?: boolean;
   hideActions?: boolean;
   emptyMessage?: string;
   activeTab?: string;
@@ -246,18 +243,16 @@ function UnifiedPositionTable({
     cell: ({ row }: { row: { original: Position } }) => {
       return (
         <div className="flex items-center gap-2">
-          {!hideEdit && (
-            <AmendDialog
-              position={row.original}
-              tokenList={MARKET_TOKEN_LIST}
-              onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
-              trigger={
-                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <Edit2 size={14} className="text-white" />
-                </button>
-              }
-            />
-          )}
+          <AmendDialog
+            position={row.original}
+            tokenList={MARKET_TOKEN_LIST}
+            onUpdate={onUpdate ? (pos) => onUpdate(pos) : undefined}
+            trigger={
+              <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                <Edit2 size={14} className="text-white" />
+              </button>
+            }
+          />
           <CancelOrderDialog
             onConfirm={() => onDelete(row.original.id)}
             trigger={
@@ -282,7 +277,7 @@ function UnifiedPositionTable({
     }
     // Transaction History: Date, Loan Token, Side, Amount, Fee, APR%, Maturity
     return [colDate, colToken, colSide, colAmount, colFee, colApr, colMaturity];
-  }, [activeTab, hideActions, onDelete, onUpdate, hideEdit]);
+  }, [activeTab, hideActions, onDelete, onUpdate]);
 
   const table = useReactTable({
     data: positions,
@@ -298,17 +293,23 @@ function UnifiedPositionTable({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-white/5">
               {headerGroup.headers.map((header) => {
+                const isFirst = headerGroup.headers[0].id === header.id;
+                const isLast =
+                  headerGroup.headers[headerGroup.headers.length - 1].id ===
+                  header.id;
                 return (
                   <TableHead
                     key={header.id}
-                    className="text-sm text-muted-foreground font-normal"
+                    className={`text-sm text-muted-foreground font-normal ${
+                      isFirst ? "rounded-l-lg pl-6" : ""
+                    } ${isLast ? "rounded-r-lg pr-6" : ""}`}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 );
               })}
@@ -339,9 +340,20 @@ function UnifiedPositionTable({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center"
+                className="h-48"
               >
-                {emptyMessage}
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                    {activeTab === "open_orders" ? (
+                      <ClipboardList size={22} className="text-white/40" />
+                    ) : activeTab === "active_position" ? (
+                      <Layers size={22} className="text-white/40" />
+                    ) : (
+                      <ArrowLeftRight size={22} className="text-white/40" />
+                    )}
+                  </CentuariGlassSurface>
+                  <span className="text-sm text-white/40">{emptyMessage}</span>
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -462,13 +474,16 @@ export function PositionSection({ assetId }: { assetId?: string }) {
   const setCurrentPage = activeTab === "open_orders" ? setOpenOrdersPage : activeTab === "active_position" ? setPositionsPage : setTxHistoryPage;
 
   return (
-    <div className="mt-2 bg-white/5 rounded-md md:p-4">
+    <div className="group/glass relative mt-2 bg-transparent border-0 rounded-xl md:p-4 overflow-hidden isolate">
+      <CentuariGlassLayers intensity="soft" />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="md:hidden">
-          <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 px-3 pt-3 pb-2 border-b border-white/10">
-            <h1 className="text-base font-medium mb-3">{currentTabConfig.label}</h1>
+          <div className="group/glass sticky top-0 z-10 relative isolate overflow-hidden bg-black/20 backdrop-blur-xl border-b border-white/10">
+            <CentuariGlassLayers intensity="soft" />
+            <div className="relative z-20 px-3 pt-3 pb-2">
+              <h1 className="text-base font-medium mb-3">{currentTabConfig.label}</h1>
 
-            <div className="relative mb-3">
+              <div className="relative mb-3">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 size={18}
@@ -482,63 +497,46 @@ export function PositionSection({ assetId }: { assetId?: string }) {
             </div>
 
             <TabsList className="bg-white/5 w-full grid grid-cols-3 mb-3">
-              <TabsTrigger
-                value="open_orders"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                Open Orders
-              </TabsTrigger>
-              <TabsTrigger
-                value="active_position"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                Positions
-              </TabsTrigger>
-              <TabsTrigger
-                value="all_transactions"
-                className="data-[state=active]:border-none! data-[state=active]:bg-white/10 text-xs"
-              >
-                All Transaction
-              </TabsTrigger>
+              {[
+                { value: "open_orders", label: "Open Orders" },
+                { value: "active_position", label: "Positions" },
+                { value: "all_transactions", label: "All Transaction" },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none! text-xs"
+                >
+                  <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                    <CentuariGlassLayers intensity="soft" />
+                  </span>
+                  <span className="relative z-20">{tab.label}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
-
+            </div>
           </div>
 
-          <TabsContent value="open_orders" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} hideEdit />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No open orders found
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="active_position" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No active positions found
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="all_transactions" className="mt-0">
-            {filteredPositions.length > 0 ? (
-              filteredPositions.map((position) => (
-                <PositionCard key={position.id} position={position} onDelete={handleDelete} />
-              ))
-            ) : (
-              <div className="px-4 py-8 text-center text-muted-foreground">
-                No transactions found
-              </div>
-            )}
-          </TabsContent>
+          {[
+            { value: "open_orders", message: "You don't have any open orders yet", icon: ClipboardList },
+            { value: "active_position", message: "You don't have any active positions yet", icon: Layers },
+            { value: "all_transactions", message: "You don't have any transactions yet", icon: ArrowLeftRight },
+          ].map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="mt-0">
+              {filteredPositions.length > 0 ? (
+                filteredPositions.map((position) => (
+                  <PositionCard key={position.id} position={position} onDelete={handleDelete} />
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 py-12">
+                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                    <tab.icon size={22} className="text-white/40" />
+                  </CentuariGlassSurface>
+                  <span className="text-sm text-white/40">{tab.message}</span>
+                </div>
+              )}
+            </TabsContent>
+          ))}
         </div>
 
         <div className="hidden md:block p-2 sm:p-3">
@@ -558,24 +556,22 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                 />
               </div>
               <TabsList className="bg-white/5 h-9 p-1">
-                <TabsTrigger
-                  value="open_orders"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  Open Orders
-                </TabsTrigger>
-                <TabsTrigger
-                  value="active_position"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  Active Position
-                </TabsTrigger>
-                <TabsTrigger
-                  value="all_transactions"
-                  className="data-[state=active]:bg-white/10 text-xs sm:text-sm px-4 h-full"
-                >
-                  All Transaction
-                </TabsTrigger>
+                {[
+                  { value: "open_orders", label: "Open Orders" },
+                  { value: "active_position", label: "Active Position" },
+                  { value: "all_transactions", label: "All Transaction" },
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none! text-xs sm:text-sm px-4 h-full"
+                  >
+                    <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                      <CentuariGlassLayers intensity="soft" />
+                    </span>
+                    <span className="relative z-20">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
           </div>
@@ -598,10 +594,9 @@ export function PositionSection({ assetId }: { assetId?: string }) {
                   positions={filteredPositions}
                   onDelete={handleDelete}
                   onUpdate={handleUpdate}
-                  hideEdit
                   hideActions={tab === "active_position" || tab === "all_transactions"}
                   activeTab={tab}
-                  emptyMessage={tab === "open_orders" ? "No open orders found" : tab === "active_position" ? "No active positions found" : "No transactions found"}
+                  emptyMessage={tab === "open_orders" ? "You don't have any open orders yet" : tab === "active_position" ? "You don't have any active positions yet" : "You don't have any transactions yet"}
                 />
               )}
             </TabsContent>

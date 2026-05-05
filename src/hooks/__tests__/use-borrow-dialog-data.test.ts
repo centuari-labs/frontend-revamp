@@ -8,7 +8,7 @@ vi.mock("@/hooks/use-my-assets", () => ({
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
-  useAuthToken: vi.fn(() => ({ getToken: vi.fn() })),
+  useAuthToken: vi.fn(() => ({ getToken: vi.fn(), authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")) })),
 }));
 
 vi.mock("@privy-io/react-auth", () => ({
@@ -24,7 +24,7 @@ vi.mock("@/contexts/user-details-context", () => ({
   })),
 }));
 
-import { useBorrowDialogData } from "@/hooks/use-borrow-dialog-data";
+import { useBorrowDialogData } from "@/hooks/use-borrow-portfolio-data";
 import { useMyAssets } from "@/hooks/use-my-assets";
 import { useUserDetailsContext } from "@/contexts/user-details-context";
 

@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { CentuariButton } from "./centuari-button";
+import { CentuariGlassLayers, CentuariGlassSurface } from "./centuari-glass-surface";
 import { CentuariInput } from "./centuari-input";
 import { formatAddress } from "@/lib/utils";
 import { useAccessContext } from "@/contexts/access-context";
@@ -154,20 +155,23 @@ export function CentuariUserMenu() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-md px-3 py-1.5 hover:bg-white/10 transition-colors cursor-pointer"
+          className="group/glass relative isolate overflow-hidden flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
         >
-          <div className="w-7 h-7 rounded-full bg-primary-blue-base/60 flex items-center justify-center text-white text-sm font-semibold">
+          <CentuariGlassLayers intensity="soft" sheen={false} />
+          <div className="relative z-20 w-7 h-7 rounded-md bg-primary-blue-base/60 flex items-center justify-center text-white text-sm font-semibold">
             {initial}
           </div>
-          <ChevronDown className="w-4 h-4 text-white/60" />
+          <ChevronDown className="relative z-20 w-4 h-4 text-white/60" />
         </button>
       </PopoverTrigger>
 
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="z-200 w-72 p-0 bg-white/5 backdrop-blur-[140px] border border-white/10 rounded-xl shadow-2xl"
+        className="group/glass relative isolate overflow-hidden z-200 w-72 p-0 bg-black/40 backdrop-blur-2xl border-0 rounded-xl shadow-2xl"
       >
+        <CentuariGlassLayers intensity="soft" sheen={false} />
+        <div className="relative z-20">
         {view === "main" ? (
           <div className="flex flex-col">
             {/* Header: Username + Wallet */}
@@ -196,7 +200,11 @@ export function CentuariUserMenu() {
 
             {/* Wallet Card */}
             {walletAddress && (
-              <div className="mx-4 mb-3 rounded-lg border border-white/10 bg-white/5 p-3">
+              <CentuariGlassSurface
+                intensity="soft"
+                className="mx-4 mb-3 rounded-lg p-3"
+              >
+                <div className="flex flex-col w-full">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-white/60 text-xs">
                     {formatAddress(walletAddress, 6)}
@@ -234,7 +242,8 @@ export function CentuariUserMenu() {
                 {copied && (
                   <p className="text-green-400 text-xs mt-1">Copied!</p>
                 )}
-              </div>
+                </div>
+              </CentuariGlassSurface>
             )}
 
             {/* Menu Items */}
@@ -297,6 +306,7 @@ export function CentuariUserMenu() {
             </CentuariButton>
           </div>
         )}
+        </div>
       </PopoverContent>
     </Popover>
   );

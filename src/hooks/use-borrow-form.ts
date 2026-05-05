@@ -16,7 +16,14 @@ import { useBorrowCalculations } from "@/hooks/use-borrow-calculations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useMarketDetail } from "@/hooks/use-market-detail";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { useTransactionFees } from "@/hooks/use-transaction-fees";
+import { useSuccessDialog } from "@/hooks/use-success-dialog";
 import { useTokenPrice } from "@/contexts/price-context";
+import {
+  MAX_APR_PCT,
+  MIN_APR_PCT,
+  mapOrderErrorToFriendlyMessage,
+} from "@/lib/order-errors";
 import type { BorrowPosition } from "@/types/positions";
 import type { TokenOption } from "@/types";
 
@@ -39,7 +46,7 @@ export function useBorrowForm({
 }: UseBorrowFormParams) {
   const { upcomingMaturities } = useMarketDetail(assetIdProp);
   const { lendOrders } = useOrderbook({ assetId: assetIdProp });
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
   const { selectedToken, setSelectedToken } = useTokenFromList(
     tokenList,
@@ -86,32 +93,23 @@ export function useBorrowForm({
     }
   }, [availableMaturities]);
 
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successAmount, setSuccessAmount] = useState("");
-  const [successTokenSymbol, setSuccessTokenSymbol] = useState("");
-
-  const SETTLEMENT_FEE_BPS = 1;
-  const SETTLEMENT_FEE_MAX_USD = 0.05;
-  const MAKER_FEE_BPS = 10;
-  const TAKER_FEE_BPS = 20;
+  const {
+    showSuccessDialog,
+    setShowSuccessDialog,
+    successAmount,
+    successTokenSymbol,
+    setSuccess,
+  } = useSuccessDialog();
 
   const limitNumericAmount = parseFloat(limitAmountInput.amount) || 0;
   const marketNumericAmount = parseFloat(marketAmountInput.amount) || 0;
 
   const limitTargetAPRNumeric = parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
 
-  // Limit = maker fee
-  const limitSettlementFee = Math.min(limitNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
-  const limitTradeFee = limitNumericAmount * (MAKER_FEE_BPS / 10000);
-  const limitTransactionFee = limitSettlementFee + limitTradeFee;
-  const limitAmountToPay = limitNumericAmount + limitTransactionFee;
+  const limitFees = useTransactionFees(limitNumericAmount, "limit");
   const limitFutureAmount = calculateFutureAmount(limitNumericAmount, limitTargetAPRNumeric, limitMaturity);
 
-  // Market = taker fee
-  const marketSettlementFee = Math.min(marketNumericAmount * (SETTLEMENT_FEE_BPS / 10000), SETTLEMENT_FEE_MAX_USD);
-  const marketTradeFee = marketNumericAmount * (TAKER_FEE_BPS / 10000);
-  const marketTransactionFee = marketSettlementFee + marketTradeFee;
-  const marketAmountToPay = marketNumericAmount + marketTransactionFee;
+  const marketFees = useTransactionFees(marketNumericAmount, "market");
   const bestBorrowRate = (lendOrders[0]?.apr ?? 0) * 100;
   const marketFutureAmount = calculateFutureAmount(marketNumericAmount, bestBorrowRate, marketMaturity);
 
@@ -205,14 +203,20 @@ export function useBorrowForm({
       if (limitCalcs.totalPortfolioValue === 0) return;
       if (limitCalcs.healthFactor < 1.0) return;
 
+      const targetAPRNumeric =
+        parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
+      if (targetAPRNumeric <= 0 || targetAPRNumeric > MAX_APR_PCT) {
+        toast.error(
+          `Target APR must be between ${MIN_APR_PCT}% and ${MAX_APR_PCT}%`,
+        );
+        return;
+      }
+
       try {
-        const targetAPRNumeric =
-          parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
         const aprDecimal = targetAPRNumeric / 100;
 
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === limitMaturity)?.marketId;
-        const result = await submitLimit(
+        const result = await authFetch(async (token) => submitLimit(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -224,24 +228,25 @@ export function useBorrowForm({
             autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
           return;
         }
 
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
         limitAmountInput.reset();
         setLimitTargetAPR("");
         setLimitSelectedCollaterals([]);
-        setShowSuccessDialog(true);
+        setSuccess(
+          formatNumberWithSeparator(numericAmount),
+          selectedToken.label.toUpperCase().slice(0, 4),
+        );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [
@@ -252,12 +257,13 @@ export function useBorrowForm({
       limitCalcs,
       isPending,
       selectedToken,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitLimit,
       editingPosition,
       onUpdate,
+      setSuccess,
     ]
   );
 
@@ -273,9 +279,8 @@ export function useBorrowForm({
       if (marketCalcs.healthFactor < 1.0) return;
 
       try {
-        const token = await getToken();
         const resolvedMarketId = upcomingMaturities.find(m => m.maturity === marketMaturity)?.marketId;
-        const result = await submitMarket(
+        const result = await authFetch(async (token) => submitMarket(
           {
             tokenValue: selectedToken.value,
             tokenLogo: selectedToken.logo,
@@ -286,23 +291,24 @@ export function useBorrowForm({
             autoRollover: autoRefinance,
             editingPosition: editingPosition ?? undefined,
           },
-          assetIdProp && resolvedMarketId ? { token: token!, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
-        );
+          assetIdProp && resolvedMarketId ? { token, marketIds: { assetId: assetIdProp, marketId: resolvedMarketId, tokenSymbol: selectedToken.label } } : undefined,
+        ));
 
         if (editingPosition && onUpdate) {
           onUpdate(result);
           return;
         }
 
-        setSuccessAmount(formatNumberWithSeparator(numericAmount));
-        setSuccessTokenSymbol(selectedToken.label.toUpperCase().slice(0, 4));
         marketAmountInput.reset();
         setMarketSelectedCollaterals([]);
-        setShowSuccessDialog(true);
+        setSuccess(
+          formatNumberWithSeparator(numericAmount),
+          selectedToken.label.toUpperCase().slice(0, 4),
+        );
       } catch (error) {
-        const message =
+        const raw =
           error instanceof Error ? error.message : "Transaction failed";
-        toast.error(message);
+        toast.error(mapOrderErrorToFriendlyMessage(raw));
       }
     },
     [
@@ -312,12 +318,13 @@ export function useBorrowForm({
       marketCalcs,
       isPending,
       selectedToken,
-      getToken,
+      authFetch,
       assetIdProp,
       upcomingMaturities,
       submitMarket,
       editingPosition,
       onUpdate,
+      setSuccess,
     ]
   );
 
@@ -354,8 +361,8 @@ export function useBorrowForm({
     limitTotalPortfolioValue: limitCalcs.totalPortfolioValue,
     limitAvailableQuota: limitCalcs.availableQuota,
     limitNumericAmount,
-    limitTransactionFee,
-    limitAmountToPay,
+    limitTransactionFee: limitFees.totalFee,
+    limitAmountToPay: limitFees.amountToPay,
     limitFutureAmount,
     getLiquidationThresholdDisplay: limitCalcs.getLiquidationThresholdDisplay,
     marketAmount: marketAmountInput.amount,
@@ -372,8 +379,8 @@ export function useBorrowForm({
     marketTotalPortfolioValue: marketCalcs.totalPortfolioValue,
     marketAvailableQuota: marketCalcs.availableQuota,
     marketNumericAmount,
-    marketTransactionFee,
-    marketAmountToPay,
+    marketTransactionFee: marketFees.totalFee,
+    marketAmountToPay: marketFees.amountToPay,
     marketFutureAmount,
     userHealthFactor,
     autoRefinance,

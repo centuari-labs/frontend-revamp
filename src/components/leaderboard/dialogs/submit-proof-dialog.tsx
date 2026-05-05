@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { UploadCloud, X } from "lucide-react";
 
 export function SubmitProofDialog() {
@@ -107,11 +108,11 @@ export function SubmitProofDialog() {
 
         <DialogFooter className="flex-row items-center justify-end px-6 py-4">
           <DialogClose asChild>
-            <Button variant="secondary" className="flex-1">
+            <CentuariButton variant="secondary" className="flex-1">
               Cancel
-            </Button>
+            </CentuariButton>
           </DialogClose>
-          <Button type="button" variant={"primary"} className="flex-1">
+          <Button type="button" variant={"primary"} className="flex-1" disabled={files.length === 0}>
             Submit
           </Button>
         </DialogFooter>

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CentuariButton } from "@/components/centuari-button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -194,9 +195,9 @@ const ActionCell: React.FC<{
         tokenList={tokenList}
         onUpdate={onUpdate}
       />
-      <Button variant="secondary" size="icon">
+      <CentuariButton variant="secondary" size="icon">
         <Trash size={14} />
-      </Button>
+      </CentuariButton>
     </div>
   );
 };

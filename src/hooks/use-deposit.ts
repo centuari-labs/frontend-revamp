@@ -16,6 +16,7 @@ import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
+import { invalidateUserQueries } from "@/lib/query-keys";
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
 
@@ -42,7 +43,7 @@ export function useDeposit() {
   const { wallets } = useWallets();
   const publicClient = usePublicClient();
   const queryClient = useQueryClient();
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const [status, setStatus] = useState<DepositStatus>("idle");
 
   const mutation = useMutation({
@@ -168,11 +169,7 @@ export function useDeposit() {
         }
 
         // Step 5: Confirm deposit with backend
-        const jwt = await getToken();
-        if (!jwt) {
-          throw new Error("Not authenticated");
-        }
-        await confirmDeposit(depositTxHash, jwt);
+        await authFetch((jwt) => confirmDeposit(depositTxHash, jwt));
 
         setStatus("success");
         return {
@@ -184,17 +181,7 @@ export function useDeposit() {
         throw err;
       }
     },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({
-        queryKey: ["lend-borrow-assets"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["user-details"],
-      });
-    },
+    onSuccess: () => invalidateUserQueries(queryClient),
   });
 
   const reset = useCallback(() => {

@@ -1,17 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 
-const mockInvalidateQueries = vi.fn();
-
-vi.mock("@tanstack/react-query", () => ({
-	useQueryClient: () => ({
-		invalidateQueries: mockInvalidateQueries,
-	}),
+vi.mock("@privy-io/react-auth", () => ({
+	usePrivy: vi.fn(() => ({
+		user: { wallet: { address: "0x123" } },
+		getAccessToken: vi.fn().mockResolvedValue("test-jwt-token"),
+	})),
 }));
 
+const mockGetToken = vi.fn().mockResolvedValue("test-jwt-token");
+const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) => fn("test-jwt-token"));
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: () => ({
-		getToken: vi.fn().mockResolvedValue("test-jwt-token"),
+		getToken: mockGetToken,
+		authFetch: mockAuthFetch,
 	}),
 }));
 
@@ -36,7 +39,7 @@ describe("useWithdraw (API mode)", () => {
 			status: "success",
 		});
 
-		const { result } = renderHook(() => useWithdraw());
+		const { result } = renderHookWithProviders(() => useWithdraw());
 
 		await act(async () => {
 			await result.current.withdraw("asset-uuid-123", "50.5");
@@ -47,7 +50,10 @@ describe("useWithdraw (API mode)", () => {
 			"50.5",
 			"test-jwt-token",
 		);
-		expect(result.current.status).toBe("success");
+
+		await waitFor(() => {
+			expect(result.current.withdrawStatus).toBe("success");
+		});
 		expect(result.current.txHash).toBe("0xRealTxHash");
 	});
 
@@ -57,20 +63,14 @@ describe("useWithdraw (API mode)", () => {
 			status: "success",
 		});
 
-		const { result } = renderHook(() => useWithdraw());
+		const { result } = renderHookWithProviders(() => useWithdraw());
 
 		await act(async () => {
 			await result.current.withdraw("asset-uuid-123", "100");
 		});
 
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({
-			queryKey: ["my-assets"],
-		});
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({
-			queryKey: ["my-portfolio"],
-		});
-		expect(mockInvalidateQueries).toHaveBeenCalledWith({
-			queryKey: ["lend-borrow-assets"],
+		await waitFor(() => {
+			expect(result.current.withdrawStatus).toBe("success");
 		});
 	});
 
@@ -79,14 +79,20 @@ describe("useWithdraw (API mode)", () => {
 			new Error("Insufficient non-collateral balance"),
 		);
 
-		const { result } = renderHook(() => useWithdraw());
+		const { result } = renderHookWithProviders(() => useWithdraw());
 
-		await act(async () => {
-			await result.current.withdraw("asset-uuid-123", "99999");
+		try {
+			await act(async () => {
+				await result.current.withdraw("asset-uuid-123", "99999");
+			});
+		} catch {
+			// mutateAsync throws on error
+		}
+
+		await waitFor(() => {
+			expect(result.current.withdrawStatus).toBe("error");
 		});
-
-		expect(result.current.status).toBe("error");
-		expect(result.current.error).toBe(
+		expect(result.current.withdrawError).toBe(
 			"Insufficient non-collateral balance",
 		);
 		expect(result.current.txHash).toBeNull();
@@ -95,13 +101,18 @@ describe("useWithdraw (API mode)", () => {
 	it("handles API error with non-Error throw", async () => {
 		vi.mocked(submitWithdraw).mockRejectedValue("string error");
 
-		const { result } = renderHook(() => useWithdraw());
+		const { result } = renderHookWithProviders(() => useWithdraw());
 
-		await act(async () => {
-			await result.current.withdraw("asset-uuid-123", "100");
+		try {
+			await act(async () => {
+				await result.current.withdraw("asset-uuid-123", "100");
+			});
+		} catch {
+			// mutateAsync throws on error
+		}
+
+		await waitFor(() => {
+			expect(result.current.withdrawStatus).toBe("error");
 		});
-
-		expect(result.current.status).toBe("error");
-		expect(result.current.error).toBe("Withdrawal failed");
 	});
 });

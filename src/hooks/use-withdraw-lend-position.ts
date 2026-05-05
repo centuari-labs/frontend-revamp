@@ -3,24 +3,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { withdrawLendPosition } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { invalidateUserQueries } from "@/lib/query-keys";
 
 export function useWithdrawLendPosition() {
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (marketId: string) => {
-      const token = await getToken();
-      if (!token) throw new Error("Authentication required");
-      return withdrawLendPosition(marketId, token);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["my-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["my-portfolio"] });
-      queryClient.invalidateQueries({ queryKey: ["lend-borrow-assets"] });
-      queryClient.invalidateQueries({ queryKey: ["order-history"] });
-    },
+    mutationFn: (marketId: string) =>
+      authFetch((token) => withdrawLendPosition(marketId, token)),
+    onSuccess: () => invalidateUserQueries(queryClient),
   });
 
   return {

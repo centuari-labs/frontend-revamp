@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDepositTokens, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { QUERY_CONFIG } from "@/lib/query-config";
 
 export function useDepositTokens() {
 	const { getToken } = useAuthToken();
@@ -11,10 +12,9 @@ export function useDepositTokens() {
 		queryKey: ["deposit-tokens"],
 		queryFn: async () => {
 			const jwt = await getToken();
-			// We no longer throw error if !jwt to allow unauthenticated viewing
 			return getDepositTokens(jwt ?? "");
 		},
-		staleTime: 5 * 60 * 1000,
+		staleTime: QUERY_CONFIG.DEPOSIT_TOKENS_STALE_TIME,
 		retry: 1,
 	});
 }

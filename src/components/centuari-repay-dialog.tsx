@@ -13,9 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
 import { HandCoins, Info, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { CentuariTypography } from "./centuari-typography";
-import { CentuariTooltip } from "./centuari-tooltip";
 import { CentuariInput } from "./centuari-input";
+import { CentuariTooltip } from "./centuari-tooltip";
+import { DialogTokenHeader } from "./dialog-token-header";
 import { CentuariButton } from "./centuari-button";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
@@ -272,60 +272,17 @@ export function CentuariRepayDialog({
             </div>
             <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
               <div className="relative overflow-hidden min-h-[400px]">
-                <div className="flex flex-col items-center justify-center gap-2 mt-6">
-                  <Image
-                    src={token_image}
-                    alt={token_name}
-                    width={76.5}
-                    height={76.5}
-                  />
-                  <CentuariTypography variant="h4">{token_symbol}</CentuariTypography>
-
-                  <div className="flex w-full items-center justify-around mt-4 px-6">
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Debt{" "}
-                        <CentuariTooltip message="The total debt including accrued interest, calculated from your position shares.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {formattedDebt} {token_symbol}
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        Amount borrowed{" "}
-                        <CentuariTooltip message="The original amount you borrowed.">
-                          <Info size={16} />
-                        </CentuariTooltip>
-                      </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {formattedAmountBorrowed} {token_symbol}
-                      </CentuariTypography>
-                    </div>
-                    <div>
-                      <CentuariTypography
-                        className="flex items-center gap-1 text-muted-foreground"
-                        variant="b3"
-                      >
-                        APR{" "}
-                          <CentuariTooltip message="The annual percentage rate for this borrow position.">
-                            <Info size={16} />
-                          </CentuariTooltip>
-                        </CentuariTypography>
-                      <CentuariTypography variant="h5" className="text-center">
-                        {formattedAPR}
-                      </CentuariTypography>
-                    </div>
-                  </div>
-                </div>
+                <DialogTokenHeader
+                  tokenImage={token_image}
+                  tokenName={token_name}
+                  tokenSymbol={token_symbol}
+                  stats={[
+                    { label: "Debt", tooltip: "The total debt including accrued interest, calculated from your position shares.", value: `${formattedDebt} ${token_symbol}` },
+                    { label: "Amount borrowed", tooltip: "The original amount you borrowed.", value: `${formattedAmountBorrowed} ${token_symbol}` },
+                    { label: "APR", tooltip: "The annual percentage rate for this borrow position.", value: formattedAPR },
+                  ]}
+                  showMarketBanner={false}
+                />
 
                 <div className="mt-4 px-6">
                   <form action="">

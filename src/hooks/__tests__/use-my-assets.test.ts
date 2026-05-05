@@ -1,18 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 
-// ─── Mock USE_MOCK=false for API mode ────────────────────────────────
-
-vi.mock("@/lib/use-mock", () => ({ USE_MOCK: false }));
-
-vi.mock("@/lib/api", () => ({
-  getMyAssets: vi.fn(),
+vi.mock("@privy-io/react-auth", () => ({
+  usePrivy: vi.fn(() => ({
+    user: { wallet: { address: "0x123" } },
+    getAccessToken: vi.fn().mockResolvedValue("test-jwt-token"),
+  })),
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: () => ({
     getToken: vi.fn().mockResolvedValue("test-jwt-token"),
+    authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("test-jwt-token")),
   }),
+}));
+
+vi.mock("@/lib/api", () => ({
+  getMyAssets: vi.fn(),
 }));
 
 import { getMyAssets } from "@/lib/api";
@@ -57,7 +61,13 @@ describe("useMyAssets (API mode)", () => {
       },
     ];
 
-    mockGetMyAssets.mockResolvedValue(mockAssets);
+    mockGetMyAssets.mockResolvedValue({
+      data: mockAssets,
+      page: 1,
+      limit: 10,
+      totalData: 2,
+      totalPages: 1,
+    });
 
     const useMyAssets = await getHook();
     const { result } = renderHookWithProviders(() => useMyAssets());
@@ -72,13 +82,19 @@ describe("useMyAssets (API mode)", () => {
   });
 
   it("passes auth token to getMyAssets", async () => {
-    mockGetMyAssets.mockResolvedValue([]);
+    mockGetMyAssets.mockResolvedValue({
+      data: [],
+      page: 1,
+      limit: 10,
+      totalData: 0,
+      totalPages: 0,
+    });
 
     const useMyAssets = await getHook();
     renderHookWithProviders(() => useMyAssets());
 
     await vi.waitFor(() => {
-      expect(mockGetMyAssets).toHaveBeenCalledWith("test-jwt-token");
+      expect(mockGetMyAssets).toHaveBeenCalledWith("test-jwt-token", expect.any(Object));
     });
   });
 
@@ -94,21 +110,18 @@ describe("useMyAssets (API mode)", () => {
 
     expect(result.current.assets).toEqual([]);
   });
-});
 
-describe("useMyAssets (mock mode)", () => {
-  it("returns empty assets when USE_MOCK is true", async () => {
-    // Re-mock USE_MOCK=true for this test
-    vi.doMock("@/lib/use-mock", () => ({ USE_MOCK: true }));
+  it("returns empty assets when user has no wallet", async () => {
+    const { usePrivy } = await import("@privy-io/react-auth");
+    vi.mocked(usePrivy).mockReturnValue({
+      user: null,
+      getAccessToken: vi.fn(),
+    } as any);
 
-    const { useMyAssets } = await import("@/hooks/use-my-assets");
+    const useMyAssets = await getHook();
     const { result } = renderHookWithProviders(() => useMyAssets());
 
-    // Query should not fire (enabled: false)
     expect(result.current.assets).toEqual([]);
     expect(mockGetMyAssets).not.toHaveBeenCalled();
-
-    // Restore
-    vi.doMock("@/lib/use-mock", () => ({ USE_MOCK: false }));
   });
 });

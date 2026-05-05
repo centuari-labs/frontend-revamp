@@ -13,10 +13,14 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, HandCoins, Layers, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import {
+  CentuariGlassLayers,
+  CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -321,9 +325,22 @@ export function DataTableAllPosition({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-[300px] text-center"
+                className="h-[300px]"
               >
-                No results.
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                    {activeTab === "borrow" ? (
+                      <HandCoins size={22} className="text-white/40" />
+                    ) : (
+                      <Layers size={22} className="text-white/40" />
+                    )}
+                  </CentuariGlassSurface>
+                  <span className="text-sm text-white/40">
+                    {activeTab === "borrow"
+                      ? "You don't have any borrow positions yet"
+                      : "You don't have any lend positions yet"}
+                  </span>
+                </div>
               </TableCell>
             </TableRow>
           )}
@@ -341,22 +358,29 @@ export function DataTableAllPosition({
   const canNext = isServerPagination ? Number(serverPage ?? 1) < Number(totalPages ?? 1) : table.getCanNextPage();
 
   return (
-    <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+    <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-xl bg-transparent border-0 isolate">
+      <CentuariGlassLayers intensity="soft" />
       <Tabs defaultValue="lend" className="w-full !gap-0 flex flex-col h-full" onValueChange={handleTabChange}>
         <div className="flex items-center justify-between py-2 px-6 shrink-0">
           <h1 className="text-white text-lg font-normal">All My Positions</h1>
           <TabsList className="bg-white/5 h-10 border border-white/5">
             <TabsTrigger
               value="lend"
-              className="px-6 h-8 rounded-md data-[state=active]:bg-[#3B3F46] data-[state=active]:text-white !border-none text-white/40"
+              className="group/glass relative overflow-hidden isolate px-6 h-8 rounded-md data-[state=active]:text-white !border-none text-white/40 !bg-transparent !shadow-none"
             >
-              Lend
+              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                <CentuariGlassLayers intensity="soft" />
+              </span>
+              <span className="relative z-20">Lend</span>
             </TabsTrigger>
             <TabsTrigger
               value="borrow"
-              className="px-6 h-8 rounded-md data-[state=active]:bg-[#3B3F46] data-[state=active]:text-white !border-none text-white/40"
+              className="group/glass relative overflow-hidden isolate px-6 h-8 rounded-md data-[state=active]:text-white !border-none text-white/40 !bg-transparent !shadow-none"
             >
-              Borrow
+              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+                <CentuariGlassLayers intensity="soft" />
+              </span>
+              <span className="relative z-20">Borrow</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -369,8 +393,10 @@ export function DataTableAllPosition({
           {positionTable}
         </TabsContent>
       </Tabs>
-      <div className="flex flex-col sm:flex-row shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
-        <div className="flex items-center gap-2 text-sm">
+      {/* Footer table all position */}
+      <div className="group/glass relative flex flex-col sm:flex-row shrink-0 w-full items-center justify-between py-2 px-6 border-t border-white/5 gap-4 sm:gap-0 isolate overflow-hidden">
+        <CentuariGlassLayers intensity="soft" />
+        <div className="relative z-20 flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {displayPage} of {displayTotalPages}
           </span>
@@ -379,7 +405,7 @@ export function DataTableAllPosition({
             Showing {displayShowing} of {displayTotal} Data
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="relative z-20 flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"

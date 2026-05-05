@@ -77,6 +77,8 @@ Component → Custom Hook → TanStack Query → API Client → Backend REST/Web
 5. **No inline styles** — use Tailwind classes exclusively. Use `cn()` from `lib/utils` to merge conditional classes.
 6. **shadcn components are read-only** — never modify files in `components/ui/`. Create `centuari-*` wrappers for customization.
 7. **Prefix domain components** — custom components that combine shadcn primitives get `centuari-` prefix (e.g., `centuari-button.tsx`).
+8. **Component max size** — dialog components should be <300 lines. Extract sub-components for form sections, success states, and fee displays.
+9. **Shared sub-components** — `FeeBreakdown`, `OrderSuccessDialog`, `DepositFlowView` are shared components — don't duplicate them.
 
 ### Hook Rules
 
@@ -86,6 +88,9 @@ Component → Custom Hook → TanStack Query → API Client → Backend REST/Web
 4. **Mock adapter pattern** — for data hooks, create `*-adapter.api.ts` (real) and `*-adapter.mock.ts` (mock). The hook selects based on `USE_MOCK` flag.
 5. **Colocate related state** — if multiple `useState` calls always change together, combine into a single hook or reducer.
 6. **Return stable references** — memoize returned objects/arrays with `useMemo` when consumers use them in dependency arrays.
+7. **Hook max size** — hooks should be <200 lines. Decompose larger hooks into focused sub-hooks.
+8. **No duplicated calculations** — any calculation appearing in 2+ hooks must be extracted to `lib/` utilities.
+9. **Success dialog pattern** — use `useSuccessDialog()` micro-hook for success state, not inline `useState`.
 
 ### Styling Rules
 
@@ -104,9 +109,11 @@ Component → Custom Hook → TanStack Query → API Client → Backend REST/Web
 
 1. **Centralized API functions** — all fetch calls defined in `lib/api.ts`. Never call `fetch` directly in hooks.
 2. **API client** — use `lib/api-client.ts` for the generic fetch wrapper with error handling.
-3. **Query keys** — use consistent, hierarchical keys: `["market", "data"]`, `["portfolio", userId]`.
-4. **staleTime: 10_000** — default. Adjust per-query only with justification.
-5. **WebSocket for real-time** — price updates come via `PriceProvider` (Socket.io). Use context, not polling.
+3. **Query keys centralized** — all query keys defined in `lib/query-keys.ts`. Use `QUERY_KEYS.*` constants — never hardcode key arrays.
+4. **Mutation invalidation** — use `invalidateUserQueries(queryClient)` helper — never manually list keys to invalidate.
+5. **No redundant staleTime** — don't re-specify `staleTime` that matches the global default (10s). Only specify when overriding.
+6. **Polling intervals** — use constants from `lib/query-config.ts`, not hardcoded numbers.
+7. **WebSocket for real-time** — price updates come via `PriceProvider` (Socket.io). Use context, not polling.
 
 ### Type Rules
 
@@ -122,6 +129,11 @@ Component → Custom Hook → TanStack Query → API Client → Backend REST/Web
 3. **Fixtures in `__tests__/helpers/fixtures/`** — use factory functions like `makeLendPosition()`.
 4. **Playwright** for e2e tests in `e2e/` directory.
 5. **Don't test shadcn internals** — test domain behavior, not UI library implementation.
+
+### Fee & Financial Calculations
+
+1. **Single source of truth** — all fee constants and calculations live in `lib/fee-utils.ts`, mirroring the matching engine.
+2. **Token price calculation** — use `getTokenPrice()` from `lib/utils.ts`. Never inline price lookups.
 
 ### Formatting
 

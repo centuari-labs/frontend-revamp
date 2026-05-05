@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "./ui/button";
+import { CentuariButton } from "./centuari-button";
 import { Pencil } from "lucide-react";
 import { LendForm } from "./market/lend-form";
 import { BorrowForm } from "./market/borrow-form";
@@ -59,9 +59,9 @@ export function AmendDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="secondary" size="icon">
+          <CentuariButton variant="secondary" size="icon">
             <Pencil size={14} />
-          </Button>
+          </CentuariButton>
         )}
       </DialogTrigger>
       <DialogContent className="flex flex-col gap-0 sm:max-w-4xl data-[state=open]:!zoom-in-0 data-[state=open]:duration-600 p-6">

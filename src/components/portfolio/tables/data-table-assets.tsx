@@ -19,9 +19,14 @@ import {
   ArrowUpDown,
   ChevronDown,
   MoreHorizontal,
+  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { cn, truncateBalance } from "@/lib/utils";
+import {
+  CentuariGlassLayers,
+  CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -329,7 +334,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
         return (
           <div className="flex items-center gap-1.5">
             <span className="text-white font-medium">
-              {truncateBalance(asset.walletBalance)}
+              {truncateBalance(asset.walletBalance, 2)}
             </span>
             <span className="text-white/40">{asset.assetSymbol.toUpperCase()}</span>
           </div>
@@ -344,8 +349,8 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(amount);
 
         const [main, cents] = formatted.split(".");
@@ -394,7 +399,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
                 handleCollateralHeaderClick();
               }}
               className={cn(
-                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 allSelected
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -402,12 +407,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {allSelected && (
                 <svg
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"
@@ -428,7 +433,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             <div
               onClick={() => handleCollateralCellClick(asset)}
               className={cn(
-                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 isCollateral
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -436,12 +441,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {isCollateral && (
                 <svg
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"
@@ -527,7 +532,8 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
           setShowUseAllCollateralDialog(false);
         }}
       />
-      <div className="w-full overflow-hidden flex flex-col h-full rounded-xl bg-white/5 border">
+      <div className="group/glass relative w-full overflow-hidden flex flex-col h-full rounded-xl bg-transparent border-0 isolate">
+        <CentuariGlassLayers intensity="soft" />
       <h1 className="text-white text-lg font-normal py-3.5 px-6 flex-shrink-0">My Assets</h1>
       <div className="flex-1 overflow-y-auto overflow-x-hidden max-h-[300px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/40">
         <Table className="w-full">
@@ -585,17 +591,26 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-[300px] text-center"
+                  className="h-[300px]"
                 >
-                  No results.
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+                      <Wallet size={22} className="text-white/40" />
+                    </CentuariGlassSurface>
+                    <span className="text-sm text-white/40">
+                      You don&apos;t have any assets yet
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-4 px-6 border-t border-white/5 gap-4 sm:gap-0">
-        <div className="flex items-center gap-2 text-sm">
+      {/* Footer table assets */}
+      <div className="group/glass relative flex flex-col sm:flex-row flex-shrink-0 w-full items-center justify-between py-2 px-6 border-t border-white/5 gap-4 sm:gap-0 isolate overflow-hidden">
+        <CentuariGlassLayers intensity="soft" />
+        <div className="relative z-20 flex items-center gap-2 text-sm">
           <span className="text-white font-medium">
             Page {isServerPagination ? (serverPage ?? 1) : table.getState().pagination.pageIndex + 1} of {isServerPagination ? (totalPages ?? 1) : (table.getPageCount() || 1)}
           </span>
@@ -604,7 +619,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             Showing {table.getRowModel().rows.length} of {isServerPagination ? (totalData ?? 0) : data.length} Data
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="relative z-20 flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"

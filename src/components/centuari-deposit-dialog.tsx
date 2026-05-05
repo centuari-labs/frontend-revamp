@@ -35,15 +35,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "./ui/label";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { ACTIVE_CHAIN, ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
-
-const EXPECTED_CAIP2 = `eip155:${ACTIVE_CHAIN.id}`;
+import { useNetworkSwitch } from "@/hooks/use-network-switch";
 
 export function CentuariDepositDialog() {
   const router = useRouter();
-  const { user } = usePrivy();
-  const { wallets } = useWallets();
   const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
   const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
 
@@ -72,29 +68,7 @@ export function CentuariDepositDialog() {
 
   const { balance: onChainBalance, isLoading: balanceLoading } = useOnChainBalance(selectedToken?.symbol ?? "");
 
-  // ─── Network detection ───────────────────────────────────────────────
-  const linkedAddress = user?.wallet?.address?.toLowerCase();
-  const loginWallet = linkedAddress
-    ? wallets.find(
-        (w) =>
-          w.walletClientType !== "privy" &&
-          w.address.toLowerCase() === linkedAddress,
-      )
-    : undefined;
-  const isWrongNetwork = loginWallet != null && loginWallet.chainId !== EXPECTED_CAIP2;
-  const [switchingChain, setSwitchingChain] = useState(false);
-
-  const handleSwitchChain = async () => {
-    if (!loginWallet || switchingChain) return;
-    setSwitchingChain(true);
-    try {
-      await loginWallet.switchChain(ACTIVE_CHAIN.id);
-    } catch {
-      toast.error("Failed to switch network");
-    } finally {
-      setSwitchingChain(false);
-    }
-  };
+  const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
 
   const isProcessing =
     depositStatus === "checkingAllowance" ||
@@ -255,7 +229,7 @@ export function CentuariDepositDialog() {
                     </button>
                   ) : (
                     <Select value={String(ACTIVE_CHAIN.id)} disabled>
-                      <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                      <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -264,8 +238,8 @@ export function CentuariDepositDialog() {
                             <img
                               src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
                               alt={ACTIVE_CHAIN_LABEL}
-                              width={16}
-                              height={16}
+                              width={32}
+                              height={32}
                               className="size-4 rounded-full object-cover"
                             />
                             {ACTIVE_CHAIN_LABEL}
@@ -282,7 +256,7 @@ export function CentuariDepositDialog() {
                     onValueChange={setSelectedTokenId}
                     disabled={tokensLoading}
                   >
-                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
+                    <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
                       <SelectValue placeholder={tokensLoading ? "Loading..." : "Select Token"} />
                     </SelectTrigger>
                     <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -291,9 +265,11 @@ export function CentuariDepositDialog() {
                           <SelectItem key={token.id} value={token.id}>
                             <Image
                               src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
-                              width={16}
-                              height={16}
+                              width={32}
+                              height={32}
                               alt={token.symbol}
+                              quality={100}
+                              className="size-4 rounded-full object-contain"
                             />
                             {token.symbol}
                           </SelectItem>

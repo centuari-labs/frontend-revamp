@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePrivy } from "@privy-io/react-auth";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const EMPTY: OpenOrderItem[] = [];
 
@@ -31,13 +32,13 @@ export function useOpenOrders(options?: {
     endDate,
     enabled = true,
   } = options ?? {};
-  const { getToken } = useAuthToken();
+  const { authFetch } = useAuthToken();
   const { user } = usePrivy();
   const address = user?.wallet?.address;
 
   const query = useQuery<OpenOrdersResponse>({
     queryKey: [
-      "open-orders",
+      QUERY_KEYS.OPEN_ORDERS,
       address,
       assetId,
       page,
@@ -47,20 +48,18 @@ export function useOpenOrders(options?: {
       startDate,
       endDate,
     ],
-    queryFn: async () => {
-      const token = await getToken();
-      if (!token) throw new Error("No auth token");
-      return getOpenOrders(token, {
-        page,
-        limit,
-        assetId,
-        side,
-        status,
-        startDate,
-        endDate,
-      });
-    },
-    staleTime: 10_000,
+    queryFn: () =>
+      authFetch((token) =>
+        getOpenOrders(token, {
+          page,
+          limit,
+          assetId,
+          side,
+          status,
+          startDate,
+          endDate,
+        }),
+      ),
     enabled: !!address && enabled,
     placeholderData: (prev) => prev,
   });

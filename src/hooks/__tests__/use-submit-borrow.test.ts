@@ -1,116 +1,136 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
+import { act } from "@testing-library/react";
+import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 import { makeBorrowPosition } from "@/__tests__/helpers/fixtures/positions";
 
-vi.mock("@/lib/positions-adapter.mock", () => ({
-  submitOpenOrder: vi.fn(async (pos) => pos),
-  submitFilledBorrowPosition: vi.fn(async (pos) => pos),
-  updateOpenOrder: vi.fn(async () => {}),
-  updateFilledPosition: vi.fn(async () => {}),
-  buildBorrowLimitPosition: vi.fn((params) => ({
-    ...makeBorrowPosition(),
-    id: params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`,
-    type: "borrow",
-    orderType: "limit",
-    apr: params.targetApr,
-    collateralTokens: params.collateralTokens,
-  })),
-  buildBorrowMarketPosition: vi.fn((params) => ({
-    ...makeBorrowPosition(),
-    id: params.editingPosition?.id ?? `borrow-${params.tokenValue}-${Date.now()}`,
-    type: "borrow",
-    orderType: "market",
-    status: "success",
-    collateralTokens: params.collateralTokens,
-  })),
-  getBestBorrowAPR: vi.fn(() => 10.1),
+const mockSubmitBorrowLimitOrder = vi.fn();
+const mockSubmitBorrowMarketOrder = vi.fn();
+
+vi.mock("@/lib/positions-adapter.api", () => ({
+	submitBorrowLimitOrder: (...args: unknown[]) =>
+		mockSubmitBorrowLimitOrder(...args),
+	submitBorrowMarketOrder: (...args: unknown[]) =>
+		mockSubmitBorrowMarketOrder(...args),
 }));
 
-import * as adapter from "@/lib/positions-adapter.mock";
+import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
+
+const MARKET_IDS = {
+	assetId: "asset-uuid-usdc",
+	marketId: "market-uuid-1",
+	tokenSymbol: "USDC",
+};
 
 beforeEach(() => {
-  vi.clearAllMocks();
+	vi.clearAllMocks();
 });
 
 describe("useSubmitBorrow", () => {
-  it("isPending starts as false", () => {
-    const { result } = renderHook(() => useSubmitBorrow());
-    expect(result.current.isPending).toBe(false);
-  });
+	it("isPending starts as false", () => {
+		const { result } = renderHookWithProviders(() => useSubmitBorrow());
+		expect(result.current.isPending).toBe(false);
+	});
 
-  it("submitLimit calls submitOpenOrder for new order", async () => {
-    const { result } = renderHook(() => useSubmitBorrow());
+	it("submitLimit calls submitBorrowLimitOrder for new order", async () => {
+		const position = makeBorrowPosition({ orderType: "limit" });
+		mockSubmitBorrowLimitOrder.mockResolvedValue(position);
+		const { result } = renderHookWithProviders(() => useSubmitBorrow());
 
-    await act(async () => {
-      await result.current.submitLimit({
-        tokenValue: "usdt",
-        tokenLogo: "/tokens/centuari-usdt.png",
-        tokenLabel: "USDT",
-        amount: 500,
-        maturity: 1000,
-        targetApr: 0.1,
-        collateralTokens: ["btc"],
-      });
-    });
+		await act(async () => {
+			await result.current.submitLimit(
+				{
+					tokenValue: "usdt",
+					tokenLogo: "/tokens/centuari-usdt.png",
+					tokenLabel: "USDT",
+					amount: 500,
+					maturity: 1000,
+					targetApr: 0.1,
+					collateralTokens: ["btc"],
+				},
+				{ token: "jwt", marketIds: MARKET_IDS },
+			);
+		});
 
-    expect(adapter.submitOpenOrder).toHaveBeenCalled();
-    expect(result.current.isPending).toBe(false);
-  });
+		expect(mockSubmitBorrowLimitOrder).toHaveBeenCalled();
+		expect(result.current.isPending).toBe(false);
+	});
 
-  it("submitLimit calls updateOpenOrder when editing", async () => {
-    const existing = makeBorrowPosition({ id: "edit-b1" });
-    const { result } = renderHook(() => useSubmitBorrow());
+	it("submitLimit passes params, marketIds, and token to API adapter", async () => {
+		const position = makeBorrowPosition({ id: "edit-b1", orderType: "limit" });
+		mockSubmitBorrowLimitOrder.mockResolvedValue(position);
+		const { result } = renderHookWithProviders(() => useSubmitBorrow());
 
-    await act(async () => {
-      await result.current.submitLimit({
-        tokenValue: "usdt",
-        tokenLogo: "/tokens/centuari-usdt.png",
-        tokenLabel: "USDT",
-        amount: 600,
-        maturity: 1000,
-        targetApr: 0.11,
-        collateralTokens: ["btc"],
-        editingPosition: existing,
-      });
-    });
+		const params = {
+			tokenValue: "usdt",
+			tokenLogo: "/tokens/centuari-usdt.png",
+			tokenLabel: "USDT",
+			amount: 600,
+			maturity: 1000,
+			targetApr: 0.11,
+			collateralTokens: ["btc"],
+		};
 
-    expect(adapter.updateOpenOrder).toHaveBeenCalled();
-  });
+		await act(async () => {
+			await result.current.submitLimit(params, {
+				token: "jwt",
+				marketIds: MARKET_IDS,
+			});
+		});
 
-  it("submitMarket calls submitFilledBorrowPosition for new order", async () => {
-    const { result } = renderHook(() => useSubmitBorrow());
+		expect(mockSubmitBorrowLimitOrder).toHaveBeenCalledWith(
+			params,
+			MARKET_IDS,
+			"jwt",
+		);
+	});
 
-    await act(async () => {
-      await result.current.submitMarket({
-        tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.webp",
-        tokenLabel: "USDC",
-        amount: 300,
-        maturity: 2000,
-        collateralTokens: ["eth"],
-      });
-    });
+	it("submitMarket calls submitBorrowMarketOrder for new order", async () => {
+		const position = makeBorrowPosition({ orderType: "market" });
+		mockSubmitBorrowMarketOrder.mockResolvedValue(position);
+		const { result } = renderHookWithProviders(() => useSubmitBorrow());
 
-    expect(adapter.submitFilledBorrowPosition).toHaveBeenCalled();
-  });
+		await act(async () => {
+			await result.current.submitMarket(
+				{
+					tokenValue: "usdc",
+					tokenLogo: "/tokens/usdc-icon.webp",
+					tokenLabel: "USDC",
+					amount: 300,
+					maturity: 2000,
+					collateralTokens: ["eth"],
+				},
+				{ token: "jwt", marketIds: MARKET_IDS },
+			);
+		});
 
-  it("submitMarket calls updateFilledPosition when editing", async () => {
-    const existing = makeBorrowPosition({ id: "edit-b2" });
-    const { result } = renderHook(() => useSubmitBorrow());
+		expect(mockSubmitBorrowMarketOrder).toHaveBeenCalled();
+	});
 
-    await act(async () => {
-      await result.current.submitMarket({
-        tokenValue: "usdc",
-        tokenLogo: "/tokens/usdc-icon.webp",
-        tokenLabel: "USDC",
-        amount: 300,
-        maturity: 2000,
-        collateralTokens: ["eth"],
-        editingPosition: existing,
-      });
-    });
+	it("submitMarket passes params, marketIds, and token to API adapter", async () => {
+		const position = makeBorrowPosition({ id: "edit-b2", orderType: "market" });
+		mockSubmitBorrowMarketOrder.mockResolvedValue(position);
+		const { result } = renderHookWithProviders(() => useSubmitBorrow());
 
-    expect(adapter.updateFilledPosition).toHaveBeenCalled();
-  });
+		const params = {
+			tokenValue: "usdc",
+			tokenLogo: "/tokens/usdc-icon.webp",
+			tokenLabel: "USDC",
+			amount: 300,
+			maturity: 2000,
+			collateralTokens: ["eth"],
+		};
+
+		await act(async () => {
+			await result.current.submitMarket(params, {
+				token: "jwt",
+				marketIds: MARKET_IDS,
+			});
+		});
+
+		expect(mockSubmitBorrowMarketOrder).toHaveBeenCalledWith(
+			params,
+			MARKET_IDS,
+			"jwt",
+		);
+	});
 });
