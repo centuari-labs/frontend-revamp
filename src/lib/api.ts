@@ -1,20 +1,12 @@
 import { apiClient } from "./api-client";
 
-export interface MarketAsset {
-	id: string;
-	name: string;
-	symbol: string;
-	decimals?: number | null;
-	image_url?: string | null;
-}
-
 export interface MarketItemMarket {
 	market_id: string | null;
 	maturity: number | null; // Unix seconds
 }
 
 export interface MarketItem {
-	asset: MarketAsset;
+	assetId: string;
 	market: MarketItemMarket;
 	borrow_rate: number;
 	lend_rate: number;
@@ -28,13 +20,7 @@ export interface MarketResponse {
 }
 
 export interface MarketDetailResponse {
-	asset: {
-		id: string;
-		name: string;
-		symbol: string;
-		decimals: number | null;
-		imageUrl: string | null;
-	};
+	assetId: string;
 	collateral_factor: number;
 	total_deposit: string;
 	active_loans: string;
@@ -48,7 +34,9 @@ export function getMarket(): Promise<MarketResponse> {
 	return apiClient<MarketResponse>("/market");
 }
 
-export function getMarketDetail(assetId: string): Promise<MarketDetailResponse> {
+export function getMarketDetail(
+	assetId: string,
+): Promise<MarketDetailResponse> {
 	return apiClient<MarketDetailResponse>(`/market/${assetId}`);
 }
 
@@ -171,26 +159,22 @@ export interface LendBorrowAssetsResponse {
 export function getLendBorrowAssets(
 	token: string,
 ): Promise<LendBorrowAssetsResponse> {
-	return apiClient<LendBorrowAssetsResponse>(
-		"/portfolio/lend-borrow-assets",
-		{ token },
-	);
+	return apiClient<LendBorrowAssetsResponse>("/portfolio/lend-borrow-assets", {
+		token,
+	});
 }
 
 // ─── My Positions ───────────────────────────────────────────────────
 
 export interface MyPositionItem {
 	id: string;
-	assetId?: string;
+	assetId: string;
 	marketId: string;
-	symbol: string;
-	name: string;
 	shares: number;
 	baseAmount: number;
 	amountInUsd: number;
 	apr: number | string;
 	isCollateral: boolean;
-	imageUrl: string | null;
 	side: "LEND" | "BORROW";
 	maturity: number | null;
 }
@@ -205,7 +189,12 @@ export interface MyPositionsResponse {
 
 export async function getMyPositions(
 	token: string,
-	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number; assetId?: string },
+	params?: {
+		type?: "LEND" | "BORROW";
+		page?: number;
+		limit?: number;
+		assetId?: string;
+	},
 ): Promise<MyPositionsResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -277,9 +266,7 @@ export interface UserDetailsResponse {
 	weightedLtv: number;
 }
 
-export function getUserDetails(
-	token: string,
-): Promise<UserDetailsResponse> {
+export function getUserDetails(token: string): Promise<UserDetailsResponse> {
 	return apiClient<UserDetailsResponse>("/portfolio/user-details", {
 		token,
 	});
@@ -583,15 +570,6 @@ export function submitRepay(
 
 // ─── Order History ────────────────────────────────────────────────────
 
-export interface OrderHistoryAsset {
-	id: string;
-	name: string;
-	symbol: string;
-	decimals: number;
-	imageUrl: string | null;
-	tokenAddress: string;
-}
-
 export interface OrderHistoryItem {
 	id: string;
 	side: "LEND" | "BORROW";
@@ -602,7 +580,7 @@ export interface OrderHistoryItem {
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
 	cancelReason?: "USER_CANCELLED" | "IOC" | null;
 	maturity: string;
-	asset: OrderHistoryAsset;
+	assetId: string;
 	fee: string | null;
 	createdAt: string;
 }
@@ -636,8 +614,10 @@ export async function getOrderHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status")
+		searchParams.set("status", params.status);
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -677,7 +657,7 @@ export interface TransactionHistoryItem {
 	amount: string;
 	fee: string | null;
 	maturity: string;
-	asset: OrderHistoryAsset;
+	assetId: string;
 	createdAt: string;
 }
 
@@ -709,7 +689,8 @@ export async function getTransactionHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -752,7 +733,7 @@ export interface OpenOrderItem {
 	status: "OPEN" | "FILLED" | "PARTIALLY_FILLED" | "CANCELLED";
 	cancelReason?: "USER_CANCELLED" | "IOC" | null;
 	maturity: string;
-	asset: OrderHistoryAsset;
+	assetId: string;
 	createdAt: string;
 }
 
@@ -786,8 +767,10 @@ export async function getOpenOrders(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status")
+		searchParams.set("status", params.status);
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -839,4 +822,3 @@ export function withdrawLendPosition(
 		},
 	);
 }
-
