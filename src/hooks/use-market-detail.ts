@@ -1,5 +1,8 @@
+"use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { getMarketDetail } from "@/lib/api";
+import { useTokens, getTokenById } from "@/hooks/use-tokens";
 
 interface UseMarketDetailResult {
 	assetId: string | undefined;
@@ -19,7 +22,11 @@ interface UseMarketDetailResult {
 	refetch: () => void;
 }
 
-export function useMarketDetail(assetId: string | undefined): UseMarketDetailResult {
+export function useMarketDetail(
+	assetId: string | undefined,
+): UseMarketDetailResult {
+	const { tokens } = useTokens();
+
 	const query = useQuery({
 		queryKey: ["market-detail", assetId],
 		queryFn: () => {
@@ -33,12 +40,13 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 	});
 
 	const data = query.data;
+	const token = data ? getTokenById(tokens, data.assetId) : undefined;
 
 	return {
-		assetId: data?.asset.id,
-		symbol: data?.asset.symbol,
-		decimals: data?.asset.decimals,
-		imageUrl: data?.asset.imageUrl,
+		assetId: data?.assetId,
+		symbol: token?.symbol,
+		decimals: token?.decimals ?? null,
+		imageUrl: token?.imageUrl ?? null,
 		totalDeposit: data ? Number.parseFloat(data.total_deposit) : 0,
 		activeLoans: data ? Number.parseFloat(data.active_loans) : 0,
 		collateralFactor: data ? data.collateral_factor : 0,
@@ -53,4 +61,3 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 		refetch: query.refetch,
 	};
 }
-

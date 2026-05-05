@@ -26,9 +26,7 @@ export interface OrderTableRow {
 	maturity?: string | number | null;
 	status?: string;
 	cancelReason?: "USER_CANCELLED" | "IOC" | null;
-	// API shape (OpenOrderItem, OrderHistoryItem, TransactionHistoryItem)
-	asset?: { symbol: string; imageUrl?: string | null };
-	// Position shape (mapped from API)
+	assetId?: string;
 	tokenSymbol?: string;
 	tokenValue?: string;
 	assetImg?: string;
@@ -49,11 +47,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function getSymbol(row: OrderTableRow): string {
-	return row.asset?.symbol ?? row.tokenSymbol ?? "";
+	return row.tokenSymbol ?? "";
 }
 
 function getImageUrl(row: OrderTableRow): string | null {
-	return row.asset?.imageUrl ?? row.assetImg ?? null;
+	return row.assetImg ?? null;
 }
 
 function formatAmount(value: string | number): string {
@@ -134,9 +132,7 @@ export function createSideColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	};
 }
 
-export function createOrderTypeColumn<
-	T extends OrderTableRow,
->(): ColumnDef<T> {
+export function createOrderTypeColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	return {
 		accessorKey: "orderType",
 		header: "Order Type",
@@ -170,8 +166,7 @@ export function createFilledAmountColumn<
 			if (!row.original.filledQuantity) return "-";
 			return (
 				<span>
-					{formatAmount(row.original.filledQuantity)}{" "}
-					{getSymbol(row.original)}
+					{formatAmount(row.original.filledQuantity)} {getSymbol(row.original)}
 				</span>
 			);
 		},
@@ -193,9 +188,7 @@ export function createFeeColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	};
 }
 
-export function createTargetAprColumn<
-	T extends OrderTableRow,
->(): ColumnDef<T> {
+export function createTargetAprColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	return {
 		accessorKey: "rate",
 		header: "Target APR %",

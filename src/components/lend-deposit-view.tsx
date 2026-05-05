@@ -17,12 +17,7 @@ import {
 import { getTokenLogo } from "@/lib/tokens";
 import { truncateBalance } from "@/lib/utils";
 import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
-
-interface DepositToken {
-	id: string;
-	symbol: string;
-	imageUrl: string | null;
-}
+import type { Token } from "@/types";
 
 interface LendDepositViewProps {
 	viewMode: string;
@@ -33,7 +28,7 @@ interface LendDepositViewProps {
 	switchingChain: boolean;
 	onSwitchChain: () => void;
 	// Token selection
-	depositTokens: DepositToken[] | undefined;
+	depositTokens: Token[];
 	depositTokensLoading: boolean;
 	depositSelectedTokenId: string;
 	onTokenChange: (id: string) => void;
