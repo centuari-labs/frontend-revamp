@@ -1,6 +1,6 @@
 # Frontend Pentest — Issues
 
-25 issues total: 1 tracking epic, 6 sub-issues for the Critical deposit-flow trust gap, 18 standalone fixes from deeper pentest passes — including 1 Critical operational, 2 High, 11 Medium, 2 Low bundles, 1 preventive hardening, 1 tracking/info.
+26 issues total: 1 tracking epic, 6 sub-issues for the Critical deposit-flow trust gap, 19 standalone fixes from deeper pentest passes — including 1 Critical operational, 3 High, 11 Medium, 2 Low bundles, 1 preventive hardening, 1 tracking/info.
 
 ## Files
 
@@ -37,17 +37,18 @@
 | [`21-orderbook-trades-decimals-default.md`](./21-orderbook-trades-decimals-default.md) | `useOrderbook` / `useRecentTrades` should not render with default `decimals = 6` | Medium | soft #18 |
 | [`22-health-factor-calculation-bundle.md`](./22-health-factor-calculation-bundle.md) | Health factor: fix Infinity-from-API + reconcile borrow/repay formula divergence | Medium | soft #16 |
 | [`23-dedupe-viem-wagmi-lockfile.md`](./23-dedupe-viem-wagmi-lockfile.md) | Dedupe `viem` (and verify `wagmi`) version resolution in `pnpm-lock.yaml` | Medium | soft #16 |
-| [`24-borrow-form-silent-validation.md`](./24-borrow-form-silent-validation.md) | Replace silent validation gates in `useBorrowForm` with explicit toast feedback | Medium | — |
+| [`24-borrow-form-silent-validation.md`](./24-borrow-form-silent-validation.md) | Replace silent validation gates: borrow form, withdraw dialog, maturity dropdown | Medium | — |
+| [`25-tokenlist-hardcoded-prices.md`](./25-tokenlist-hardcoded-prices.md) | Hardcoded prices in `lib/portfolio-data.ts` mis-value IDRX (16 000×) and XSGD (35%) | **High** | soft #16 |
 
 ## Submission order
 
 **Epic group** (#1–#6): #1, #2, #3 ship in parallel (independent). After they merge, #4 and #5 ship in parallel. #6 last.
 
-**Standalone** (#7–#24):
+**Standalone** (#7–#25):
 
 - **Ship #15 FIRST**: it's a Critical operational fix that unblocks every other workflow change (#16, #17 item 2).
-- After #15, ship #16 (lint + typecheck restoration + tsconfig hardening). Together with #15 these form the CI quality-gate floor; #16 also catches the kind of regression that #18, #22, and #23 are live examples of.
-- #7–#14 and #17–#24 are otherwise independent. Soft deps: #12 → #3 (shared `assertAddress`), #14 → #13 (overlapping `remotePatterns`), #17 item 2 → #15 (workflow editing), #18/#19/#22/#23 prefer #16 (typecheck would have caught), #21 prefers #18 (same files; combine if convenient), #24 independent.
+- After #15, ship #16 (lint + typecheck restoration + tsconfig hardening). Together with #15 these form the CI quality-gate floor; #16 also catches the kind of regression that #18, #22, #23, and #25 are live examples of.
+- #7–#14 and #17–#25 are otherwise independent. Soft deps: #12 → #3 (shared `assertAddress`), #14 → #13 (overlapping `remotePatterns`), #17 item 2 → #15 (workflow editing), #18/#19/#22/#23/#25 prefer #16 (typecheck would have caught), #21 prefers #18 (same files; combine if convenient), #24 independent.
 - #20 is **tracking only** — verification with backend, no frontend code change.
 
 ```
@@ -69,10 +70,10 @@
                                                                   └──────────┘
 
   Standalone (any order, independent of each other):
-    #7  #8  #9  #10  #11  #12  #13  #14  #17  #18  #19  #20  #21  #22  #23  #24
-                          ↑         ↑    ↑    ↑    ↑         ↑    ↑    ↑
-                          soft #3   #13  #15  ⤴ four (#18/#19/#22/#23) soft #18
-                                                  prefer #16                    soft #16
+    #7  #8  #9  #10  #11  #12  #13  #14  #17  #18  #19  #20  #21  #22  #23  #24  #25
+                          ↑         ↑    ↑    ↑    ↑         ↑    ↑    ↑         ↑
+                          soft #3   #13  #15  ⤴ five (#18/#19/#22/#23/#25)        ⤴
+                                                  prefer #16                       soft #16
                                                   (typecheck)
                                                                 ↑
                                               #20 is tracking-only —
@@ -94,7 +95,7 @@ Then run:
 ./create-issues.sh
 ```
 
-The script creates all 25 issues (1 epic, 6 sub-issues, 18 standalone), captures their numbers, edits the epic body to link the real sub-issue numbers, and prints a summary table at the end. Re-running is safe only if you delete or close the previous issues first — the script does not deduplicate.
+The script creates all 26 issues (1 epic, 6 sub-issues, 19 standalone), captures their numbers, edits the epic body to link the real sub-issue numbers, and prints a summary table at the end. Re-running is safe only if you delete or close the previous issues first — the script does not deduplicate.
 
 ## Manual submission
 
@@ -112,7 +113,7 @@ If you prefer the GitHub UI: the body of each `*.md` file in this folder is read
 |---|---|---|
 | Critical (security) | 3 | #2, #3, #4 |
 | Critical (operational) | 1 | #15 |
-| High | 5 | #5, #6, #7, #16, #18 |
+| High | 6 | #5, #6, #7, #16, #18, #25 |
 | Medium | 10 | #8, #9, #10, #11, #12, #19, #21, #22, #23, #24 |
 | Medium + Low (bundle, 6 items) | 1 | #17 |
 | Low (bundle, 7 items) | 1 | #13 |

@@ -179,7 +179,11 @@ Codebase elsewhere uses comma-as-decimal for **display** (`formattedAPR.replace(
 - Decide on a single locale convention for the input layer. Recommended: keep US convention (period as decimal, comma as thousand-sep stripped) since `parseFloat` only handles US. Document this choice inline.
 - Strip both period and comma at the thousand-separator level, then accept either as decimal. Or constrain inputs more aggressively: digits + a single decimal separator + a max length.
 - Reject exponential notation explicitly (`.replace(/[^\d.]/g, "")` already does this incidentally, but a typed-input `<input type="text" pattern="[0-9.,]*" inputMode="decimal">` would let the browser block e/E earlier).
-- Add a Vitest covering: US input (`"1,234.56"`), Indonesian input (`"1.234,56"` — current parser fails this), exponential input (`"1e10"` — should not silently truncate).
+- Audit other amount-input call sites for the same family of issues:
+  - `centuari-withdraw-dialog.tsx:62` — `Number(withdrawAmount) || 0` accepts exponential notation. `Number("1e10") = 10_000_000_000`. Silent corruption: not the input box's responsibility, but `amountNum` flows into `exceedsBalance` and the row's USD calculation. Add the same input constraint there.
+  - `centuari-repay-dialog.tsx` — `parseFloat` similarly. Defaults to 0 on bad input (defensive ✓), but no explicit reject of exponentials.
+  - Any other `parseFloat`/`Number(...)` call on a user-typed amount string. Standardize on a single helper `parseAmountStrict(value: string): number | null` that returns `null` on exponential / non-numeric / empty input.
+- Add a Vitest covering: US input (`"1,234.56"`), Indonesian input (`"1.234,56"` — current parser fails this), exponential input (`"1e10"` — should be rejected at the helper, not silently truncated).
 
 # Item 7 — Delete `usePortfolioFromStorage` dead-code hook
 
