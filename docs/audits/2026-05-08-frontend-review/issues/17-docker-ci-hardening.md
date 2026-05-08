@@ -60,33 +60,82 @@ coverage/
 
 (`*.md` excludes top-level READMEs etc. If a runtime feature reads `package.json` or a markdown — none does today — re-add.)
 
-# Item 2 — CI guard for `NEXT_PUBLIC_USE_MOCK` (Medium)
+# Item 2 — Decide what to do with the `NEXT_PUBLIC_USE_MOCK` plumbing (Medium)
 
-**File:** `.github/workflows/deploy.yml`
+**Files:** `.github/workflows/deploy.yml`, `Dockerfile`, `src/lib/use-mock.ts`
 
-Currently:
+Round-8 follow-up: `NEXT_PUBLIC_USE_MOCK` is currently **dead config**. The env var threads through:
+
+```dockerfile
+# Dockerfile
+ARG NEXT_PUBLIC_USE_MOCK
+ENV NEXT_PUBLIC_USE_MOCK=$NEXT_PUBLIC_USE_MOCK
+```
 
 ```yaml
+# .github/workflows/deploy.yml
 --build-arg NEXT_PUBLIC_USE_MOCK='${{ vars.NEXT_PUBLIC_USE_MOCK }}'
 ```
 
-If `vars.NEXT_PUBLIC_USE_MOCK` is set to `"true"` for the production environment in GitHub (typo in admin UI, copy-paste from staging, etc.), the production bundle ships with mock-data hooks active. Audit M-4 (`localStorage` JSON unvalidated parsing) was downgraded on the assumption that mock mode never ships. This Dockerfile/CI does not enforce that assumption.
+…but `src/lib/use-mock.ts` is:
 
-**AC:** add a gate step before `docker build`:
+```ts
+export const USE_MOCK = false;
+```
+
+A hardcoded literal. **Nothing reads the env var.** Today the env var has zero effect.
+
+The team needs to **decide between** two paths:
+
+### Path A — Remove the dead plumbing (recommended)
+
+The simplest path. Mock mode is a build-time-frozen `false`. The CI/Docker plumbing is removed entirely.
+
+- Delete `ARG NEXT_PUBLIC_USE_MOCK` and `ENV NEXT_PUBLIC_USE_MOCK=$NEXT_PUBLIC_USE_MOCK` from `Dockerfile`.
+- Delete `--build-arg NEXT_PUBLIC_USE_MOCK='${{ vars.NEXT_PUBLIC_USE_MOCK }}'` from the workflow.
+- Delete the GitHub `vars.NEXT_PUBLIC_USE_MOCK` var from each environment.
+- Optional: delete `src/lib/use-mock.ts` entirely and inline `false` at call sites — but the constant is referenced by mock files so leave it as-is.
+
+This eliminates the M-4 risk class entirely (mock mode cannot ship because the toggle does not exist).
+
+### Path B — Wire it for real
+
+Make the env var live and add the CI guard:
+
+```ts
+// src/lib/use-mock.ts
+export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+```
+
+Then add the workflow guard:
 
 ```yaml
 - name: Refuse to build prod with mocks enabled
   if: needs.detect-env.outputs.env == 'prod'
   run: |
-    if [ "${{ vars.NEXT_PUBLIC_USE_MOCK }}" != "false" ]; then
-      echo "::error::NEXT_PUBLIC_USE_MOCK must be 'false' for prod builds (got: '${{ vars.NEXT_PUBLIC_USE_MOCK }}')"
+    if [ "${{ vars.NEXT_PUBLIC_USE_MOCK }}" != "false" ] && [ -n "${{ vars.NEXT_PUBLIC_USE_MOCK }}" ]; then
+      echo "::error::NEXT_PUBLIC_USE_MOCK must be 'false' (or unset) for prod (got: '${{ vars.NEXT_PUBLIC_USE_MOCK }}')"
       exit 1
     fi
 ```
 
-Also add the inverse for staging if staging is ever expected to be mock-only — the rule should be explicit, not implicit.
+Note: include the `unset` guard (`-n` check) — an unset GitHub var stringifies to `""`, which fails `!= "false"` and would erroneously block a deploy.
 
-Optional follow-up: add a runtime check at app boot that asserts `process.env.NEXT_PUBLIC_USE_MOCK !== "true"` AND `window.location.hostname` matches a prod allowlist; throws a visible error if both are true. Defense-in-depth.
+Also add a **runtime** assertion at app boot for defense-in-depth:
+
+```ts
+// somewhere in the provider stack, top of mount
+if (USE_MOCK && typeof window !== "undefined" && window.location.hostname === "app.centuari.finance") {
+  throw new Error("Mock mode is enabled in production — refusing to render");
+}
+```
+
+### AC for this item
+
+- [ ] Team picks Path A or Path B.
+- [ ] Path A: env-var plumbing removed from `Dockerfile`, `deploy.yml`, GitHub Environments. `src/lib/use-mock.ts` left as-is (hardcoded `false`).
+- [ ] Path B: `use-mock.ts` reads the env var; CI guard added with proper unset handling; runtime hostname assertion added.
+- [ ] In either case, the audit's M-4 finding is closed: mock mode demonstrably cannot ship in production.
 
 # Item 3 — `USER node` in Dockerfile (Low)
 

@@ -1,17 +1,18 @@
 ---
-title: "Migrate `getMyAssets` / `getOrderHistory` / `getTransactionHistory` to `apiClient`"
+title: "Migrate `getMyAssets` / `getOrderHistory` / `getTransactionHistory` / `getMyPositions` to `apiClient`"
 labels: ["chore", "medium", "area:api", "bug"]
 ---
 
 # Summary
 
-Three functions in `lib/api.ts` use raw `fetch()` instead of the centralized `apiClient` wrapper. They miss the `AuthError` typed-throw, the centralized error-message extraction, and the `Authorization` header consistency. CLAUDE.md says all fetch should go through `apiClient`; these three are the last holdouts.
+Four functions in `lib/api.ts` use raw `fetch()` instead of the centralized `apiClient` wrapper. They miss the `AuthError` typed-throw, the centralized error-message extraction, and the `Authorization` header consistency. CLAUDE.md says all fetch should go through `apiClient`; these four are the last holdouts.
 
 # Why
 
 The offending functions:
 
 - `getMyAssets` — `lib/api.ts:324-355`
+- `getMyPositions` — `lib/api.ts:206-247` *(added in deep-dive Round 8 — initially missed)*
 - `getOrderHistory` — `lib/api.ts:620-669`
 - `getTransactionHistory` — `lib/api.ts:694-768`
 
@@ -44,7 +45,7 @@ if (res.status === 401) throw new AuthError(message);  // typed → triggers fre
 # Acceptance criteria
 
 - [ ] `apiClient` accepts an optional `query?: Record<string, string | number | undefined>` parameter (or a `URLSearchParams`) so callers don't need to build query strings by hand.
-- [ ] `getMyAssets`, `getOrderHistory`, `getTransactionHistory` are rewritten to call `apiClient` with method `"GET"`, `token`, and the new `query` parameter. The pagination / filter logic stays the same.
+- [ ] `getMyAssets`, `getMyPositions`, `getOrderHistory`, `getTransactionHistory` are rewritten to call `apiClient` with method `"GET"`, `token`, and the new `query` parameter. The pagination / filter logic stays the same.
 - [ ] `grep -rn "fetch(\`/api" src/lib/api.ts` returns no matches.
 - [ ] All three functions still return the same response shape (the small "meta normalization" that wraps the backend's `meta` block stays — just move it to live around the `apiClient` call, or do it inside `apiClient` if the shape generalizes).
 - [ ] The existing tests for these functions still pass. Add a test that verifies a 401 from one of these endpoints triggers `AuthError` (not a generic `Error`).
@@ -53,8 +54,8 @@ if (res.status === 401) throw new AuthError(message);  // typed → triggers fre
 # Files to change
 
 - `src/lib/api-client.ts` — extend signature with `query?` parameter
-- `src/lib/api.ts` (lines 324-355, 620-669, 694-768) — rewrite three functions
-- Any existing tests for these functions (`src/hooks/__tests__/use-my-assets.test.ts`, `use-order-history.test.ts`, `use-transaction-history.test.ts`)
+- `src/lib/api.ts` (lines 206-247, 324-355, 620-669, 694-768) — rewrite four functions
+- Any existing tests for these functions (`src/hooks/__tests__/use-my-assets.test.ts`, `use-my-positions.test.ts`, `use-order-history.test.ts`, `use-transaction-history.test.ts`)
 
 # Suggested patch sketch
 
@@ -103,7 +104,7 @@ export async function getMyAssets(
 
 # Estimated effort
 
-~30 LOC across 4 files + test updates. ~1 hour.
+~40 LOC across 5 files + test updates. ~1-1.5 hours.
 
 # Dependencies
 
