@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Bulk-create the 26 issues from this folder via the gh CLI:
+# Bulk-create the 27 issues from this folder via the gh CLI:
 #   - 1 epic (#0)
 #   - 6 sub-issues (#1..#6) under the epic — token & decimals trust
-#   - 19 standalone (#7..#25) — proxy hardening, faucet auth, fee logic,
+#   - 20 standalone (#7..#26) — proxy hardening, faucet auth, fee logic,
 #     wallet fallback, apiClient consistency, wallet-address validation,
 #     low-severity cleanup bundle, next.config.ts hardening,
 #     deploy.yml conflict resolution, lint + typecheck restoration,
 #     Docker / CI hardening bundle, APR units bug, mapStatus fail-loud,
 #     DEV_TOKEN backend verification, orderbook/trades decimals default,
 #     health factor calculation bundle, viem/wagmi dedupe,
-#     borrow form silent validation, tokenList hardcoded prices
+#     borrow form silent validation, tokenList hardcoded prices,
+#     submit-proof dialog half-built
 #
 # Requirements:
 #   - gh installed and authenticated (`gh auth status`)
@@ -105,7 +106,7 @@ EPIC_NUMBER="${EPIC_URL##*/}"
 echo "  → #$EPIC_NUMBER  $EPIC_URL"
 
 echo
-echo "Creating standalone issues 7..25..."
+echo "Creating standalone issues 7..26..."
 N7=$(create_issue 07-proxy-path-prefix-bypass.md)
 N8=$(create_issue 08-faucet-authenticate.md)
 N9=$(create_issue 09-fee-logic-divergence.md)
@@ -125,6 +126,7 @@ N22=$(create_issue 22-health-factor-calculation-bundle.md)
 N23=$(create_issue 23-dedupe-viem-wagmi-lockfile.md)
 N24=$(create_issue 24-borrow-form-silent-validation.md)
 N25=$(create_issue 25-tokenlist-hardcoded-prices.md)
+N26=$(create_issue 26-submit-proof-dialog-half-built.md)
 
 cat <<SUMMARY
 
@@ -155,6 +157,7 @@ Created issues:
   Stand  #$N23  Dedupe viem (and wagmi) version resolution        [Medium]      (soft dep on #$N16)
   Stand  #$N24  Replace silent validation gates (borrow/withdraw/maturity) [Medium] (independent)
   Stand  #$N25  tokenList hardcoded prices (IDRX/XSGD currency confusion)  [High]   (soft dep on #$N16)
+  Stand  #$N26  SubmitProofDialog half-built upload UI                     [Medium] (independent)
 
 Next steps:
   - Open the epic and verify the dependency links resolved correctly.

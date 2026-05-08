@@ -57,6 +57,38 @@ src/hooks/use-lend-form.ts:251                              # amountInUsd = nume
 
 Four call sites. Two of them are in **submit handlers** for the lend form — meaning the wrong USD figure can flow into the request body if the order DTO ever uses `amountInUsd` (verify with the backend's `createLendLimitOrder` payload contract).
 
+# Second source-of-truth — `amend-dialog.tsx` ships its own token list (Round-12 add)
+
+```ts
+// src/components/amend-dialog.tsx:32-39
+const defaultTokenList: TokenOption[] = [
+  { logo: "/tokens/btc-icon.webp",                value: "btc",      label: "Bitcoin" },
+  { logo: "/tokens/xaut-icon.webp",               value: "xaut",     label: "Tether Gold" },
+  { logo: "/tokens/eth-icon.webp",                value: "eth",      label: "Ethereum" },
+  { logo: "/tokens/centuari-arbitrum.png",        value: "arb",      label: "Arbitrum" },
+  { logo: "/tokens/usdc-icon.webp",               value: "usdc",     label: "USDC" },
+  { logo: "/tokens/usdt-icon.webp",               value: "usdt",     label: "USDT" },
+  { logo: "/tokens/centuari-dai.png",             value: "dai",      label: "DAI" },
+  { logo: "/tokens/centuari-centuari.png",        value: "centuari", label: "Centuari" },
+];
+```
+
+A **second hardcoded token list**, independent of `lib/portfolio-data.ts:tokenList`. Different shape (no `price`, `ltv`, `liquidationThreshold`) but overlapping values. Two sources of truth that can drift independently — adding/removing a token from one doesn't sync the other.
+
+Worse: line 56 falls back silently:
+
+```ts
+const selectedToken = tokenList.find(t => t.value === position.tokenValue) || tokenList[0];
+```
+
+If `position.tokenValue` is unknown to this list (e.g. backend introduces a new market), the amend dialog quietly proceeds editing under the **first token** in the array — Bitcoin in this case. Same "fail-loud not silent" theme as #19 (mapStatus).
+
+**Action:** include the `amend-dialog.tsx` cleanup in this issue. Either:
+- Import `tokenList` from `lib/portfolio-data.ts` (after `price` field is removed) so there's one source.
+- Better, source the token list from API (`useDepositTokens` or a new `useMarketTokens` hook) so the frontend mirrors the backend's actual market list.
+
+Either way the inline `defaultTokenList` constant should be deleted. Audit cross-reference: same family as Round-10 #25 hardcoded-prices finding — different file, same root cause (frontend ships its own copy of data that should come from backend or a single committed config).
+
 # Acceptance criteria
 
 - [ ] All four call sites are migrated off `tokenInfo.price` as a USD source. Replace with `useTokenPrice(assetId)` from `PriceProvider` (Socket.io WS feed). For consumers that don't have an `assetId`, derive it from the symbol (the existing `getTokenPrice(amountInUsd, walletBalance)` helper in `lib/utils.ts:13` is a working alternative when both fields exist).
@@ -78,6 +110,7 @@ Four call sites. Two of them are in **submit handlers** for the lend form — me
 - `src/lib/portfolio-data.ts` — remove or strongly type the `price` field
 - `src/components/portfolio/tables/data-table-assets.tsx` (line 230)
 - `src/hooks/use-lend-form.ts` (lines 127, 187, 251)
+- `src/components/amend-dialog.tsx` (lines 32-39 + 56) — delete the inline `defaultTokenList`, source from canonical place; replace silent `|| tokenList[0]` fallback with explicit error / disabled state
 - `src/contexts/price-context.tsx` — possibly expose a bulk-read helper if needed for the table
 - Tests for the above
 

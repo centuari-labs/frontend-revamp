@@ -72,16 +72,27 @@ const currentHealthFactor = userDetails?.healthFactor ?? 0;
 - Update `centuari-health-factor.tsx` to render a distinct "No debt" / "—" pill with neutral / green styling for `kind: "no-debt"`, instead of falling into the "Danger" branch.
 - Update repay-dialog `currentHealthFactor` derivation to use `classifyHealthFactor` and surface the no-debt state (a user repaying when they have no debt shouldn't be able to enter the repay dialog at all, but defensively handle it).
 
-# Bug 2 — Borrow and repay HF projections use different debt fields
+# Bug 2 — Borrow and repay HF projections use different debt fields (THREE copies of the math)
 
-**Files:** `src/hooks/use-borrow-calculations.ts:25` vs `src/components/centuari-repay-dialog.tsx:114-117`.
+**Files:**
+
+- `src/hooks/use-borrow-calculations.ts:25` (borrow projection — used by market-page form)
+- `src/components/centuari-borrow-dialog.tsx:130-141` (borrow projection — **inlined** in the dialog body, separate copy)
+- `src/components/centuari-repay-dialog.tsx:114-117` (repay projection)
+
+Round-12 deep dive verified that the borrow dialog body inlines the same projection math instead of consuming `useBorrowCalculations`. Three places in the codebase compute "what is the health factor after this action" — all subtly different, none documented relative to the others.
 
 ```ts
-// use-borrow-calculations.ts (borrow projection)
+// use-borrow-calculations.ts (borrow projection — canonical-ish)
 const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
 const healthFactor = numerator / projectedDebt;   // projectedDebt = settledDebtUsd + newBorrowUsd
 //                                  ^^^^^^^^^^^^^^^^
 //                  numerator: collateral − SETTLED debt
+
+// centuari-borrow-dialog.tsx:130-141 (inlined duplicate of the above)
+const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
+const calculatedHF = numerator / projectedDebt;
+// ^ identical math, just inlined. Three sites of drift instead of one.
 
 // centuari-repay-dialog.tsx (repay projection)
 const newHealthFactor = newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
@@ -91,6 +102,8 @@ const newHealthFactor = newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv 
   //                  denominator: NEW total debt (post-repay)
   : ...;
 ```
+
+Plus, `centuari-borrow-dialog.tsx:142-150` inlines the entire `getHealthFactorPercentage` cascade **even though `getHealthFactorPercentage` is imported at line 27 and is the canonical implementation**. Dead-import + duplicate-math.
 
 The borrow path subtracts **`settledDebtUsd`** from collateral; the repay path subtracts **`totalDebtUsd`**. `UserDetailsResponse` has three debt fields:
 
@@ -137,6 +150,7 @@ Concrete failure modes:
 - [ ] Add Zod schema for `UserDetailsResponse` validating `healthFactor` (`z.number().finite().nonnegative().nullable()`). Apply it in `getUserDetails` (`lib/api.ts:280`).
 - [ ] `centuari-health-factor.tsx` consumes `classifyHealthFactor`. Renders distinct "No debt" pill for `kind: "no-debt"` (neutral/green color, label "No debt", no progress bar). Renders existing tiers for healthy/danger.
 - [ ] `useBorrowCalculations` calls `projectHealthFactorForBorrow` instead of inlining the math.
+- [ ] `centuari-borrow-dialog.tsx` (lines 130-150) **stops inlining** the projection math and the percentage cascade. Consume `useBorrowCalculations` (or directly `projectHealthFactorForBorrow` + `getHealthFactorPercentage` from the new module). Remove the dead duplicate code.
 - [ ] `centuari-repay-dialog.tsx` calls `projectHealthFactorForRepay` instead of inlining the math.
 - [ ] Backend coordination (small): confirm what `healthFactor` looks like over the wire when the user has no debt. Document the answer inline in `lib/health-factor.ts` (comment block at the top: "Backend convention as of [date]: …"). If the wire format is something other than `null` (e.g. a sentinel `9999`), update the Zod schema and `classifyHealthFactor` accordingly.
 - [ ] Vitest covering both formula paths and the classify function. Critical cases:
@@ -154,6 +168,7 @@ Concrete failure modes:
 - `src/lib/api.ts` (line 259 type comment + Zod schema for `UserDetailsResponse`)
 - `src/components/centuari-health-factor.tsx` (lines 25-90 simplified via `classifyHealthFactor`)
 - `src/hooks/use-borrow-calculations.ts` (line 25 onwards) — call new helper
+- `src/components/centuari-borrow-dialog.tsx` (lines 130-150) — remove inlined math + dead-import duplication
 - `src/components/centuari-repay-dialog.tsx` (lines 99, 114-117) — call new helper, render no-debt branch
 - `src/lib/utils.ts` — move `getHealthFactorPercentage` out (re-export from `health-factor.ts` to avoid breaking imports during migration)
 - `src/lib/__tests__/health-factor.test.ts` (new)
