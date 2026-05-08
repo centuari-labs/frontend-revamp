@@ -1,13 +1,13 @@
 ---
-title: "Low-severity cleanup bundle (6 items) — dead code, headers, env strictness, locale parsing"
+title: "Low-severity cleanup bundle (7 items) — dead code, headers, env strictness, locale parsing, dead localStorage hook"
 labels: ["chore", "low", "cleanup", "area:config"]
 ---
 
 # Summary
 
-Six small, independent cleanups bundled into one PR. Each is sub-30-LOC; doing them as separate PRs would create more review noise than the changes themselves. None is a security vulnerability on its own; collectively they reduce attack surface, fix a UX papercut, and tighten configuration.
+Seven small, independent cleanups bundled into one PR. Each is sub-30-LOC; doing them as separate PRs would create more review noise than the changes themselves. None is a security vulnerability on its own; collectively they reduce attack surface, fix a UX papercut, and tighten configuration.
 
-The six items:
+The seven items:
 
 1. Delete `submitDeposit` dead code in `lib/api.ts:500-510`.
 2. `useSyncAccount` should not force-logout on every backend error during `/auth/login`.
@@ -15,6 +15,7 @@ The six items:
 4. Remove deprecated `X-XSS-Protection` header from `next.config.ts`.
 5. `IS_MAINNET` should fail loudly on unrecognized `NEXT_PUBLIC_CHAIN_ENV` values rather than silently picking testnet.
 6. `parseNumberFromSeparator` is locale-fragile — handles US thousand-separators but corrupts Indonesian-locale input.
+7. Delete `usePortfolioFromStorage` dead-code hook + its three orphan localStorage keys.
 
 # Item 1 — Delete `submitDeposit` dead code
 
@@ -180,10 +181,33 @@ Codebase elsewhere uses comma-as-decimal for **display** (`formattedAPR.replace(
 - Reject exponential notation explicitly (`.replace(/[^\d.]/g, "")` already does this incidentally, but a typed-input `<input type="text" pattern="[0-9.,]*" inputMode="decimal">` would let the browser block e/E earlier).
 - Add a Vitest covering: US input (`"1,234.56"`), Indonesian input (`"1.234,56"` — current parser fails this), exponential input (`"1e10"` — should not silently truncate).
 
+# Item 7 — Delete `usePortfolioFromStorage` dead-code hook
+
+**Files:** `src/hooks/use-portfolio-from-storage.ts`, `src/hooks/__tests__/use-portfolio-from-storage.test.ts`
+
+`grep -rn "usePortfolioFromStorage" src/` shows only:
+
+- The definition file
+- The hook's own test file
+- One stale `vi.mock(...)` in `use-lend-dialog-data.api.test.ts` for a hook that doesn't actually import it (vestigial mock)
+
+**No production component imports the hook.** It reads/writes three localStorage keys (`centuari_portfolio`, `centuari_total_debt`, `centuari_collateral`) that no production code consumes either. Audit M-4 (in `security.md`) was originally raised against the assumption this hook was wired into the borrow flow; Round 10 verified it is not.
+
+**AC:**
+
+- Delete `src/hooks/use-portfolio-from-storage.ts`.
+- Delete `src/hooks/__tests__/use-portfolio-from-storage.test.ts`.
+- Remove the stale `vi.mock("@/hooks/use-portfolio-from-storage", ...)` from `src/hooks/__tests__/use-lend-dialog-data.api.test.ts:38-42` (also unused).
+- Add a one-time migration step (optional): a tiny `useEffect` in the root layout that calls `localStorage.removeItem(...)` for the three keys. Without it, users who previously had mock-mode data leave orphan keys forever. Migration is purely cosmetic; not strictly required.
+- `grep -rn "centuari_portfolio\|centuari_total_debt\|centuari_collateral" src/` returns no matches after the change (test fixtures may keep the strings — that's fine).
+
+This collapses the M-4 risk class entirely: there is no code path that parses unvalidated localStorage data into UI in production.
+
 # Acceptance criteria (whole PR)
 
-- [ ] All six items completed.
+- [ ] All seven items completed.
 - [ ] Unit tests for items 2, 5, 6 (the others are deletions / config — covered by smoke).
+- [ ] After item 7, the audit's M-4 finding (`localStorage` JSON unvalidated parsing) closes — `grep` for the three storage keys returns clean.
 - [ ] Smoke test: home, market, portfolio, faucet, deposit dialog open, login flow — all still work.
 - [ ] `pnpm run lint` clean.
 

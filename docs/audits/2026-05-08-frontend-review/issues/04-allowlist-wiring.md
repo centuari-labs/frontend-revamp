@@ -25,6 +25,10 @@ Pinning every signed contract call to a hardcoded, code-reviewed allowlist remov
   - `tokenAddress` differs from allowlist for same symbol → throws "address mismatch", never calls `writeContract`.
   - `symbol` not in allowlist → throws "unknown token", never calls `writeContract`.
 - [ ] When the error is "address mismatch" (the tampering signal), an analytics/log event is emitted with `{ chainId, symbol, expected, received }` so SecOps can detect and alert. (Use whatever logger the team already wires; do not introduce a new vendor.)
+- [ ] **Smoke test for the auto-select widening (Round-10 follow-up):** `centuari-deposit-dialog.tsx:54-58` auto-selects `tokens[0]` once the API list loads. After this issue lands, manually serve a deliberately-corrupted `tokens` list (via DevTools network override, MITM-style intercept, or a backend feature flag) where the first entry has a tokenAddress NOT in the allowlist. Confirm:
+  - Dialog rejects the auto-selected token (renders an explicit "Unknown / unsupported token" message instead of silently letting the user enter an amount).
+  - User cannot reach the deposit submit path while a non-allowlisted token is selected.
+  - No `writeContract` call fires in the network tab.
 
 # Files to change
 
