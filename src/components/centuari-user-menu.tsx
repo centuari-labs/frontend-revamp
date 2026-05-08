@@ -158,7 +158,7 @@ export function CentuariUserMenu() {
           className="group/glass relative isolate overflow-hidden flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
         >
           <CentuariGlassLayers intensity="soft" sheen={false} />
-          <div className="relative z-20 w-7 h-7 rounded-md bg-primary-blue-base/60 flex items-center justify-center text-white text-sm font-semibold">
+          <div className="relative z-20 w-7 h-7 rounded-md bg-gray-700 flex items-center justify-center text-white text-sm font-semibold">
             {initial}
           </div>
           <ChevronDown className="relative z-20 w-4 h-4 text-white/60" />

@@ -25,16 +25,18 @@ export default function RootLayout({
         suppressHydrationWarning
         suppressContentEditableWarning
       >
-        <main
-          className="mx-auto max-w-full py-2.5 text-foreground min-h-screen"
+        <div
+          className="fixed inset-0"
           style={{
             backgroundImage: 'url("/bg-centuari.webp")',
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
-        >
-          <div className="fixed inset-0 -z-10 bg-black" />
+        />
+        <div className="fixed inset-0 -z-10 bg-black" />
+
+        <main className="mx-auto max-w-full py-2.5 text-foreground min-h-screen">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
