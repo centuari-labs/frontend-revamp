@@ -1,19 +1,20 @@
 ---
-title: "Low-severity cleanup bundle (5 items) — dead code, headers, env strictness"
+title: "Low-severity cleanup bundle (6 items) — dead code, headers, env strictness, locale parsing"
 labels: ["chore", "low", "cleanup", "area:config"]
 ---
 
 # Summary
 
-Five small, independent cleanups bundled into one PR. Each is sub-30-LOC; doing them as separate PRs would create more review noise than the changes themselves. None is a security vulnerability on its own; collectively they reduce attack surface, fix a UX papercut, and tighten configuration.
+Six small, independent cleanups bundled into one PR. Each is sub-30-LOC; doing them as separate PRs would create more review noise than the changes themselves. None is a security vulnerability on its own; collectively they reduce attack surface, fix a UX papercut, and tighten configuration.
 
-The five items:
+The six items:
 
 1. Delete `submitDeposit` dead code in `lib/api.ts:500-510`.
 2. `useSyncAccount` should not force-logout on every backend error during `/auth/login`.
 3. Add `images.remotePatterns` to `next.config.ts` for `assets.coingecko.com`.
 4. Remove deprecated `X-XSS-Protection` header from `next.config.ts`.
 5. `IS_MAINNET` should fail loudly on unrecognized `NEXT_PUBLIC_CHAIN_ENV` values rather than silently picking testnet.
+6. `parseNumberFromSeparator` is locale-fragile — handles US thousand-separators but corrupts Indonesian-locale input.
 
 # Item 1 — Delete `submitDeposit` dead code
 
@@ -152,10 +153,37 @@ const IS_MAINNET = env === "mainnet";
 - Document the allowed values in `.env.example` / README.
 - Default behavior when env is `undefined` stays as testnet (current dev behavior). Only typoed/misspelled values throw.
 
+# Item 6 — `parseNumberFromSeparator` locale-fragile
+
+**File:** `src/lib/utils.ts`
+
+```ts
+export function parseNumberFromSeparator(value: string): string {
+  if (!value) return "";
+  // Remove all non-digit characters except decimal point
+  return value.replace(/[^\d.]/g, "");
+}
+```
+
+Strips everything except digits and periods. Behaviour:
+
+- US locale: `"1,234.56"` → `"1234.56"` ✓ (commas stripped, period stays as decimal).
+- Indonesian locale: `"1.234,56"` (period as thousand-sep, comma as decimal) → `"1.234.56"` → `parseFloat = 1` ❌ (treats period as decimal, parses up to second period).
+- Exponential: `"1.5e10"` → `"1.510"` (silently corrupted). At least bounded — the user gets a wrong but small number instead of `1.5 × 10¹⁰`.
+
+Codebase elsewhere uses comma-as-decimal for **display** (`formattedAPR.replace(".", ",")`, "5,0%"). Input handling assumes US locale; display assumes Indonesian. Inconsistent.
+
+**AC:**
+
+- Decide on a single locale convention for the input layer. Recommended: keep US convention (period as decimal, comma as thousand-sep stripped) since `parseFloat` only handles US. Document this choice inline.
+- Strip both period and comma at the thousand-separator level, then accept either as decimal. Or constrain inputs more aggressively: digits + a single decimal separator + a max length.
+- Reject exponential notation explicitly (`.replace(/[^\d.]/g, "")` already does this incidentally, but a typed-input `<input type="text" pattern="[0-9.,]*" inputMode="decimal">` would let the browser block e/E earlier).
+- Add a Vitest covering: US input (`"1,234.56"`), Indonesian input (`"1.234,56"` — current parser fails this), exponential input (`"1e10"` — should not silently truncate).
+
 # Acceptance criteria (whole PR)
 
-- [ ] All five items completed.
-- [ ] Unit tests for items 2, 5 (the others are deletions / config — covered by smoke).
+- [ ] All six items completed.
+- [ ] Unit tests for items 2, 5, 6 (the others are deletions / config — covered by smoke).
 - [ ] Smoke test: home, market, portfolio, faucet, deposit dialog open, login flow — all still work.
 - [ ] `pnpm run lint` clean.
 
