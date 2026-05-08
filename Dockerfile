@@ -14,14 +14,14 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the source code
 COPY . .
 
-# NEXT_PUBLIC_* vars harus di-bake saat build (Next.js mem-resolve pada compile time).
-# Kosongkan default agar build tetap bisa jalan tanpa args untuk dev lokal.
-ARG NEXT_PUBLIC_PRIVY_APP_ID=""
-ARG NEXT_PUBLIC_WS_URL=""
-ARG NEXT_PUBLIC_CHAIN_ENV="testnet"
-ARG NEXT_PUBLIC_USE_MOCK="false"
-ARG NEXT_PUBLIC_RPC_URL=""
-ARG NEXT_PUBLIC_TREASURY_ADDRESS=""
+# Build-time public env vars baked into the client bundle.
+# These MUST be declared as ARG; --build-arg from CI is otherwise ignored.
+ARG NEXT_PUBLIC_PRIVY_APP_ID
+ARG NEXT_PUBLIC_WS_URL
+ARG NEXT_PUBLIC_CHAIN_ENV
+ARG NEXT_PUBLIC_USE_MOCK
+ARG NEXT_PUBLIC_RPC_URL
+ARG NEXT_PUBLIC_TREASURY_ADDRESS
 ENV NEXT_PUBLIC_PRIVY_APP_ID=$NEXT_PUBLIC_PRIVY_APP_ID
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_CHAIN_ENV=$NEXT_PUBLIC_CHAIN_ENV

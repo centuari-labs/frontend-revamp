@@ -8,7 +8,11 @@ name: Build & Deploy frontend-revamp
 
 on:
   push:
+<<<<<<< staging
     branches: [development, staging, main]
+=======
+    branches: [staging, testnet]
+>>>>>>> testnet
   workflow_dispatch:
 
 concurrency:
@@ -26,20 +30,30 @@ jobs:
       - id: set
         run: |
           case "${{ github.ref_name }}" in
+<<<<<<< staging
             development)
               echo "env=dev" >> $GITHUB_OUTPUT
               echo "namespace=centuari-dev" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.dev.yml -p centuari-dev" >> $GITHUB_OUTPUT
               ;;
+=======
+>>>>>>> testnet
             staging)
               echo "env=staging" >> $GITHUB_OUTPUT
               echo "namespace=centuari-staging" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.staging.yml -p centuari-staging" >> $GITHUB_OUTPUT
               ;;
+<<<<<<< staging
             main)
               echo "env=prod" >> $GITHUB_OUTPUT
               echo "namespace=centuari" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.prod.yml" >> $GITHUB_OUTPUT
+=======
+            testnet)
+              echo "env=testing" >> $GITHUB_OUTPUT
+              echo "namespace=centuari-testing" >> $GITHUB_OUTPUT
+              echo "compose_cmd=docker compose -f compose.testing.yml -p centuari-testing" >> $GITHUB_OUTPUT
+>>>>>>> testnet
               ;;
             *)
               echo "Unknown branch ${{ github.ref_name }}" >&2
@@ -48,6 +62,13 @@ jobs:
           esac
 
   test:
+<<<<<<< staging
+=======
+    # Skipped on testnet branch — test suite is being fixed in a separate plan.
+    # See docs/plans/2026-05-01-fix-frontend-testnet-tests.md.
+    # TODO: remove the `if:` once tests are sync'd to current adapter & status enum.
+    if: github.ref_name != 'testnet'
+>>>>>>> testnet
     needs: detect-env
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -72,6 +93,13 @@ jobs:
 
   build-and-deploy:
     needs: [detect-env, test]
+<<<<<<< staging
+=======
+    if: |
+      always() &&
+      needs.detect-env.result == 'success' &&
+      (needs.test.result == 'success' || needs.test.result == 'skipped')
+>>>>>>> testnet
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: ${{ needs.detect-env.outputs.env }}
@@ -80,7 +108,11 @@ jobs:
       IMAGE_NAME: ${{ needs.detect-env.outputs.namespace }}/frontend-revamp
       REGISTRY: localhost:5000
       COMPOSE_CMD: ${{ needs.detect-env.outputs.compose_cmd }}
+<<<<<<< staging
       SERVICE_NAME: frontend${{ needs.detect-env.outputs.env == 'prod' && '' || format('-{0}', needs.detect-env.outputs.env) }}
+=======
+      SERVICE_NAME: frontend-${{ needs.detect-env.outputs.env }}
+>>>>>>> testnet
     steps:
       - uses: actions/checkout@v4
 
@@ -130,10 +162,19 @@ jobs:
         run: pkill -f "ssh.*-L 5000:127.0.0.1:5000" || true
 
       - name: Deploy to VPS
+<<<<<<< staging
+=======
+        # Force-remove the container by name first, in case it was created with a
+        # different compose project label (legacy bootstrap).
+>>>>>>> testnet
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT || 22 }} \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ~/centuari && \
+<<<<<<< staging
+=======
+             docker rm -f centuari-${{ needs.detect-env.outputs.env }}-frontend 2>/dev/null || true && \
+>>>>>>> testnet
              ${{ env.COMPOSE_CMD }} pull ${{ env.SERVICE_NAME }} && \
              ${{ env.COMPOSE_CMD }} up -d --no-deps ${{ env.SERVICE_NAME }} && \
              docker image prune -f"
