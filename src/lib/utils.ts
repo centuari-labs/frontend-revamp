@@ -580,3 +580,24 @@ export function calculateProfitAmount(
 
   return Number((amount * (aprPercent / 100) / 365 * days).toFixed(2));
 }
+
+/**
+ * Render a duration in seconds as a human-readable string for toast copy.
+ * Granularity matches what users care about for rate-limit / lock waits:
+ *   < 60s → "Ns"
+ *   < 1h  → "N minutes" (ceil)
+ *   else  → "N hours"   (ceil)
+ */
+export function humanizeSeconds(sec: number): string {
+	if (sec < 60) return `${sec}s`;
+	if (sec < 3600) return `${Math.ceil(sec / 60)} minutes`;
+	return `${Math.ceil(sec / 3600)} hours`;
+}
+
+/**
+ * Format a unix-ms timestamp as a locale-formatted date+time string,
+ * e.g. `"5/12/2026, 3:45:12 PM"`. Used for `FlagLockActive.unlocksAt` toasts.
+ */
+export function formatTimestamp(ms: number): string {
+	return new Date(ms).toLocaleString();
+}

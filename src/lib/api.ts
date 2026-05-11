@@ -48,7 +48,9 @@ export function getMarket(): Promise<MarketResponse> {
 	return apiClient<MarketResponse>("/market");
 }
 
-export function getMarketDetail(assetId: string): Promise<MarketDetailResponse> {
+export function getMarketDetail(
+	assetId: string,
+): Promise<MarketDetailResponse> {
 	return apiClient<MarketDetailResponse>(`/market/${assetId}`);
 }
 
@@ -171,10 +173,9 @@ export interface LendBorrowAssetsResponse {
 export function getLendBorrowAssets(
 	token: string,
 ): Promise<LendBorrowAssetsResponse> {
-	return apiClient<LendBorrowAssetsResponse>(
-		"/portfolio/lend-borrow-assets",
-		{ token },
-	);
+	return apiClient<LendBorrowAssetsResponse>("/portfolio/lend-borrow-assets", {
+		token,
+	});
 }
 
 // ─── My Positions ───────────────────────────────────────────────────
@@ -205,7 +206,12 @@ export interface MyPositionsResponse {
 
 export async function getMyPositions(
 	token: string,
-	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number; assetId?: string },
+	params?: {
+		type?: "LEND" | "BORROW";
+		page?: number;
+		limit?: number;
+		assetId?: string;
+	},
 ): Promise<MyPositionsResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
@@ -277,9 +283,7 @@ export interface UserDetailsResponse {
 	weightedLtv: number;
 }
 
-export function getUserDetails(
-	token: string,
-): Promise<UserDetailsResponse> {
+export function getUserDetails(token: string): Promise<UserDetailsResponse> {
 	return apiClient<UserDetailsResponse>("/portfolio/user-details", {
 		token,
 	});
@@ -287,6 +291,12 @@ export function getUserDetails(
 
 // ─── Set Asset As Collateral ────────────────────────────────────────
 
+/**
+ * @deprecated Calls the deleted `PUT /portfolio/is-collateral` endpoint.
+ * Kept temporarily to keep `use-set-collateral.ts` and its caller in
+ * `portfolio/page.tsx` compiling. Use `flagCollateral` / `unflagCollateral`
+ * below. Phase 3 will delete this alongside the legacy hook.
+ */
 export function setAssetAsCollateral(
 	assetIds: string[],
 	isCollateral: boolean,
@@ -295,6 +305,34 @@ export function setAssetAsCollateral(
 	return apiClient<void>("/portfolio/is-collateral", {
 		method: "PUT",
 		body: { assetIds, isCollateral },
+		token,
+	});
+}
+
+// ─── Collateral Flag / Unflag ────────────────────────────────────────
+
+export function flagCollateral(
+	asset: `0x${string}`,
+	token: string,
+): Promise<{ queued: true }> {
+	return apiClient<{ queued: true }>("/collateral/flag", {
+		method: "POST",
+		body: { asset },
+		token,
+	});
+}
+
+export type UnflagCollateralResponse =
+	| { dequeued: true }
+	| { applied: boolean; txHash?: string; reason?: string };
+
+export function unflagCollateral(
+	asset: `0x${string}`,
+	token: string,
+): Promise<UnflagCollateralResponse> {
+	return apiClient<UnflagCollateralResponse>("/collateral/unflag", {
+		method: "POST",
+		body: { asset },
 		token,
 	});
 }
@@ -636,8 +674,10 @@ export async function getOrderHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status")
+		searchParams.set("status", params.status);
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -709,7 +749,8 @@ export async function getTransactionHistory(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -786,8 +827,10 @@ export async function getOpenOrders(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status")
+		searchParams.set("status", params.status);
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -839,4 +882,3 @@ export function withdrawLendPosition(
 		},
 	);
 }
-
