@@ -32,6 +32,7 @@ import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { useFlagCollateral } from "@/hooks/use-flag-collateral";
 
 type ViewMode = "borrow" | "deposit-collateral";
 
@@ -64,12 +65,15 @@ export function CentuariBorrowDialog({
 	const reactId = useId();
 	const { submitMarket, isPending } = useSubmitBorrow();
 	const { getToken } = useAuthToken();
+	const flagCollateralMutation = useFlagCollateral();
 	const borrowTokenPrice = useTokenPrice(asset_id) ?? 0;
 
 	const {
 		portfolio,
 		totalDebt,
 		collateralStatus,
+		pendingCollateralFlag,
+		tokenAddressBySymbol,
 		collateralTokenList,
 		userHealthFactor,
 		apiCollateralUsd,
@@ -88,7 +92,11 @@ export function CentuariBorrowDialog({
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	// Animation
-	useDialogViewAnimation(borrowViewRef, collateralViewRef, viewMode === "borrow");
+	useDialogViewAnimation(
+		borrowViewRef,
+		collateralViewRef,
+		viewMode === "borrow",
+	);
 
 	// Parse APR values
 	const parseAPR = (aprString: string): number => {
@@ -103,7 +111,11 @@ export function CentuariBorrowDialog({
 	const numericAmount = parseFloat(amountToBorrow) || 0;
 	const { transactionFee, amountToPay } = calculateFees(numericAmount);
 	const maturityDate = getDefaultMaturityTimestamp();
-	const futureAmount = calculateFutureAmount(numericAmount, borrowAPRNumeric, maturityDate);
+	const futureAmount = calculateFutureAmount(
+		numericAmount,
+		borrowAPRNumeric,
+		maturityDate,
+	);
 
 	const totalPortfolioValue = selectedCollaterals.reduce(
 		(total, val) => total + (portfolio[val] || 0),
@@ -115,7 +127,8 @@ export function CentuariBorrowDialog({
 			? selectedCollaterals.reduce((sum, val) => {
 					const token = collateralTokenList.find((t) => t.value === val);
 					const portfolioValue = portfolio[val] || 0;
-					if (token && portfolioValue > 0) return sum + token.ltv * portfolioValue;
+					if (token && portfolioValue > 0)
+						return sum + token.ltv * portfolioValue;
 					return sum;
 				}, 0) / totalPortfolioValue
 			: collateralFactorNumeric;
@@ -131,7 +144,8 @@ export function CentuariBorrowDialog({
 					const borrowAmountUsd = numericAmount * borrowTokenPrice;
 					const projectedDebt = apiSettledDebtUsd + borrowAmountUsd;
 					if (projectedDebt <= 0) return 0;
-					const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
+					const numerator =
+						(apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
 					const calculatedHF = numerator / projectedDebt;
 					if (!Number.isFinite(calculatedHF) || calculatedHF < 0) return 0;
 					return calculatedHF;
@@ -139,7 +153,10 @@ export function CentuariBorrowDialog({
 			: 0;
 
 	const healthFactorPercentage =
-		healthFactor > 0 && !isNaN(healthFactor) && selectedCollaterals.length > 0 && numericAmount > 0
+		healthFactor > 0 &&
+		!isNaN(healthFactor) &&
+		selectedCollaterals.length > 0 &&
+		numericAmount > 0
 			? healthFactor >= 2.5
 				? 100
 				: healthFactor >= 1.5
@@ -183,7 +200,8 @@ export function CentuariBorrowDialog({
 
 	const handleBorrow = async () => {
 		if (viewMode !== "borrow") return;
-		if (numericAmount <= 0 || numericAmount * borrowTokenPrice > availableQuota) return;
+		if (numericAmount <= 0 || numericAmount * borrowTokenPrice > availableQuota)
+			return;
 		if (selectedCollaterals.length === 0 || totalPortfolioValue === 0) return;
 		if (healthFactor < 1.0) return;
 
@@ -191,6 +209,26 @@ export function CentuariBorrowDialog({
 
 		try {
 			const authToken = await getToken();
+
+			// Pre-submit: queue a flag for each selected collateral that's not
+			// already on-chain flagged AND not already queued. Backend dedupes
+			// by (wallet, asset) so re-enqueueing is safe; we filter here to
+			// avoid noisy toast spam. Acceptable race: the borrow may match
+			// before the queue write commits — the user's intent at submit
+			// time was to flag, so the user-visible outcome is identical.
+			const newlySelected = selectedCollaterals.filter(
+				(symbol) =>
+					!collateralStatus[symbol] &&
+					!pendingCollateralFlag[symbol] &&
+					tokenAddressBySymbol[symbol],
+			);
+			await Promise.all(
+				newlySelected.map((symbol) =>
+					flagCollateralMutation.mutateAsync({
+						asset: tokenAddressBySymbol[symbol],
+					}),
+				),
+			);
 
 			await submitMarket(
 				{
@@ -202,7 +240,14 @@ export function CentuariBorrowDialog({
 					collateralTokens: selectedCollaterals,
 				},
 				authToken && asset_id && market_id
-					? { token: authToken, marketIds: { assetId: asset_id, marketId: market_id, tokenSymbol: token_symbol } }
+					? {
+							token: authToken,
+							marketIds: {
+								assetId: asset_id,
+								marketId: market_id,
+								tokenSymbol: token_symbol,
+							},
+						}
 					: undefined,
 			);
 
@@ -214,7 +259,9 @@ export function CentuariBorrowDialog({
 			setShowSuccessDialog(true);
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : "Transaction failed. Please try again.";
+				error instanceof Error
+					? error.message
+					: "Transaction failed. Please try again.";
 			setSubmitError(message);
 		}
 	};
@@ -232,9 +279,13 @@ export function CentuariBorrowDialog({
 						Borrow {token_symbol}
 					</AlertDialogTitle>
 					<AlertDialogDescription className="sr-only">
-						Borrow {token_symbol} against your collateral. Review your health factor before confirming.
+						Borrow {token_symbol} against your collateral. Review your health
+						factor before confirming.
 					</AlertDialogDescription>
-					<AlertDialogCancel className="rounded-full w-4 h-4 p-3 cursor-pointer" asChild>
+					<AlertDialogCancel
+						className="rounded-full w-4 h-4 p-3 cursor-pointer"
+						asChild
+					>
 						<button
 							type="button"
 							aria-label="Close"
@@ -288,7 +339,10 @@ export function CentuariBorrowDialog({
 							</div>
 						</ScrollArea>
 					</AlertDialogHeader>
-					<AlertDialogFooter id="tour-borrow-confirm" className="flex flex-col! gap-2 pt-2 px-6">
+					<AlertDialogFooter
+						id="tour-borrow-confirm"
+						className="flex flex-col! gap-2 pt-2 px-6"
+					>
 						<div className="flex items-center gap-4">
 							<AlertDialogCancel asChild>
 								<CentuariButton variant="secondary">Cancel</CentuariButton>
@@ -321,6 +375,13 @@ export function CentuariBorrowDialog({
 								)}
 							</CentuariButton>
 						</div>
+						<p className="text-xs text-muted-foreground text-center leading-relaxed">
+							Selected assets will be auto-flagged for any future borrow until
+							you remove them. They will be on-chain locked as collateral for at
+							least 24 hours after the match settles. Full repayment does NOT
+							automatically release them — you must explicitly unflag after the
+							24h lock expires.
+						</p>
 						<p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
 							This position is automatically refinanced. At maturity, it will
 							roll over to the next available term unless you take action.

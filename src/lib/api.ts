@@ -289,26 +289,6 @@ export function getUserDetails(token: string): Promise<UserDetailsResponse> {
 	});
 }
 
-// ─── Set Asset As Collateral ────────────────────────────────────────
-
-/**
- * @deprecated Calls the deleted `PUT /portfolio/is-collateral` endpoint.
- * Kept temporarily to keep `use-set-collateral.ts` and its caller in
- * `portfolio/page.tsx` compiling. Use `flagCollateral` / `unflagCollateral`
- * below. Phase 3 will delete this alongside the legacy hook.
- */
-export function setAssetAsCollateral(
-	assetIds: string[],
-	isCollateral: boolean,
-	token: string,
-): Promise<void> {
-	return apiClient<void>("/portfolio/is-collateral", {
-		method: "PUT",
-		body: { assetIds, isCollateral },
-		token,
-	});
-}
-
 // ─── Collateral Flag / Unflag ────────────────────────────────────────
 
 export function flagCollateral(
@@ -341,11 +321,28 @@ export function unflagCollateral(
 
 export interface MyAssetItem {
 	assetId: string;
+	/** Hex address (`0x…`). Echo into Phase 2 mutation hooks (`useFlagCollateral`,
+	 *  `useFlagCollateralDirect`, `useUnflagCollateral`) — they all expect
+	 *  `asset: 0x${string}`. Hub address for bridgeable tokens, spoke address
+	 *  for SPOKE_NATIVE tokens; works for both — the backend echoes whatever
+	 *  the indexer stamped onto `user_balance.asset`. */
+	tokenAddress: `0x${string}`;
 	symbol: string;
 	name: string;
 	walletBalance: number;
 	amountInUsd: number;
+	/** On-chain truth — mirrors `user_balance.used_as_collateral`. HF math
+	 *  counts ONLY rows where this is true (spec §27). Never count
+	 *  `pendingCollateralFlag` here: a liquidator ignores the queue. */
 	isCollateral: boolean;
+	/** True when a queued (pre-settlement) flag exists for this (wallet, asset).
+	 *  Drives the "Pending" yellow badge. */
+	pendingCollateralFlag: boolean;
+	/** Unix seconds; `0` sentinel when not flagged. */
+	flaggedAt: number;
+	/** Unix seconds; `0` sentinel when not flagged. Used by `useCountdown`
+	 *  to power the 24h flag-lock badge. */
+	unlocksAt: number;
 	imageUrl: string | null;
 	ltv: number;
 	liquidationThreshold: number;
