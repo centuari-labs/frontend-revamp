@@ -13,6 +13,7 @@ const ALLOWED_PATH_PREFIXES = [
 	"deposit",
 	"withdraw",
 	"faucet/",
+	"collateral/",
 ];
 
 function isPathAllowed(path: string): boolean {
