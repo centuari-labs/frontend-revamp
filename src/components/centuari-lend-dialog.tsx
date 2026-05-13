@@ -88,13 +88,8 @@ export function CentuariLendDialog({
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	// Deposit state & hooks
-	const {
-		deposit,
-		status: depositStatus,
-		reset: resetDepositHook,
-	} = useDeposit();
-	const { tokens: depositTokens, isLoading: depositTokensLoading } =
-		useTokens();
+	const { deposit, status: depositStatus, reset: resetDepositHook } = useDeposit();
+	const { tokens: depositTokens, isLoading: depositTokensLoading } = useTokens();
 	const [depositSelectedTokenId, setDepositSelectedTokenId] = useState("");
 	const [depositAmount, setDepositAmount] = useState("");
 	const [depositDisplayAmount, setDepositDisplayAmount] = useState("");
@@ -126,21 +121,13 @@ export function CentuariLendDialog({
 	}, [depositAmount, depositOnChainBalance]);
 
 	// Network detection
-	const { isWrongNetwork, switchingChain, handleSwitchChain } =
-		useNetworkSwitch();
+	const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
 
 	const isDepositSubmitDisabled =
-		isDepositProcessing ||
-		!depositAmount ||
-		!depositSelectedTokenId ||
-		depositAmountExceedsBalance ||
-		isWrongNetwork;
+		isDepositProcessing || !depositAmount || !depositSelectedTokenId || depositAmountExceedsBalance || isWrongNetwork;
 
 	const depositTokenIcon = depositSelectedToken
-		? getTokenLogo(
-				depositSelectedToken.symbol,
-				depositSelectedToken.imageUrl ?? undefined,
-			)
+		? getTokenLogo(depositSelectedToken.symbol, depositSelectedToken.imageUrl ?? undefined)
 		: "/tokens/usdc-icon.webp";
 
 	// Animation
@@ -157,11 +144,7 @@ export function CentuariLendDialog({
 	const { transactionFee, amountToPay } = calculateFees(numericAmount);
 	const formattedVaultTotal = formatCurrency(vaultTotal);
 	const maturityDate = getDefaultMaturityTimestamp();
-	const futureAmount = calculateFutureAmount(
-		numericAmount,
-		lendAPRNumeric,
-		maturityDate,
-	);
+	const futureAmount = calculateFutureAmount(numericAmount, lendAPRNumeric, maturityDate);
 
 	// Handlers
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,9 +159,7 @@ export function CentuariLendDialog({
 		setDisplayAmount(formatNumberWithSeparator(maxAmount));
 	};
 
-	const handleDepositAmountChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	) => {
+	const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const numericValue = parseNumberFromSeparator(e.target.value);
 		setDepositAmount(numericValue);
 		setDepositDisplayAmount(formatNumberWithSeparator(numericValue));
@@ -193,18 +174,11 @@ export function CentuariLendDialog({
 	};
 
 	const handleDepositSubmit = async () => {
-		if (!depositAmount || !depositSelectedTokenId || isDepositProcessing)
-			return;
+		if (!depositAmount || !depositSelectedTokenId || isDepositProcessing) return;
 		try {
-			const result = await deposit(
-				depositSelectedTokenId,
-				depositAmount,
-				depositSelectedToken,
-			);
+			const result = await deposit(depositSelectedTokenId, depositAmount, depositSelectedToken);
 			if (result) {
-				toast.success(
-					`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""}`,
-				);
+				toast.success(`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""}`);
 				setDepositAmount("");
 				setDepositDisplayAmount("");
 				resetDepositHook();
@@ -257,14 +231,7 @@ export function CentuariLendDialog({
 					autoRollover: true,
 				},
 				authToken && asset_id && market_id
-					? {
-							token: authToken,
-							marketIds: {
-								assetId: asset_id,
-								marketId: market_id,
-								tokenSymbol: token_symbol,
-							},
-						}
+					? { token: authToken, marketIds: { assetId: asset_id, marketId: market_id, tokenSymbol: token_symbol } }
 					: undefined,
 			);
 
@@ -275,9 +242,7 @@ export function CentuariLendDialog({
 			setShowSuccessDialog(true);
 		} catch (error) {
 			const message =
-				error instanceof Error
-					? error.message
-					: "Transaction failed. Please try again.";
+				error instanceof Error ? error.message : "Transaction failed. Please try again.";
 			setSubmitError(message);
 		}
 	};
@@ -333,9 +298,7 @@ export function CentuariLendDialog({
 									depositSelectedTokenId={depositSelectedTokenId}
 									onTokenChange={setDepositSelectedTokenId}
 									depositTokenIcon={depositTokenIcon}
-									depositSelectedTokenSymbol={
-										depositSelectedToken?.symbol ?? "token"
-									}
+									depositSelectedTokenSymbol={depositSelectedToken?.symbol ?? "token"}
 									depositDisplayAmount={depositDisplayAmount}
 									onAmountChange={handleDepositAmountChange}
 									onMaxClick={handleDepositMaxClick}
@@ -361,9 +324,7 @@ export function CentuariLendDialog({
 								type="button"
 								variant="primary"
 								className="flex-1"
-								onClick={
-									viewMode === "deposit-lend" ? handleDepositSubmit : handleLend
-								}
+								onClick={viewMode === "deposit-lend" ? handleDepositSubmit : handleLend}
 								disabled={
 									viewMode === "deposit-lend"
 										? isDepositSubmitDisabled
@@ -376,28 +337,23 @@ export function CentuariLendDialog({
 								{viewMode === "deposit-lend" ? (
 									depositStatus === "checkingAllowance" ? (
 										<>
-											Checking allowance...{" "}
-											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Checking allowance... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "approving" ? (
 										<>
-											Approve in wallet...{" "}
-											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "waitingApproval" ? (
 										<>
-											Waiting for approval...{" "}
-											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Waiting for approval... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "depositing" ? (
 										<>
-											Confirm deposit in wallet...{" "}
-											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Confirm deposit in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "confirming" ? (
 										<>
-											Confirming deposit...{" "}
-											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Confirming deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : (
 										"Confirm Deposit"

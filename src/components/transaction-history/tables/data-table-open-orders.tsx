@@ -16,16 +16,19 @@ import {
 	createMaturityColumn,
 	createStatusColumn,
 } from "@/components/tables/shared-columns";
+import { useTokens, getTokenById } from "@/hooks/use-tokens";
 
-const columns: ColumnDef<OpenOrderItem>[] = [
-	createDateColumn(),
-	createLoanTokenColumn(),
-	createSideColumn(),
-	createOrderTypeColumn(),
-	createAmountColumn(),
-	createTargetAprColumn(),
-	createMaturityColumn(),
-	createStatusColumn(),
+type EnrichedOpenOrder = OpenOrderItem & { tokenSymbol: string; assetImg: string };
+
+const columns: ColumnDef<EnrichedOpenOrder>[] = [
+	createDateColumn<EnrichedOpenOrder>(),
+	createLoanTokenColumn<EnrichedOpenOrder>(),
+	createSideColumn<EnrichedOpenOrder>(),
+	createOrderTypeColumn<EnrichedOpenOrder>(),
+	createAmountColumn<EnrichedOpenOrder>(),
+	createTargetAprColumn<EnrichedOpenOrder>(),
+	createMaturityColumn<EnrichedOpenOrder>(),
+	createStatusColumn<EnrichedOpenOrder>(),
 	{
 		id: "actions",
 		header: "Actions",
@@ -56,10 +59,23 @@ export function DataTableOpenOrders({
 		limit,
 		...filters,
 	});
+	const { tokens } = useTokens();
+
+	const enrichedOrders = React.useMemo<EnrichedOpenOrder[]>(() =>
+		orders.map((order) => {
+			const token = getTokenById(tokens, order.assetId);
+			return {
+				...order,
+				tokenSymbol: token?.symbol ?? order.asset?.symbol ?? "",
+				assetImg: token?.imageUrl ?? order.asset?.imageUrl ?? "",
+			};
+		}),
+		[orders, tokens],
+	);
 
 	return (
 		<CentuariDataTable
-			data={orders}
+			data={enrichedOrders}
 			columns={columns}
 			isLoading={isLoading}
 			emptyMessage="No open orders."

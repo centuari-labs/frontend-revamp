@@ -4,7 +4,7 @@ import { renderHook } from "@testing-library/react";
 vi.mock("@/lib/use-mock", () => ({ USE_MOCK: true }));
 
 vi.mock("@/hooks/use-my-assets", () => ({
-  useMyAssets: vi.fn(() => ({ assets: [], isLoading: false, isError: false })),
+  useMyAssets: vi.fn(() => ({ assets: [], page: 1, totalData: 0, totalPages: 0, isLoading: false, isError: false, refetch: vi.fn() })),
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
@@ -57,8 +57,12 @@ describe("useBorrowDialogData (mock mode / no user details)", () => {
           liquidationThreshold: 0.92,
         },
       ],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.totalDebt).toBe(0);
@@ -88,8 +92,12 @@ describe("useBorrowDialogData (mock mode / no user details)", () => {
   it("returns loading state from assets", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: true,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.isLoading).toBe(true);
@@ -98,8 +106,12 @@ describe("useBorrowDialogData (mock mode / no user details)", () => {
   it("returns error state from assets", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: true,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.isError).toBe(true);

@@ -17,18 +17,21 @@ import {
 	createMaturityColumn,
 	createStatusColumn,
 } from "@/components/tables/shared-columns";
+import { useTokens, getTokenById } from "@/hooks/use-tokens";
 
-const columns: ColumnDef<OrderHistoryItem>[] = [
-	createDateColumn(),
-	createLoanTokenColumn(),
-	createSideColumn(),
-	createOrderTypeColumn(),
-	createAmountColumn(),
-	createFilledAmountColumn(),
-	createFeeColumn(),
-	createTargetAprColumn(),
-	createMaturityColumn(),
-	createStatusColumn(),
+type EnrichedOrderHistory = OrderHistoryItem & { tokenSymbol: string; assetImg: string };
+
+const columns: ColumnDef<EnrichedOrderHistory>[] = [
+	createDateColumn<EnrichedOrderHistory>(),
+	createLoanTokenColumn<EnrichedOrderHistory>(),
+	createSideColumn<EnrichedOrderHistory>(),
+	createOrderTypeColumn<EnrichedOrderHistory>(),
+	createAmountColumn<EnrichedOrderHistory>(),
+	createFilledAmountColumn<EnrichedOrderHistory>(),
+	createFeeColumn<EnrichedOrderHistory>(),
+	createTargetAprColumn<EnrichedOrderHistory>(),
+	createMaturityColumn<EnrichedOrderHistory>(),
+	createStatusColumn<EnrichedOrderHistory>(),
 ];
 
 export function DataTableOrderHistory({
@@ -48,10 +51,23 @@ export function DataTableOrderHistory({
 		limit,
 		...filters,
 	});
+	const { tokens } = useTokens();
+
+	const enrichedTransactions = React.useMemo<EnrichedOrderHistory[]>(() =>
+		transactions.map((t) => {
+			const token = getTokenById(tokens, t.assetId);
+			return {
+				...t,
+				tokenSymbol: token?.symbol ?? "",
+				assetImg: token?.imageUrl ?? "",
+			};
+		}),
+		[transactions, tokens],
+	);
 
 	return (
 		<CentuariDataTable
-			data={transactions}
+			data={enrichedTransactions}
 			columns={columns}
 			isLoading={isLoading}
 			skeletonColumns={7}

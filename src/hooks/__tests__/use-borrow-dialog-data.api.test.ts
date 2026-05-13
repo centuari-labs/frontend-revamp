@@ -30,8 +30,12 @@ const mockAssets = [
 vi.mock("@/hooks/use-my-assets", () => ({
   useMyAssets: vi.fn(() => ({
     assets: mockAssets,
+    page: 1,
+    totalData: 0,
+    totalPages: 0,
     isLoading: false,
     isError: false,
+    refetch: vi.fn(),
   })),
 }));
 
@@ -114,8 +118,12 @@ describe("useBorrowDialogData (API mode)", () => {
   it("combines loading states", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: true,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.isLoading).toBe(true);
@@ -124,8 +132,12 @@ describe("useBorrowDialogData (API mode)", () => {
   it("combines error states", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: true,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.isError).toBe(true);
@@ -134,8 +146,12 @@ describe("useBorrowDialogData (API mode)", () => {
   it("returns empty data when no assets", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.portfolio).toEqual({});
@@ -157,8 +173,12 @@ describe("useBorrowDialogData (API mode)", () => {
           liquidationThreshold: 0.92,
         },
       ],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     const usdc = result.current.collateralTokenList[0];
@@ -180,8 +200,12 @@ describe("useBorrowDialogData (API mode)", () => {
           liquidationThreshold: 0.6,
         },
       ],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useBorrowDialogData());
     expect(result.current.collateralTokenList[0].logo).toBe(

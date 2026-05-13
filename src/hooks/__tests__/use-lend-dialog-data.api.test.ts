@@ -30,8 +30,12 @@ const mockAssets = [
 vi.mock("@/hooks/use-my-assets", () => ({
   useMyAssets: vi.fn(() => ({
     assets: mockAssets,
+    page: 1,
+    totalData: 0,
+    totalPages: 0,
     isLoading: false,
     isError: false,
+    refetch: vi.fn(),
   })),
 }));
 
@@ -80,8 +84,12 @@ describe("useLendDialogData (API mode)", () => {
   it("returns isLoading from useMyAssets", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: true,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useLendDialogData("USDC"));
     expect(result.current.isLoading).toBe(true);
@@ -91,8 +99,12 @@ describe("useLendDialogData (API mode)", () => {
   it("returns isError from useMyAssets", () => {
     vi.mocked(useMyAssets).mockReturnValue({
       assets: [],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: true,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useLendDialogData("USDC"));
     expect(result.current.isError).toBe(true);
@@ -112,8 +124,12 @@ describe("useLendDialogData (API mode)", () => {
           liquidationThreshold: 0.92,
         },
       ],
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useLendDialogData("USDC"));
     expect(result.current.availableBalance).toBe(0);
@@ -125,8 +141,12 @@ describe("useLendDialogData (API mode)", () => {
     // Re-set the mock since previous test may have overridden it
     vi.mocked(useMyAssets).mockReturnValue({
       assets: mockAssets,
+      page: 1,
+      totalData: 0,
+      totalPages: 0,
       isLoading: false,
       isError: false,
+      refetch: vi.fn(),
     });
     const { result } = renderHook(() => useLendDialogData("usdc"));
     expect(result.current.availableBalance).toBe(5000);

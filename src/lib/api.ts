@@ -6,7 +6,14 @@ export interface MarketItemMarket {
 }
 
 export interface MarketItem {
-	assetId: string;
+	assetId?: string;
+	asset?: {
+		id: string;
+		name: string;
+		symbol: string;
+		image_url: string | null;
+		decimals?: number | null;
+	};
 	market: MarketItemMarket;
 	borrow_rate: number;
 	lend_rate: number;
@@ -177,6 +184,9 @@ export interface MyPositionItem {
 	isCollateral: boolean;
 	side: "LEND" | "BORROW";
 	maturity: number | null;
+	imageUrl?: string | null;
+	name?: string;
+	symbol?: string;
 }
 
 export interface MyPositionsResponse {
@@ -289,15 +299,15 @@ export function setAssetAsCollateral(
 // ─── My Assets (Portfolio) ───────────────────────────────────────────
 
 export interface MyAssetItem {
-	assetId: string;
+	assetId?: string;
 	symbol: string;
 	name: string;
 	walletBalance: number;
 	amountInUsd: number;
 	isCollateral: boolean;
 	imageUrl: string | null;
-	ltv: number;
-	liquidationThreshold: number;
+	ltv?: number;
+	liquidationThreshold?: number;
 }
 
 export interface MyAssetsResponse {
@@ -658,6 +668,11 @@ export interface TransactionHistoryItem {
 	fee: string | null;
 	maturity: string;
 	assetId: string;
+	asset?: {
+		imageUrl: string | null;
+		name: string;
+		symbol: string;
+	};
 	createdAt: string;
 }
 
@@ -734,6 +749,11 @@ export interface OpenOrderItem {
 	cancelReason?: "USER_CANCELLED" | "IOC" | null;
 	maturity: string;
 	assetId: string;
+	asset?: {
+		imageUrl: string | null;
+		name: string;
+		symbol: string;
+	};
 	createdAt: string;
 }
 

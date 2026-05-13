@@ -14,15 +14,18 @@ import {
 	createAprColumn,
 	createMaturityColumn,
 } from "@/components/tables/shared-columns";
+import { useTokens, getTokenById } from "@/hooks/use-tokens";
 
-const columns: ColumnDef<TransactionHistoryItem>[] = [
-	createDateColumn(),
-	createLoanTokenColumn(),
-	createSideColumn(),
-	createAmountColumn(),
-	createFeeColumn(),
-	createAprColumn(),
-	createMaturityColumn(),
+type EnrichedTransactionHistory = TransactionHistoryItem & { tokenSymbol: string; assetImg: string };
+
+const columns: ColumnDef<EnrichedTransactionHistory>[] = [
+	createDateColumn<EnrichedTransactionHistory>(),
+	createLoanTokenColumn<EnrichedTransactionHistory>(),
+	createSideColumn<EnrichedTransactionHistory>(),
+	createAmountColumn<EnrichedTransactionHistory>(),
+	createFeeColumn<EnrichedTransactionHistory>(),
+	createAprColumn<EnrichedTransactionHistory>(),
+	createMaturityColumn<EnrichedTransactionHistory>(),
 ];
 
 export function DataTableTransactionHistory({
@@ -41,10 +44,23 @@ export function DataTableTransactionHistory({
 		limit,
 		...filters,
 	});
+	const { tokens } = useTokens();
+
+	const enrichedTransactions = React.useMemo<EnrichedTransactionHistory[]>(() =>
+		transactions.map((t) => {
+			const token = getTokenById(tokens, t.assetId);
+			return {
+				...t,
+				tokenSymbol: token?.symbol ?? t.asset?.symbol ?? "",
+				assetImg: token?.imageUrl ?? t.asset?.imageUrl ?? "",
+			};
+		}),
+		[transactions, tokens],
+	);
 
 	return (
 		<CentuariDataTable
-			data={transactions}
+			data={enrichedTransactions}
 			columns={columns}
 			isLoading={isLoading}
 			minWidth="700px"
