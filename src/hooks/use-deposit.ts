@@ -11,17 +11,14 @@ import {
   custom,
   type WalletClient,
 } from "viem";
-import { treasuryAbi } from "@/../abis/treasury";
+import hubDepositorAbi from "@/../abis/HubDepositor.json";
 import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
-import { ACTIVE_CHAIN } from "@/lib/chain-config";
+import { ACTIVE_CHAIN, HUB_DEPOSITOR_ADDRESS } from "@/lib/chain-config";
 import { invalidateUserQueries } from "@/lib/query-keys";
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
-
-const TREASURY_ADDRESS = process.env
-  .NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
 
 export type DepositStatus =
   | "idle"
@@ -102,7 +99,7 @@ export function useDeposit() {
           address: tokenAddress,
           abi: erc20Abi,
           functionName: "allowance",
-          args: [address, TREASURY_ADDRESS],
+          args: [address, HUB_DEPOSITOR_ADDRESS],
         });
 
         // Estimate gas fees with buffer to avoid "max fee per gas less than block base fee"
@@ -121,7 +118,7 @@ export function useDeposit() {
             address: tokenAddress,
             abi: erc20Abi,
             functionName: "approve",
-            args: [TREASURY_ADDRESS, depositAmount],
+            args: [HUB_DEPOSITOR_ADDRESS, depositAmount],
             ...gasOverrides,
           });
 
@@ -136,7 +133,7 @@ export function useDeposit() {
           }
         }
 
-        // Step 3: Call Treasury.deposit
+        // Step 3: Call HubDepositor.deposit
         setStatus("depositing");
         // Re-fetch gas fees in case base fee changed during approval
         const latestBlock = await publicClient.getBlock();
@@ -149,8 +146,8 @@ export function useDeposit() {
         const depositTxHash = await walletClient.writeContract({
           account: address,
           chain: ACTIVE_CHAIN,
-          address: TREASURY_ADDRESS,
-          abi: treasuryAbi,
+          address: HUB_DEPOSITOR_ADDRESS,
+          abi: hubDepositorAbi,
           functionName: "deposit",
           args: [tokenAddress, depositAmount],
           maxFeePerGas: latestMaxFeePerGas,

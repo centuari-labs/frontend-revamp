@@ -4,7 +4,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createWalletClient, custom } from "viem";
-import { collateralManagerAbi } from "@/../abis/collateralManager";
+import collateralManagerAbi from "@/../abis/CollateralManager.json";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { ACTIVE_CHAIN, COLLATERAL_MANAGER_ADDRESS } from "@/lib/chain-config";
 import { invalidateUserQueries } from "@/lib/query-keys";
@@ -15,11 +15,6 @@ import { invalidateUserQueries } from "@/lib/query-keys";
  * optimistically after the wallet submits the tx — the Phase 3 badge
  * component re-polls the portfolio query (invalidated below) to reflect the
  * on-chain state once the indexer tail stamps `used_as_collateral=true`.
- *
- * Phase 2 known constraint: the `flag(address)` entry point is part of a
- * pending testnet upgrade. Until the upgrade ships, this call will revert
- * on-chain (the wallet still returns a txHash, but the tx fails). The
- * frontend wiring is forward-compat.
  *
  * Spec: smart-contract-revamp/docs/collateral-frontend-implementation.md (line 152)
  */

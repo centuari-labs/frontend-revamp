@@ -131,7 +131,7 @@ jobs:
             --build-arg NEXT_PUBLIC_CHAIN_ENV='${{ vars.NEXT_PUBLIC_CHAIN_ENV }}' \
             --build-arg NEXT_PUBLIC_USE_MOCK='${{ vars.NEXT_PUBLIC_USE_MOCK }}' \
             --build-arg NEXT_PUBLIC_RPC_URL='${{ vars.NEXT_PUBLIC_RPC_URL }}' \
-            --build-arg NEXT_PUBLIC_TREASURY_ADDRESS='${{ vars.NEXT_PUBLIC_TREASURY_ADDRESS }}' \
+            --build-arg NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS='${{ vars.NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS }}' \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.IMAGE_NAME }}:latest \
             .
