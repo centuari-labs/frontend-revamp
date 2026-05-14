@@ -1,9 +1,12 @@
 "use client";
 
 import { useReadContract } from "wagmi";
-import { formatUnits, erc20Abi } from "viem";
+import { formatUnits, erc20Abi, getAddress } from "viem";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
+import { ACTIVE_CHAIN } from "@/lib/chain-config";
+import { isValidDecimals } from "@/lib/erc20-decimals";
+import { isAllowlistedAddress } from "@/lib/token-config";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { useMemo } from "react";
 
@@ -23,18 +26,19 @@ export function useOnChainBalance(tokenSymbol: string) {
 		const depositToken = depositTokens?.find(
 			(t) => t.symbol.toLowerCase() === sym,
 		);
-		if (depositToken?.tokenAddress) {
-			return {
-				tokenAddress: depositToken.tokenAddress as `0x${string}`,
-				decimals: depositToken.decimals ?? 18,
-			};
+		if (!depositToken?.tokenAddress) return null;
+		if (!isAllowlistedAddress(ACTIVE_CHAIN.id, depositToken.tokenAddress)) {
+			return null;
 		}
-
-		return null;
+		if (!isValidDecimals(depositToken.decimals)) return null;
+		return {
+			tokenAddress: getAddress(depositToken.tokenAddress),
+			decimals: depositToken.decimals,
+		};
 	}, [depositTokens, tokenSymbol]);
 
 	const tokenAddress = resolved?.tokenAddress;
-	const decimals = resolved?.decimals ?? 18;
+	const decimals = resolved?.decimals;
 
 	const {
 		data: rawBalance,
@@ -61,7 +65,7 @@ export function useOnChainBalance(tokenSymbol: string) {
 	});
 
 	const formattedBalance = useMemo(() => {
-		if (rawBalance == null) return 0;
+		if (rawBalance == null || decimals == null) return 0;
 		return Number(formatUnits(rawBalance as bigint, decimals));
 	}, [rawBalance, decimals]);
 

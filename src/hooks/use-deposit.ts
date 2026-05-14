@@ -16,6 +16,8 @@ import { confirmDeposit, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { ACTIVE_CHAIN, HUB_DEPOSITOR_ADDRESS } from "@/lib/chain-config";
+import { assertAllowlistedAddress } from "@/lib/token-config";
+import { assertValidDecimals } from "@/lib/erc20-decimals";
 import { invalidateUserQueries } from "@/lib/query-keys";
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
@@ -68,9 +70,13 @@ export function useDeposit() {
 					throw new Error("Token info is required for deposits");
 				}
 
-				const decimals = token.decimals ?? 18;
-				const tokenAddress = token.tokenAddress as `0x${string}`;
-				const depositAmount = parseUnits(amount, decimals);
+				assertValidDecimals(token.decimals, token.symbol);
+				const tokenAddress = assertAllowlistedAddress(
+					ACTIVE_CHAIN.id,
+					token.tokenAddress,
+					`token ${token.symbol}`,
+				);
+				const depositAmount = parseUnits(amount, token.decimals);
 
 				// Get the wallet client directly from Privy's wallet provider.
 				// This bypasses wagmi's active connector, ensuring we always sign

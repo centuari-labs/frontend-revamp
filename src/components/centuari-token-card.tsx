@@ -131,7 +131,6 @@ export const CentuariTokenCard = ({
 						lendAPR={rates.lendAPR}
 						borrowAPR={rates.borrowAPR}
 						collateralFactor={rates.collateralFactor}
-						vaultTotal={vaultTotal}
 						asset_id={asset_id}
 						market_id={market_id}
 					/>

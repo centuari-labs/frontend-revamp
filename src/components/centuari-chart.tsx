@@ -32,12 +32,17 @@ const fallbackData = [
 	{ date: "7 Oct", value: 68 },
 ];
 
+interface TooltipPayloadItem {
+	value: number;
+	payload: { date: string; value: number };
+}
+
 const CustomTooltip = ({
 	active,
 	payload,
 }: {
 	active?: boolean;
-	payload?: any[];
+	payload?: TooltipPayloadItem[];
 }) => {
 	if (active && payload && payload.length) {
 		return (
@@ -57,13 +62,8 @@ const CustomTooltip = ({
 	return null;
 };
 
-const CustomDot = (props: {
-	cx?: number;
-	cy?: number;
-	payload?: any;
-	dataKey?: string;
-}) => {
-	const { cx, cy, payload } = props;
+const CustomDot = (props: { cx?: number; cy?: number; dataKey?: string }) => {
+	const { cx, cy } = props;
 
 	if (props.dataKey === "value") {
 		return (

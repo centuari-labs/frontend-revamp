@@ -42,7 +42,6 @@ interface CentuariBorrowDialogProps {
 	lendAPR: string;
 	borrowAPR: string;
 	collateralFactor: string;
-	vaultTotal: number;
 	asset_id?: string;
 	market_id?: string;
 }
@@ -54,7 +53,6 @@ export function CentuariBorrowDialog({
 	lendAPR,
 	borrowAPR,
 	collateralFactor,
-	vaultTotal,
 	asset_id,
 	market_id,
 }: CentuariBorrowDialogProps) {
