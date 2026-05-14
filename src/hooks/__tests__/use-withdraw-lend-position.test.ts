@@ -11,7 +11,9 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 
 const mockGetToken = vi.fn(async () => "mock-token");
-const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) => fn("mock-token"));
+const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) =>
+	fn("mock-token"),
+);
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: vi.fn(() => ({
 		getToken: mockGetToken,
@@ -43,7 +45,10 @@ describe("useWithdrawLendPosition", () => {
 			await result.current.withdraw("market-id-w1");
 		});
 
-		expect(withdrawLendPositionApi).toHaveBeenCalledWith("market-id-w1", "mock-token");
+		expect(withdrawLendPositionApi).toHaveBeenCalledWith(
+			"market-id-w1",
+			"mock-token",
+		);
 
 		await waitFor(() => {
 			expect(result.current.isSuccess).toBe(true);

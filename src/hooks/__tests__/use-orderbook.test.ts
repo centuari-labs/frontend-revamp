@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
-import { createMockSocket, type MockSocket } from "@/__tests__/helpers/mock-socket";
+import {
+	createMockSocket,
+	type MockSocket,
+} from "@/__tests__/helpers/mock-socket";
 
 let mockSocket: MockSocket;
 

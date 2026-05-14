@@ -19,7 +19,9 @@ interface UseMarketDetailResult {
 	refetch: () => void;
 }
 
-export function useMarketDetail(assetId: string | undefined): UseMarketDetailResult {
+export function useMarketDetail(
+	assetId: string | undefined,
+): UseMarketDetailResult {
 	const query = useQuery({
 		queryKey: ["market-detail", assetId],
 		queryFn: () => {
@@ -53,4 +55,3 @@ export function useMarketDetail(assetId: string | undefined): UseMarketDetailRes
 		refetch: query.refetch,
 	};
 }
-

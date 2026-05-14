@@ -59,7 +59,9 @@ describe("mapOrderErrorToFriendlyMessage", () => {
 
 	it("maps internal server error message to generic copy", () => {
 		expect(
-			mapOrderErrorToFriendlyMessage("Internal server error: something blew up"),
+			mapOrderErrorToFriendlyMessage(
+				"Internal server error: something blew up",
+			),
 		).toBe("Something went wrong. Please try again.");
 	});
 

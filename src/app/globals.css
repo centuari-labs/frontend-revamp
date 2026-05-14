@@ -51,7 +51,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-    /* Primary Blue Colors */
+  /* Primary Blue Colors */
   --color-primary-blue-10: var(--primary-10);
   --color-primary-blue-20: var(--primary-20);
   --color-primary-blue-30: var(--primary-30);
@@ -89,7 +89,7 @@
   --color-warning-90: var(--warning-90);
   --color-warning-100: var(--warning-100);
   --color-warning-base: var(--warning-base);
-  
+
   /* Critical Colors */
   --color-critical-10: var(--critical-10);
   --color-critical-20: var(--critical-20);
@@ -208,7 +208,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-    /* Start Primary Blue */
+  /* Start Primary Blue */
   --primary-10: oklch(0.8356 0.08156 261.6711);
   --primary-20: oklch(0.7588 0.1038 261.63);
   --primary-30: oklch(0.6837 0.1193 261.2);
@@ -249,7 +249,7 @@
   --warning-100: oklch(0.2674 0.05 93.5);
   --warning-base: oklch(0.8051 0.1614 92.46);
   /* End Warning Colors */
-  
+
   /* Critical/Orange Colors */
   --critical-10: oklch(0.9312 0.037 43.08);
   --critical-20: oklch(0.8868 0.0632 42.9);
@@ -292,28 +292,29 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Ensure scrollbar is always visible when content overflows in ScrollArea */
   /* This improves UX by making it clear when content is scrollable */
   [data-slot="scroll-area-scrollbar"][data-state="visible"] {
-    opacity: 1 !important;
-    pointer-events: auto !important;
+    opacity: 1;
+    pointer-events: auto;
   }
-  
+
   /* Keep scrollbar visible - prevent fade out animation */
   [data-slot="scroll-area-scrollbar"] {
-    transition: opacity 0s !important;
+    transition: opacity 0s;
   }
-  
+
   /* Ensure scrollbar thumb is always visible when scrollbar is visible */
-  [data-slot="scroll-area-scrollbar"][data-state="visible"] [data-slot="scroll-area-thumb"] {
-    opacity: 1 !important;
+  [data-slot="scroll-area-scrollbar"][data-state="visible"]
+    [data-slot="scroll-area-thumb"] {
+    opacity: 1;
   }
 
   /* Hide react-joyride tooltip arrow */
   .__floater__arrow,
   .react-joyride__arrow {
-    display: none !important;
+    display: none;
   }
 
   /* Ensure react-joyride tooltips remain interactive when a Radix modal
@@ -326,6 +327,6 @@
   .react-joyride__spotlight,
   .react-joyride__overlay,
   .react-joyride__tooltip {
-    pointer-events: auto !important;
+    pointer-events: auto;
   }
 }

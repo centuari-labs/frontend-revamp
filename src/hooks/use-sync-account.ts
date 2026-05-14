@@ -22,8 +22,9 @@ export function useSyncAccount() {
 		if (!ready || !authenticated || hasSynced.current) return;
 
 		// Any wallet is sufficient to trigger sync — prefer external, fallback to embedded
-		const wallet = wallets.find((w) => w.walletClientType !== "privy")
-			?? wallets.find((w) => w.walletClientType === "privy");
+		const wallet =
+			wallets.find((w) => w.walletClientType !== "privy") ??
+			wallets.find((w) => w.walletClientType === "privy");
 		if (!wallet) return;
 
 		hasSynced.current = true;
@@ -47,7 +48,15 @@ export function useSyncAccount() {
 				disconnect();
 				localStorage.removeItem(LS_USERNAME_KEY);
 			});
-	}, [ready, authenticated, wallets, authFetch, logout, disconnect, setHasAccess]);
+	}, [
+		ready,
+		authenticated,
+		wallets,
+		authFetch,
+		logout,
+		disconnect,
+		setHasAccess,
+	]);
 
 	// Reset when user logs out
 	useEffect(() => {

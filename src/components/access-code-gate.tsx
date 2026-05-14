@@ -143,9 +143,7 @@ function AccessCodeForm() {
 								autoComplete="off"
 								className="text-white placeholder:text-white/40"
 							/>
-							{error && (
-								<p className="text-sm text-destructive">{error}</p>
-							)}
+							{error && <p className="text-sm text-destructive">{error}</p>}
 						</div>
 
 						<Button

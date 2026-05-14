@@ -14,6 +14,19 @@ vi.mock("@/lib/positions-adapter.api", () => ({
 }));
 
 import { useSubmitLend } from "@/hooks/use-submit-lend";
+import type {
+	SubmitLendLimitParams,
+	SubmitLendMarketParams,
+} from "@/types/positions";
+
+const baseLendFields = {
+	tokenValue: "usdc",
+	tokenLogo: "/tokens/usdc-icon.webp",
+	tokenLabel: "USDC",
+	amountInUsd: 100,
+	maturity: Date.now() + 30 * 24 * 60 * 60 * 1000,
+	autoRollover: false,
+};
 
 let queryClient: QueryClient;
 let wrapper: React.FC<{ children: React.ReactNode }>;
@@ -42,13 +55,17 @@ describe("useSubmitLend (thin wrapper)", () => {
 		let returned: unknown;
 		await act(async () => {
 			returned = await result.current.submitLimit(
-				{ amount: 100, targetApr: 0.05 },
+				{
+					...baseLendFields,
+					amount: 100,
+					targetApr: 0.05,
+				} satisfies SubmitLendLimitParams,
 				{ token: "jwt", marketIds },
 			);
 		});
 
 		expect(mockSubmitLendLimitOrder).toHaveBeenCalledWith(
-			{ amount: 100, targetApr: 0.05 },
+			{ ...baseLendFields, amount: 100, targetApr: 0.05 },
 			marketIds,
 			"jwt",
 		);
@@ -69,13 +86,16 @@ describe("useSubmitLend (thin wrapper)", () => {
 		let returned: unknown;
 		await act(async () => {
 			returned = await result.current.submitMarket(
-				{ amount: 500 },
+				{
+					...baseLendFields,
+					amount: 500,
+				} satisfies SubmitLendMarketParams,
 				{ token: "jwt", marketIds },
 			);
 		});
 
 		expect(mockSubmitLendMarketOrder).toHaveBeenCalledWith(
-			{ amount: 500 },
+			{ ...baseLendFields, amount: 500 },
 			marketIds,
 			"jwt",
 		);
@@ -89,7 +109,11 @@ describe("useSubmitLend (thin wrapper)", () => {
 
 		await act(async () => {
 			await result.current.submitLimit(
-				{ amount: 100 },
+				{
+					...baseLendFields,
+					amount: 100,
+					targetApr: 0.05,
+				} satisfies SubmitLendLimitParams,
 				{
 					token: "jwt",
 					marketIds: {
@@ -111,7 +135,10 @@ describe("useSubmitLend (thin wrapper)", () => {
 
 		await act(async () => {
 			await result.current.submitMarket(
-				{ amount: 500 },
+				{
+					...baseLendFields,
+					amount: 500,
+				} satisfies SubmitLendMarketParams,
 				{
 					token: "jwt",
 					marketIds: {

@@ -9,7 +9,10 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 
 vi.mock("@/hooks/use-auth-token", () => ({
-	useAuthToken: vi.fn(() => ({ getToken: vi.fn(), authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")) })),
+	useAuthToken: vi.fn(() => ({
+		getToken: vi.fn(),
+		authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")),
+	})),
 }));
 
 vi.mock("@/hooks/use-my-assets", () => ({
@@ -25,7 +28,9 @@ beforeEach(() => {
 
 describe("useLendDialogData", () => {
 	it("returns 0 balance when no matching asset", () => {
-		const { result } = renderHookWithProviders(() => useLendDialogData("UNKNOWN"));
+		const { result } = renderHookWithProviders(() =>
+			useLendDialogData("UNKNOWN"),
+		);
 		expect(result.current.availableBalance).toBe(0);
 		expect(result.current.tokenPrice).toBe(0);
 	});

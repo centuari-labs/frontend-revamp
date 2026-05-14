@@ -25,9 +25,7 @@ function subscribe(callback: () => void): () => void {
 	};
 }
 
-function getDefaultUsername(
-	user: ReturnType<typeof usePrivy>["user"],
-): string {
+function getDefaultUsername(user: ReturnType<typeof usePrivy>["user"]): string {
 	const email = user?.email?.address;
 	if (email) return email.split("@")[0];
 
@@ -42,7 +40,11 @@ function getDefaultUsername(
 
 export function useAccountName(): string | null {
 	const { user, authenticated } = usePrivy();
-	const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+	const stored = useSyncExternalStore(
+		subscribe,
+		getSnapshot,
+		getServerSnapshot,
+	);
 	if (stored) return stored;
 	if (!authenticated) return null;
 	return getDefaultUsername(user);

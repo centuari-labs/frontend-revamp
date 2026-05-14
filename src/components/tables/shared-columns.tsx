@@ -134,9 +134,7 @@ export function createSideColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	};
 }
 
-export function createOrderTypeColumn<
-	T extends OrderTableRow,
->(): ColumnDef<T> {
+export function createOrderTypeColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	return {
 		accessorKey: "orderType",
 		header: "Order Type",
@@ -170,8 +168,7 @@ export function createFilledAmountColumn<
 			if (!row.original.filledQuantity) return "-";
 			return (
 				<span>
-					{formatAmount(row.original.filledQuantity)}{" "}
-					{getSymbol(row.original)}
+					{formatAmount(row.original.filledQuantity)} {getSymbol(row.original)}
 				</span>
 			);
 		},
@@ -193,9 +190,7 @@ export function createFeeColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	};
 }
 
-export function createTargetAprColumn<
-	T extends OrderTableRow,
->(): ColumnDef<T> {
+export function createTargetAprColumn<T extends OrderTableRow>(): ColumnDef<T> {
 	return {
 		accessorKey: "rate",
 		header: "Target APR %",

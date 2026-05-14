@@ -16,7 +16,7 @@ import {
 	type PositionProps,
 } from "@/components/portfolio/tables/data-table-all-position";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getHealthFactorStatus } from "@/lib/utils";
 import { CentuariButton } from "@/components/centuari-button";
 import { useMyPortfolio } from "@/hooks/use-my-portfolio";

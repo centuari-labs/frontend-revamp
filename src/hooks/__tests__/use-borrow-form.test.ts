@@ -6,7 +6,9 @@ import { useBorrowForm } from "@/hooks/use-borrow-form";
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: vi.fn(() => ({
 		getToken: vi.fn(async () => "mock-token"),
-		authFetch: vi.fn(async (fn: (t: string) => Promise<unknown>) => fn("mock-token")),
+		authFetch: vi.fn(async (fn: (t: string) => Promise<unknown>) =>
+			fn("mock-token"),
+		),
 	})),
 }));
 

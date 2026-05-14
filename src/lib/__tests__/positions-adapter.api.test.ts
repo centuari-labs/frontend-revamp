@@ -244,16 +244,40 @@ describe("normalizeOrderToBorrowPosition", () => {
 	});
 
 	it("accepts market orderType", () => {
-		const pos = normalizeOrderToBorrowPosition(BORROW_RESPONSE, "USDC", "market");
+		const pos = normalizeOrderToBorrowPosition(
+			BORROW_RESPONSE,
+			"USDC",
+			"market",
+		);
 		expect(pos.orderType).toBe("market");
 		expect(pos.type).toBe("borrow");
 	});
 
 	it("maps all statuses correctly", () => {
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "OPEN" }, "USDC").status).toBe("OPEN");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "FILLED" }, "USDC").status).toBe("FILLED");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "CANCELLED" }, "USDC").status).toBe("CANCELLED");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "PARTIALLY_FILLED" }, "USDC").status).toBe("PARTIALLY_FILLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "OPEN" },
+				"USDC",
+			).status,
+		).toBe("OPEN");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "FILLED" },
+				"USDC",
+			).status,
+		).toBe("FILLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "CANCELLED" },
+				"USDC",
+			).status,
+		).toBe("CANCELLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "PARTIALLY_FILLED" },
+				"USDC",
+			).status,
+		).toBe("PARTIALLY_FILLED");
 	});
 });
 
@@ -271,7 +295,10 @@ describe("submitLendMarketOrder", () => {
 	};
 
 	it("converts params to correct DTO (no rate) and calls createLendMarketOrder", async () => {
-		mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+		mockCreateLendMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			type: "MARKET",
+		});
 
 		await submitLendMarketOrder(baseParams, MARKET_IDS, "jwt-token");
 
@@ -287,7 +314,10 @@ describe("submitLendMarketOrder", () => {
 	});
 
 	it("returns a normalized LendPosition with orderType market", async () => {
-		mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+		mockCreateLendMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			type: "MARKET",
+		});
 
 		const result = await submitLendMarketOrder(baseParams, MARKET_IDS, "token");
 
@@ -320,7 +350,11 @@ describe("submitBorrowLimitOrder", () => {
 	};
 
 	it("converts params to correct DTO with rate and calls createBorrowLimitOrder", async () => {
-		mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+		mockCreateBorrowLimit.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			rate: 10.1,
+		});
 
 		await submitBorrowLimitOrder(baseParams, MARKET_IDS, "jwt-borrow");
 
@@ -337,9 +371,17 @@ describe("submitBorrowLimitOrder", () => {
 	});
 
 	it("returns a normalized BorrowPosition", async () => {
-		mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+		mockCreateBorrowLimit.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			rate: 10.1,
+		});
 
-		const result = await submitBorrowLimitOrder(baseParams, MARKET_IDS, "token");
+		const result = await submitBorrowLimitOrder(
+			baseParams,
+			MARKET_IDS,
+			"token",
+		);
 
 		expect(result.id).toBe("order-123");
 		expect(result.type).toBe("borrow");
@@ -370,7 +412,11 @@ describe("submitBorrowMarketOrder", () => {
 	};
 
 	it("converts params to correct DTO (no rate) and calls createBorrowMarketOrder", async () => {
-		mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+		mockCreateBorrowMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			type: "MARKET",
+		});
 
 		await submitBorrowMarketOrder(baseParams, MARKET_IDS, "jwt-borrow");
 
@@ -386,9 +432,17 @@ describe("submitBorrowMarketOrder", () => {
 	});
 
 	it("returns a normalized BorrowPosition with orderType market", async () => {
-		mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+		mockCreateBorrowMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			type: "MARKET",
+		});
 
-		const result = await submitBorrowMarketOrder(baseParams, MARKET_IDS, "token");
+		const result = await submitBorrowMarketOrder(
+			baseParams,
+			MARKET_IDS,
+			"token",
+		);
 
 		expect(result.id).toBe("order-123");
 		expect(result.type).toBe("borrow");

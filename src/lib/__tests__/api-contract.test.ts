@@ -9,7 +9,7 @@ import {
 	MY_ASSETS_WIRE_RESPONSE,
 	MY_ASSETS_ITEMS,
 	MARKET_WIRE_RESPONSE,
-	MARKET_RESPONSE,
+	type MARKET_RESPONSE,
 } from "@/__tests__/fixtures/api-responses";
 
 const mockFetch = vi.fn();
@@ -52,8 +52,7 @@ describe("apiClient envelope unwrapping", () => {
 			json: async () => MARKET_WIRE_RESPONSE,
 		});
 
-		const result =
-			await apiClient<typeof MARKET_RESPONSE>("/market");
+		const result = await apiClient<typeof MARKET_RESPONSE>("/market");
 		expect(result.total_deposit).toBe("1500000.00");
 		expect(result.markets).toHaveLength(2);
 	});

@@ -23,9 +23,7 @@ export function useWalletAddress(): `0x${string}` | undefined {
 	if (privyAddress) return privyAddress as `0x${string}`;
 
 	// Fallback to embedded wallet for social login users
-	const embeddedWallet = wallets.find(
-		(w) => w.walletClientType === "privy",
-	);
+	const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
 	if (embeddedWallet) return embeddedWallet.address as `0x${string}`;
 
 	// Fallback to first available wallet

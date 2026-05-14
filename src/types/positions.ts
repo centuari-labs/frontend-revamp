@@ -3,116 +3,120 @@
  * Used by hooks and adapter for lend/borrow operations.
  */
 
-export type PositionStatus = "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
+export type PositionStatus =
+	| "OPEN"
+	| "FILLED"
+	| "CANCELLED"
+	| "PARTIALLY_FILLED";
 export type OrderType = "limit" | "market";
 
 export interface LendPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "lend";
-  tokenValue: string;
-  tokenSymbol: string;
-  assetId?: string;
-  marketId?: string;
-  maturity: number;
-  status: PositionStatus;
-  createdAt: string;
-  timestamp: number;
-  orderType?: OrderType;
-  filledQuantity?: number;
-  fee?: number;
+	id: string;
+	assetImg: string;
+	assetName: string;
+	amount: number;
+	apr: number;
+	type: "lend";
+	tokenValue: string;
+	tokenSymbol: string;
+	assetId?: string;
+	marketId?: string;
+	maturity: number;
+	status: PositionStatus;
+	createdAt: string;
+	timestamp: number;
+	orderType?: OrderType;
+	filledQuantity?: number;
+	fee?: number;
 }
 
 export interface BorrowPosition {
-  id: string;
-  assetImg: string;
-  assetName: string;
-  amount: number;
-  apr: number;
-  type: "borrow";
-  tokenValue: string;
-  tokenSymbol: string;
-  assetId?: string;
-  marketId?: string;
-  maturity: number;
-  status: PositionStatus;
-  createdAt: string;
-  timestamp: number;
-  collateralTokens: string[];
-  orderType?: OrderType;
-  filledQuantity?: number;
-  fee?: number;
+	id: string;
+	assetImg: string;
+	assetName: string;
+	amount: number;
+	apr: number;
+	type: "borrow";
+	tokenValue: string;
+	tokenSymbol: string;
+	assetId?: string;
+	marketId?: string;
+	maturity: number;
+	status: PositionStatus;
+	createdAt: string;
+	timestamp: number;
+	collateralTokens: string[];
+	orderType?: OrderType;
+	filledQuantity?: number;
+	fee?: number;
 }
 
 export type Position = LendPosition | BorrowPosition;
 
 export function isLendPosition(pos: Position): pos is LendPosition {
-  return pos.type === "lend";
+	return pos.type === "lend";
 }
 
 export function isBorrowPosition(pos: Position): pos is BorrowPosition {
-  return pos.type === "borrow";
+	return pos.type === "borrow";
 }
 
 // Params for submit actions
 export interface SubmitLendLimitParams {
-  tokenValue: string;
-  tokenLogo: string;
-  tokenLabel: string;
-  amount: number;
-  amountInUsd: number;
-  targetApr: number;
-  maturity: number;
-  autoRollover: boolean;
-  editingPosition?: LendPosition;
+	tokenValue: string;
+	tokenLogo: string;
+	tokenLabel: string;
+	amount: number;
+	amountInUsd: number;
+	targetApr: number;
+	maturity: number;
+	autoRollover: boolean;
+	editingPosition?: LendPosition;
 }
 
 export interface SubmitLendMarketParams {
-  tokenValue: string;
-  tokenLogo: string;
-  tokenLabel: string;
-  amount: number;
-  amountInUsd: number;
-  maturity: number;
-  autoRollover?: boolean;
-  editingPosition?: LendPosition;
+	tokenValue: string;
+	tokenLogo: string;
+	tokenLabel: string;
+	amount: number;
+	amountInUsd: number;
+	maturity: number;
+	autoRollover?: boolean;
+	editingPosition?: LendPosition;
 }
 
 export interface SubmitBorrowLimitParams {
-  tokenValue: string;
-  tokenLogo: string;
-  tokenLabel: string;
-  amount: number;
-  maturity: number;
-  targetApr: number;
-  collateralTokens: string[];
-  autoRollover?: boolean;
-  editingPosition?: BorrowPosition;
+	tokenValue: string;
+	tokenLogo: string;
+	tokenLabel: string;
+	amount: number;
+	maturity: number;
+	targetApr: number;
+	collateralTokens: string[];
+	autoRollover?: boolean;
+	editingPosition?: BorrowPosition;
 }
 
 export interface SubmitBorrowMarketParams {
-  tokenValue: string;
-  tokenLogo: string;
-  tokenLabel: string;
-  amount: number;
-  maturity: number;
-  collateralTokens: string[];
-  autoRollover?: boolean;
-  editingPosition?: BorrowPosition;
+	tokenValue: string;
+	tokenLogo: string;
+	tokenLabel: string;
+	amount: number;
+	maturity: number;
+	collateralTokens: string[];
+	autoRollover?: boolean;
+	editingPosition?: BorrowPosition;
 }
 
 export interface WithdrawLendParams {
-  marketId: string;
-  amount: number;
-  tokenValue: string;
+	marketId: string;
+	amount: number;
+	tokenValue: string;
 }
 
 export interface RepayBorrowParams {
-  marketId: string;
-  amount: number;
-  futureAmount: number;
-  tokenValue: string;
+	marketId: string;
+	amount: number;
+	futureAmount: number;
+	tokenValue: string;
 }

@@ -9,7 +9,12 @@ export interface SubmitOrderOptions {
 	marketIds?: MarketIds;
 }
 
-export function useSubmitOrder<LimitParams, MarketParams, LimitResult, MarketResult>(
+export function useSubmitOrder<
+	LimitParams,
+	MarketParams,
+	LimitResult,
+	MarketResult,
+>(
 	limitFn: (
 		params: LimitParams,
 		marketIds: MarketIds,

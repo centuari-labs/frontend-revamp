@@ -36,7 +36,11 @@ export function useOnChainBalance(tokenSymbol: string) {
 	const tokenAddress = resolved?.tokenAddress;
 	const decimals = resolved?.decimals ?? 18;
 
-	const { data: rawBalance, isLoading, error } = useReadContract({
+	const {
+		data: rawBalance,
+		isLoading,
+		error,
+	} = useReadContract({
 		address: tokenAddress,
 		abi: erc20Abi,
 		functionName: "balanceOf",
@@ -47,7 +51,14 @@ export function useOnChainBalance(tokenSymbol: string) {
 		},
 	});
 
-	console.log("[OnChainBalance]", { address, tokenAddress, tokenSymbol, rawBalance, isLoading, error: error?.message });
+	console.log("[OnChainBalance]", {
+		address,
+		tokenAddress,
+		tokenSymbol,
+		rawBalance,
+		isLoading,
+		error: error?.message,
+	});
 
 	const formattedBalance = useMemo(() => {
 		if (rawBalance == null) return 0;

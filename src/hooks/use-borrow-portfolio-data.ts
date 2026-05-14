@@ -68,7 +68,7 @@ export function useBorrowPortfolioData(): BorrowPortfolioData {
 			tokenAddressBySymbol,
 			collateralTokenList,
 			userHealthFactor: Number.isFinite(userDetails?.healthFactor)
-				? userDetails!.healthFactor
+				? (userDetails?.healthFactor ?? 0)
 				: 0,
 			apiCollateralUsd: userDetails?.collateralUsd ?? 0,
 			apiSettledDebtUsd: userDetails?.settledDebtUsd ?? 0,

@@ -10,7 +10,9 @@ vi.mock("@privy-io/react-auth", () => ({
 }));
 
 const mockGetToken = vi.fn().mockResolvedValue("test-jwt-token");
-const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) => fn("test-jwt-token"));
+const mockAuthFetch = vi.fn(async (fn: (token: string) => Promise<unknown>) =>
+	fn("test-jwt-token"),
+);
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: () => ({
 		getToken: mockGetToken,

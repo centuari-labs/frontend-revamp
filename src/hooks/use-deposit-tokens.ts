@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getDepositTokens, type DepositToken } from "@/lib/api";
+import { getDepositTokens } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { QUERY_CONFIG } from "@/lib/query-config";
 

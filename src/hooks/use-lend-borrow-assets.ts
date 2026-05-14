@@ -7,21 +7,21 @@ import { QUERY_KEYS } from "@/lib/query-keys";
 import { usePrivy } from "@privy-io/react-auth";
 
 export function useLendBorrowAssets() {
-  const { authFetch } = useAuthToken();
-  const { user } = usePrivy();
-  const address = user?.wallet?.address;
+	const { authFetch } = useAuthToken();
+	const { user } = usePrivy();
+	const address = user?.wallet?.address;
 
-  const query = useQuery<LendBorrowAssetsResponse>({
-    queryKey: [QUERY_KEYS.LEND_BORROW_ASSETS, address],
-    queryFn: () => authFetch((token) => getLendBorrowAssets(token)),
-    enabled: !!address,
-  });
+	const query = useQuery<LendBorrowAssetsResponse>({
+		queryKey: [QUERY_KEYS.LEND_BORROW_ASSETS, address],
+		queryFn: () => authFetch((token) => getLendBorrowAssets(token)),
+		enabled: !!address,
+	});
 
-  return {
-    lendBorrow: query.data ?? null,
-    chartData: query.data?.chartData ?? [],
-    isLoading: query.isLoading,
-    isError: query.isError,
-    refetch: query.refetch,
-  };
+	return {
+		lendBorrow: query.data ?? null,
+		chartData: query.data?.chartData ?? [],
+		isLoading: query.isLoading,
+		isError: query.isError,
+		refetch: query.refetch,
+	};
 }

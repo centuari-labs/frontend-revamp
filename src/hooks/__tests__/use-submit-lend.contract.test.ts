@@ -8,7 +8,7 @@ import {
 	aprToBasisPoints,
 	normalizeOrderToLendPosition,
 } from "@/lib/positions-adapter.api";
-import { MARKET_RESPONSE, ORDER_RESPONSE_DATA } from "@/__tests__/fixtures/api-responses";
+import { ORDER_RESPONSE_DATA } from "@/__tests__/fixtures/api-responses";
 
 vi.mock("@/lib/api", () => ({
 	createLendLimitOrder: vi.fn(),

@@ -23,7 +23,6 @@ import {
 	formatNumberWithSeparator,
 	parseNumberFromSeparator,
 	calculateFutureAmount,
-	getHealthFactorPercentage,
 } from "@/lib/utils";
 import { useTokenPrice } from "@/contexts/price-context";
 import { getDefaultMaturityTimestamp } from "@/lib/maturity";
@@ -154,7 +153,7 @@ export function CentuariBorrowDialog({
 
 	const healthFactorPercentage =
 		healthFactor > 0 &&
-		!isNaN(healthFactor) &&
+		!Number.isNaN(healthFactor) &&
 		selectedCollaterals.length > 0 &&
 		numericAmount > 0
 			? healthFactor >= 2.5

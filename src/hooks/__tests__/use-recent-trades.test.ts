@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
-import { createMockSocket, type MockSocket } from "@/__tests__/helpers/mock-socket";
+import {
+	createMockSocket,
+	type MockSocket,
+} from "@/__tests__/helpers/mock-socket";
 
 let mockSocket: MockSocket;
 
@@ -82,8 +85,20 @@ describe("useRecentTrades (WS mode)", () => {
 
 		act(() => {
 			mockSocket._simulateEvent("recent-trades-snapshot", [
-				{ assetId, side: "BORROW", amount: "1000000", rate: 500, timestamp: Date.now() },
-				{ assetId, side: "LEND", amount: "2000000", rate: 450, timestamp: Date.now() + 1 },
+				{
+					assetId,
+					side: "BORROW",
+					amount: "1000000",
+					rate: 500,
+					timestamp: Date.now(),
+				},
+				{
+					assetId,
+					side: "LEND",
+					amount: "2000000",
+					rate: 450,
+					timestamp: Date.now() + 1,
+				},
 			]);
 		});
 

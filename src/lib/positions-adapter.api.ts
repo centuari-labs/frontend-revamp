@@ -40,8 +40,15 @@ export function aprToBasisPoints(aprDecimal: number): number {
 // ─── Status Mapping ───────────────────────────────────────────────────
 
 function mapStatus(backendStatus: string): PositionStatus {
-	const valid: PositionStatus[] = ["OPEN", "FILLED", "CANCELLED", "PARTIALLY_FILLED"];
-	return (valid.includes(backendStatus as PositionStatus) ? backendStatus : "OPEN") as PositionStatus;
+	const valid: PositionStatus[] = [
+		"OPEN",
+		"FILLED",
+		"CANCELLED",
+		"PARTIALLY_FILLED",
+	];
+	return (
+		valid.includes(backendStatus as PositionStatus) ? backendStatus : "OPEN"
+	) as PositionStatus;
 }
 
 // ─── Response Normalization ───────────────────────────────────────────
