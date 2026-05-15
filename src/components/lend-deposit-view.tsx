@@ -17,12 +17,7 @@ import {
 import { getTokenLogo } from "@/lib/tokens";
 import { truncateBalance } from "@/lib/utils";
 import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
-
-interface DepositToken {
-	id: string;
-	symbol: string;
-	imageUrl: string | null;
-}
+import type { Token } from "@/types/token";
 
 interface LendDepositViewProps {
 	viewMode: string;
@@ -33,7 +28,7 @@ interface LendDepositViewProps {
 	switchingChain: boolean;
 	onSwitchChain: () => void;
 	// Token selection
-	depositTokens: DepositToken[] | undefined;
+	depositTokens: Token[] | undefined;
 	depositTokensLoading: boolean;
 	depositSelectedTokenId: string;
 	onTokenChange: (id: string) => void;
@@ -155,7 +150,7 @@ export const LendDepositView = forwardRef<HTMLDivElement, LendDepositViewProps>(
 							</button>
 						) : (
 							<Select value="arbitrum-sepolia" disabled>
-								<SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
+								<SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -182,7 +177,7 @@ export const LendDepositView = forwardRef<HTMLDivElement, LendDepositViewProps>(
 							onValueChange={onTokenChange}
 							disabled={depositTokensLoading || isDepositProcessing}
 						>
-							<SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
+							<SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
 								<SelectValue
 									placeholder={
 										depositTokensLoading ? "Loading..." : "Select Token"

@@ -37,10 +37,8 @@ export function MarketHeader({
           <Image
             src={selectedToken.logo}
             alt={`${selectedToken.label} Icon`}
-            width={48}
-            height={48}
-            quality={100}
-            className="size-6 object-contain"
+            width={24}
+            height={24}
           />
           <CentuariTypography className="uppercase font-semibold text-lg">
             {selectedToken.label}
@@ -61,10 +59,8 @@ export function MarketHeader({
             <Image
               src={selectedToken.logo}
               alt={`${selectedToken.label} Icon`}
-              width={70}
-              height={70}
-              quality={100}
-              className="size-[35px] object-contain"
+              width={35}
+              height={35}
             />
             <CentuariTypography
               className="uppercase font-semibold"

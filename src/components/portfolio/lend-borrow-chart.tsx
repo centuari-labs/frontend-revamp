@@ -8,9 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format } from "date-fns";
-import { LineChart } from "lucide-react";
 import type { LendBorrowChartPoint } from "@/lib/api";
-import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 
 interface ChartDataPoint {
   date: string;
@@ -90,13 +88,8 @@ export default function LendBorrowChart({ data = [] }: LendBorrowChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="w-full h-[180px] flex flex-col items-center justify-center gap-3">
-        <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
-          <LineChart size={22} className="text-white/40" />
-        </CentuariGlassSurface>
-        <span className="text-sm text-white/40">
-          You don&apos;t have any lend or borrow activity yet
-        </span>
+      <div className="w-full h-[180px] flex items-center justify-center text-sm text-white/40">
+        No chart data
       </div>
     );
   }

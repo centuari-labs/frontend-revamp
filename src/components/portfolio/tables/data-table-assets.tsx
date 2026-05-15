@@ -19,14 +19,10 @@ import {
   ArrowUpDown,
   ChevronDown,
   MoreHorizontal,
-  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { cn, truncateBalance } from "@/lib/utils";
-import {
-  CentuariGlassLayers,
-  CentuariGlassSurface,
-} from "@/components/centuari-glass-surface";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -399,7 +395,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
                 handleCollateralHeaderClick();
               }}
               className={cn(
-                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 allSelected
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -407,12 +403,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {allSelected && (
                 <svg
-                  width="10"
-                  height="10"
+                  width="12"
+                  height="12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3.5"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"
@@ -433,7 +429,7 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             <div
               onClick={() => handleCollateralCellClick(asset)}
               className={cn(
-                "w-4 h-4 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
+                "w-5 h-5 rounded-full border flex items-center justify-center transition-colors cursor-pointer hover:opacity-80",
                 isCollateral
                   ? "bg-blue-600 border-blue-600"
                   : "bg-transparent border-white/20"
@@ -441,12 +437,12 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
             >
               {isCollateral && (
                 <svg
-                  width="10"
-                  height="10"
+                  width="12"
+                  height="12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="3.5"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className="text-white"
@@ -591,16 +587,9 @@ export function DataTableAssets({ assets: externalAssets, onToggleCollateral, on
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-[300px]"
+                  className="h-[300px] text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
-                      <Wallet size={22} className="text-white/40" />
-                    </CentuariGlassSurface>
-                    <span className="text-sm text-white/40">
-                      You don&apos;t have any assets yet
-                    </span>
-                  </div>
+                  No results.
                 </TableCell>
               </TableRow>
             )}

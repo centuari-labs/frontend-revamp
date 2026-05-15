@@ -2,17 +2,10 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-const SCROLL_THRESHOLD = 60;
 
 import { Input } from "@/components/ui/input";
 import { CentuariButton } from "./centuari-button";
@@ -46,15 +39,13 @@ const NAV_ITEMS: readonly NavItem[] = [
 export default function CentuariNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
 
   const pathname = usePathname();
 
   const { authenticated } = usePrivy();
 
-  const navRef = useRef<HTMLElement>(null);
-  const pillRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const navItemsRef = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -62,130 +53,13 @@ export default function CentuariNavbar() {
   const indicatorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // GSAP-driven smart navbar — width-shrink to centered pill on scroll.
   useEffect(() => {
-    const nav = navRef.current;
-    const pill = pillRef.current;
-    const inner = innerRef.current;
-    if (!nav || !pill || !inner) return;
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
 
-    const ctx = gsap.context(() => {
-      const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-      // Initial — full width hero state
-      const initialMaxW = "100%";
-      const initialPadX = isDesktop ? 42 : 16;
-      const initialPadY = isDesktop ? 2 : 2;
-      const initialInnerH = isDesktop ? 80 : 64;
-      const initialRadius = 0;
-      const initialMarginTop = 0;
-      // Scrolled — centered floating pill
-      const scrolledMaxW = isDesktop ? "880px" : "calc(100% - 24px)";
-      const scrolledPadX = isDesktop ? 16 : 12;
-      const scrolledPadY = isDesktop ? 6 : 4;
-      const scrolledInnerH = isDesktop ? 56 : 48;
-      const scrolledRadius = 10;
-      const scrolledMarginTop = isDesktop ? 12 : 8;
-
-      gsap.set(nav, {
-        willChange: "transform",
-      });
-      gsap.set(pill, {
-        maxWidth: initialMaxW,
-        // marginTop: initialMarginTop,
-        paddingLeft: initialPadX,
-        paddingRight: initialPadX,
-        paddingTop: initialPadY,
-        paddingBottom: initialPadY,
-        borderRadius: initialRadius,
-        willChange: "max-width, margin, padding, border-radius, background-color, backdrop-filter",
-      });
-      gsap.set(inner, {
-        height: initialInnerH,
-        willChange: "height",
-      });
-
-      // 1. Mount intro — fade + slide down.
-      gsap.from(nav, {
-        y: -24,
-        opacity: 0,
-        duration: 0.7,
-        ease: "expo.out",
-      });
-
-      // 2. Scrolled state — width shrink + pill + glass.
-      const scrolledTl = gsap
-        .timeline({
-          paused: true,
-          defaults: { ease: "power2.out", duration: 0.45 },
-        })
-        .to(
-          pill,
-          {
-            maxWidth: scrolledMaxW,
-            marginTop: scrolledMarginTop,
-            paddingLeft: scrolledPadX,
-            paddingRight: scrolledPadX,
-            paddingTop: scrolledPadY,
-            paddingBottom: scrolledPadY,
-            borderRadius: scrolledRadius,
-            backgroundColor: "rgba(8, 10, 18, 0.6)",
-            backdropFilter: "blur(20px) saturate(160%)",
-            borderColor: "rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 12px 40px -10px rgba(0,0,0,0.55)",
-          },
-          0,
-        )
-        .to(inner, { height: scrolledInnerH }, 0);
-
-      ScrollTrigger.create({
-        start: 0,
-        end: 99999,
-        onUpdate: (self) => {
-          if (self.scroll() > SCROLL_THRESHOLD) scrolledTl.play();
-          else scrolledTl.reverse();
-        },
-      });
-
-      // 3. Smart hide — scroll down hides, scroll up reveals.
-      // let lastY = 0;
-      // ScrollTrigger.create({
-      //   start: 0,
-      //   end: 99999,
-      //   onUpdate: (self) => {
-      //     const y = self.scroll();
-      //     const delta = y - lastY;
-      //     lastY = y;
-
-      //     if (y < SCROLL_THRESHOLD) {
-      //       gsap.to(nav, {
-      //         yPercent: 0,
-      //         duration: 0.3,
-      //         ease: "power2.out",
-      //         overwrite: "auto",
-      //       });
-      //       return;
-      //     }
-
-      //     if (delta > 4) {
-      //       gsap.to(nav, {
-      //         yPercent: -130,
-      //         duration: 0.4,
-      //         ease: "power2.in",
-      //         overwrite: "auto",
-      //       });
-      //     } else if (delta < -4) {
-      //       gsap.to(nav, {
-      //         yPercent: 0,
-      //         duration: 0.4,
-      //         ease: "power2.out",
-      //         overwrite: "auto",
-      //       });
-      //     }
-      //   },
-      // });
-    }, nav);
-
-    return () => ctx.revert();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const isNavItemActive = (item: NavItem): boolean =>
@@ -316,23 +190,15 @@ export default function CentuariNavbar() {
 
   return (
     <nav
-      ref={navRef}
       id="tour-home-nav"
-      className="fixed top-0 left-0 right-0 z-[100] translate-z-0 backface-hidden pointer-events-none"
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
+        ? "bg-primary-blue-90/20 backdrop-blur-xl md:border-b md:border-white/10"
+        : ""
+        }`}
     >
-      <div
-        ref={pillRef}
-        className="mx-auto w-full border border-transparent pointer-events-auto"
-        style={{
-          backgroundColor: "rgba(8, 10, 18, 0)",
-          backdropFilter: "blur(0px)",
-        }}
-      >
-        <div>
-          <div
-            ref={innerRef}
-            className="flex items-center justify-between"
-          >
+      <div className="max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto w-full">
+        <div className="px-4 md:px-6">
+          <div className="flex items-center justify-between h-16 md:h-20">
             <Link href="/" className="flex items-center gap-2">
               <img
                 src="/centuari-logo.png"

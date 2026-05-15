@@ -2,18 +2,15 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-	AlertDialog,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogDescription,
-	AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, XIcon } from "lucide-react";
-import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
+import { Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { CentuariButton } from "./centuari-button";
 import { CentuariGlassButton } from "./centuari-glass-button";
@@ -34,9 +31,8 @@ import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateUserQueries } from "@/lib/query-keys";
-import { LendDialogTour } from "./product-tour/lend-dialog-tour";
 import { useDeposit } from "@/hooks/use-deposit";
-import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useTokens } from "@/hooks/use-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
 import { getTokenLogo } from "@/lib/tokens";
 import { useNetworkSwitch } from "@/hooks/use-network-switch";
@@ -93,18 +89,18 @@ export function CentuariLendDialog({
 
 	// Deposit state & hooks
 	const { deposit, status: depositStatus, reset: resetDepositHook } = useDeposit();
-	const { data: depositTokens, isLoading: depositTokensLoading } = useDepositTokens();
+	const { tokens: depositTokens, isLoading: depositTokensLoading } = useTokens();
 	const [depositSelectedTokenId, setDepositSelectedTokenId] = useState("");
 	const [depositAmount, setDepositAmount] = useState("");
 	const [depositDisplayAmount, setDepositDisplayAmount] = useState("");
 
 	const depositSelectedToken = useMemo(
-		() => depositTokens?.find((t) => t.id === depositSelectedTokenId),
+		() => depositTokens.find((t) => t.id === depositSelectedTokenId),
 		[depositTokens, depositSelectedTokenId],
 	);
 
 	useEffect(() => {
-		if (depositTokens && depositTokens.length > 0 && !depositSelectedTokenId) {
+		if (depositTokens.length > 0 && !depositSelectedTokenId) {
 			setDepositSelectedTokenId(depositTokens[0].id);
 		}
 	}, [depositTokens, depositSelectedTokenId]);
@@ -198,7 +194,7 @@ export function CentuariLendDialog({
 	const resetDepositForm = () => {
 		setDepositAmount("");
 		setDepositDisplayAmount("");
-		setDepositSelectedTokenId(depositTokens?.[0]?.id ?? "");
+		setDepositSelectedTokenId(depositTokens[0]?.id ?? "");
 		resetDepositHook();
 	};
 
@@ -253,33 +249,14 @@ export function CentuariLendDialog({
 
 	return (
 		<>
-			<AlertDialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-				<AlertDialogTrigger asChild>
+			<Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+				<DialogTrigger asChild>
 					<CentuariGlassButton className="flex-1">
 						Start Earning
 					</CentuariGlassButton>
-				</AlertDialogTrigger>
-				<AlertDialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:zoom-in-0! data-[state=open]:duration-600">
-					<AlertDialogTitle className="sr-only">
-						Lend {token_symbol}
-					</AlertDialogTitle>
-					<AlertDialogDescription className="sr-only">
-						Lend your {token_symbol} to earn fixed APR. Review the details before confirming.
-					</AlertDialogDescription>
-					<AlertDialogCancel className="rounded-full w-4 h-4 p-3 cursor-pointer" asChild>
-						<button
-							type="button"
-							aria-label="Close"
-							className="group/glass ring-offset-background focus:ring-ring absolute -top-2.5 -right-2.5 z-30 isolate overflow-hidden opacity-70"
-						>
-							<CentuariGlassLayers intensity="soft" />
-							<span className="relative z-20 flex">
-								<XIcon />
-							</span>
-							<span className="sr-only">Close</span>
-						</button>
-					</AlertDialogCancel>
-					<AlertDialogHeader className="contents space-y-0 text-left">
+				</DialogTrigger>
+				<DialogContent className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600">
+					<DialogHeader className="contents space-y-0 text-left">
 						<div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
 							<div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
 							<div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
@@ -337,12 +314,12 @@ export function CentuariLendDialog({
 								/>
 							</div>
 						</ScrollArea>
-					</AlertDialogHeader>
-					<AlertDialogFooter id="tour-lend-confirm" className="flex flex-col! gap-2 px-6">
+					</DialogHeader>
+					<DialogFooter className="flex !flex-col gap-2 px-6">
 						<div className="flex items-center gap-4">
-							<AlertDialogCancel asChild>
+							<DialogClose asChild>
 								<CentuariButton variant="secondary">Cancel</CentuariButton>
-							</AlertDialogCancel>
+							</DialogClose>
 							<CentuariButton
 								type="button"
 								variant="primary"
@@ -395,11 +372,9 @@ export function CentuariLendDialog({
 							This position is automatically refinanced. At maturity, it will
 							roll over to the next available term unless you take action.
 						</p>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
-			<LendDialogTour open={isDialogOpen} />
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<TransactionSuccessDialog
 				open={showSuccessDialog}

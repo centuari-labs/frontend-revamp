@@ -22,9 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trophy } from "lucide-react";
 import { IcPolygonCentuari } from "../icons/ic-polygon-centuari";
-import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 import Image from "next/image";
 
 const data: LeaderboardProps[] = [
@@ -297,16 +295,9 @@ export function LeaderboardTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-48"
+                  className="h-24 text-center text-xs sm:text-sm md:text-base 2xl:text-lg"
                 >
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
-                      <Trophy size={22} className="text-white/40" />
-                    </CentuariGlassSurface>
-                    <span className="text-sm text-white/40">
-                      No leaderboard data yet
-                    </span>
-                  </div>
+                  No results.
                 </TableCell>
               </TableRow>
             )}

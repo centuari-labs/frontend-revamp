@@ -2,7 +2,7 @@
 
 import { useReadContract } from "wagmi";
 import { formatUnits, erc20Abi } from "viem";
-import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useTokens } from "@/hooks/use-tokens";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { useMemo } from "react";
@@ -15,12 +15,12 @@ import { useMemo } from "react";
  */
 export function useOnChainBalance(tokenSymbol: string) {
 	const address = useWalletAddress();
-	const { data: depositTokens } = useDepositTokens();
+	const { tokens: depositTokens } = useTokens();
 
 	const resolved = useMemo(() => {
 		const sym = tokenSymbol.toLowerCase();
 
-		const depositToken = depositTokens?.find(
+		const depositToken = depositTokens.find(
 			(t) => t.symbol.toLowerCase() === sym,
 		);
 		if (depositToken?.tokenAddress) {
@@ -36,7 +36,11 @@ export function useOnChainBalance(tokenSymbol: string) {
 	const tokenAddress = resolved?.tokenAddress;
 	const decimals = resolved?.decimals ?? 18;
 
-	const { data: rawBalance, isLoading, error } = useReadContract({
+	const {
+		data: rawBalance,
+		isLoading,
+		error,
+	} = useReadContract({
 		address: tokenAddress,
 		abi: erc20Abi,
 		functionName: "balanceOf",
@@ -47,7 +51,14 @@ export function useOnChainBalance(tokenSymbol: string) {
 		},
 	});
 
-	console.log("[OnChainBalance]", { address, tokenAddress, tokenSymbol, rawBalance, isLoading, error: error?.message });
+	console.log("[OnChainBalance]", {
+		address,
+		tokenAddress,
+		tokenSymbol,
+		rawBalance,
+		isLoading,
+		error: error?.message,
+	});
 
 	const formattedBalance = useMemo(() => {
 		if (rawBalance == null) return 0;

@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { CentuariButton } from "@/components/centuari-button";
 import Image from "next/image";
 import { MARKET_TOKEN_LIST, getTokenLogo } from "@/lib/tokens";
+import { useTokens, getTokenById } from "@/hooks/use-tokens";
 import { formatNumber, parseMaturity } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { AmendDialog } from "@/components/amend-dialog";
@@ -83,10 +84,9 @@ function PositionCard({
           <Image
             src={getTokenLogo(position.tokenValue, position.assetImg)}
             alt={position.tokenSymbol}
-            width={64}
-            height={64}
-            quality={100}
-            className="size-8 rounded-full object-contain"
+            width={32}
+            height={32}
+            className="rounded-full"
           />
           <div>
             <p className="font-semibold text-white">{position.tokenSymbol}</p>
@@ -173,7 +173,7 @@ function CancelOrderDialog({
           </div>
           <div className="mt-8 px-6 flex items-center justify-center flex-col gap-3">
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Trash2 size={28} className="text-red-600" />
+              <Trash2 size={28} className="text-red-400" />
             </div>
             <CentuariTypography className="text-xl font-semibold">
               Cancel Order
@@ -185,7 +185,7 @@ function CancelOrderDialog({
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-end px-6 py-5">
           <DialogClose asChild>
-            <CentuariButton variant="ghost" className="flex-1" disabled={isPending}>
+            <CentuariButton variant="secondary" className="flex-1" disabled={isPending}>
               No, keep it
             </CentuariButton>
           </DialogClose>
@@ -293,23 +293,17 @@ function UnifiedPositionTable({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-white/5">
               {headerGroup.headers.map((header) => {
-                const isFirst = headerGroup.headers[0].id === header.id;
-                const isLast =
-                  headerGroup.headers[headerGroup.headers.length - 1].id ===
-                  header.id;
                 return (
                   <TableHead
                     key={header.id}
-                    className={`text-sm text-muted-foreground font-normal ${
-                      isFirst ? "rounded-l-lg pl-6" : ""
-                    } ${isLast ? "rounded-r-lg pr-6" : ""}`}
+                    className="text-sm text-muted-foreground font-normal"
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 );
               })}
@@ -366,6 +360,7 @@ function UnifiedPositionTable({
 export function PositionSection({ assetId }: { assetId?: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("open_orders");
+  const { tokens } = useTokens();
   const [openOrdersPage, setOpenOrdersPage] = useState(1);
   const [positionsPage, setPositionsPage] = useState(1);
   const [txHistoryPage, setTxHistoryPage] = useState(1);
@@ -395,60 +390,69 @@ export function PositionSection({ assetId }: { assetId?: string }) {
 
   // Map open orders API data to Position type
   const openOrderPositions: Position[] = useMemo(() =>
-    openOrders.map((o) => ({
-      id: o.id,
-      assetImg: o.asset.imageUrl ?? "",
-      assetName: o.asset.name,
-      amount: Number(o.amount),
-      apr: o.rate / 100,
-      type: o.side.toLowerCase() as "lend" | "borrow",
-      tokenValue: o.asset.symbol.toLowerCase(),
-      tokenSymbol: o.asset.symbol,
-      maturity: o.maturity ? parseMaturity(o.maturity) : 0,
-      status: o.status as PositionStatus,
-      createdAt: new Date(o.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
-      timestamp: Date.now(),
-      orderType: o.orderType?.toLowerCase() as OrderType | undefined,
-      filledQuantity: o.filledQuantity ? Number(o.filledQuantity) : undefined,
-      ...(o.side === "BORROW" ? { collateralTokens: [] } : {}),
-    })) as Position[], [openOrders]);
+    openOrders.map((o) => {
+      const token = getTokenById(tokens, o.assetId);
+      return {
+        id: o.id,
+        assetImg: token?.imageUrl ?? "",
+        assetName: token?.name ?? "",
+        amount: Number(o.amount),
+        apr: o.rate / 100,
+        type: o.side.toLowerCase() as "lend" | "borrow",
+        tokenValue: (token?.symbol ?? "").toLowerCase(),
+        tokenSymbol: token?.symbol ?? "",
+        maturity: o.maturity ? parseMaturity(o.maturity) : 0,
+        status: o.status as PositionStatus,
+        createdAt: new Date(o.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
+        timestamp: Date.now(),
+        orderType: o.orderType?.toLowerCase() as OrderType | undefined,
+        filledQuantity: o.filledQuantity ? Number(o.filledQuantity) : undefined,
+        ...(o.side === "BORROW" ? { collateralTokens: [] } : {}),
+      };
+    }) as Position[], [openOrders, tokens]);
 
   // Map active positions API data to Position type
   const activePositionsMapped: Position[] = useMemo(() =>
-    activePositions.map((p) => ({
-      id: p.id,
-      assetImg: p.imageUrl ?? "",
-      assetName: p.name,
-      amount: p.amountInUsd,
-      apr: (Number(p.apr) || 0) / 100,
-      type: p.side.toLowerCase() as "lend" | "borrow",
-      tokenValue: p.symbol.toLowerCase(),
-      tokenSymbol: p.symbol,
-      maturity: (p.maturity ?? 0) * 1000,
-      status: "FILLED" as const,
-      createdAt: "",
-      timestamp: Date.now(),
-      ...(p.side === "BORROW" ? { collateralTokens: [] } : {}),
-    })) as Position[], [activePositions]);
+    activePositions.map((p) => {
+      const token = getTokenById(tokens, p.assetId);
+      return {
+        id: p.id,
+        assetImg: token?.imageUrl ?? "",
+        assetName: token?.name ?? "",
+        amount: p.amountInUsd,
+        apr: (Number(p.apr) || 0) / 100,
+        type: p.side.toLowerCase() as "lend" | "borrow",
+        tokenValue: (token?.symbol ?? "").toLowerCase(),
+        tokenSymbol: token?.symbol ?? "",
+        maturity: (p.maturity ?? 0) * 1000,
+        status: "FILLED" as const,
+        createdAt: "",
+        timestamp: Date.now(),
+        ...(p.side === "BORROW" ? { collateralTokens: [] } : {}),
+      };
+    }) as Position[], [activePositions, tokens]);
 
   // Map transaction history API data to Position type (from matches table — always settled)
   const txPositions: Position[] = useMemo(() =>
-    transactions.map((t) => ({
-      id: t.id,
-      assetImg: t.asset.imageUrl ?? "",
-      assetName: t.asset.name,
-      amount: Number(t.amount),
-      apr: t.rate / 100,
-      type: t.side.toLowerCase() as "lend" | "borrow",
-      tokenValue: t.asset.symbol.toLowerCase(),
-      tokenSymbol: t.asset.symbol,
-      maturity: t.maturity ? parseMaturity(t.maturity) : 0,
-      status: "FILLED" as const,
-      createdAt: new Date(t.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
-      timestamp: Date.now(),
-      fee: t.fee ? Number(t.fee) : undefined,
-      ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
-    })) as Position[], [transactions]);
+    transactions.map((t) => {
+      const token = getTokenById(tokens, t.assetId);
+      return {
+        id: t.id,
+        assetImg: token?.imageUrl ?? "",
+        assetName: token?.name ?? "",
+        amount: Number(t.amount),
+        apr: t.rate / 100,
+        type: t.side.toLowerCase() as "lend" | "borrow",
+        tokenValue: (token?.symbol ?? "").toLowerCase(),
+        tokenSymbol: token?.symbol ?? "",
+        maturity: t.maturity ? parseMaturity(t.maturity) : 0,
+        status: "FILLED" as const,
+        createdAt: new Date(t.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }),
+        timestamp: Date.now(),
+        fee: t.fee ? Number(t.fee) : undefined,
+        ...(t.side === "BORROW" ? { collateralTokens: [] } : {}),
+      };
+    }) as Position[], [transactions, tokens]);
 
   const tabPositions = useMemo(() => {
     if (activeTab === "open_orders") return openOrderPositions;

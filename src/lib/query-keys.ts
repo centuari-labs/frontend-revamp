@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 export const QUERY_KEYS = {
+	TOKENS: "tokens",
 	MY_ASSETS: "my-assets",
 	MY_PORTFOLIO: "my-portfolio",
 	LEND_BORROW_ASSETS: "lend-borrow-assets",

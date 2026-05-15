@@ -13,14 +13,11 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowLeft, ArrowRight, HandCoins, Layers, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import {
-  CentuariGlassLayers,
-  CentuariGlassSurface,
-} from "@/components/centuari-glass-surface";
+import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -325,22 +322,9 @@ export function DataTableAllPosition({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-[300px]"
+                className="h-[300px] text-center"
               >
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
-                    {activeTab === "borrow" ? (
-                      <HandCoins size={22} className="text-white/40" />
-                    ) : (
-                      <Layers size={22} className="text-white/40" />
-                    )}
-                  </CentuariGlassSurface>
-                  <span className="text-sm text-white/40">
-                    {activeTab === "borrow"
-                      ? "You don't have any borrow positions yet"
-                      : "You don't have any lend positions yet"}
-                  </span>
-                </div>
+                No results.
               </TableCell>
             </TableRow>
           )}

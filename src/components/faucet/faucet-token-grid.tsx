@@ -10,9 +10,8 @@ import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
 import { FaucetErrorPage } from "./faucet-error-page";
 import { FaucetTokenCard } from "./faucet-token-card";
 import { useFaucetDrip } from "@/hooks/use-faucet-drip";
-import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useTokens } from "@/hooks/use-tokens";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
-import type { DepositToken } from "@/lib/api";
 
 const DRIP_AMOUNTS: Record<string, number> = {
   USDC: 5000,
@@ -33,12 +32,12 @@ export function FaucetTokenGrid() {
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const { requestDrip, status, error, transactionHash, reset } = useFaucetDrip();
-  const { data: depositTokens, isLoading: isTokensLoading } = useDepositTokens();
+  const { tokens: depositTokens, isLoading: isTokensLoading } = useTokens();
 
   const tokens = useMemo(() => {
-    if (!depositTokens || depositTokens.length === 0) return [];
+    if (depositTokens.length === 0) return [];
 
-    return depositTokens.map((t: DepositToken) => {
+    return depositTokens.map((t) => {
       const symbol = t.symbol.toUpperCase();
       return {
         value: t.symbol.toLowerCase(),
@@ -88,7 +87,7 @@ export function FaucetTokenGrid() {
 
   const isLoading = status === "loading" || isTokensLoading;
 
-  if (!isTokensLoading && (!depositTokens || depositTokens.length === 0)) {
+  if (!isTokensLoading && depositTokens.length === 0) {
     return <FaucetErrorPage />;
   }
 
@@ -108,9 +107,9 @@ export function FaucetTokenGrid() {
 
       {/* Sticky bottom bar */}
       {(selectedTokens.size > 0 || status === "success" || status === "error") && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6 flex items-center justify-center">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-6">
           <div className={cn(
-            "group/glass relative isolate overflow-hidden bg-black/40 backdrop-blur-2xl border-0 rounded-2xl shadow-2xl w-1/3",
+            "group/glass relative isolate overflow-hidden bg-black/40 backdrop-blur-2xl border-0 rounded-2xl shadow-2xl",
             status === "success" && "shadow-[0_0_24px_rgba(16,185,129,0.25)]",
             status === "error" && "shadow-[0_0_24px_rgba(239,68,68,0.25)]"
           )}>

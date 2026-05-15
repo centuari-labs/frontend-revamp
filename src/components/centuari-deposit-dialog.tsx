@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CentuariAlert } from "./centuari-alert";
 import { useDeposit } from "@/hooks/use-deposit";
-import { useDepositTokens } from "@/hooks/use-deposit-tokens";
+import { useTokens } from "@/hooks/use-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
 import {
   Select,
@@ -41,7 +41,7 @@ import { useNetworkSwitch } from "@/hooks/use-network-switch";
 export function CentuariDepositDialog() {
   const router = useRouter();
   const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
-  const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
+  const { tokens, isLoading: tokensLoading } = useTokens();
 
   const [selectedTokenId, setSelectedTokenId] = useState<string>("");
   const [depositAmount, setDepositAmount] = useState<string>("");
@@ -55,13 +55,13 @@ export function CentuariDepositDialog() {
   } | null>(null);
 
   const selectedToken = useMemo(
-    () => tokens?.find((t) => t.id === selectedTokenId),
+    () => tokens.find((t) => t.id === selectedTokenId),
     [tokens, selectedTokenId],
   );
 
   // Auto-select first token when tokens load
   useEffect(() => {
-    if (tokens && tokens.length > 0 && !selectedTokenId) {
+    if (tokens.length > 0 && !selectedTokenId) {
       setSelectedTokenId(tokens[0].id);
     }
   }, [tokens, selectedTokenId]);
@@ -96,7 +96,7 @@ export function CentuariDepositDialog() {
     if (!open && !successData) {
       setDepositAmount("");
       setDisplayAmount("");
-      setSelectedTokenId(tokens?.[0]?.id ?? "");
+      setSelectedTokenId(tokens[0]?.id ?? "");
       resetDeposit();
     }
   };
@@ -229,7 +229,7 @@ export function CentuariDepositDialog() {
                     </button>
                   ) : (
                     <Select value={String(ACTIVE_CHAIN.id)} disabled>
-                      <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
+                      <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
@@ -238,8 +238,8 @@ export function CentuariDepositDialog() {
                             <img
                               src="https://assets.coingecko.com/coins/images/16547/standard/arb.jpg?1721358242"
                               alt={ACTIVE_CHAIN_LABEL}
-                              width={32}
-                              height={32}
+                              width={16}
+                              height={16}
                               className="size-4 rounded-full object-cover"
                             />
                             {ACTIVE_CHAIN_LABEL}
@@ -256,20 +256,18 @@ export function CentuariDepositDialog() {
                     onValueChange={setSelectedTokenId}
                     disabled={tokensLoading}
                   >
-                    <SelectTrigger className="!h-9 px-3 py-1 gap-1 w-full">
+                    <SelectTrigger className="!h-9 border-0 bg-transparent px-2 py-1 focus:ring-0 focus:ring-offset-0 gap-1 w-full">
                       <SelectValue placeholder={tokensLoading ? "Loading..." : "Select Token"} />
                     </SelectTrigger>
                     <SelectContent className="z-[120] bg-white/5 backdrop-blur-[140px]">
                       <SelectGroup>
-                        {tokens?.map((token) => (
+                        {tokens.map((token) => (
                           <SelectItem key={token.id} value={token.id}>
                             <Image
                               src={getTokenLogo(token.symbol, token.imageUrl ?? undefined)}
-                              width={32}
-                              height={32}
+                              width={16}
+                              height={16}
                               alt={token.symbol}
-                              quality={100}
-                              className="size-4 rounded-full object-contain"
                             />
                             {token.symbol}
                           </SelectItem>
@@ -374,7 +372,7 @@ export function CentuariDepositDialog() {
           if (!open) {
             setDepositAmount("");
             setDisplayAmount("");
-            setSelectedTokenId(tokens?.[0]?.id ?? "");
+            setSelectedTokenId(tokens[0]?.id ?? "");
             setSuccessData(null);
             resetDeposit();
           }

@@ -162,12 +162,8 @@ export default function HealthFactor({
         }
 
         if (markerRef.current) {
-          // Clamp marker so half of it never leaves the bar's visible area
-          // (parent containers in some forms use overflow-hidden which clips
-          // the marker's right half when displayValue hits 100).
-          const clamped = Math.min(Math.max(currentValue, 1.5), 98.5);
           gsap.to(markerRef.current, {
-            left: `${clamped}%`,
+            left: `${currentValue}%`,
             duration: 0.1,
             ease: "none",
           });
@@ -227,15 +223,11 @@ export default function HealthFactor({
             />
           </div>
 
-          {/* Marker with glow — left clamped to keep marker visible inside
-              parent containers that use overflow-hidden (e.g. health factor
-              cards in borrow-main-view / centuari-add-collateral). */}
+          {/* Marker with glow */}
           <div
             ref={markerRef}
             className="absolute -top-2 -translate-x-1/2 -translate-y-1 pointer-events-none transition-all duration-300"
-            style={{
-              left: `${Math.min(Math.max(displayValue, 1.5), 98.5)}%`,
-            }}
+            style={{ left: `${displayValue}%` }}
           >
               <div
                 className="relative"

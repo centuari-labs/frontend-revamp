@@ -88,7 +88,7 @@ export default function PortfolioPage() {
   // ─── Map API assets → DataTableAssets props ────────────────────────
   const assetTableData: AssetProps[] = useMemo(() => {
     return apiAssets.map((a) => ({
-      id: a.assetId,
+      id: a.assetId ?? "",
       assetImg: a.imageUrl ?? "/tokens/default-token.svg",
       assetName: a.symbol,
       assetSymbol: a.symbol,
@@ -96,7 +96,7 @@ export default function PortfolioPage() {
       amountInUsd: a.amountInUsd,
       idleAssetYield: a.amountInUsd * 0.06,
       isCollateral: a.isCollateral,
-      tokenValue: a.assetId,
+      tokenValue: a.assetId ?? "",
     }));
   }, [apiAssets]);
 
@@ -127,14 +127,14 @@ export default function PortfolioPage() {
       assetId: p.assetId,
       marketId: p.marketId,
       assetImg: p.imageUrl ?? "/tokens/default-token.svg",
-      assetName: p.symbol,
+      assetName: p.symbol ?? "",
       amount: p.amountInUsd,
       shares: p.shares,
       baseAmount: p.baseAmount,
       apr: Number(p.apr) || 0,
       type: p.side.toLowerCase() as "lend" | "borrow",
-      tokenValue: p.symbol.toLowerCase(),
-      tokenSymbol: p.symbol,
+      tokenValue: (p.symbol ?? "").toLowerCase(),
+      tokenSymbol: p.symbol ?? "",
       maturity: p.maturity ? p.maturity * 1000 : undefined,
     }));
   }, [apiPositions]);
@@ -295,7 +295,7 @@ export default function PortfolioPage() {
                   </div>
                 ))}
                 <Link href="/portfolio/transaction-history">
-                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4 opacity-60 hover:opacity-100 cursor-pointer">
+                  <CentuariButton variant="secondary" size={"sm"} className="w-full mt-4">
                     See All Transaction
                   </CentuariButton>
                 </Link>
@@ -343,7 +343,6 @@ export default function PortfolioPage() {
                 <div className="space-y-1.5">
                   <p className="text-sm">Health Factor</p>
                   <Badge
-                    className="opacity-50"
                     variant={
                       healthFactorValue === 0
                         ? "secondary"

@@ -41,8 +41,8 @@ describe("useMarketData (API integration)", () => {
 		});
 
 		expect(result.current.markets).toHaveLength(2);
-		expect(result.current.markets[0].asset.symbol).toBe("USDC");
-		expect(result.current.markets[1].asset.symbol).toBe("ETH");
+		expect(result.current.markets[0].asset?.symbol).toBe("USDC");
+		expect(result.current.markets[1].asset?.symbol).toBe("ETH");
 	});
 
 	it("rate values are percentages (not BPS)", async () => {

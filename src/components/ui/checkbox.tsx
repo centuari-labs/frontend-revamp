@@ -45,7 +45,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             "disabled:cursor-not-allowed disabled:opacity-50 rounded-full",
             checked
               ? "bg-primary-blue-base"
-              : "border border-input bg-transparent"
+              : "border border-white/20 bg-transparent"
           )}
           aria-hidden
         >

@@ -6,7 +6,6 @@ import {
 	useReactTable,
 	type ColumnDef,
 } from "@tanstack/react-table";
-import { Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Table,
@@ -17,7 +16,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 
 interface PaginationProps {
 	page: number;
@@ -85,12 +83,12 @@ export function CentuariDataTable<T>({
 										key={header.id}
 										className={`text-sm text-muted-foreground font-normal ${
 											headerGroup.headers[0].id === header.id
-												? "rounded-l-lg pl-6"
+												? "rounded-l-sm"
 												: ""
 										} ${
 											headerGroup.headers[headerGroup.headers.length - 1]
 												.id === header.id
-												? "rounded-r-lg pr-6"
+												? "rounded-r-sm"
 												: ""
 										}`}
 									>
@@ -126,16 +124,9 @@ export function CentuariDataTable<T>({
 							<TableRow>
 								<TableCell
 									colSpan={columns.length}
-									className="h-48"
+									className="h-24 text-center"
 								>
-									<div className="flex flex-col items-center justify-center gap-3">
-										<CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
-											<Inbox size={22} className="text-white/40" />
-										</CentuariGlassSurface>
-										<span className="text-sm text-white/40">
-											{emptyMessage}
-										</span>
-									</div>
+									{emptyMessage}
 								</TableCell>
 							</TableRow>
 						)}

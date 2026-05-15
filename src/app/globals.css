@@ -190,7 +190,7 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.62 0.27 25);
+  --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -308,24 +308,5 @@
   /* Ensure scrollbar thumb is always visible when scrollbar is visible */
   [data-slot="scroll-area-scrollbar"][data-state="visible"] [data-slot="scroll-area-thumb"] {
     opacity: 1 !important;
-  }
-
-  /* Hide react-joyride tooltip arrow */
-  .__floater__arrow,
-  .react-joyride__arrow {
-    display: none !important;
-  }
-
-  /* Ensure react-joyride tooltips remain interactive when a Radix modal
-     (Dialog / AlertDialog) sets pointer-events: none on the body. */
-  .__floater,
-  .__floater__body,
-  .__floater *,
-  [id^="react-joyride"],
-  [id^="react-joyride"] *,
-  .react-joyride__spotlight,
-  .react-joyride__overlay,
-  .react-joyride__tooltip {
-    pointer-events: auto !important;
   }
 }

@@ -3,6 +3,7 @@ import { QUERY_KEYS, invalidateUserQueries } from "@/lib/query-keys";
 
 describe("QUERY_KEYS", () => {
 	it("exports all expected key constants", () => {
+		expect(QUERY_KEYS.TOKENS).toBe("tokens");
 		expect(QUERY_KEYS.MY_ASSETS).toBe("my-assets");
 		expect(QUERY_KEYS.MY_PORTFOLIO).toBe("my-portfolio");
 		expect(QUERY_KEYS.LEND_BORROW_ASSETS).toBe("lend-borrow-assets");
@@ -12,8 +13,8 @@ describe("QUERY_KEYS", () => {
 		expect(QUERY_KEYS.USER_DETAILS).toBe("user-details");
 	});
 
-	it("contains exactly 7 keys", () => {
-		expect(Object.keys(QUERY_KEYS)).toHaveLength(7);
+	it("contains exactly 8 keys", () => {
+		expect(Object.keys(QUERY_KEYS)).toHaveLength(8);
 	});
 });
 
@@ -54,7 +55,7 @@ describe("invalidateUserQueries", () => {
 		}
 	});
 
-	it("invalidation keys match QUERY_KEYS values exactly", () => {
+	it("invalidates only user-specific keys, not TOKENS", () => {
 		const mockInvalidateQueries = vi.fn();
 		const mockQueryClient = {
 			invalidateQueries: mockInvalidateQueries,
@@ -66,6 +67,12 @@ describe("invalidateUserQueries", () => {
 			(call: [{ queryKey: string[] }]) => call[0].queryKey[0],
 		);
 
-		expect(calledKeys).toEqual(Object.values(QUERY_KEYS));
+		expect(calledKeys).not.toContain(QUERY_KEYS.TOKENS);
+		expect(calledKeys).toContain(QUERY_KEYS.MY_ASSETS);
+		expect(calledKeys).toContain(QUERY_KEYS.MY_PORTFOLIO);
+		expect(calledKeys).toContain(QUERY_KEYS.MY_POSITIONS);
+		expect(calledKeys).toContain(QUERY_KEYS.OPEN_ORDERS);
+		expect(calledKeys).toContain(QUERY_KEYS.ORDER_HISTORY);
+		expect(calledKeys).toContain(QUERY_KEYS.USER_DETAILS);
 	});
 });

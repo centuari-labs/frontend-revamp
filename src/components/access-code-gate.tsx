@@ -141,7 +141,7 @@ function AccessCodeForm() {
 								placeholder="Enter access code"
 								autoFocus
 								autoComplete="off"
-								className="text-white placeholder:text-white/40"
+								className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
 							/>
 							{error && (
 								<p className="text-sm text-destructive">{error}</p>

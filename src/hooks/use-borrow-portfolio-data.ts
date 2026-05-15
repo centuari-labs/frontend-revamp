@@ -40,9 +40,9 @@ export function useBorrowPortfolioData(): BorrowPortfolioData {
 				logo: asset.imageUrl ?? "/tokens/centuari-eth.png",
 				value: key,
 				label: asset.name,
-				ltv: asset.ltv,
+				ltv: asset.ltv ?? 0,
 				price: getTokenPrice(asset.amountInUsd, asset.walletBalance),
-				liquidationThreshold: asset.liquidationThreshold,
+				liquidationThreshold: asset.liquidationThreshold ?? 0,
 			});
 		}
 

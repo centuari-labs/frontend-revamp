@@ -4,12 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getDepositTokens, type DepositToken } from "@/lib/api";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { QUERY_CONFIG } from "@/lib/query-config";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 export function useDepositTokens() {
 	const { getToken } = useAuthToken();
 
 	return useQuery({
-		queryKey: ["deposit-tokens"],
+		queryKey: [QUERY_KEYS.TOKENS],
 		queryFn: async () => {
 			const jwt = await getToken();
 			return getDepositTokens(jwt ?? "");
@@ -18,3 +19,5 @@ export function useDepositTokens() {
 		retry: 1,
 	});
 }
+
+export type { DepositToken };

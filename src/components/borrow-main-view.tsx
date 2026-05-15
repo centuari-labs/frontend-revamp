@@ -130,27 +130,25 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 
 				<div className="mt-4 px-6">
 					<form action="">
-						<div id="tour-borrow-amount">
-							<CentuariInput
-								id={`amount-${reactId}`}
-								label="Amount to Borrow"
-								size="large"
-								placeholder="1,000"
-								leftIcon={
-									<Image
-										src={tokenImage}
-										alt={tokenSymbol}
-										width={16}
-										height={16}
-										className="w-4 h-4"
-									/>
-								}
-								suffix={tokenSymbol}
-								value={displayAmount}
-								onChange={onAmountChange}
-							/>
-						</div>
-						<div id="tour-borrow-collateral" className="mt-5">
+						<CentuariInput
+							id={`amount-${reactId}`}
+							label="Amount to Borrow"
+							size="large"
+							placeholder="1,000"
+							leftIcon={
+								<Image
+									src={tokenImage}
+									alt={tokenSymbol}
+									width={16}
+									height={16}
+									className="w-4 h-4"
+								/>
+							}
+							suffix={tokenSymbol}
+							value={displayAmount}
+							onChange={onAmountChange}
+						/>
+						<div className="mt-5">
 							<Label>Collateral Used</Label>
 							<div className="mt-1.5">
 								{selectedCollaterals.length > 0 ? (
@@ -164,7 +162,7 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 							</div>
 						</div>
 
-						<div id="tour-borrow-health-factor">
+						<div>
 							<Label className="mb-2 mt-4">
 								Health Factor{" "}
 								<CentuariTooltip message="Your health factor shows how safe your borrowed position is. Blue indicates a safe position.">
@@ -174,8 +172,8 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 									{`${hfDisplay.value} ~ ${hfDisplay.status}`}
 								</Badge>
 							</Label>
-							<div className="border border-white/5 rounded-md mt-2 overflow-hidden">
-								<div className="px-2 py-5 border-b rounded-b-md border-white/5 bg-white/10 z-50">
+							<div className="border border-white/5 rounded-lg mt-2">
+								<div className="px-2 py-5 rounded-lg border-b border-white/5 bg-white/10 z-50">
 									<HealthFactor
 										targetValue={displayPercentage}
 										healthFactor={
@@ -220,15 +218,13 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 							/>
 						)}
 
-						<div id="tour-borrow-summary">
-							<TransactionSummary
-								transactionFee={numericAmount > 0 ? transactionFee : 0}
-								amountToPay={numericAmount > 0 ? amountToPay : 0}
-								futureAmount={numericAmount > 0 ? futureAmount : 0}
-								futureLabel="In the future you'll pay"
-								tokenSymbol={tokenSymbol}
-							/>
-						</div>
+						<TransactionSummary
+							transactionFee={numericAmount > 0 ? transactionFee : 0}
+							amountToPay={numericAmount > 0 ? amountToPay : 0}
+							futureAmount={numericAmount > 0 ? futureAmount : 0}
+							futureLabel="In the future you'll pay"
+							tokenSymbol={tokenSymbol}
+						/>
 
 						<CentuariTypography
 							variant="s4"

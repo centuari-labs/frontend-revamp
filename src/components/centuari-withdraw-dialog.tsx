@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Loader2, AlertTriangle, Wallet } from "lucide-react";
-import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
+import { ArrowLeft, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -233,16 +232,10 @@ export function CentuariWithdrawDialog() {
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                       </div>
                     ) : withdrawableAssets.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center gap-3 py-8">
-                        <CentuariGlassSurface
-                          intensity="soft"
-                          className="rounded-xl p-3"
-                        >
-                          <Wallet size={22} className="text-white/40" />
-                        </CentuariGlassSurface>
+                      <div className="text-center py-8">
                         <CentuariTypography
                           variant="b3"
-                          className="text-white/40"
+                          className="text-muted-foreground"
                         >
                           No withdrawable assets found
                         </CentuariTypography>
@@ -382,7 +375,7 @@ export function CentuariWithdrawDialog() {
                           id="withdraw-amount"
                           type="text"
                           placeholder="0.00"
-                          className="w-full text-center text-4xl font-bold bg-transparent border-input focus:outline-none focus:border-ring pb-2"
+                          className="w-full text-center text-4xl font-bold bg-transparent border-white/10 focus:outline-none focus:border-white/20 pb-2"
                           inputMode="decimal"
                           pattern="[0-9]*\.?[0-9]*"
                           value={withdrawAmount}
