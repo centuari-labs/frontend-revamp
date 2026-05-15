@@ -86,8 +86,8 @@ describe("assertAllowlistedAddress", () => {
 	});
 
 	it("throws for unknown chainId even with a valid address", () => {
-		expect(() =>
-			assertAllowlistedAddress(1, USDC_CHECKSUM, "token X"),
-		).toThrow(/Address not in allowlist for chain 1/);
+		expect(() => assertAllowlistedAddress(1, USDC_CHECKSUM, "token X")).toThrow(
+			/Address not in allowlist for chain 1/,
+		);
 	});
 });

@@ -22,8 +22,11 @@ vi.mock("wagmi", () => ({
 	}),
 }));
 
+// biome-ignore lint/suspicious/noExplicitAny: test-only wallet shape
+let mockWallets: any[] = [];
+
 vi.mock("@privy-io/react-auth", () => ({
-	useWallets: () => ({ wallets: [] }),
+	useWallets: () => ({ wallets: mockWallets }),
 }));
 
 vi.mock("@/hooks/use-wallet-address", () => ({
@@ -64,6 +67,7 @@ function makeToken(overrides: Partial<DepositToken> = {}): DepositToken {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockWallets = [];
 });
 
 describe("useDeposit decimals validation (issue #2)", () => {
@@ -187,14 +191,222 @@ describe("useDeposit tokenAddress validation (issue #3)", () => {
 					tokenAddress: "0x000000000000000000000000000000000000dEaD",
 				}),
 			),
-		).rejects.toThrow(/Address not in allowlist for chain 421614 \(token USDC\)/);
+		).rejects.toThrow(
+			/Address not in allowlist for chain 421614 \(token USDC\)/,
+		);
 		expect(mockReadContract).not.toHaveBeenCalled();
 	});
 
 	it("does not throw an allowlist error for the allowlisted USDC address", async () => {
 		const { result } = renderHookWithProviders(() => useDeposit());
 		await expect(
-			result.current.deposit("asset-1", "100", makeToken({ tokenAddress: USDC_LOWER })),
+			result.current.deposit(
+				"asset-1",
+				"100",
+				makeToken({ tokenAddress: USDC_LOWER }),
+			),
 		).rejects.not.toThrow(/Address not in allowlist/);
+	});
+});
+
+describe("useDeposit on-chain decimals cross-check (issue #5)", () => {
+	const USDC_CHECKSUMMED = "0x218A9082C712FA709c044a6cea6Ef333df04cc3d";
+
+	function setWallet(request?: ReturnType<typeof vi.fn>) {
+		const provider = {
+			request:
+				request ??
+				vi.fn(async () => {
+					throw new Error("test stop: provider not mocked");
+				}),
+		};
+		mockWallets = [
+			{
+				walletClientType: "privy",
+				address: "0x1111111111111111111111111111111111111111",
+				getEthereumProvider: async () => provider,
+			},
+		];
+		return provider.request;
+	}
+
+	beforeEach(() => {
+		mockGetBlock.mockResolvedValue({ baseFeePerGas: BigInt(100_000_000) });
+	});
+
+	it("reads on-chain decimals from the validated token contract", async () => {
+		setWallet();
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") return 6;
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow();
+
+		expect(mockReadContract).toHaveBeenCalledWith(
+			expect.objectContaining({
+				functionName: "decimals",
+				address: USDC_CHECKSUMMED,
+			}),
+		);
+	});
+
+	it("rejects with DecimalsMismatchError when on-chain differs from API", async () => {
+		setWallet();
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") return 18;
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/Decimals mismatch for USDC/);
+	});
+
+	it("does not call the wallet provider when decimals mismatch", async () => {
+		const providerRequest = setWallet();
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") return 18;
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/Decimals mismatch/);
+
+		expect(providerRequest).not.toHaveBeenCalled();
+	});
+
+	it("surfaces an RPC failure on decimals() as 'could not verify token'", async () => {
+		setWallet();
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") {
+					throw new Error("network error");
+				}
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/Could not verify token USDC/);
+	});
+});
+
+describe("useDeposit confirmTransaction gate (issue #6)", () => {
+	function setWallet(request?: ReturnType<typeof vi.fn>) {
+		const provider = {
+			request:
+				request ??
+				vi.fn(async () => {
+					throw new Error("test stop: provider not mocked");
+				}),
+		};
+		mockWallets = [
+			{
+				walletClientType: "privy",
+				address: "0x1111111111111111111111111111111111111111",
+				getEthereumProvider: async () => provider,
+			},
+		];
+		return provider.request;
+	}
+
+	beforeEach(() => {
+		mockGetBlock.mockResolvedValue({ baseFeePerGas: BigInt(100_000_000) });
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") return 6;
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+	});
+
+	it("calls confirmTransaction with Approve details before signing approve", async () => {
+		const providerRequest = setWallet();
+		const confirmTransaction = vi.fn(async () => {});
+		const { result } = renderHookWithProviders(() =>
+			useDeposit({ confirmTransaction }),
+		);
+
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow();
+
+		expect(confirmTransaction).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: "Approve",
+				symbol: "USDC",
+				tokenAddress: "0x218A9082C712FA709c044a6cea6Ef333df04cc3d",
+				spender: "0xb0103A9a9CFb4e2EbE565594e487b29283ac02eB",
+				chainName: "Arbitrum Sepolia",
+				chainId: 421614,
+			}),
+		);
+		expect(providerRequest).toHaveBeenCalled();
+	});
+
+	it("does not call the wallet when confirmTransaction rejects with UserCancelledError", async () => {
+		const providerRequest = setWallet();
+		const { UserCancelledError } = await import("@/lib/errors");
+		const confirmTransaction = vi.fn(async () => {
+			throw new UserCancelledError();
+		});
+		const { result } = renderHookWithProviders(() =>
+			useDeposit({ confirmTransaction }),
+		);
+
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/cancel/i);
+
+		expect(providerRequest).not.toHaveBeenCalled();
+	});
+
+	it("returns status to idle (not error) after UserCancelledError", async () => {
+		setWallet();
+		const { UserCancelledError } = await import("@/lib/errors");
+		const confirmTransaction = vi.fn(async () => {
+			throw new UserCancelledError();
+		});
+		const { result } = renderHookWithProviders(() =>
+			useDeposit({ confirmTransaction }),
+		);
+
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow();
+
+		expect(result.current.status).toBe("idle");
+	});
+
+	it("works without a confirmTransaction callback (backwards compat)", async () => {
+		const providerRequest = setWallet();
+		const { result } = renderHookWithProviders(() => useDeposit());
+
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow();
+
+		// No callback was provided; the wallet provider should still be reached
+		expect(providerRequest).toHaveBeenCalled();
 	});
 });

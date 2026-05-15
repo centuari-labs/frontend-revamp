@@ -18,7 +18,19 @@ import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { ACTIVE_CHAIN, HUB_DEPOSITOR_ADDRESS } from "@/lib/chain-config";
 import { assertAllowlistedAddress } from "@/lib/token-config";
 import { assertValidDecimals } from "@/lib/erc20-decimals";
+import { DecimalsMismatchError, UserCancelledError } from "@/lib/errors";
 import { invalidateUserQueries } from "@/lib/query-keys";
+import type { TxConfirmationDetails } from "@/components/centuari-tx-confirm-dialog";
+
+const SPENDER_LABEL = "Centuari Treasury (HubDepositor)";
+
+export type ConfirmTransactionFn = (
+	details: TxConfirmationDetails,
+) => Promise<void>;
+
+export interface UseDepositOptions {
+	confirmTransaction?: ConfirmTransactionFn;
+}
 
 const GAS_FEE_MULTIPLIER = BigInt(150); // 1.5x buffer to prevent "max fee per gas less than block base fee"
 
@@ -37,7 +49,8 @@ interface DepositResult {
 	status: string;
 }
 
-export function useDeposit() {
+export function useDeposit(options: UseDepositOptions = {}) {
+	const { confirmTransaction } = options;
 	const address = useWalletAddress();
 	const { wallets } = useWallets();
 	const publicClient = usePublicClient();
@@ -76,7 +89,6 @@ export function useDeposit() {
 					token.tokenAddress,
 					`token ${token.symbol}`,
 				);
-				const depositAmount = parseUnits(amount, token.decimals);
 
 				// Get the wallet client directly from Privy's wallet provider.
 				// This bypasses wagmi's active connector, ensuring we always sign
@@ -107,6 +119,38 @@ export function useDeposit() {
 					args: [address, HUB_DEPOSITOR_ADDRESS],
 				});
 
+				// Cross-check on-chain decimals against API-served value. Defense in
+				// depth on top of assertValidDecimals — catches a backend that returns
+				// a plausible-but-wrong value (e.g. 18 for a 6-decimal token).
+				let onChainDecimals: number;
+				try {
+					const raw = await publicClient.readContract({
+						address: tokenAddress,
+						abi: erc20Abi,
+						functionName: "decimals",
+					});
+					onChainDecimals = Number(raw);
+				} catch (rpcErr) {
+					throw new Error(
+						`Could not verify token ${token.symbol} on-chain decimals. ${rpcErr instanceof Error ? rpcErr.message : ""}`.trim(),
+					);
+				}
+				if (onChainDecimals !== token.decimals) {
+					console.error("[useDeposit] token_decimals_mismatch", {
+						tokenAddress,
+						symbol: token.symbol,
+						apiDecimals: token.decimals,
+						onChainDecimals,
+					});
+					throw new DecimalsMismatchError({
+						tokenAddress,
+						symbol: token.symbol,
+						apiDecimals: token.decimals,
+						onChainDecimals,
+					});
+				}
+				const depositAmount = parseUnits(amount, onChainDecimals);
+
 				// Estimate gas fees with buffer to avoid "max fee per gas less than block base fee"
 				const block = await publicClient.getBlock();
 				const baseFee = block.baseFeePerGas ?? BigInt(0);
@@ -116,6 +160,18 @@ export function useDeposit() {
 
 				// Step 2: Approve if needed (exact amount)
 				if (currentAllowance < depositAmount) {
+					if (confirmTransaction) {
+						await confirmTransaction({
+							action: "Approve",
+							amount,
+							symbol: token.symbol,
+							tokenAddress,
+							spender: HUB_DEPOSITOR_ADDRESS,
+							spenderLabel: SPENDER_LABEL,
+							chainName: ACTIVE_CHAIN.name,
+							chainId: ACTIVE_CHAIN.id,
+						});
+					}
 					setStatus("approving");
 					const approveTxHash = await walletClient.writeContract({
 						account: address,
@@ -139,6 +195,18 @@ export function useDeposit() {
 				}
 
 				// Step 3: Call HubDepositor.deposit
+				if (confirmTransaction) {
+					await confirmTransaction({
+						action: "Deposit",
+						amount,
+						symbol: token.symbol,
+						tokenAddress,
+						spender: HUB_DEPOSITOR_ADDRESS,
+						spenderLabel: SPENDER_LABEL,
+						chainName: ACTIVE_CHAIN.name,
+						chainId: ACTIVE_CHAIN.id,
+					});
+				}
 				setStatus("depositing");
 				// Re-fetch gas fees in case base fee changed during approval
 				const latestBlock = await publicClient.getBlock();
@@ -179,7 +247,11 @@ export function useDeposit() {
 					status: "confirmed",
 				};
 			} catch (err) {
-				setStatus("error");
+				if (err instanceof UserCancelledError) {
+					setStatus("idle");
+				} else {
+					setStatus("error");
+				}
 				throw err;
 			}
 		},

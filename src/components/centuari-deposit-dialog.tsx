@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -15,6 +15,10 @@ import { CentuariTypography } from "./centuari-typography";
 import { CentuariInput } from "./centuari-input";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
 import {
+	CentuariTxConfirmDialog,
+	type TxConfirmationDetails,
+} from "./centuari-tx-confirm-dialog";
+import {
 	formatNumberWithSeparator,
 	parseNumberFromSeparator,
 	truncateBalance,
@@ -26,6 +30,7 @@ import { CentuariAlert } from "./centuari-alert";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
+import { UserCancelledError } from "@/lib/errors";
 import {
 	Select,
 	SelectContent,
@@ -40,7 +45,34 @@ import { useNetworkSwitch } from "@/hooks/use-network-switch";
 
 export function CentuariDepositDialog() {
 	const router = useRouter();
-	const { deposit, status: depositStatus, reset: resetDeposit } = useDeposit();
+	const [pendingConfirmation, setPendingConfirmation] = useState<{
+		details: TxConfirmationDetails;
+		resolve: () => void;
+		reject: (err: Error) => void;
+	} | null>(null);
+
+	const confirmTransaction = useCallback(
+		(details: TxConfirmationDetails) =>
+			new Promise<void>((resolve, reject) => {
+				setPendingConfirmation({
+					details: {
+						...details,
+						amount: formatNumberWithSeparator(details.amount),
+					},
+					resolve,
+					reject,
+				});
+			}),
+		[],
+	);
+
+	const {
+		deposit,
+		status: depositStatus,
+		reset: resetDeposit,
+	} = useDeposit({
+		confirmTransaction,
+	});
 	const { data: tokens, isLoading: tokensLoading } = useDepositTokens();
 
 	const [selectedTokenId, setSelectedTokenId] = useState<string>("");
@@ -138,6 +170,10 @@ export function CentuariDepositDialog() {
 				setDialogOpen(false);
 			}
 		} catch (err) {
+			if (err instanceof UserCancelledError) {
+				// User cancelled at the in-app confirmation gate — silent, no toast.
+				return;
+			}
 			const message = err instanceof Error ? err.message : "Deposit failed";
 			toast.error(message);
 		}
@@ -413,6 +449,19 @@ export function CentuariDepositDialog() {
 				primaryActionLabel="Start Earning"
 				onPrimaryAction={() => router.push("/")}
 				secondaryActionLabel="Done"
+			/>
+
+			<CentuariTxConfirmDialog
+				open={!!pendingConfirmation}
+				details={pendingConfirmation?.details ?? null}
+				onConfirm={() => {
+					pendingConfirmation?.resolve();
+					setPendingConfirmation(null);
+				}}
+				onCancel={() => {
+					pendingConfirmation?.reject(new UserCancelledError());
+					setPendingConfirmation(null);
+				}}
 			/>
 		</>
 	);
