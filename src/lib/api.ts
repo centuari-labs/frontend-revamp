@@ -490,10 +490,12 @@ export function requestFaucetTokens(
 	chainId: number,
 	recipientAddress: string,
 	tokens: string[],
+	token: string,
 ): Promise<FaucetResponse> {
 	return apiClient<FaucetResponse>("/faucet/request-tokens", {
 		method: "POST",
 		body: { chainId, recipientAddress, token: tokens },
+		token,
 	});
 }
 
