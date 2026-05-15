@@ -30,7 +30,7 @@ import {
 } from "@/lib/health-factor";
 import { useTokenPrice } from "@/contexts/price-context";
 import { getDefaultMaturityTimestamp } from "@/lib/maturity";
-import { calculateFees } from "@/lib/fee-calculations";
+import { calculateOrderFees } from "@/lib/fee-utils";
 import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
 import { useBorrowPortfolioData } from "@/hooks/use-borrow-portfolio-data";
@@ -110,7 +110,9 @@ export function CentuariBorrowDialog({
 
 	// Derived calculations
 	const numericAmount = parseFloat(amountToBorrow) || 0;
-	const { transactionFee, amountToPay } = calculateFees(numericAmount);
+	const { totalFee } = calculateOrderFees(numericAmount, "market");
+	const transactionFee = totalFee;
+	const amountToPay = numericAmount + totalFee;
 	const maturityDate = getDefaultMaturityTimestamp();
 	const futureAmount = calculateFutureAmount(
 		numericAmount,

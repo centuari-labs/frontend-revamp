@@ -222,7 +222,7 @@ describe("useDeposit on-chain decimals cross-check (issue #5)", () => {
 		};
 		mockWallets = [
 			{
-				walletClientType: "privy",
+				walletClientType: "metamask",
 				address: "0x1111111111111111111111111111111111111111",
 				getEthereumProvider: async () => provider,
 			},
@@ -321,7 +321,7 @@ describe("useDeposit confirmTransaction gate (issue #6)", () => {
 		};
 		mockWallets = [
 			{
-				walletClientType: "privy",
+				walletClientType: "metamask",
 				address: "0x1111111111111111111111111111111111111111",
 				getEthereumProvider: async () => provider,
 			},
@@ -408,5 +408,115 @@ describe("useDeposit confirmTransaction gate (issue #6)", () => {
 
 		// No callback was provided; the wallet provider should still be reached
 		expect(providerRequest).toHaveBeenCalled();
+	});
+});
+
+describe("useDeposit wallet selection (issue #10)", () => {
+	beforeEach(() => {
+		mockGetBlock.mockResolvedValue({ baseFeePerGas: BigInt(100_000_000) });
+		mockReadContract.mockImplementation(
+			({ functionName }: { functionName: string }) => {
+				if (functionName === "decimals") return 6;
+				if (functionName === "allowance") return BigInt(0);
+				return undefined;
+			},
+		);
+	});
+
+	it("signs with the external wallet whose address matches", async () => {
+		const externalProviderRequest = vi.fn(async () => {
+			throw new Error("test stop: external provider reached");
+		});
+		const embeddedProviderRequest = vi.fn(async () => {
+			throw new Error("embedded provider should NOT be called");
+		});
+		mockWallets = [
+			{
+				walletClientType: "privy",
+				address: "0x1111111111111111111111111111111111111111",
+				getEthereumProvider: async () => ({
+					request: embeddedProviderRequest,
+				}),
+			},
+			{
+				walletClientType: "metamask",
+				address: "0x1111111111111111111111111111111111111111",
+				getEthereumProvider: async () => ({
+					request: externalProviderRequest,
+				}),
+			},
+		];
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/test stop: external provider reached/);
+
+		expect(externalProviderRequest).toHaveBeenCalled();
+		expect(embeddedProviderRequest).not.toHaveBeenCalled();
+	});
+
+	it("matches the external wallet case-insensitively", async () => {
+		const externalProviderRequest = vi.fn(async () => {
+			throw new Error("test stop: external provider reached");
+		});
+		mockWallets = [
+			{
+				walletClientType: "metamask",
+				// Checksummed form — useWalletAddress returns lowercase
+				address: "0x1111111111111111111111111111111111111111".toUpperCase(),
+				getEthereumProvider: async () => ({
+					request: externalProviderRequest,
+				}),
+			},
+		];
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toThrow(/test stop: external provider reached/);
+
+		expect(externalProviderRequest).toHaveBeenCalled();
+	});
+
+	it("throws WalletNotConnectedError when only the embedded wallet is available", async () => {
+		const embeddedProviderRequest = vi.fn();
+		mockWallets = [
+			{
+				walletClientType: "privy",
+				address: "0x1111111111111111111111111111111111111111",
+				getEthereumProvider: async () => ({
+					request: embeddedProviderRequest,
+				}),
+			},
+		];
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toMatchObject({ name: "WalletNotConnectedError" });
+
+		expect(embeddedProviderRequest).not.toHaveBeenCalled();
+	});
+
+	it("throws WalletNotConnectedError when no external wallet matches the active address", async () => {
+		const externalProviderRequest = vi.fn();
+		mockWallets = [
+			{
+				walletClientType: "metamask",
+				// Different address — not the active wallet
+				address: "0x2222222222222222222222222222222222222222",
+				getEthereumProvider: async () => ({
+					request: externalProviderRequest,
+				}),
+			},
+		];
+
+		const { result } = renderHookWithProviders(() => useDeposit());
+		await expect(
+			result.current.deposit("asset-1", "100", makeToken({ decimals: 6 })),
+		).rejects.toMatchObject({ name: "WalletNotConnectedError" });
+
+		expect(externalProviderRequest).not.toHaveBeenCalled();
 	});
 });

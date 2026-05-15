@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
+import { toast } from "sonner";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
 import { useBorrowForm } from "@/hooks/use-borrow-form";
+
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+		success: vi.fn(),
+	},
+}));
 
 vi.mock("@/hooks/use-auth-token", () => ({
 	useAuthToken: vi.fn(() => ({
@@ -227,5 +235,89 @@ describe("useBorrowForm", () => {
 			useBorrowForm({ tokenList }),
 		);
 		expect(result.current.borrowTokenPrice).toBe(1);
+	});
+});
+
+describe("useBorrowForm validation toasts (issue #24)", () => {
+	it("handleLimitSubmit toasts 'Enter an amount greater than zero' when amount is 0", async () => {
+		const { result } = renderHookWithProviders(() =>
+			useBorrowForm({ tokenList }),
+		);
+
+		await act(async () => {
+			await result.current.handleLimitSubmit({
+				preventDefault: vi.fn(),
+			} as unknown as React.FormEvent);
+		});
+
+		expect(toast.error).toHaveBeenCalledWith(
+			"Enter an amount greater than zero",
+		);
+		expect(result.current.showSuccessDialog).toBe(false);
+	});
+
+	it("handleMarketSubmit toasts 'Enter an amount greater than zero' when amount is 0", async () => {
+		const { result } = renderHookWithProviders(() =>
+			useBorrowForm({ tokenList }),
+		);
+
+		await act(async () => {
+			await result.current.handleMarketSubmit({
+				preventDefault: vi.fn(),
+			} as unknown as React.FormEvent);
+		});
+
+		expect(toast.error).toHaveBeenCalledWith(
+			"Enter an amount greater than zero",
+		);
+		expect(result.current.showSuccessDialog).toBe(false);
+	});
+
+	it("handleLimitSubmit toasts 'Amount exceeds available borrowing power' when amount exceeds quota", async () => {
+		const { result } = renderHookWithProviders(() =>
+			useBorrowForm({ tokenList }),
+		);
+
+		act(() => {
+			result.current.handleLimitAmountChange({
+				target: { value: "1000" },
+			} as React.ChangeEvent<HTMLInputElement>);
+		});
+
+		await act(async () => {
+			await result.current.handleLimitSubmit({
+				preventDefault: vi.fn(),
+			} as unknown as React.FormEvent);
+		});
+
+		// With empty portfolio + collateralFactor=0, availableQuota is 0,
+		// so amount*price (1000) > 0 triggers the quota toast.
+		expect(toast.error).toHaveBeenCalledWith(
+			"Amount exceeds available borrowing power",
+		);
+		expect(result.current.showSuccessDialog).toBe(false);
+	});
+
+	it("handleMarketSubmit toasts 'Amount exceeds available borrowing power' when amount exceeds quota", async () => {
+		const { result } = renderHookWithProviders(() =>
+			useBorrowForm({ tokenList }),
+		);
+
+		act(() => {
+			result.current.handleMarketAmountChange({
+				target: { value: "1000" },
+			} as React.ChangeEvent<HTMLInputElement>);
+		});
+
+		await act(async () => {
+			await result.current.handleMarketSubmit({
+				preventDefault: vi.fn(),
+			} as unknown as React.FormEvent);
+		});
+
+		expect(toast.error).toHaveBeenCalledWith(
+			"Amount exceeds available borrowing power",
+		);
+		expect(result.current.showSuccessDialog).toBe(false);
 	});
 });

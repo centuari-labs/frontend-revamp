@@ -5,6 +5,13 @@ export class UserCancelledError extends Error {
 	}
 }
 
+export class WalletNotConnectedError extends Error {
+	constructor(message = "Please reconnect your external wallet") {
+		super(message);
+		this.name = "WalletNotConnectedError";
+	}
+}
+
 export class DecimalsMismatchError extends Error {
 	readonly tokenAddress: `0x${string}`;
 	readonly symbol: string;

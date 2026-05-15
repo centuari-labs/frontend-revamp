@@ -18,7 +18,11 @@ import { useWalletAddress } from "@/hooks/use-wallet-address";
 import { ACTIVE_CHAIN, HUB_DEPOSITOR_ADDRESS } from "@/lib/chain-config";
 import { assertAllowlistedAddress } from "@/lib/token-config";
 import { assertValidDecimals } from "@/lib/erc20-decimals";
-import { DecimalsMismatchError, UserCancelledError } from "@/lib/errors";
+import {
+	DecimalsMismatchError,
+	UserCancelledError,
+	WalletNotConnectedError,
+} from "@/lib/errors";
 import { invalidateUserQueries } from "@/lib/query-keys";
 import type { TxConfirmationDetails } from "@/components/centuari-tx-confirm-dialog";
 
@@ -91,17 +95,17 @@ export function useDeposit(options: UseDepositOptions = {}) {
 				);
 
 				// Get the wallet client directly from Privy's wallet provider.
-				// This bypasses wagmi's active connector, ensuring we always sign
-				// with the correct wallet (login wallet for external, embedded for social).
-				const targetWallet =
-					wallets.find(
-						(w) =>
-							w.walletClientType !== "privy" &&
-							w.address.toLowerCase() === address.toLowerCase(),
-					) ?? wallets.find((w) => w.walletClientType === "privy");
+				// Require an external wallet whose address matches the active
+				// `useWalletAddress()` source — never silently fall back to the
+				// embedded wallet, since that can sign with the wrong key.
+				const targetWallet = wallets.find(
+					(w) =>
+						w.walletClientType !== "privy" &&
+						w.address.toLowerCase() === address.toLowerCase(),
+				);
 
 				if (!targetWallet) {
-					throw new Error("No wallet available for signing");
+					throw new WalletNotConnectedError();
 				}
 
 				const provider = await targetWallet.getEthereumProvider();

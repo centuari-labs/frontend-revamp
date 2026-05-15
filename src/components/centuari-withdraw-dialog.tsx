@@ -33,6 +33,7 @@ import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
 import type { UserAssetDetail } from "@/lib/api";
 import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+import { toast } from "sonner";
 
 const ARBITRUM_ICON = getChainIcon("arbitrum");
 
@@ -121,6 +122,10 @@ export function CentuariWithdrawDialog() {
 
 	const handleWithdraw = async () => {
 		if (isProcessing || !withdrawAmount || !selectedAsset) return;
+		if (exceedsBalance) {
+			toast.error("Amount exceeds available balance");
+			return;
+		}
 		await withdraw(selectedAsset.assetId, withdrawAmount);
 	};
 

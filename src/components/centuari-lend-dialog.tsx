@@ -26,7 +26,7 @@ import {
 	calculateFutureAmount,
 } from "@/lib/utils";
 import { getDefaultMaturityTimestamp } from "@/lib/maturity";
-import { calculateFees } from "@/lib/fee-calculations";
+import { calculateOrderFees } from "@/lib/fee-utils";
 import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
@@ -35,6 +35,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { invalidateUserQueries } from "@/lib/query-keys";
 import { LendDialogTour } from "./product-tour/lend-dialog-tour";
 import { useDeposit } from "@/hooks/use-deposit";
+import { WalletNotConnectedError } from "@/lib/errors";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
 import { getTokenLogo } from "@/lib/tokens";
@@ -157,7 +158,9 @@ export function CentuariLendDialog({
 	};
 	const lendAPRNumeric = parseLendAPR(lendAPR);
 	const numericAmount = parseFloat(amountToLend) || 0;
-	const { transactionFee, amountToPay } = calculateFees(numericAmount);
+	const { totalFee } = calculateOrderFees(numericAmount, "market");
+	const transactionFee = totalFee;
+	const amountToPay = numericAmount + totalFee;
 	const formattedVaultTotal = formatCurrency(vaultTotal);
 	const maturityDate = getDefaultMaturityTimestamp();
 	const futureAmount = calculateFutureAmount(
@@ -215,6 +218,10 @@ export function CentuariLendDialog({
 				invalidateUserQueries(queryClient);
 			}
 		} catch (err) {
+			if (err instanceof WalletNotConnectedError) {
+				toast.error("Please reconnect your external wallet");
+				return;
+			}
 			const message = err instanceof Error ? err.message : "Deposit failed";
 			toast.error(message);
 		}

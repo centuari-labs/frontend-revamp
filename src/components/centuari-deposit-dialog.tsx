@@ -30,7 +30,7 @@ import { CentuariAlert } from "./centuari-alert";
 import { useDeposit } from "@/hooks/use-deposit";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
-import { UserCancelledError } from "@/lib/errors";
+import { UserCancelledError, WalletNotConnectedError } from "@/lib/errors";
 import {
 	Select,
 	SelectContent,
@@ -170,6 +170,10 @@ export function CentuariDepositDialog() {
 				setDialogOpen(false);
 			}
 		} catch (err) {
+			if (err instanceof WalletNotConnectedError) {
+				toast.error("Please reconnect your external wallet");
+				return;
+			}
 			if (err instanceof UserCancelledError) {
 				// User cancelled at the in-app confirmation gate — silent, no toast.
 				return;

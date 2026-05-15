@@ -226,11 +226,29 @@ export function useBorrowForm({
 			e.preventDefault();
 			const numericAmount = parseFloat(limitAmountInput.amount) || 0;
 
-			if (numericAmount <= 0 || isPending) return;
-			if (numericAmount * borrowTokenPrice > limitCalcs.availableQuota) return;
-			if (limitSelectedCollaterals.length === 0) return;
-			if (limitCalcs.totalPortfolioValue === 0) return;
-			if (limitCalcs.healthFactor < 1.0) return;
+			if (isPending) return;
+			if (numericAmount <= 0) {
+				toast.error("Enter an amount greater than zero");
+				return;
+			}
+			if (numericAmount * borrowTokenPrice > limitCalcs.availableQuota) {
+				toast.error("Amount exceeds available borrowing power");
+				return;
+			}
+			if (limitSelectedCollaterals.length === 0) {
+				toast.error("Select at least one collateral asset");
+				return;
+			}
+			if (limitCalcs.totalPortfolioValue === 0) {
+				toast.error("Deposit collateral before borrowing");
+				return;
+			}
+			if (limitCalcs.healthFactor < 1.0) {
+				toast.error(
+					"This borrow would put your position underwater (HF < 1.0)",
+				);
+				return;
+			}
 
 			const targetAPRNumeric =
 				parseFloat(limitTargetAPR.replace(/,/g, ".")) || 0;
@@ -247,6 +265,10 @@ export function useBorrowForm({
 				const resolvedMarketId = upcomingMaturities.find(
 					(m) => m.maturity === limitMaturity,
 				)?.marketId;
+				if (!resolvedMarketId) {
+					toast.error("Selected maturity is not yet available on-chain");
+					return;
+				}
 				const result = await authFetch(async (token) =>
 					submitLimit(
 						{
@@ -316,16 +338,38 @@ export function useBorrowForm({
 			e.preventDefault();
 			const numericAmount = parseFloat(marketAmountInput.amount) || 0;
 
-			if (numericAmount <= 0 || isPending) return;
-			if (numericAmount * borrowTokenPrice > marketCalcs.availableQuota) return;
-			if (marketSelectedCollaterals.length === 0) return;
-			if (marketCalcs.totalPortfolioValue === 0) return;
-			if (marketCalcs.healthFactor < 1.0) return;
+			if (isPending) return;
+			if (numericAmount <= 0) {
+				toast.error("Enter an amount greater than zero");
+				return;
+			}
+			if (numericAmount * borrowTokenPrice > marketCalcs.availableQuota) {
+				toast.error("Amount exceeds available borrowing power");
+				return;
+			}
+			if (marketSelectedCollaterals.length === 0) {
+				toast.error("Select at least one collateral asset");
+				return;
+			}
+			if (marketCalcs.totalPortfolioValue === 0) {
+				toast.error("Deposit collateral before borrowing");
+				return;
+			}
+			if (marketCalcs.healthFactor < 1.0) {
+				toast.error(
+					"This borrow would put your position underwater (HF < 1.0)",
+				);
+				return;
+			}
 
 			try {
 				const resolvedMarketId = upcomingMaturities.find(
 					(m) => m.maturity === marketMaturity,
 				)?.marketId;
+				if (!resolvedMarketId) {
+					toast.error("Selected maturity is not yet available on-chain");
+					return;
+				}
 				const result = await authFetch(async (token) =>
 					submitMarket(
 						{
