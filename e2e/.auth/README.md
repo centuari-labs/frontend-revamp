@@ -58,4 +58,4 @@ Re-capture is the same one-liner — no human in the loop.
 
 - `privy.json` is gitignored via [`frontend-revamp/.gitignore`](../../.gitignore). Confirm with `git status` after capturing — the file must not appear in tracked changes.
 - The test private key in `capture-privy-session.ts` is well-known. Anyone with it can authenticate as `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` against Centuari's Privy app. Acceptable for testnet-only auth fixtures because this wallet holds zero funds and has zero privileges. **Do not** use the same key for any wallet that holds funds, points, or privileged roles.
-- Do not store the captured JSON in CI secrets without a separate threat-model review. CI E2E is intentionally deferred (see hub-only-launch-plan.md Track B1).
+- Do not store the captured JSON in CI secrets without a separate threat-model review. CI E2E is intentionally deferred (see dev-docs/architecture-html/launches/hub-only.html Track B1).
