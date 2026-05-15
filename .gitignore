@@ -49,3 +49,8 @@ next-env.d.tspackage-lock.json
 test-results
 
 playwright-report
+
+# Captured Privy sessions for e2e — never commit (real auth tokens)
+e2e/.auth/*
+!e2e/.auth/.gitkeep
+!e2e/.auth/README.md

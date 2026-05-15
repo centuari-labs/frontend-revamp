@@ -8,43 +8,38 @@
  * toast copy, dialog flow, wagmi prompts) — the API-only pattern cannot
  * exercise those.
  *
- * ─── Privy auth bypass (not yet working) ───────────────────────────────────
- * The portfolio data hooks gate on `usePrivy().user?.wallet?.address`, so
- * tests cannot interact with the asset table without an authenticated Privy
- * session. The SDK's @privy-io/react-auth (3.10.0) validates session tokens
- * cryptographically against `auth.privy.io`, so seeding cookies + localStorage
- * with a stub JWT does NOT satisfy the check — the SDK rejects the session.
+ * ─── Auth ────────────────────────────────────────────────────────────────
+ * Privy SDK (currently @privy-io/react-auth ^3.7.0) cryptographically
+ * validates session tokens against `auth.privy.io`, so stubbed cookies +
+ * localStorage are rejected and the asset table never renders. This spec
+ * runs against a real Privy session captured by `pnpm test:e2e:capture`
+ * (headless SIWE via the EIP-6963 mock provider in
+ * `capture-privy-session.ts`) and persisted to `e2e/.auth/privy.json`
+ * (gitignored). `test.use({ storageState })` below applies it to every
+ * scenario. The `setup` Playwright project (`auth.setup.ts`) verifies the
+ * session is still valid before this spec runs.
  *
- * Until a bypass lands, every UI scenario is marked `test.fixme()`. To run
- * these tests, one of the following must happen first:
- *   (1) Capture a real Privy session via a one-time interactive login,
- *       save it to `e2e/.auth/privy.json` with
- *       `await context.storageState({ path: 'e2e/.auth/privy.json' })`,
- *       then add `test.use({ storageState: 'e2e/.auth/privy.json' })`
- *       to this file and remove the `test.fixme()` calls.
- *   (2) Add a network-boundary Privy bypass — e.g. a custom session-refresh
- *       endpoint mock that satisfies the SDK's validation. The fallback
- *       `**\/auth.privy.io\/**` route mock currently returns a generic
- *       success payload that does not match the SDK's expected refresh
- *       response shape.
- *   (3) Add a frontend test-mode hook in `useAuthToken.ts` that returns a
- *       stub `getToken()` + `authFetch()` when a window-level test flag is
- *       present. This is purely test infrastructure but requires touching
- *       app code, which is out of Phase 4 scope.
+ * Deferred alternatives still documented for future reference:
+ *   (2) Extend the `**\/auth.privy.io\/**` route mock to match the SDK's
+ *       session-refresh response shape. Most fragile path — couples test
+ *       infra to Privy SDK internals.
+ *   (3) Add a window-level test bypass in `useAuthToken.ts` that returns a
+ *       stub `getToken()` + `authFetch()` when a window flag is present.
+ *       Requires touching app code; cleanest runtime model but largest
+ *       surface to gate.
  *
- * The mock helpers (setupAuth, mockBaseRoutes, mockPrivyEndpoints) and the
- * per-scenario route stubs all stay in place — once the bypass is unblocked,
- * removing the `test.fixme()` from each scenario should be enough to run.
- *
- * Spec source: smart-contract-revamp/docs/collateral-frontend-implementation.md:233-243
+ * Capture / re-capture runbook: e2e/.auth/README.md
  */
 
 import { expect, type Page, test } from "@playwright/test";
 
+test.use({ storageState: "e2e/.auth/privy.json" });
+
 const FRONTEND_URL = "http://localhost:3200";
-const WALLET_ADDRESS = "0x63f799163222e9CfC4afbddE7a632599AE0F1298";
-const STUB_JWT =
-	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHViLXVzZXIifQ.stub";
+// Derived from the well-known Anvil dev key #0 used by capture-privy-session.ts.
+// Viem's canonical EIP-55 form (account.address) — keep in sync with what
+// capture-privy-session.ts prints at the start of a capture run.
+const WALLET_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
 type AssetFixture = {
 	assetId: string;
@@ -107,59 +102,23 @@ function errorBody(
 	};
 }
 
-async function setupAuth(page: Page) {
-	const cookieDomain = new URL(FRONTEND_URL).hostname;
-	await page.context().addCookies([
-		{ name: "privy-token", value: STUB_JWT, domain: cookieDomain, path: "/" },
-		{ name: "privy-session", value: STUB_JWT, domain: cookieDomain, path: "/" },
-		{
-			name: "privy-id-token",
-			value: STUB_JWT,
-			domain: cookieDomain,
-			path: "/",
-		},
-	]);
-
+/**
+ * Install a wagmi-friendly window.ethereum mock and dismiss the first-visit
+ * tour dialogs. Auth itself comes from the captured Privy session via
+ * `test.use({ storageState })` — this only patches the wallet provider so
+ * the tests can intercept eth_sendTransaction without a real signer.
+ */
+async function installEthereumMock(page: Page) {
 	await page.addInitScript(
-		({ address, jwt }: { address: string; jwt: string }) => {
-			const stubUser = {
-				id: "did:privy:stub",
-				createdAt: new Date().toISOString(),
-				wallet: {
-					address,
-					chainType: "ethereum",
-					walletClientType: "metamask",
-				},
-				linkedAccounts: [
-					{
-						type: "wallet",
-						address,
-						chainType: "ethereum",
-						walletClientType: "metamask",
-					},
-				],
-			};
-
-			localStorage.setItem("privy:token", jwt);
-			localStorage.setItem("privy:refresh_token", `${jwt}-refresh`);
-			localStorage.setItem("privy:identity_token", jwt);
-			localStorage.setItem(
-				"privy:session",
-				JSON.stringify({ user: stubUser, expires_at: Date.now() + 3_600_000 }),
-			);
-			localStorage.setItem("privy:user", JSON.stringify(stubUser));
-
-			// Dismiss the first-visit Welcome tour dialog so it doesn't cover
-			// the page. Storage key from `tour-context.tsx` (TOUR_STORAGE_KEY).
+		({ address }: { address: string }) => {
+			// Dismiss the first-visit Welcome tour dialog so it doesn't cover the
+			// page. Storage keys from `tour-context.tsx`.
 			localStorage.setItem("centuari_tour_seen", "true");
 			localStorage.setItem("centuari_borrow_dialog_tour_seen", "true");
 			localStorage.setItem("centuari_lend_dialog_tour_seen", "true");
 
 			const calls: Array<{ method: string; params: unknown }> = [];
-			(
-				window as unknown as { __ethCalls: typeof calls; __jwt: string }
-			).__ethCalls = calls;
-			(window as unknown as { __jwt: string }).__jwt = jwt;
+			(window as unknown as { __ethCalls: typeof calls }).__ethCalls = calls;
 			(window as unknown as { ethereum: Record<string, unknown> }).ethereum = {
 				isMetaMask: true,
 				chainId: "0x66eee",
@@ -189,35 +148,8 @@ async function setupAuth(page: Page) {
 				removeListener: () => {},
 			};
 		},
-		{ address: WALLET_ADDRESS, jwt: STUB_JWT },
+		{ address: WALLET_ADDRESS },
 	);
-}
-
-async function mockPrivyEndpoints(page: Page) {
-	await page.route("**/auth.privy.io/**", async (route) => {
-		const url = route.request().url();
-		await route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({
-				token: STUB_JWT,
-				identity_token: STUB_JWT,
-				refresh_token: `${STUB_JWT}-refresh`,
-				user: {
-					id: "did:privy:stub",
-					wallet: { address: WALLET_ADDRESS },
-				},
-				url,
-			}),
-		});
-	});
-	await page.route("**/api/auth/**", async (route) => {
-		await route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify(envelope({ ok: true, address: WALLET_ADDRESS })),
-		});
-	});
 }
 
 async function mockBaseRoutes(
@@ -303,48 +235,14 @@ async function mockBaseRoutes(
 async function gotoPortfolio(page: Page) {
 	await page.goto(`${FRONTEND_URL}/portfolio`);
 	await page.waitForLoadState("networkidle");
-}
-
-const PRIVY_BYPASS_SKIP_REASON =
-	"Privy SDK (3.10.0) rejected the stubbed session — the portfolio data hooks gate on `usePrivy().user?.wallet?.address`, so the asset table never renders. To unblock these tests, either (1) capture a real Privy session into a storageState fixture and `test.use({ storageState })`, (2) extend the mock at `**/auth.privy.io/**` to match the SDK's session-refresh response shape, or (3) add a window-level test bypass in `useAuthToken.ts`. See the leading comment in this file for details.";
-
-async function preflightOrSkip(page: Page) {
-	// Race: did the portfolio table render (auth succeeded) or are we still
-	// showing the "Login" button in the nav / "Login Required" modal / empty
-	// state because Privy didn't authenticate?
-	const tableHeading = page.getByRole("heading", { name: "My Assets" });
-	const loginButton = page
-		.getByRole("button", { name: "Login", exact: true })
-		.first();
-	const loginGate = page.getByRole("heading", { name: "Login Required" });
-
-	try {
-		await Promise.race([
-			tableHeading.waitFor({ state: "visible", timeout: 8_000 }),
-			loginGate.waitFor({ state: "visible", timeout: 8_000 }),
-			loginButton.waitFor({ state: "visible", timeout: 8_000 }),
-		]);
-	} catch {
-		// nothing settled within 8s — treat as unauthenticated
-	}
-
-	const [navHasLogin, loginGateOpen] = await Promise.all([
-		loginButton.isVisible().catch(() => false),
-		loginGate.isVisible().catch(() => false),
-	]);
-	if (navHasLogin || loginGateOpen) {
-		test.skip(true, PRIVY_BYPASS_SKIP_REASON);
-	}
-
-	// Auth succeeded — make sure the table heading is actually visible before
-	// the test starts clicking row buttons.
-	await tableHeading.waitFor({ state: "visible", timeout: 5_000 });
+	await expect(page.getByRole("heading", { name: "My Assets" })).toBeVisible({
+		timeout: 10_000,
+	});
 }
 
 test.describe("Collateral toggle — UI", () => {
 	test.beforeEach(async ({ page }) => {
-		await setupAuth(page);
-		await mockPrivyEndpoints(page);
+		await installEthereumMock(page);
 	});
 
 	test("1. cheap flag queues a Pending badge with no wagmi prompt", async ({
@@ -374,7 +272,6 @@ test.describe("Collateral toggle — UI", () => {
 		});
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
@@ -405,7 +302,6 @@ test.describe("Collateral toggle — UI", () => {
 		await mockBaseRoutes(page, { assets: [asset] });
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await page
 			.getByRole("button", { name: "Flag now (urgent)" })
@@ -454,7 +350,6 @@ test.describe("Collateral toggle — UI", () => {
 		});
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await expect(page.getByText("Pending", { exact: true })).toBeVisible();
 		await page.getByRole("button", { name: "Remove pending" }).first().click();
@@ -495,7 +390,6 @@ test.describe("Collateral toggle — UI", () => {
 		});
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await expect(
 			page.getByText("Collateral", { exact: true }).first(),
@@ -570,7 +464,6 @@ test.describe("Collateral toggle — UI", () => {
 		// pre-submit flag step directly on the portfolio page. Both flag
 		// buttons are present per row.
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
@@ -626,7 +519,6 @@ test.describe("Collateral toggle — UI", () => {
 		});
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		for (let i = 0; i < 11; i += 1) {
 			await page
@@ -673,7 +565,6 @@ test.describe("Collateral toggle — UI", () => {
 		});
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
@@ -722,7 +613,6 @@ test.describe("Collateral toggle — UI", () => {
 		page.on("pageerror", (err) => consoleErrors.push(err.message));
 
 		await gotoPortfolio(page);
-		await preflightOrSkip(page);
 
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
