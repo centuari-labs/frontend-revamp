@@ -128,7 +128,7 @@ describe("useSubmitLend (API mode)", () => {
 
 		// Resolve the pending promise
 		await act(async () => {
-			resolveFn!(API_LEND_POSITION);
+			resolveFn?.(API_LEND_POSITION);
 		});
 		await promise;
 

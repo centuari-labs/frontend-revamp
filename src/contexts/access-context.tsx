@@ -49,9 +49,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
 export function useAccessContext(): AccessContextValue {
 	const ctx = useContext(AccessContext);
 	if (!ctx) {
-		throw new Error(
-			"useAccessContext must be used within an AccessProvider",
-		);
+		throw new Error("useAccessContext must be used within an AccessProvider");
 	}
 	return ctx;
 }

@@ -1,4 +1,4 @@
-import { apiClient } from "./api-client";
+import { apiClient, apiClientPaginated } from "./api-client";
 
 export interface MarketAsset {
 	id: string;
@@ -48,7 +48,9 @@ export function getMarket(): Promise<MarketResponse> {
 	return apiClient<MarketResponse>("/market");
 }
 
-export function getMarketDetail(assetId: string): Promise<MarketDetailResponse> {
+export function getMarketDetail(
+	assetId: string,
+): Promise<MarketDetailResponse> {
 	return apiClient<MarketDetailResponse>(`/market/${assetId}`);
 }
 
@@ -171,10 +173,9 @@ export interface LendBorrowAssetsResponse {
 export function getLendBorrowAssets(
 	token: string,
 ): Promise<LendBorrowAssetsResponse> {
-	return apiClient<LendBorrowAssetsResponse>(
-		"/portfolio/lend-borrow-assets",
-		{ token },
-	);
+	return apiClient<LendBorrowAssetsResponse>("/portfolio/lend-borrow-assets", {
+		token,
+	});
 }
 
 // ─── My Positions ───────────────────────────────────────────────────
@@ -205,35 +206,31 @@ export interface MyPositionsResponse {
 
 export async function getMyPositions(
 	token: string,
-	params?: { type?: "LEND" | "BORROW"; page?: number; limit?: number; assetId?: string },
+	params?: {
+		type?: "LEND" | "BORROW";
+		page?: number;
+		limit?: number;
+		assetId?: string;
+	},
 ): Promise<MyPositionsResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.type) searchParams.set("type", params.type);
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
-
-	const res = await fetch(
-		`/api/portfolio/my-position?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<MyPositionItem[]>(
+		"/portfolio/my-position",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				type: params?.type,
+				assetId: params?.assetId,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		data: json.data ?? [],
+		data: data ?? [],
 		page: Number(meta.page) || page,
 		limit: Number(meta.limit) || limit,
 		totalData: Number(meta.totalData) || 0,
@@ -269,32 +266,44 @@ export interface UserDetailsResponse {
 	settledDebtUsd: number;
 	pendingDebtUsd: number;
 	debts: UserDebtDetail[];
-	/** Health factor; may be Infinity when there is no debt. */
-	healthFactor: number;
+	/** Health factor. null means no debt (Infinity cannot be serialised to JSON). */
+	healthFactor: number | null;
 	/** Total collateral value in USD */
 	collateralUsd: number;
 	/** Weighted LTV across all collateral (decimal, e.g. 0.75 = 75%) */
 	weightedLtv: number;
 }
 
-export function getUserDetails(
-	token: string,
-): Promise<UserDetailsResponse> {
+export function getUserDetails(token: string): Promise<UserDetailsResponse> {
 	return apiClient<UserDetailsResponse>("/portfolio/user-details", {
 		token,
 	});
 }
 
-// ─── Set Asset As Collateral ────────────────────────────────────────
+// ─── Collateral Flag / Unflag ────────────────────────────────────────
 
-export function setAssetAsCollateral(
-	assetIds: string[],
-	isCollateral: boolean,
+export function flagCollateral(
+	asset: `0x${string}`,
 	token: string,
-): Promise<void> {
-	return apiClient<void>("/portfolio/is-collateral", {
-		method: "PUT",
-		body: { assetIds, isCollateral },
+): Promise<{ queued: true }> {
+	return apiClient<{ queued: true }>("/collateral/flag", {
+		method: "POST",
+		body: { asset },
+		token,
+	});
+}
+
+export type UnflagCollateralResponse =
+	| { dequeued: true }
+	| { applied: boolean; txHash?: string; reason?: string };
+
+export function unflagCollateral(
+	asset: `0x${string}`,
+	token: string,
+): Promise<UnflagCollateralResponse> {
+	return apiClient<UnflagCollateralResponse>("/collateral/unflag", {
+		method: "POST",
+		body: { asset },
 		token,
 	});
 }
@@ -303,11 +312,28 @@ export function setAssetAsCollateral(
 
 export interface MyAssetItem {
 	assetId: string;
+	/** Hex address (`0x…`). Echo into Phase 2 mutation hooks (`useFlagCollateral`,
+	 *  `useFlagCollateralDirect`, `useUnflagCollateral`) — they all expect
+	 *  `asset: 0x${string}`. Hub address for bridgeable tokens, spoke address
+	 *  for SPOKE_NATIVE tokens; works for both — the backend echoes whatever
+	 *  the indexer stamped onto `user_balance.asset`. */
+	tokenAddress: `0x${string}`;
 	symbol: string;
 	name: string;
 	walletBalance: number;
 	amountInUsd: number;
+	/** On-chain truth — mirrors `user_balance.used_as_collateral`. HF math
+	 *  counts ONLY rows where this is true (spec §27). Never count
+	 *  `pendingCollateralFlag` here: a liquidator ignores the queue. */
 	isCollateral: boolean;
+	/** True when a queued (pre-settlement) flag exists for this (wallet, asset).
+	 *  Drives the "Pending" yellow badge. */
+	pendingCollateralFlag: boolean;
+	/** Unix seconds; `0` sentinel when not flagged. */
+	flaggedAt: number;
+	/** Unix seconds; `0` sentinel when not flagged. Used by `useCountdown`
+	 *  to power the 24h flag-lock badge. */
+	unlocksAt: number;
 	imageUrl: string | null;
 	ltv: number;
 	liquidationThreshold: number;
@@ -328,25 +354,13 @@ export async function getMyAssets(
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
-
-	const res = await fetch(
-		`/api/portfolio/my-assets?page=${page}&limit=${limit}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<MyAssetItem[]>(
+		"/portfolio/my-assets",
+		{ token, params: { page, limit } },
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	// API returns { statusCode, data: [...], meta: { page, limit, totalData, totalPages } }
-	const meta = json.meta ?? {};
 	return {
-		data: json.data ?? [],
+		data: data ?? [],
 		page: Number(meta.page) || page,
 		limit: Number(meta.limit) || limit,
 		totalData: Number(meta.totalData) || 0,
@@ -455,10 +469,12 @@ export function requestFaucetTokens(
 	chainId: number,
 	recipientAddress: string,
 	tokens: string[],
+	token: string,
 ): Promise<FaucetResponse> {
 	return apiClient<FaucetResponse>("/faucet/request-tokens", {
 		method: "POST",
 		body: { chainId, recipientAddress, token: tokens },
+		token,
 	});
 }
 
@@ -631,35 +647,35 @@ export async function getOrderHistory(
 ): Promise<OrderHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
-	if (params?.startDate) searchParams.set("startDate", params.startDate);
-	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
+	const side =
+		params?.side && params.side !== "all_transaction"
+			? params.side.toUpperCase()
+			: undefined;
+	const status =
+		params?.status && params.status !== "all_status"
+			? params.status
+			: undefined;
 
-	const res = await fetch(
-		`/api/portfolio/order-history?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<OrderHistoryItem[]>(
+		"/portfolio/order-history",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				assetId: params?.assetId,
+				side,
+				status,
+				startDate: params?.startDate,
+				endDate: params?.endDate,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		statusCode: json.statusCode ?? 200,
-		data: json.data ?? [],
+		statusCode: 200,
+		data: data ?? [],
 		meta: {
 			page: Number(meta.page) || page,
 			limit: Number(meta.limit) || limit,
@@ -704,34 +720,30 @@ export async function getTransactionHistory(
 ): Promise<TransactionHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.startDate) searchParams.set("startDate", params.startDate);
-	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
+	const side =
+		params?.side && params.side !== "all_transaction"
+			? params.side.toUpperCase()
+			: undefined;
 
-	const res = await fetch(
-		`/api/portfolio/transaction-history?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<TransactionHistoryItem[]>(
+		"/portfolio/transaction-history",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				assetId: params?.assetId,
+				side,
+				startDate: params?.startDate,
+				endDate: params?.endDate,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		statusCode: json.statusCode ?? 200,
-		data: json.data ?? [],
+		statusCode: 200,
+		data: data ?? [],
 		meta: {
 			page: Number(meta.page) || page,
 			limit: Number(meta.limit) || limit,
@@ -786,8 +798,10 @@ export async function getOpenOrders(
 		limit: String(limit),
 	});
 	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction") searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status") searchParams.set("status", params.status);
+	if (params?.side && params.side !== "all_transaction")
+		searchParams.set("side", params.side.toUpperCase());
+	if (params?.status && params.status !== "all_status")
+		searchParams.set("status", params.status);
 	if (params?.startDate) searchParams.set("startDate", params.startDate);
 	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
@@ -839,4 +853,3 @@ export function withdrawLendPosition(
 		},
 	);
 }
-

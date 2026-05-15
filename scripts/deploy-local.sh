@@ -149,7 +149,7 @@ docker buildx build \
     --build-arg NEXT_PUBLIC_CHAIN_ENV="${NEXT_PUBLIC_CHAIN_ENV:-testnet}" \
     --build-arg NEXT_PUBLIC_USE_MOCK="${NEXT_PUBLIC_USE_MOCK:-false}" \
     --build-arg NEXT_PUBLIC_RPC_URL="${NEXT_PUBLIC_RPC_URL:-}" \
-    --build-arg NEXT_PUBLIC_TREASURY_ADDRESS="${NEXT_PUBLIC_TREASURY_ADDRESS:-}" \
+    --build-arg NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS="${NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS:-}" \
     --tag "$IMAGE_LATEST" \
     --tag "$IMAGE_SHA" \
     --load \

@@ -4,326 +4,328 @@ import React from "react";
 import { gsap } from "gsap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ArrowLeftRight, ArrowUp, BookOpen } from "lucide-react";
-import { CentuariGlassLayers, CentuariGlassSurface } from "@/components/centuari-glass-surface";
-import { ScrollArea } from "../ui/scroll-area";
+import {
+	CentuariGlassLayers,
+	CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
 import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
 import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
 
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
-  amount.toLocaleString(undefined, { maximumFractionDigits: 3 });
+	amount.toLocaleString(undefined, { maximumFractionDigits: 3 });
 
 const OrderRowView: React.FC<{
-  order: OrderRow;
-  maxAmount: number;
+	order: OrderRow;
+	maxAmount: number;
 }> = ({ order, maxAmount }) => {
-  const isBorrow = order.side === "borrow";
-  const widthPct = maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
+	const isBorrow = order.side === "borrow";
+	const widthPct = maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
 
-  const barRef = React.useRef<HTMLDivElement>(null);
+	const barRef = React.useRef<HTMLDivElement>(null);
 
-  React.useLayoutEffect(() => {
-    if (!barRef.current) return;
-    gsap.to(barRef.current, {
-      width: `${widthPct}%`,
-      duration: 0.6,
-      ease: "power3.out",
-    });
-  }, [widthPct]);
+	React.useLayoutEffect(() => {
+		if (!barRef.current) return;
+		gsap.to(barRef.current, {
+			width: `${widthPct}%`,
+			duration: 0.6,
+			ease: "power3.out",
+		});
+	}, [widthPct]);
 
-  return (
-    <div className="relative grid grid-cols-12 h-7 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
-      {/* Per-row liquidity bar — anchored left */}
-      <div
-        ref={barRef}
-        className={`absolute inset-y-0 left-0 ${
-          isBorrow ? "bg-[rgba(255,59,68,0.18)]" : "bg-[rgba(61,229,122,0.18)]"
-        }`}
-        style={{ width: "0%" }}
-      />
+	return (
+		<div className="relative grid grid-cols-12 h-7 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
+			{/* Per-row liquidity bar — anchored left */}
+			<div
+				ref={barRef}
+				className={`absolute inset-y-0 left-0 ${
+					isBorrow ? "bg-[rgba(255,59,68,0.18)]" : "bg-[rgba(61,229,122,0.18)]"
+				}`}
+				style={{ width: "0%" }}
+			/>
 
-      {/* APR */}
-      <div
-        className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
-          isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
-        }`}
-      >
-        {formatAPR(order.apr)}
-      </div>
+			{/* APR */}
+			<div
+				className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
+					isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
+				}`}
+			>
+				{formatAPR(order.apr)}
+			</div>
 
-      {/* Amount */}
-      <div className="col-span-6 text-right font-semibold tracking-tight pr-2 z-10 text-white/80">
-        {formatAmount(order.amount)}
-      </div>
-    </div>
-  );
+			{/* Amount */}
+			<div className="col-span-6 text-right font-semibold tracking-tight pr-2 z-10 text-white/80">
+				{formatAmount(order.amount)}
+			</div>
+		</div>
+	);
 };
 
 const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
-  orders,
-  side,
+	orders,
+	side,
 }) => {
-  const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+	const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
+	const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    if (side === "borrow" && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [side, orders]);
+	React.useEffect(() => {
+		if (side === "borrow" && scrollRef.current) {
+			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+		}
+	}, [side]);
 
-  if (orders.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 h-[195px]">
-        <CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
-          <BookOpen size={18} className="text-white/40" />
-        </CentuariGlassSurface>
-        <span className="text-xs text-white/40">No orders yet</span>
-      </div>
-    );
-  }
+	if (orders.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center gap-2 h-[195px]">
+				<CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+					<BookOpen size={18} className="text-white/40" />
+				</CentuariGlassSurface>
+				<span className="text-xs text-white/40">No orders yet</span>
+			</div>
+		);
+	}
 
-  return (
-    <div
-      ref={scrollRef}
-      className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 p-3 sm:p-4 md:p-4"
-    >
-      {side === "borrow" ? (
-        <div className="flex flex-col justify-end min-h-full">
-          {orders.map((row, i) => (
-            <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
-          ))}
-        </div>
-      ) : (
-        orders.map((row, i) => (
-          <OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
-        ))
-      )}
-    </div>
-  );
+	return (
+		<div
+			ref={scrollRef}
+			className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 p-3 sm:p-4 md:p-4"
+		>
+			{side === "borrow" ? (
+				<div className="flex flex-col justify-end min-h-full">
+					{orders.map((row, i) => (
+						<OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+					))}
+				</div>
+			) : (
+				orders.map((row, i) => (
+					<OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+				))
+			)}
+		</div>
+	);
 };
 
 const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
-  return (
-    <div className="space-y-0.5">
-      {trades.map((trade, i) => (
-        <div
-          key={i}
-          className="grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors"
-        >
-          <div className="col-span-3 text-start text-white/90 shrink-0">
-            {trade.time}
-          </div>
-          <div
-            className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
-              trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
-            }`}
-          >
-            {trade.type}
-          </div>
-          <div className="col-span-3 text-right text-white/90 z-10 shrink-0">
-            {formatAmount(trade.amount)}
-          </div>
-          <div className="col-span-3 text-white/90 text-right z-10 shrink-0">
-            {formatAPR(trade.apr)}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+	return (
+		<div className="space-y-0.5">
+			{trades.map((trade, i) => (
+				<div
+					key={i}
+					className="grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors"
+				>
+					<div className="col-span-3 text-start text-white/90 shrink-0">
+						{trade.time}
+					</div>
+					<div
+						className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
+							trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
+						}`}
+					>
+						{trade.type}
+					</div>
+					<div className="col-span-3 text-right text-white/90 z-10 shrink-0">
+						{formatAmount(trade.amount)}
+					</div>
+					<div className="col-span-3 text-white/90 text-right z-10 shrink-0">
+						{formatAPR(trade.apr)}
+					</div>
+				</div>
+			))}
+		</div>
+	);
 };
 
 const OrderBookContent: React.FC<{
-  borrowOrders: OrderRow[];
-  lendOrders: OrderRow[];
+	borrowOrders: OrderRow[];
+	lendOrders: OrderRow[];
 }> = ({ borrowOrders, lendOrders }) => {
-  // WebSocket already sends orders in correct display order — no sorting needed.
-  const displayBorrow = borrowOrders.slice(0, 10);
-  const displayLend = lendOrders.slice(0, 10);
+	// WebSocket already sends orders in correct display order — no sorting needed.
+	const displayBorrow = borrowOrders.slice(0, 10);
+	const displayLend = lendOrders.slice(0, 10);
 
-  // Best borrow = first item (closest to spread, data arrives sorted this way)
-  const bestBorrowApr = displayBorrow[0]?.apr;
-  // Best lend = first item (closest to spread)
-  const bestLendApr = displayLend[0]?.apr;
+	// Best borrow = first item (closest to spread, data arrives sorted this way)
+	const bestBorrowApr = displayBorrow[0]?.apr;
+	// Best lend = first item (closest to spread)
+	const bestLendApr = displayLend[0]?.apr;
 
-  const midApr =
-    bestBorrowApr != null && bestLendApr != null
-      ? (bestBorrowApr + bestLendApr) / 2
-      : (bestBorrowApr ?? bestLendApr ?? 0);
-  const spreadApr =
-    bestBorrowApr != null && bestLendApr != null
-      ? Math.abs(bestBorrowApr - bestLendApr)
-      : 0;
+	const midApr =
+		bestBorrowApr != null && bestLendApr != null
+			? (bestBorrowApr + bestLendApr) / 2
+			: (bestBorrowApr ?? bestLendApr ?? 0);
+	const spreadApr =
+		bestBorrowApr != null && bestLendApr != null
+			? Math.abs(bestBorrowApr - bestLendApr)
+			: 0;
 
-  return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="border-b py-1 shrink-0">
-        <span className="text-sm p-3 sm:p-4 md:p-4">Borrow</span>
-      </div>
-      <div className="mt-2.5 grid grid-cols-12 text-sm shrink-0 px-3 sm:px-4 md:px-4">
-        <div className="col-span-6 text-white/80 text-start font-semibold pl-2">
-          APR
-        </div>
-        <div className="col-span-6 text-white/80 font-semibold text-right pr-2">
-          Amount
-        </div>
-      </div>
+	return (
+		<div className="flex flex-col h-full overflow-hidden">
+			<div className="border-b py-1 shrink-0">
+				<span className="text-sm p-3 sm:p-4 md:p-4">Borrow</span>
+			</div>
+			<div className="mt-2.5 grid grid-cols-12 text-sm shrink-0 px-3 sm:px-4 md:px-4">
+				<div className="col-span-6 text-white/80 text-start font-semibold pl-2">
+					APR
+				</div>
+				<div className="col-span-6 text-white/80 font-semibold text-right pr-2">
+					Amount
+				</div>
+			</div>
 
-      {/* BORROW — rows pinned to bottom */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
-      </div>
+			{/* BORROW — rows pinned to bottom */}
+			<div className="flex-1 min-h-0 overflow-hidden">
+				<OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
+			</div>
 
-      {/* MID APR */}
-      <div className="bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
-        <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
-          <ArrowUp color="#3de57a" size={16} />
-          <span>{formatAPR(midApr)}</span>
-        </div>
-        <div className="text-white/70 text-xs sm:text-sm">
-          Spread : {(spreadApr * 100).toFixed(2)}%
-        </div>
-      </div>
+			{/* MID APR */}
+			<div className="bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
+				<div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
+					<ArrowUp color="#3de57a" size={16} />
+					<span>{formatAPR(midApr)}</span>
+				</div>
+				<div className="text-white/70 text-xs sm:text-sm">
+					Spread : {(spreadApr * 100).toFixed(2)}%
+				</div>
+			</div>
 
-      {/* LEND — rows start from top */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <OrderTable orders={displayLend} side="lend" />
-      </div>
+			{/* LEND — rows start from top */}
+			<div className="flex-1 min-h-0 overflow-hidden">
+				<OrderTable orders={displayLend} side="lend" />
+			</div>
 
-      <div className="border-t py-1 shrink-0">
-        <span className="text-sm p-3 sm:p-4 md:p-4">Lend</span>
-      </div>
-    </div>
-  );
+			<div className="border-t py-1 shrink-0">
+				<span className="text-sm p-3 sm:p-4 md:p-4">Lend</span>
+			</div>
+		</div>
+	);
 };
 
 const RecentTradesContent: React.FC<{
-  trades: TradeRow[];
-  cardRef: React.RefObject<HTMLDivElement | null>;
+	trades: TradeRow[];
+	cardRef: React.RefObject<HTMLDivElement | null>;
 }> = ({ trades, cardRef }) => {
-  const headerRef = React.useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = React.useState<number>(0);
+	const headerRef = React.useRef<HTMLDivElement>(null);
+	const [listHeight, setListHeight] = React.useState<number>(0);
 
-  React.useEffect(() => {
-    const card = cardRef.current;
-    const header = headerRef.current;
-    if (!card) return;
+	React.useEffect(() => {
+		const card = cardRef.current;
+		const header = headerRef.current;
+		if (!card) return;
 
-    // Find TabsList element height
-    const tabsList = card.querySelector('[data-slot="tabs-list"]');
+		// Find TabsList element height
+		const tabsList = card.querySelector('[data-slot="tabs-list"]');
 
-    const recalc = () => {
-      const cardH = card.clientHeight;
-      const cardPadding =
-        parseFloat(getComputedStyle(card).paddingTop) +
-        parseFloat(getComputedStyle(card).paddingBottom);
-      const tabsH = tabsList?.getBoundingClientRect().height ?? 0;
-      const headerH = header?.offsetHeight ?? 0;
-      // gap-2 from Tabs = 8px, mt-2.5 from header = 10px, mb-3 = 12px
-      const gaps = 8 + 8;
-      setListHeight(Math.max(cardH - cardPadding - tabsH - headerH - gaps, 0));
-    };
+		const recalc = () => {
+			const cardH = card.clientHeight;
+			const cardPadding =
+				parseFloat(getComputedStyle(card).paddingTop) +
+				parseFloat(getComputedStyle(card).paddingBottom);
+			const tabsH = tabsList?.getBoundingClientRect().height ?? 0;
+			const headerH = header?.offsetHeight ?? 0;
+			// gap-2 from Tabs = 8px, mt-2.5 from header = 10px, mb-3 = 12px
+			const gaps = 8 + 8;
+			setListHeight(Math.max(cardH - cardPadding - tabsH - headerH - gaps, 0));
+		};
 
-    const observer = new ResizeObserver(recalc);
-    observer.observe(card);
-    recalc();
-    return () => observer.disconnect();
-  }, [cardRef]);
+		const observer = new ResizeObserver(recalc);
+		observer.observe(card);
+		recalc();
+		return () => observer.disconnect();
+	}, [cardRef]);
 
-  return (
-    <>
-      <div
-        ref={headerRef}
-        className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center px-3 sm:px-4 md:px-4"
-      >
-        <div className="col-span-3 text-white/80 font-semibold text-left">
-          Time
-        </div>
-        <div className="col-span-3 text-white/80 text-left font-semibold">
-          Type
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">Amount</div>
-        <div className="col-span-3 text-white/80 text-right font-semibold">
-          APR
-        </div>
-      </div>
+	return (
+		<>
+			<div
+				ref={headerRef}
+				className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center px-3 sm:px-4 md:px-4"
+			>
+				<div className="col-span-3 text-white/80 font-semibold text-left">
+					Time
+				</div>
+				<div className="col-span-3 text-white/80 text-left font-semibold">
+					Type
+				</div>
+				<div className="col-span-3 text-white/80 font-semibold">Amount</div>
+				<div className="col-span-3 text-white/80 text-right font-semibold">
+					APR
+				</div>
+			</div>
 
-      {trades.length === 0 ? (
-        <div
-          className="flex flex-col items-center justify-center gap-2 px-3 sm:px-4 md:px-4"
-          style={{ height: listHeight || undefined }}
-        >
-          <CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
-            <ArrowLeftRight size={18} className="text-white/40" />
-          </CentuariGlassSurface>
-          <span className="text-xs text-white/40">No recent trades</span>
-        </div>
-      ) : (
-        <div
-          className="overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 px-3 sm:px-4 md:px-4"
-          style={{ height: listHeight || undefined }}
-        >
-          <RecentTradeTable trades={trades} />
-        </div>
-      )}
-    </>
-  );
+			{trades.length === 0 ? (
+				<div
+					className="flex flex-col items-center justify-center gap-2 px-3 sm:px-4 md:px-4"
+					style={{ height: listHeight || undefined }}
+				>
+					<CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+						<ArrowLeftRight size={18} className="text-white/40" />
+					</CentuariGlassSurface>
+					<span className="text-xs text-white/40">No recent trades</span>
+				</div>
+			) : (
+				<div
+					className="overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 px-3 sm:px-4 md:px-4"
+					style={{ height: listHeight || undefined }}
+				>
+					<RecentTradeTable trades={trades} />
+				</div>
+			)}
+		</>
+	);
 };
 
 export const OrderBookCard: React.FC<{
-  height?: string;
-  assetId?: string;
-  decimals?: number;
+	height?: string;
+	assetId?: string;
+	decimals?: number;
 }> = ({ height = "auto", assetId, decimals }) => {
-  const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
-  const { trades } = useRecentTrades({ assetId, decimals });
-  const cardRef = React.useRef<HTMLDivElement>(null);
+	const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
+	const { trades } = useRecentTrades({ assetId, decimals });
+	const cardRef = React.useRef<HTMLDivElement>(null);
 
-  return (
-    <div
-      ref={cardRef}
-      className="group/glass relative bg-transparent border-0 rounded-xl overflow-hidden isolate"
-      style={{ height }}
-    >
-      <CentuariGlassLayers intensity="soft" />
-      <Tabs
-        defaultValue="orderbook"
-        className="relative z-20 w-full h-full flex flex-col"
-      >
-        <div className="shrink-0 px-3 sm:px-4 md:px-4 pt-3 sm:pt-4 md:pt-4">
-          <TabsList className="bg-white/5 w-full">
-            <TabsTrigger
-              value="orderbook"
-              className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
-            >
-              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
-                <CentuariGlassLayers intensity="soft" />
-              </span>
-              <span className="relative z-20">Order Book</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="trades"
-              className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
-            >
-              <span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
-                <CentuariGlassLayers intensity="soft" />
-              </span>
-              <span className="relative z-20">Recent Trades</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+	return (
+		<div
+			ref={cardRef}
+			className="group/glass relative bg-transparent border-0 rounded-xl overflow-hidden isolate"
+			style={{ height }}
+		>
+			<CentuariGlassLayers intensity="soft" />
+			<Tabs
+				defaultValue="orderbook"
+				className="relative z-20 w-full h-full flex flex-col"
+			>
+				<div className="shrink-0 px-3 sm:px-4 md:px-4 pt-3 sm:pt-4 md:pt-4">
+					<TabsList className="bg-white/5 w-full">
+						<TabsTrigger
+							value="orderbook"
+							className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
+						>
+							<span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+								<CentuariGlassLayers intensity="soft" />
+							</span>
+							<span className="relative z-20">Order Book</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value="trades"
+							className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
+						>
+							<span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+								<CentuariGlassLayers intensity="soft" />
+							</span>
+							<span className="relative z-20">Recent Trades</span>
+						</TabsTrigger>
+					</TabsList>
+				</div>
 
-        <TabsContent value="orderbook" className="flex-1 min-h-0">
-          <OrderBookContent
-            borrowOrders={borrowOrders}
-            lendOrders={lendOrders}
-          />
-        </TabsContent>
+				<TabsContent value="orderbook" className="flex-1 min-h-0">
+					<OrderBookContent
+						borrowOrders={borrowOrders}
+						lendOrders={lendOrders}
+					/>
+				</TabsContent>
 
-        <TabsContent value="trades" className="flex-1 min-h-0">
-          <RecentTradesContent trades={trades} cardRef={cardRef} />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+				<TabsContent value="trades" className="flex-1 min-h-0">
+					<RecentTradesContent trades={trades} cardRef={cardRef} />
+				</TabsContent>
+			</Tabs>
+		</div>
+	);
 };

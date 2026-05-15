@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
 	aprToBasisPoints,
+	basisPointsToApr,
+	mapStatus,
 	normalizeOrderToLendPosition,
 	normalizeOrderToBorrowPosition,
 	submitLendLimitOrder,
@@ -79,6 +81,97 @@ describe("aprToBasisPoints", () => {
 
 	it("converts small APR correctly", () => {
 		expect(aprToBasisPoints(0.0001)).toBe(1);
+	});
+});
+
+// ─── basisPointsToApr ─────────────────────────────────────────────────
+
+describe("basisPointsToApr", () => {
+	it("converts 650 bps to 0.065 decimal APR", () => {
+		expect(basisPointsToApr(650)).toBeCloseTo(0.065, 6);
+	});
+
+	it("converts 500 bps to 0.05 decimal APR", () => {
+		expect(basisPointsToApr(500)).toBe(0.05);
+	});
+
+	it("is exact inverse of aprToBasisPoints within rounding", () => {
+		const original = 0.0537;
+		const bps = aprToBasisPoints(original);
+		const recovered = basisPointsToApr(bps);
+		expect(Math.abs(recovered - original)).toBeLessThan(1 / 10_000);
+	});
+});
+
+// ─── mapStatus ────────────────────────────────────────────────────────
+
+describe("mapStatus", () => {
+	let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		consoleErrorSpy.mockRestore();
+	});
+
+	it("maps OPEN to OPEN", () => {
+		expect(mapStatus("OPEN")).toBe("OPEN");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps FILLED to FILLED", () => {
+		expect(mapStatus("FILLED")).toBe("FILLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps CANCELLED to CANCELLED", () => {
+		expect(mapStatus("CANCELLED")).toBe("CANCELLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps PARTIALLY_FILLED to PARTIALLY_FILLED", () => {
+		expect(mapStatus("PARTIALLY_FILLED")).toBe("PARTIALLY_FILLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns UNKNOWN and logs for unrecognised string", () => {
+		expect(mapStatus("WEIRD")).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: "WEIRD" },
+		);
+	});
+
+	it("returns UNKNOWN and logs for null", () => {
+		expect(mapStatus(null)).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: null },
+		);
+	});
+
+	it("returns UNKNOWN and logs for undefined", () => {
+		expect(mapStatus(undefined)).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: undefined },
+		);
+	});
+
+	it("returns UNKNOWN and logs for empty string", () => {
+		expect(mapStatus("")).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: "" },
+		);
+	});
+
+	it("does NOT coerce unknown statuses to OPEN (regression guard for A4 #19)", () => {
+		expect(mapStatus("ZOMBIE")).not.toBe("OPEN");
+		expect(mapStatus("ZOMBIE")).toBe("UNKNOWN");
 	});
 });
 
@@ -244,16 +337,40 @@ describe("normalizeOrderToBorrowPosition", () => {
 	});
 
 	it("accepts market orderType", () => {
-		const pos = normalizeOrderToBorrowPosition(BORROW_RESPONSE, "USDC", "market");
+		const pos = normalizeOrderToBorrowPosition(
+			BORROW_RESPONSE,
+			"USDC",
+			"market",
+		);
 		expect(pos.orderType).toBe("market");
 		expect(pos.type).toBe("borrow");
 	});
 
 	it("maps all statuses correctly", () => {
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "OPEN" }, "USDC").status).toBe("OPEN");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "FILLED" }, "USDC").status).toBe("FILLED");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "CANCELLED" }, "USDC").status).toBe("CANCELLED");
-		expect(normalizeOrderToBorrowPosition({ ...BORROW_RESPONSE, status: "PARTIALLY_FILLED" }, "USDC").status).toBe("PARTIALLY_FILLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "OPEN" },
+				"USDC",
+			).status,
+		).toBe("OPEN");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "FILLED" },
+				"USDC",
+			).status,
+		).toBe("FILLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "CANCELLED" },
+				"USDC",
+			).status,
+		).toBe("CANCELLED");
+		expect(
+			normalizeOrderToBorrowPosition(
+				{ ...BORROW_RESPONSE, status: "PARTIALLY_FILLED" },
+				"USDC",
+			).status,
+		).toBe("PARTIALLY_FILLED");
 	});
 });
 
@@ -271,7 +388,10 @@ describe("submitLendMarketOrder", () => {
 	};
 
 	it("converts params to correct DTO (no rate) and calls createLendMarketOrder", async () => {
-		mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+		mockCreateLendMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			type: "MARKET",
+		});
 
 		await submitLendMarketOrder(baseParams, MARKET_IDS, "jwt-token");
 
@@ -287,7 +407,10 @@ describe("submitLendMarketOrder", () => {
 	});
 
 	it("returns a normalized LendPosition with orderType market", async () => {
-		mockCreateLendMarket.mockResolvedValue({ ...MOCK_RESPONSE, type: "MARKET" });
+		mockCreateLendMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			type: "MARKET",
+		});
 
 		const result = await submitLendMarketOrder(baseParams, MARKET_IDS, "token");
 
@@ -320,7 +443,11 @@ describe("submitBorrowLimitOrder", () => {
 	};
 
 	it("converts params to correct DTO with rate and calls createBorrowLimitOrder", async () => {
-		mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+		mockCreateBorrowLimit.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			rate: 10.1,
+		});
 
 		await submitBorrowLimitOrder(baseParams, MARKET_IDS, "jwt-borrow");
 
@@ -337,9 +464,17 @@ describe("submitBorrowLimitOrder", () => {
 	});
 
 	it("returns a normalized BorrowPosition", async () => {
-		mockCreateBorrowLimit.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", rate: 10.1 });
+		mockCreateBorrowLimit.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			rate: 10.1,
+		});
 
-		const result = await submitBorrowLimitOrder(baseParams, MARKET_IDS, "token");
+		const result = await submitBorrowLimitOrder(
+			baseParams,
+			MARKET_IDS,
+			"token",
+		);
 
 		expect(result.id).toBe("order-123");
 		expect(result.type).toBe("borrow");
@@ -370,7 +505,11 @@ describe("submitBorrowMarketOrder", () => {
 	};
 
 	it("converts params to correct DTO (no rate) and calls createBorrowMarketOrder", async () => {
-		mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+		mockCreateBorrowMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			type: "MARKET",
+		});
 
 		await submitBorrowMarketOrder(baseParams, MARKET_IDS, "jwt-borrow");
 
@@ -386,9 +525,17 @@ describe("submitBorrowMarketOrder", () => {
 	});
 
 	it("returns a normalized BorrowPosition with orderType market", async () => {
-		mockCreateBorrowMarket.mockResolvedValue({ ...MOCK_RESPONSE, side: "BORROW", type: "MARKET" });
+		mockCreateBorrowMarket.mockResolvedValue({
+			...MOCK_RESPONSE,
+			side: "BORROW",
+			type: "MARKET",
+		});
 
-		const result = await submitBorrowMarketOrder(baseParams, MARKET_IDS, "token");
+		const result = await submitBorrowMarketOrder(
+			baseParams,
+			MARKET_IDS,
+			"token",
+		);
 
 		expect(result.id).toBe("order-123");
 		expect(result.type).toBe("borrow");

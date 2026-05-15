@@ -6,10 +6,13 @@
     "dev": "next dev --turbopack -p 3200",
     "build": "next build",
     "start": "next start -p 3200",
+    "lint": "biome check src/",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:capture": "playwright test --project=capture"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

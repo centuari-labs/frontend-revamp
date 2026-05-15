@@ -107,6 +107,25 @@ describe("path whitelist", () => {
 		expect(body.error).toBe("Endpoint not allowed");
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
+
+	it.each([
+		"marketing",
+		"market-admin",
+		"marketers/list",
+		"deposit-admin",
+		"deposit-internal/refund",
+		"depositories",
+		"withdrawal",
+		"withdrawals-internal",
+		"withdraw-batch/run",
+		"faucet-admin",
+	])("blocks prefix-collision path: %s", async (path) => {
+		const req = makeRequest(path);
+		const res = await GET(req, makeParams(path));
+
+		expect(res.status).toBe(403);
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
 });
 
 // ─── Path Traversal / Sanitization ──────────────────────────────────────────
@@ -144,10 +163,7 @@ describe("path sanitization", () => {
 		// Next.js decodes segments before they hit the handler, so
 		// path segments like ["..", "etc", "passwd"] would join to "../etc/passwd"
 		const req = makeRequest("market/..%2Fetc%2Fpasswd");
-		const res = await GET(
-			req,
-			makeParams("market/..%2Fetc%2Fpasswd"),
-		);
+		const res = await GET(req, makeParams("market/..%2Fetc%2Fpasswd"));
 
 		// This contains ".." so should be blocked
 		expect(res.status).toBe(400);
@@ -240,7 +256,9 @@ describe("proxy forwarding", () => {
 	});
 
 	it("forwards query string parameters to backend", async () => {
-		const req = makeRequest("portfolio/order-history?page=2&limit=10&side=lend");
+		const req = makeRequest(
+			"portfolio/order-history?page=2&limit=10&side=lend",
+		);
 		await GET(req, makeParams("portfolio/order-history"));
 
 		const [url] = mockFetch.mock.calls[0];

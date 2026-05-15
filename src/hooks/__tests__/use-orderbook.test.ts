@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
-import { createMockSocket, type MockSocket } from "@/__tests__/helpers/mock-socket";
+import {
+	createMockSocket,
+	type MockSocket,
+} from "@/__tests__/helpers/mock-socket";
 
 let mockSocket: MockSocket;
 
@@ -22,7 +25,9 @@ afterEach(() => {
 describe("useOrderbook (no assetId)", () => {
 	it("returns empty orders when no assetId provided", async () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
-		const { result } = renderHookWithProviders(() => useOrderbook());
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId: undefined, decimals: undefined }),
+		);
 
 		expect(result.current.borrowOrders).toHaveLength(0);
 		expect(result.current.lendOrders).toHaveLength(0);
@@ -30,9 +35,47 @@ describe("useOrderbook (no assetId)", () => {
 
 	it("does not subscribe to socket without assetId", async () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
-		renderHookWithProviders(() => useOrderbook());
+		renderHookWithProviders(() =>
+			useOrderbook({ assetId: undefined, decimals: undefined }),
+		);
 
 		expect(mockSocket.emit).not.toHaveBeenCalled();
+	});
+});
+
+describe("useOrderbook (decimals undefined — loading token metadata)", () => {
+	it("does not subscribe when decimals is undefined", async () => {
+		vi.resetModules();
+		vi.doMock("@/lib/socket", () => ({
+			acquireSocket: vi.fn(() => mockSocket),
+			releaseSocket: vi.fn(),
+		}));
+		const { useOrderbook } = await import("@/hooks/use-orderbook");
+		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: undefined }),
+		);
+
+		expect(mockSocket.emit).not.toHaveBeenCalled();
+	});
+
+	it("returns empty orders and ignores incoming events when decimals is undefined", async () => {
+		vi.resetModules();
+		vi.doMock("@/lib/socket", () => ({
+			acquireSocket: vi.fn(() => mockSocket),
+			releaseSocket: vi.fn(),
+		}));
+		const { useOrderbook } = await import("@/hooks/use-orderbook");
+		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: undefined }),
+		);
+
+		// No event listener attached, so simulate would have no observer.
+		expect(result.current.borrowOrders).toHaveLength(0);
+		expect(result.current.lendOrders).toHaveLength(0);
 	});
 });
 
@@ -46,7 +89,7 @@ describe("useOrderbook (WS mode)", () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
 		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-		renderHookWithProviders(() => useOrderbook({ assetId }));
+		renderHookWithProviders(() => useOrderbook({ assetId, decimals: 6 }));
 
 		expect(mockSocket.emit).toHaveBeenCalledWith("subscribe-orderbook", {
 			assetId,
@@ -76,10 +119,10 @@ describe("useOrderbook (WS mode)", () => {
 		});
 
 		expect(result.current.lendOrders).toHaveLength(1);
-		expect(result.current.lendOrders[0].apr).toBeCloseTo(4.5, 1);
+		expect(result.current.lendOrders[0].apr).toBeCloseTo(0.045, 4);
 		expect(result.current.lendOrders[0].amount).toBe(1);
 		expect(result.current.borrowOrders).toHaveLength(1);
-		expect(result.current.borrowOrders[0].apr).toBe(5.0);
+		expect(result.current.borrowOrders[0].apr).toBeCloseTo(0.05, 4);
 	});
 
 	it("ignores updates from different market", async () => {
@@ -91,7 +134,9 @@ describe("useOrderbook (WS mode)", () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
 		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-		const { result } = renderHookWithProviders(() => useOrderbook({ assetId }));
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: 6 }),
+		);
 
 		act(() => {
 			mockSocket._simulateEvent("orderbook-update", {

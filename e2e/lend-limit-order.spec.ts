@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { TEST_WALLET } from "./helpers/test-wallet";
 
-const TEST_WALLET = "0x63f799163222e9CfC4afbddE7a632599AE0F1298";
 const AUTH_HEADER = `Bearer DEV_TOKEN_${TEST_WALLET}`;
 
 test.describe("Lend Limit Order E2E", () => {

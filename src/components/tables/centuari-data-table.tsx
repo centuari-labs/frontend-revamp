@@ -88,8 +88,8 @@ export function CentuariDataTable<T>({
 												? "rounded-l-lg pl-6"
 												: ""
 										} ${
-											headerGroup.headers[headerGroup.headers.length - 1]
-												.id === header.id
+											headerGroup.headers[headerGroup.headers.length - 1].id ===
+											header.id
 												? "rounded-r-lg pr-6"
 												: ""
 										}`}
@@ -124,12 +124,12 @@ export function CentuariDataTable<T>({
 							))
 						) : (
 							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-48"
-								>
+								<TableCell colSpan={columns.length} className="h-48">
 									<div className="flex flex-col items-center justify-center gap-3">
-										<CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+										<CentuariGlassSurface
+											intensity="soft"
+											className="rounded-xl p-3"
+										>
 											<Inbox size={22} className="text-white/40" />
 										</CentuariGlassSurface>
 										<span className="text-sm text-white/40">

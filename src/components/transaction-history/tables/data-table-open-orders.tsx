@@ -31,7 +31,10 @@ const columns: ColumnDef<OpenOrderItem>[] = [
 		header: "Actions",
 		cell: () => (
 			<div className="flex items-center gap-2">
-				<button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+				<button
+					type="button"
+					className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+				>
 					<Trash2 size={14} className="text-red-400" />
 				</button>
 			</div>

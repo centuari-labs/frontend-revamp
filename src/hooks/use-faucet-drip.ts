@@ -4,11 +4,13 @@ import { useState, useCallback } from "react";
 import { requestFaucetTokens, type FaucetResponse } from "@/lib/api";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
 import { useWalletAddress } from "@/hooks/use-wallet-address";
+import { useAuthToken } from "@/hooks/use-auth-token";
 
 export type FaucetDripStatus = "idle" | "loading" | "success" | "error";
 
 export function useFaucetDrip() {
 	const address = useWalletAddress();
+	const { getToken } = useAuthToken();
 	const [status, setStatus] = useState<FaucetDripStatus>("idle");
 	const [error, setError] = useState<string | null>(null);
 	const [transactionHash, setTransactionHash] = useState<string | null>(null);
@@ -26,10 +28,12 @@ export function useFaucetDrip() {
 					throw new Error("No wallet connected");
 				}
 
+				const jwt = await getToken();
 				const result = await requestFaucetTokens(
 					ACTIVE_CHAIN.id,
 					address,
 					tokenValues,
+					jwt ?? "",
 				);
 				setStatus("success");
 				setTransactionHash(result.transactionHash);
@@ -42,7 +46,7 @@ export function useFaucetDrip() {
 				return null;
 			}
 		},
-		[address],
+		[address, getToken],
 	);
 
 	const reset = useCallback(() => {

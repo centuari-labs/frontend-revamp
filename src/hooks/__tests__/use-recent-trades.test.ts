@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
 import { renderHookWithProviders } from "@/__tests__/helpers/render-with-providers";
-import { createMockSocket, type MockSocket } from "@/__tests__/helpers/mock-socket";
+import {
+	createMockSocket,
+	type MockSocket,
+} from "@/__tests__/helpers/mock-socket";
 
 let mockSocket: MockSocket;
 
@@ -22,14 +25,37 @@ afterEach(() => {
 describe("useRecentTrades (no assetId)", () => {
 	it("starts with empty trades", async () => {
 		const { useRecentTrades } = await import("@/hooks/use-recent-trades");
-		const { result } = renderHookWithProviders(() => useRecentTrades());
+		const { result } = renderHookWithProviders(() =>
+			useRecentTrades({ assetId: undefined, decimals: undefined }),
+		);
 		expect(result.current.trades).toHaveLength(0);
 	});
 
 	it("does not subscribe to socket without assetId", async () => {
 		const { useRecentTrades } = await import("@/hooks/use-recent-trades");
-		renderHookWithProviders(() => useRecentTrades());
+		renderHookWithProviders(() =>
+			useRecentTrades({ assetId: undefined, decimals: undefined }),
+		);
 		expect(mockSocket.emit).not.toHaveBeenCalled();
+	});
+});
+
+describe("useRecentTrades (decimals undefined — loading token metadata)", () => {
+	it("does not subscribe when decimals is undefined", async () => {
+		vi.resetModules();
+		vi.doMock("@/lib/socket", () => ({
+			acquireSocket: vi.fn(() => mockSocket),
+			releaseSocket: vi.fn(),
+		}));
+		const { useRecentTrades } = await import("@/hooks/use-recent-trades");
+		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		const { result } = renderHookWithProviders(() =>
+			useRecentTrades({ assetId, decimals: undefined }),
+		);
+
+		expect(mockSocket.emit).not.toHaveBeenCalled();
+		expect(result.current.trades).toHaveLength(0);
 	});
 });
 
@@ -77,13 +103,25 @@ describe("useRecentTrades (WS mode)", () => {
 		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
 		const { result } = renderHookWithProviders(() =>
-			useRecentTrades({ assetId }),
+			useRecentTrades({ assetId, decimals: 6 }),
 		);
 
 		act(() => {
 			mockSocket._simulateEvent("recent-trades-snapshot", [
-				{ assetId, side: "BORROW", amount: "1000000", rate: 500, timestamp: Date.now() },
-				{ assetId, side: "LEND", amount: "2000000", rate: 450, timestamp: Date.now() + 1 },
+				{
+					assetId,
+					side: "BORROW",
+					amount: "1000000",
+					rate: 500,
+					timestamp: Date.now(),
+				},
+				{
+					assetId,
+					side: "LEND",
+					amount: "2000000",
+					rate: 450,
+					timestamp: Date.now() + 1,
+				},
 			]);
 		});
 

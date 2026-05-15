@@ -10,7 +10,7 @@ brainstorm: docs/brainstorms/2026-03-04-fix-deposit-flow-brainstorm.md
 
 ## Overview
 
-Replace the broken deposit flow (raw ERC20 `transfer` to treasury) with the correct DeFi pattern: check allowance, approve if needed (MaxUint256), then call `Treasury.deposit(token, amount)`. Remove backend verify call (indexer-v2 handles event indexing). Remove mock mode from deposit hook only.
+Replace the broken deposit flow (raw ERC20 `transfer` to treasury) with the correct DeFi pattern: check allowance, approve if needed (MaxUint256), then call `Treasury.deposit(token, amount)`. Remove backend verify call (indexer-v3 handles event indexing). Remove mock mode from deposit hook only.
 
 ## Files to Change
 
