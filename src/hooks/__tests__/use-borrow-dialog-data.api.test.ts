@@ -100,7 +100,6 @@ describe("useBorrowDialogData (API mode)", () => {
 		expect(usdc).toBeDefined();
 		expect(usdc?.ltv).toBe(0.9);
 		expect(usdc?.liquidationThreshold).toBe(0.92);
-		expect(usdc?.price).toBe(1); // 5000/5000
 		expect(usdc?.logo).toBe("/tokens/usdc-icon.webp");
 		expect(usdc?.label).toBe("USDC");
 
@@ -109,7 +108,6 @@ describe("useBorrowDialogData (API mode)", () => {
 		);
 		expect(btc).toBeDefined();
 		expect(btc?.ltv).toBe(0.75);
-		expect(btc?.price).toBe(90000); // 45000/0.5
 	});
 
 	it("returns 0 totalDebt when userDetails is null", () => {
@@ -167,7 +165,7 @@ describe("useBorrowDialogData (API mode)", () => {
 		expect(result.current.collateralTokenList).toEqual([]);
 	});
 
-	it("handles zero walletBalance for price derivation", () => {
+	it("includes token in collateralTokenList even with zero walletBalance", () => {
 		vi.mocked(useMyAssets).mockReturnValue({
 			assets: [
 				{
@@ -195,8 +193,8 @@ describe("useBorrowDialogData (API mode)", () => {
 		});
 		const { result } = renderHook(() => useBorrowDialogData());
 		const usdc = result.current.collateralTokenList[0];
-		expect(usdc.price).toBe(0);
-		expect(Number.isFinite(usdc.price)).toBe(true);
+		expect(usdc.value).toBe("usdc");
+		expect(usdc.ltv).toBe(0.9);
 	});
 
 	it("uses default logo when imageUrl is null", () => {

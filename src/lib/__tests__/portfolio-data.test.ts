@@ -20,7 +20,6 @@ describe("tokenList", () => {
 			expect(token.label).toBeTruthy();
 			expect(token.ltv).toBeGreaterThan(0);
 			expect(token.ltv).toBeLessThanOrEqual(1);
-			expect(token.price).toBeGreaterThanOrEqual(0);
 		}
 	});
 });

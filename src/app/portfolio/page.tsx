@@ -17,7 +17,7 @@ import {
 } from "@/components/portfolio/tables/data-table-all-position";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { getHealthFactorStatus } from "@/lib/utils";
+import { getHealthFactorStatus } from "@/lib/health-factor";
 import { CentuariButton } from "@/components/centuari-button";
 import { useMyPortfolio } from "@/hooks/use-my-portfolio";
 import { useLendBorrowAssets } from "@/hooks/use-lend-borrow-assets";

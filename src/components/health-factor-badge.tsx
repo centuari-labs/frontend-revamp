@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { getHealthFactorDisplayStatus } from "@/lib/utils";
+import { getHealthFactorDisplayStatus } from "@/lib/health-factor";
 
 export interface HealthFactorBadgeProps {
 	healthFactor: number;

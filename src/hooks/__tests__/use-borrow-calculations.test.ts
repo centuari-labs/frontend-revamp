@@ -16,7 +16,6 @@ describe("useBorrowCalculations", () => {
 			value: "btc",
 			label: "BTC",
 			ltv: 0.75,
-			price: 100000,
 			liquidationThreshold: 0.8,
 		},
 		{
@@ -24,7 +23,6 @@ describe("useBorrowCalculations", () => {
 			value: "eth",
 			label: "ETH",
 			ltv: 0.8,
-			price: 50000,
 			liquidationThreshold: 0.82,
 		},
 		{
@@ -32,7 +30,6 @@ describe("useBorrowCalculations", () => {
 			value: "usdc",
 			label: "USDC",
 			ltv: 0.9,
-			price: 1,
 			liquidationThreshold: 0.95,
 		},
 	];

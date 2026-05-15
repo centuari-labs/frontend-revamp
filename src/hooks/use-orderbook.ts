@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
+import { basisPointsToApr } from "@/lib/positions-adapter.api";
 
 export type OrderRow = {
 	apr: number;
@@ -30,7 +31,7 @@ function levelsToRows(
 	decimals: number,
 ): OrderRow[] {
 	return levels.map((level) => ({
-		apr: level.rate / 100, // rate comes as percentage (e.g. 4.5), convert to decimal (0.045)
+		apr: basisPointsToApr(level.rate),
 		amount: Number(level.amount) / 10 ** decimals,
 		side,
 	}));

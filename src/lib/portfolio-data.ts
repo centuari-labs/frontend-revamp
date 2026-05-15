@@ -6,7 +6,6 @@ export interface TokenInfo {
 	value: string;
 	label: string;
 	ltv: number; // Loan-to-Value (e.g., 0.75 = 75%)
-	price: number;
 	liquidationThreshold?: number; // Liquidation Threshold (default: LTV * 0.92)
 	liquidationPenalty?: number; // Liquidation Penalty in percentage (default: 1-5%)
 }
@@ -17,16 +16,14 @@ export const tokenList: TokenInfo[] = [
 		value: "btc",
 		label: "Bitcoin",
 		ltv: 0.75,
-		price: 45000,
-		liquidationThreshold: 0.8, // 80% of LTV
-		liquidationPenalty: 5, // 5%
+		liquidationThreshold: 0.8,
+		liquidationPenalty: 5,
 	},
 	{
 		logo: "/tokens/xaut-icon.webp",
 		value: "xaut",
 		label: "Tether Gold",
 		ltv: 0.75,
-		price: 2000,
 		liquidationThreshold: 0.8,
 		liquidationPenalty: 5,
 	},
@@ -35,7 +32,6 @@ export const tokenList: TokenInfo[] = [
 		value: "eth",
 		label: "Ethereum",
 		ltv: 0.8,
-		price: 2800,
 		liquidationThreshold: 0.82,
 		liquidationPenalty: 5,
 	},
@@ -44,7 +40,6 @@ export const tokenList: TokenInfo[] = [
 		value: "arb",
 		label: "Arbitrum",
 		ltv: 0.65,
-		price: 1.2,
 		liquidationThreshold: 0.7,
 		liquidationPenalty: 8,
 	},
@@ -53,7 +48,6 @@ export const tokenList: TokenInfo[] = [
 		value: "usdc",
 		label: "USDC",
 		ltv: 0.9,
-		price: 1,
 		liquidationThreshold: 0.92,
 		liquidationPenalty: 1,
 	},
@@ -62,7 +56,6 @@ export const tokenList: TokenInfo[] = [
 		value: "usdt",
 		label: "USDT",
 		ltv: 0.9,
-		price: 1,
 		liquidationThreshold: 0.92,
 		liquidationPenalty: 1,
 	},
@@ -71,7 +64,6 @@ export const tokenList: TokenInfo[] = [
 		value: "dai",
 		label: "DAI",
 		ltv: 0.85,
-		price: 1,
 		liquidationThreshold: 0.88,
 		liquidationPenalty: 3,
 	},
@@ -80,7 +72,6 @@ export const tokenList: TokenInfo[] = [
 		value: "xsgd",
 		label: "XSGD",
 		ltv: 0.9,
-		price: 1,
 		liquidationThreshold: 0.92,
 		liquidationPenalty: 1,
 	},
@@ -89,7 +80,6 @@ export const tokenList: TokenInfo[] = [
 		value: "idrx",
 		label: "IDRX",
 		ltv: 0.9,
-		price: 1,
 		liquidationThreshold: 0.92,
 		liquidationPenalty: 1,
 	},
@@ -98,7 +88,6 @@ export const tokenList: TokenInfo[] = [
 		value: "centuari",
 		label: "Centuari",
 		ltv: 0.8,
-		price: 0.5,
 		liquidationThreshold: 0.82,
 		liquidationPenalty: 5,
 	},
@@ -107,7 +96,6 @@ export const tokenList: TokenInfo[] = [
 		value: "nvdaon",
 		label: "NVIDIA (Ondo Tokenized)",
 		ltv: 0.75,
-		price: 150,
 		liquidationThreshold: 0.8,
 		liquidationPenalty: 5,
 	},
@@ -116,7 +104,6 @@ export const tokenList: TokenInfo[] = [
 		value: "aaplon",
 		label: "Apple (Ondo Tokenized)",
 		ltv: 0.75,
-		price: 230,
 		liquidationThreshold: 0.8,
 		liquidationPenalty: 5,
 	},
@@ -125,7 +112,6 @@ export const tokenList: TokenInfo[] = [
 		value: "tlton",
 		label: "iShares 20+ Year Treasury Bond ETF (Ondo Tokenized)",
 		ltv: 0.75,
-		price: 95,
 		liquidationThreshold: 0.8,
 		liquidationPenalty: 5,
 	},
@@ -134,7 +120,6 @@ export const tokenList: TokenInfo[] = [
 		value: "slvon",
 		label: "iShares Silver Trust (Ondo Tokenized)",
 		ltv: 0.75,
-		price: 28,
 		liquidationThreshold: 0.8,
 		liquidationPenalty: 5,
 	},

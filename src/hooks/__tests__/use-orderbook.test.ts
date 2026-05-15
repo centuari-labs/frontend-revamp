@@ -79,10 +79,10 @@ describe("useOrderbook (WS mode)", () => {
 		});
 
 		expect(result.current.lendOrders).toHaveLength(1);
-		expect(result.current.lendOrders[0].apr).toBeCloseTo(4.5, 1);
+		expect(result.current.lendOrders[0].apr).toBeCloseTo(0.045, 4);
 		expect(result.current.lendOrders[0].amount).toBe(1);
 		expect(result.current.borrowOrders).toHaveLength(1);
-		expect(result.current.borrowOrders[0].apr).toBe(5.0);
+		expect(result.current.borrowOrders[0].apr).toBeCloseTo(0.05, 4);
 	});
 
 	it("ignores updates from different market", async () => {

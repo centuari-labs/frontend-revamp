@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import { getHealthFactorPercentage } from "@/lib/utils";
+import {
+	getHealthFactorPercentage,
+	projectHealthFactorForBorrow,
+} from "@/lib/health-factor";
 import { type TokenInfo, getLiquidationThreshold } from "@/lib/portfolio-data";
 
 export function useBorrowCalculations(
@@ -15,22 +18,16 @@ export function useBorrowCalculations(
 	apiWeightedLtv = 0,
 	borrowTokenPrice = 0,
 ) {
-	// Uses backend values (collateralUsd, settledDebtUsd, weightedLtv) from user-details API
-	// to match backend formula: HF = ((C_usd - D_settled) × LTV_weighted) / (D_settled + borrowAmountUsd)
 	const calculateHealthFactor = useCallback(
 		(amt: number, collaterals: string[]): number => {
 			if (amt <= 0 || collaterals.length === 0 || apiCollateralUsd <= 0)
 				return 0;
-
-			const borrowAmountUsd = amt * borrowTokenPrice;
-			const projectedDebt = apiSettledDebtUsd + borrowAmountUsd;
-			if (projectedDebt <= 0) return 0;
-
-			const numerator = (apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
-			const healthFactor = numerator / projectedDebt;
-
-			if (!Number.isFinite(healthFactor) || healthFactor < 0) return 0;
-			return healthFactor;
+			return projectHealthFactorForBorrow({
+				collateralUsd: apiCollateralUsd,
+				settledDebtUsd: apiSettledDebtUsd,
+				weightedLtv: apiWeightedLtv,
+				newBorrowUsd: amt * borrowTokenPrice,
+			});
 		},
 		[apiCollateralUsd, apiSettledDebtUsd, apiWeightedLtv, borrowTokenPrice],
 	);

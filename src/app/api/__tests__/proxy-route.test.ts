@@ -107,6 +107,25 @@ describe("path whitelist", () => {
 		expect(body.error).toBe("Endpoint not allowed");
 		expect(mockFetch).not.toHaveBeenCalled();
 	});
+
+	it.each([
+		"marketing",
+		"market-admin",
+		"marketers/list",
+		"deposit-admin",
+		"deposit-internal/refund",
+		"depositories",
+		"withdrawal",
+		"withdrawals-internal",
+		"withdraw-batch/run",
+		"faucet-admin",
+	])("blocks prefix-collision path: %s", async (path) => {
+		const req = makeRequest(path);
+		const res = await GET(req, makeParams(path));
+
+		expect(res.status).toBe(403);
+		expect(mockFetch).not.toHaveBeenCalled();
+	});
 });
 
 // ─── Path Traversal / Sanitization ──────────────────────────────────────────

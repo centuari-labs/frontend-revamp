@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import {
+	getHealthFactorStatus,
+	getHealthFactorDisplayStatus,
+	getHealthFactorPercentage,
+} from "@/lib/health-factor";
+import {
 	cn,
 	formatAddress,
 	formatCurrency,
@@ -16,9 +21,6 @@ import {
 	getLocalStorageJson,
 	migratePortfolioFromStorage,
 	toPercent,
-	getHealthFactorStatus,
-	getHealthFactorDisplayStatus,
-	getHealthFactorPercentage,
 	formatNumberWithSeparator,
 	parseNumberFromSeparator,
 	handleNumberInputChange,

@@ -27,24 +27,9 @@ interface AmendDialogProps {
 	trigger?: React.ReactNode;
 }
 
-const defaultTokenList: TokenOption[] = [
-	{ logo: "/tokens/btc-icon.webp", value: "btc", label: "Bitcoin" },
-	{ logo: "/tokens/xaut-icon.webp", value: "xaut", label: "Tether Gold" },
-	{ logo: "/tokens/eth-icon.webp", value: "eth", label: "Ethereum" },
-	{ logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
-	{ logo: "/tokens/usdc-icon.webp", value: "usdc", label: "USDC" },
-	{ logo: "/tokens/usdt-icon.webp", value: "usdt", label: "USDT" },
-	{ logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
-	{
-		logo: "/tokens/centuari-centuari.png",
-		value: "centuari",
-		label: "Centuari",
-	},
-];
-
 export function AmendDialog({
 	position,
-	tokenList = defaultTokenList,
+	tokenList,
 	onUpdate,
 	trigger,
 }: AmendDialogProps) {
@@ -58,7 +43,7 @@ export function AmendDialog({
 	};
 
 	const selectedToken =
-		tokenList.find((t) => t.value === position.tokenValue) || tokenList[0];
+		tokenList.find((t) => t.value === position.tokenValue) ?? null;
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -90,7 +75,11 @@ export function AmendDialog({
 					</div>
 					<div className="relative text-center text-white/60 flex-1 bg-white/5 px-2.5 rounded-md">
 						<div className="absolute inset-x-0 h-px w-2/3 mx-auto top-0 shadow-2xl bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-						{position.type === "lend" ? (
+						{selectedToken == null ? (
+							<p className="py-8 text-sm text-muted-foreground">
+								Token not available for amendment.
+							</p>
+						) : position.type === "lend" ? (
 							<LendForm
 								tokenList={tokenList}
 								selectedToken={selectedToken}

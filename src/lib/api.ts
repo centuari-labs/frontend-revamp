@@ -275,8 +275,8 @@ export interface UserDetailsResponse {
 	settledDebtUsd: number;
 	pendingDebtUsd: number;
 	debts: UserDebtDetail[];
-	/** Health factor; may be Infinity when there is no debt. */
-	healthFactor: number;
+	/** Health factor. null means no debt (Infinity cannot be serialised to JSON). */
+	healthFactor: number | null;
 	/** Total collateral value in USD */
 	collateralUsd: number;
 	/** Weighted LTV across all collateral (decimal, e.g. 0.75 = 75%) */

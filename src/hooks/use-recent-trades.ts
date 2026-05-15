@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { acquireSocket, releaseSocket } from "@/lib/socket";
+import { basisPointsToApr } from "@/lib/positions-adapter.api";
 
 export type TradeRow = {
 	id: string;
@@ -25,7 +26,7 @@ function tradeEventToRow(event: RecentTradeEvent, decimals: number): TradeRow {
 	const date = new Date(event.timestamp);
 	const type = event.side === "LEND" ? "Lend" : "Borrow";
 	const amount = Number(event.amount) / 10 ** decimals;
-	const apr = event.rate / 10000;
+	const apr = basisPointsToApr(event.rate);
 
 	// Create a unique ID based on properties to help with deduplication
 	const id = `${event.timestamp}-${type}-${amount}-${apr}`;

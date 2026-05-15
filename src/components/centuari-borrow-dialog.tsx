@@ -24,6 +24,10 @@ import {
 	parseNumberFromSeparator,
 	calculateFutureAmount,
 } from "@/lib/utils";
+import {
+	projectHealthFactorForBorrow,
+	getHealthFactorPercentage,
+} from "@/lib/health-factor";
 import { useTokenPrice } from "@/contexts/price-context";
 import { getDefaultMaturityTimestamp } from "@/lib/maturity";
 import { calculateFees } from "@/lib/fee-calculations";
@@ -137,32 +141,17 @@ export function CentuariBorrowDialog({
 	// Health factor calculation
 	const healthFactor =
 		numericAmount > 0 && apiCollateralUsd > 0 && selectedCollaterals.length > 0
-			? (() => {
-					const borrowAmountUsd = numericAmount * borrowTokenPrice;
-					const projectedDebt = apiSettledDebtUsd + borrowAmountUsd;
-					if (projectedDebt <= 0) return 0;
-					const numerator =
-						(apiCollateralUsd - apiSettledDebtUsd) * apiWeightedLtv;
-					const calculatedHF = numerator / projectedDebt;
-					if (!Number.isFinite(calculatedHF) || calculatedHF < 0) return 0;
-					return calculatedHF;
-				})()
+			? projectHealthFactorForBorrow({
+					collateralUsd: apiCollateralUsd,
+					settledDebtUsd: apiSettledDebtUsd,
+					weightedLtv: apiWeightedLtv,
+					newBorrowUsd: numericAmount * borrowTokenPrice,
+				})
 			: 0;
 
 	const healthFactorPercentage =
-		healthFactor > 0 &&
-		!Number.isNaN(healthFactor) &&
-		selectedCollaterals.length > 0 &&
-		numericAmount > 0
-			? healthFactor >= 2.5
-				? 100
-				: healthFactor >= 1.5
-					? 75 + ((healthFactor - 1.5) / 1.0) * 25
-					: healthFactor >= 1.2
-						? 50 + ((healthFactor - 1.2) / 0.3) * 25
-						: healthFactor >= 1.0
-							? 25 + ((healthFactor - 1.0) / 0.2) * 25
-							: (healthFactor / 1.0) * 25
+		healthFactor > 0 && selectedCollaterals.length > 0 && numericAmount > 0
+			? getHealthFactorPercentage(healthFactor)
 			: 0;
 
 	// Handlers
@@ -372,13 +361,6 @@ export function CentuariBorrowDialog({
 								)}
 							</CentuariButton>
 						</div>
-						<p className="text-xs text-muted-foreground text-center leading-relaxed">
-							Selected assets will be auto-flagged for any future borrow until
-							you remove them. They will be on-chain locked as collateral for at
-							least 24 hours after the match settles. Full repayment does NOT
-							automatically release them — you must explicitly unflag after the
-							24h lock expires.
-						</p>
 						<p className="text-xs text-muted-foreground text-center leading-relaxed mb-2">
 							This position is automatically refinanced. At maturity, it will
 							roll over to the next available term unless you take action.

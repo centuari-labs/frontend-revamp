@@ -66,7 +66,7 @@ export function CentuariWalletList() {
 		await loginWithSiwe({ signature, message });
 	};
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	// biome-ignore lint/correctness/useExhaustiveDependencies: connectPrivy is stable (Privy-provided)
 	useEffect(() => {
 		if (!authenticated && wagmiAddress && isConnected) {
 			connectPrivy();

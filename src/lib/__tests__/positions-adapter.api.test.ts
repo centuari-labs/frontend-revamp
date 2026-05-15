@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
 	aprToBasisPoints,
+	basisPointsToApr,
 	normalizeOrderToLendPosition,
 	normalizeOrderToBorrowPosition,
 	submitLendLimitOrder,
@@ -79,6 +80,25 @@ describe("aprToBasisPoints", () => {
 
 	it("converts small APR correctly", () => {
 		expect(aprToBasisPoints(0.0001)).toBe(1);
+	});
+});
+
+// ─── basisPointsToApr ─────────────────────────────────────────────────
+
+describe("basisPointsToApr", () => {
+	it("converts 650 bps to 0.065 decimal APR", () => {
+		expect(basisPointsToApr(650)).toBeCloseTo(0.065, 6);
+	});
+
+	it("converts 500 bps to 0.05 decimal APR", () => {
+		expect(basisPointsToApr(500)).toBe(0.05);
+	});
+
+	it("is exact inverse of aprToBasisPoints within rounding", () => {
+		const original = 0.0537;
+		const bps = aprToBasisPoints(original);
+		const recovered = basisPointsToApr(bps);
+		expect(Math.abs(recovered - original)).toBeLessThan(1 / 10_000);
 	});
 });
 

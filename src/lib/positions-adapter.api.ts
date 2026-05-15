@@ -37,6 +37,11 @@ export function aprToBasisPoints(aprDecimal: number): number {
 	return Math.round(aprDecimal * 10000);
 }
 
+// Inverse of aprToBasisPoints — used to convert WebSocket event rates (bps) to decimal APR.
+export function basisPointsToApr(rateBps: number): number {
+	return rateBps / 10000;
+}
+
 // ─── Status Mapping ───────────────────────────────────────────────────
 
 function mapStatus(backendStatus: string): PositionStatus {

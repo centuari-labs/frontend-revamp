@@ -2,24 +2,25 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 
-/**
- * Allowed API path prefixes. Requests to paths not matching any prefix are rejected.
- */
+// Exact paths accepted without a subpath (e.g. POST /deposit, POST /withdraw, GET /market).
+const ALLOWED_EXACT_PATHS = new Set<string>(["market", "deposit", "withdraw"]);
+
+// Prefix paths — every entry must end with "/" to prevent collisions like
+// "market" → "marketing" or "deposit" → "deposit-admin".
 const ALLOWED_PATH_PREFIXES = [
 	"auth/",
-	"market",
+	"market/",
 	"orders/",
 	"portfolio/",
-	"deposit",
-	"withdraw",
+	"deposit/",
+	"withdraw/",
 	"faucet/",
 	"collateral/",
-];
+] as const;
 
 function isPathAllowed(path: string): boolean {
-	return ALLOWED_PATH_PREFIXES.some(
-		(prefix) => path === prefix.replace(/\/$/, "") || path.startsWith(prefix),
-	);
+	if (ALLOWED_EXACT_PATHS.has(path)) return true;
+	return ALLOWED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
 async function handler(

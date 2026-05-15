@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/performance/noImgElement: <explanation> */
+/** biome-ignore-all lint/performance/noImgElement: wallet icons use <img> for dynamic src */
 "use client";
 
 import { useLoginWithSiwe } from "@privy-io/react-auth";

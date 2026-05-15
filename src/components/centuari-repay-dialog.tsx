@@ -21,10 +21,14 @@ import { Badge } from "./ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
 import {
 	formatNumberWithSeparator,
-	getHealthFactorPercentage,
 	handleNumberInputChange,
-	getHealthFactorDisplayStatus,
 } from "@/lib/utils";
+import {
+	classifyHealthFactor,
+	projectHealthFactorForRepay,
+	getHealthFactorPercentage,
+	getHealthFactorDisplayStatus,
+} from "@/lib/health-factor";
 import { useUserDetailsContext } from "@/contexts/user-details-context";
 import { useRepay } from "@/hooks/use-repay";
 import HealthFactor from "./centuari-health-factor";
@@ -96,8 +100,15 @@ export function CentuariRepayDialog({
 			? userAsset.availableBalanceUsd / userAsset.availableBalance
 			: 0;
 
-	// Health factor from backend
-	const currentHealthFactor = userDetails?.healthFactor ?? 0;
+	// Health factor from backend (null = no debt)
+	const rawHealthFactor = userDetails?.healthFactor ?? null;
+	const currentHFState = classifyHealthFactor(rawHealthFactor);
+	const currentHealthFactor =
+		currentHFState.kind === "healthy" || currentHFState.kind === "danger"
+			? currentHFState.value
+			: currentHFState.kind === "no-debt"
+				? Infinity
+				: 0;
 	const totalDebtUsd = userDetails?.totalDebtUsd ?? 0;
 	const collateralUsd = userDetails?.collateralUsd ?? 0;
 	const weightedLtv = userDetails?.weightedLtv ?? 0;
@@ -114,27 +125,30 @@ export function CentuariRepayDialog({
 	const principal = numericAmount * ratio;
 	const interest = numericAmount - principal;
 
-	// Calculate new health factor after repayment
+	// Project health factor after repayment
 	const repayAmountUsd = numericAmount * tokenPrice;
-	const newTotalDebtUsd = Math.max(0, totalDebtUsd - repayAmountUsd);
-
 	const isFullRepayment = numericAmount >= debt && debt > 0;
 	const newHealthFactor = isFullRepayment
 		? Infinity
-		: newTotalDebtUsd > 0 && collateralUsd > 0 && weightedLtv > 0
-			? ((collateralUsd - totalDebtUsd) * weightedLtv) / newTotalDebtUsd
-			: collateralUsd > 0
-				? Infinity
-				: 0;
+		: projectHealthFactorForRepay({
+				collateralUsd,
+				totalDebtUsd,
+				weightedLtv,
+				repayUsd: repayAmountUsd,
+			});
 
 	const currentHealthFactorPercentage =
-		currentHealthFactor <= 0 || Number.isNaN(currentHealthFactor)
-			? 0
-			: getHealthFactorPercentage(currentHealthFactor);
+		currentHFState.kind === "no-debt"
+			? 100
+			: currentHealthFactor > 0
+				? getHealthFactorPercentage(currentHealthFactor)
+				: 0;
 	const newHealthFactorPercentage =
-		newHealthFactor <= 0 || Number.isNaN(newHealthFactor)
-			? 0
-			: getHealthFactorPercentage(newHealthFactor);
+		!Number.isFinite(newHealthFactor) || newHealthFactor > 0
+			? newHealthFactor >= 2.5 || !Number.isFinite(newHealthFactor)
+				? 100
+				: getHealthFactorPercentage(newHealthFactor)
+			: 0;
 
 	// Format APR with comma as decimal separator
 	const formattedAPR = `${apr.toFixed(1).replace(".", ",")}%`;

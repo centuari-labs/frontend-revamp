@@ -3,11 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import Image from "next/image";
-import { getHealthFactorPercentage } from "@/lib/utils";
+import {
+	getHealthFactorPercentage,
+	classifyHealthFactor,
+} from "@/lib/health-factor";
 
 interface HealthFactorProps {
 	targetValue?: number;
-	healthFactor?: number; // Actual health factor value (e.g., 4.60)
+	healthFactor?: number | null; // null = no debt; positive finite = active HF
 }
 
 export default function HealthFactor({
@@ -23,15 +26,26 @@ export default function HealthFactor({
 	const glowRef = useRef<HTMLDivElement>(null);
 	const animationRef = useRef({ value: 0 });
 
-	const getHFPercentage = (hf: number | undefined): number => {
-		if (!hf || hf <= 0) return 0;
-		return getHealthFactorPercentage(hf);
+	const getHFPercentage = (hf: number | null | undefined): number => {
+		const state = classifyHealthFactor(hf);
+		if (state.kind === "no-debt") return 100;
+		if (state.kind === "unknown") return 0;
+		return getHealthFactorPercentage(state.value);
 	};
 
 	// Determine segment based on health factor value with accurate colors
 	// Thresholds: HF >= 2.5 (Excellent), >= 1.5 (Good), >= 1.2 (Warning), >= 1.0 (Critical), < 1.0 (Danger)
-	const getSegment = (hf: number | undefined) => {
-		if (!hf || hf <= 0) {
+	const getSegment = (hf: number | null | undefined) => {
+		const state = classifyHealthFactor(hf);
+		if (state.kind === "no-debt") {
+			return {
+				color: "bg-green-500",
+				hex: "#22c55e",
+				label: "No debt",
+				glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
+			};
+		}
+		if (state.kind === "unknown") {
 			return {
 				color: "bg-red-500",
 				hex: "#ef4444",
@@ -39,7 +53,8 @@ export default function HealthFactor({
 				glow: "shadow-[0_0_20px_rgba(239,68,68,0.6)]",
 			};
 		}
-		if (hf >= 2.5) {
+		const hfValue = state.value;
+		if (hfValue >= 2.5) {
 			return {
 				color: "bg-green-500",
 				hex: "#22c55e",
@@ -47,7 +62,7 @@ export default function HealthFactor({
 				glow: "shadow-[0_0_20px_rgba(34,197,94,0.6)]",
 			};
 		}
-		if (hf >= 1.5) {
+		if (hfValue >= 1.5) {
 			return {
 				color: "bg-blue-500",
 				hex: "#3b82f6",
@@ -55,7 +70,7 @@ export default function HealthFactor({
 				glow: "shadow-[0_0_20px_rgba(59,130,246,0.6)]",
 			};
 		}
-		if (hf >= 1.2) {
+		if (hfValue >= 1.2) {
 			return {
 				color: "bg-yellow-500",
 				hex: "#eab308",
@@ -63,7 +78,7 @@ export default function HealthFactor({
 				glow: "shadow-[0_0_20px_rgba(234,179,8,0.6)]",
 			};
 		}
-		if (hf >= 1.0) {
+		if (hfValue >= 1.0) {
 			return {
 				color: "bg-orange-500",
 				hex: "#f97316",
@@ -133,11 +148,9 @@ export default function HealthFactor({
 	useEffect(() => {
 		if (propTargetValue !== undefined) {
 			setTargetValue(propTargetValue);
-		} else if (healthFactor !== undefined && healthFactor > 0) {
-			const percentage = getHFPercentage(healthFactor);
-			setTargetValue(percentage);
+		} else if (healthFactor !== undefined) {
+			setTargetValue(getHFPercentage(healthFactor));
 		} else {
-			// Reset to 0 if healthFactor is 0 or undefined
 			setTargetValue(0);
 		}
 		// biome-ignore lint/correctness/useExhaustiveDependencies: getHFPercentage is a stable closure over a pure helper

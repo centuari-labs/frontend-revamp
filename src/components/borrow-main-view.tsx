@@ -12,11 +12,11 @@ import { CollateralListDisplay } from "./collateral-list-display";
 import { CollateralEmptyState } from "./collateral-empty-state";
 import { TransactionSummary } from "./market/transaction-summary";
 import { DialogTokenHeader } from "./dialog-token-header";
+import { formatCurrency } from "@/lib/utils";
 import {
-	formatCurrency,
 	getHealthFactorPercentage,
 	getHealthFactorDisplayStatus,
-} from "@/lib/utils";
+} from "@/lib/health-factor";
 import { formatMaturityTimestamp } from "@/lib/maturity";
 import type { TokenInfo } from "@/lib/portfolio-data";
 
