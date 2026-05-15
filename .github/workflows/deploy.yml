@@ -97,6 +97,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Guard against USE_MOCK in production
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testnet'
+        run: |
+          if [ "${{ vars.NEXT_PUBLIC_USE_MOCK }}" = "true" ]; then
+            echo "::error::NEXT_PUBLIC_USE_MOCK=true is forbidden on main/testnet"
+            exit 1
+          fi
+
       - name: Build Docker image
         run: |
           docker build \

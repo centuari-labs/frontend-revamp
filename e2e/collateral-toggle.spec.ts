@@ -32,14 +32,11 @@
  */
 
 import { expect, type Page, test } from "@playwright/test";
+import { TEST_WALLET } from "./helpers/test-wallet";
 
 test.use({ storageState: "e2e/.auth/privy.json" });
 
 const FRONTEND_URL = "http://localhost:3200";
-// Derived from the well-known Anvil dev key #0 used by capture-privy-session.ts.
-// Viem's canonical EIP-55 form (account.address) — keep in sync with what
-// capture-privy-session.ts prints at the start of a capture run.
-const WALLET_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
 type AssetFixture = {
 	assetId: string;
@@ -148,7 +145,7 @@ async function installEthereumMock(page: Page) {
 				removeListener: () => {},
 			};
 		},
-		{ address: WALLET_ADDRESS },
+		{ address: TEST_WALLET },
 	);
 }
 
@@ -216,7 +213,7 @@ async function mockBaseRoutes(
 			status: 200,
 			contentType: "application/json",
 			body: JSON.stringify(
-				envelope({ address: WALLET_ADDRESS, name: "Stub User" }),
+				envelope({ address: TEST_WALLET, name: "Stub User" }),
 			),
 		});
 	});

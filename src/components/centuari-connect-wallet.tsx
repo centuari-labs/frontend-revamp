@@ -129,11 +129,18 @@ export function CentuariConnectWallet({ onBack }: { onBack: () => void }) {
 										className="h-8 w-8 rounded-lg"
 									/>
 								</div>
-								<CentuariTypography className="text-white">
-									{connecting === wallet.info.rdns
-										? `Connecting ${wallet.info.name}...`
-										: wallet.info.name}
-								</CentuariTypography>
+								<div className="flex flex-col items-start">
+									<CentuariTypography className="text-white">
+										{connecting === wallet.info.rdns
+											? `Connecting ${wallet.info.name}...`
+											: wallet.info.name}
+									</CentuariTypography>
+									{wallet.info.rdns && (
+										<div className="text-xs text-muted-foreground font-mono">
+											{wallet.info.rdns}
+										</div>
+									)}
+								</div>
 							</button>
 						))}
 						{detectedWallets.length === 0 && (
