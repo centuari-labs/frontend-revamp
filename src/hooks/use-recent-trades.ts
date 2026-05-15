@@ -44,11 +44,11 @@ function tradeEventToRow(event: RecentTradeEvent, decimals: number): TradeRow {
 
 const MAX_TRADES = 20;
 
-export function useRecentTrades(options?: {
-	assetId?: string;
-	decimals?: number;
+export function useRecentTrades(options: {
+	assetId: string | undefined;
+	decimals: number | undefined;
 }) {
-	const { assetId, decimals = 6 } = options ?? {};
+	const { assetId, decimals } = options;
 
 	const [trades, setTrades] = useState<TradeRow[]>([]);
 	const [isConnected, setIsConnected] = useState(false);
@@ -66,7 +66,7 @@ export function useRecentTrades(options?: {
 
 	// WebSocket mode
 	useEffect(() => {
-		if (!assetId) return;
+		if (!assetId || decimals === undefined) return;
 
 		setTrades([]);
 

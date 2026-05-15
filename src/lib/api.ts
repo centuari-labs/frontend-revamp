@@ -1,4 +1,4 @@
-import { apiClient } from "./api-client";
+import { apiClient, apiClientPaginated } from "./api-client";
 
 export interface MarketAsset {
 	id: string;
@@ -215,31 +215,22 @@ export async function getMyPositions(
 ): Promise<MyPositionsResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.type) searchParams.set("type", params.type);
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
-
-	const res = await fetch(
-		`/api/portfolio/my-position?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<MyPositionItem[]>(
+		"/portfolio/my-position",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				type: params?.type,
+				assetId: params?.assetId,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		data: json.data ?? [],
+		data: data ?? [],
 		page: Number(meta.page) || page,
 		limit: Number(meta.limit) || limit,
 		totalData: Number(meta.totalData) || 0,
@@ -363,25 +354,13 @@ export async function getMyAssets(
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
-
-	const res = await fetch(
-		`/api/portfolio/my-assets?page=${page}&limit=${limit}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<MyAssetItem[]>(
+		"/portfolio/my-assets",
+		{ token, params: { page, limit } },
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	// API returns { statusCode, data: [...], meta: { page, limit, totalData, totalPages } }
-	const meta = json.meta ?? {};
 	return {
-		data: json.data ?? [],
+		data: data ?? [],
 		page: Number(meta.page) || page,
 		limit: Number(meta.limit) || limit,
 		totalData: Number(meta.totalData) || 0,
@@ -668,37 +647,35 @@ export async function getOrderHistory(
 ): Promise<OrderHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction")
-		searchParams.set("side", params.side.toUpperCase());
-	if (params?.status && params.status !== "all_status")
-		searchParams.set("status", params.status);
-	if (params?.startDate) searchParams.set("startDate", params.startDate);
-	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
+	const side =
+		params?.side && params.side !== "all_transaction"
+			? params.side.toUpperCase()
+			: undefined;
+	const status =
+		params?.status && params.status !== "all_status"
+			? params.status
+			: undefined;
 
-	const res = await fetch(
-		`/api/portfolio/order-history?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<OrderHistoryItem[]>(
+		"/portfolio/order-history",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				assetId: params?.assetId,
+				side,
+				status,
+				startDate: params?.startDate,
+				endDate: params?.endDate,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		statusCode: json.statusCode ?? 200,
-		data: json.data ?? [],
+		statusCode: 200,
+		data: data ?? [],
 		meta: {
 			page: Number(meta.page) || page,
 			limit: Number(meta.limit) || limit,
@@ -743,35 +720,30 @@ export async function getTransactionHistory(
 ): Promise<TransactionHistoryResponse> {
 	const page = params?.page ?? 1;
 	const limit = params?.limit ?? 10;
-	const searchParams = new URLSearchParams({
-		page: String(page),
-		limit: String(limit),
-	});
-	if (params?.assetId) searchParams.set("assetId", params.assetId);
-	if (params?.side && params.side !== "all_transaction")
-		searchParams.set("side", params.side.toUpperCase());
-	if (params?.startDate) searchParams.set("startDate", params.startDate);
-	if (params?.endDate) searchParams.set("endDate", params.endDate);
 
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
-	};
+	const side =
+		params?.side && params.side !== "all_transaction"
+			? params.side.toUpperCase()
+			: undefined;
 
-	const res = await fetch(
-		`/api/portfolio/transaction-history?${searchParams.toString()}`,
-		{ headers },
+	const { data, meta } = await apiClientPaginated<TransactionHistoryItem[]>(
+		"/portfolio/transaction-history",
+		{
+			token,
+			params: {
+				page,
+				limit,
+				assetId: params?.assetId,
+				side,
+				startDate: params?.startDate,
+				endDate: params?.endDate,
+			},
+		},
 	);
 
-	if (!res.ok) {
-		throw new Error(`API error: ${res.status} ${res.statusText}`);
-	}
-
-	const json = await res.json();
-	const meta = json.meta ?? {};
 	return {
-		statusCode: json.statusCode ?? 200,
-		data: json.data ?? [],
+		statusCode: 200,
+		data: data ?? [],
 		meta: {
 			page: Number(meta.page) || page,
 			limit: Number(meta.limit) || limit,

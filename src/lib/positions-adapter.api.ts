@@ -44,16 +44,22 @@ export function basisPointsToApr(rateBps: number): number {
 
 // ─── Status Mapping ───────────────────────────────────────────────────
 
-function mapStatus(backendStatus: string): PositionStatus {
-	const valid: PositionStatus[] = [
-		"OPEN",
-		"FILLED",
-		"CANCELLED",
-		"PARTIALLY_FILLED",
-	];
-	return (
-		valid.includes(backendStatus as PositionStatus) ? backendStatus : "OPEN"
-	) as PositionStatus;
+const KNOWN_STATUSES: PositionStatus[] = [
+	"OPEN",
+	"FILLED",
+	"CANCELLED",
+	"PARTIALLY_FILLED",
+];
+
+export function mapStatus(backendStatus: unknown): PositionStatus {
+	if (
+		typeof backendStatus === "string" &&
+		KNOWN_STATUSES.includes(backendStatus as PositionStatus)
+	) {
+		return backendStatus as PositionStatus;
+	}
+	console.error("[mapStatus] unknown order status", { backendStatus });
+	return "UNKNOWN";
 }
 
 // ─── Response Normalization ───────────────────────────────────────────

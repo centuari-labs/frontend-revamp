@@ -28,6 +28,7 @@ import {
 import Image from "next/image";
 import { CentuariBadge } from "./centuari-badge";
 import { AmendDialog } from "./amend-dialog";
+import type { PositionStatus } from "@/types/positions";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 
 const data: PositionProps[] = [
@@ -109,7 +110,7 @@ export type PositionProps = {
 	maturity?: number;
 	createdAt?: string;
 	healthFactor?: string;
-	status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
+	status: PositionStatus;
 };
 
 const tokenList = [
@@ -138,7 +139,7 @@ type PositionForDialog =
 			tokenValue: string;
 			tokenSymbol: string;
 			maturity: number;
-			status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
+			status: PositionStatus;
 			createdAt: string;
 			timestamp: number;
 			orderType?: "limit" | "market";
@@ -153,7 +154,7 @@ type PositionForDialog =
 			tokenValue: string;
 			tokenSymbol: string;
 			maturity: number;
-			status: "OPEN" | "FILLED" | "CANCELLED" | "PARTIALLY_FILLED";
+			status: PositionStatus;
 			createdAt: string;
 			timestamp: number;
 			orderType?: "limit" | "market";

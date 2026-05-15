@@ -25,7 +25,9 @@ afterEach(() => {
 describe("useOrderbook (no assetId)", () => {
 	it("returns empty orders when no assetId provided", async () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
-		const { result } = renderHookWithProviders(() => useOrderbook());
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId: undefined, decimals: undefined }),
+		);
 
 		expect(result.current.borrowOrders).toHaveLength(0);
 		expect(result.current.lendOrders).toHaveLength(0);
@@ -33,9 +35,47 @@ describe("useOrderbook (no assetId)", () => {
 
 	it("does not subscribe to socket without assetId", async () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
-		renderHookWithProviders(() => useOrderbook());
+		renderHookWithProviders(() =>
+			useOrderbook({ assetId: undefined, decimals: undefined }),
+		);
 
 		expect(mockSocket.emit).not.toHaveBeenCalled();
+	});
+});
+
+describe("useOrderbook (decimals undefined — loading token metadata)", () => {
+	it("does not subscribe when decimals is undefined", async () => {
+		vi.resetModules();
+		vi.doMock("@/lib/socket", () => ({
+			acquireSocket: vi.fn(() => mockSocket),
+			releaseSocket: vi.fn(),
+		}));
+		const { useOrderbook } = await import("@/hooks/use-orderbook");
+		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: undefined }),
+		);
+
+		expect(mockSocket.emit).not.toHaveBeenCalled();
+	});
+
+	it("returns empty orders and ignores incoming events when decimals is undefined", async () => {
+		vi.resetModules();
+		vi.doMock("@/lib/socket", () => ({
+			acquireSocket: vi.fn(() => mockSocket),
+			releaseSocket: vi.fn(),
+		}));
+		const { useOrderbook } = await import("@/hooks/use-orderbook");
+		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: undefined }),
+		);
+
+		// No event listener attached, so simulate would have no observer.
+		expect(result.current.borrowOrders).toHaveLength(0);
+		expect(result.current.lendOrders).toHaveLength(0);
 	});
 });
 
@@ -49,7 +89,7 @@ describe("useOrderbook (WS mode)", () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
 		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-		renderHookWithProviders(() => useOrderbook({ assetId }));
+		renderHookWithProviders(() => useOrderbook({ assetId, decimals: 6 }));
 
 		expect(mockSocket.emit).toHaveBeenCalledWith("subscribe-orderbook", {
 			assetId,
@@ -94,7 +134,9 @@ describe("useOrderbook (WS mode)", () => {
 		const { useOrderbook } = await import("@/hooks/use-orderbook");
 		const assetId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
-		const { result } = renderHookWithProviders(() => useOrderbook({ assetId }));
+		const { result } = renderHookWithProviders(() =>
+			useOrderbook({ assetId, decimals: 6 }),
+		);
 
 		act(() => {
 			mockSocket._simulateEvent("orderbook-update", {

@@ -74,11 +74,12 @@ function PositionCard({
 	onDelete: (id: string) => void;
 	onUpdate?: (updatedPosition: Position) => void;
 }) {
-	const statusColors = {
+	const statusColors: Record<PositionStatus, string> = {
 		OPEN: "bg-blue-500",
 		FILLED: "bg-green-500",
 		CANCELLED: "bg-red-500",
 		PARTIALLY_FILLED: "bg-yellow-500",
+		UNKNOWN: "bg-muted-foreground",
 	};
 
 	const handleDelete = () => {

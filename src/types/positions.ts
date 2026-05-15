@@ -7,7 +7,8 @@ export type PositionStatus =
 	| "OPEN"
 	| "FILLED"
 	| "CANCELLED"
-	| "PARTIALLY_FILLED";
+	| "PARTIALLY_FILLED"
+	| "UNKNOWN";
 export type OrderType = "limit" | "market";
 
 export interface LendPosition {

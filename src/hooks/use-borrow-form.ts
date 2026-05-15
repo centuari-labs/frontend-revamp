@@ -44,8 +44,11 @@ export function useBorrowForm({
 	maturityOptions,
 	assetId: assetIdProp,
 }: UseBorrowFormParams) {
-	const { upcomingMaturities } = useMarketDetail(assetIdProp);
-	const { lendOrders } = useOrderbook({ assetId: assetIdProp });
+	const { upcomingMaturities, decimals } = useMarketDetail(assetIdProp);
+	const { lendOrders } = useOrderbook({
+		assetId: assetIdProp,
+		decimals: decimals ?? undefined,
+	});
 	const { authFetch } = useAuthToken();
 	const { submitLimit, submitMarket, isPending } = useSubmitBorrow();
 	const { selectedToken, setSelectedToken } = useTokenFromList(

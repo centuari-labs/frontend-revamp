@@ -39,11 +39,11 @@ function levelsToRows(
 
 // ─── Hook ────────────────────────────────────────────────────────────
 
-export function useOrderbook(options?: {
-	assetId?: string;
-	decimals?: number;
+export function useOrderbook(options: {
+	assetId: string | undefined;
+	decimals: number | undefined;
 }) {
-	const { assetId, decimals = 6 } = options ?? {};
+	const { assetId, decimals } = options;
 
 	const [borrowOrders, setBorrowOrders] = useState<OrderRow[]>([]);
 	const [lendOrders, setLendOrders] = useState<OrderRow[]>([]);
@@ -52,7 +52,7 @@ export function useOrderbook(options?: {
 
 	// WebSocket mode
 	useEffect(() => {
-		if (!assetId) return;
+		if (!assetId || decimals === undefined) return;
 
 		// Clear stale data immediately when the market changes
 		setBorrowOrders([]);

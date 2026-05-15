@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
 	aprToBasisPoints,
 	basisPointsToApr,
+	mapStatus,
 	normalizeOrderToLendPosition,
 	normalizeOrderToBorrowPosition,
 	submitLendLimitOrder,
@@ -99,6 +100,78 @@ describe("basisPointsToApr", () => {
 		const bps = aprToBasisPoints(original);
 		const recovered = basisPointsToApr(bps);
 		expect(Math.abs(recovered - original)).toBeLessThan(1 / 10_000);
+	});
+});
+
+// ─── mapStatus ────────────────────────────────────────────────────────
+
+describe("mapStatus", () => {
+	let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		consoleErrorSpy.mockRestore();
+	});
+
+	it("maps OPEN to OPEN", () => {
+		expect(mapStatus("OPEN")).toBe("OPEN");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps FILLED to FILLED", () => {
+		expect(mapStatus("FILLED")).toBe("FILLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps CANCELLED to CANCELLED", () => {
+		expect(mapStatus("CANCELLED")).toBe("CANCELLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("maps PARTIALLY_FILLED to PARTIALLY_FILLED", () => {
+		expect(mapStatus("PARTIALLY_FILLED")).toBe("PARTIALLY_FILLED");
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
+	});
+
+	it("returns UNKNOWN and logs for unrecognised string", () => {
+		expect(mapStatus("WEIRD")).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: "WEIRD" },
+		);
+	});
+
+	it("returns UNKNOWN and logs for null", () => {
+		expect(mapStatus(null)).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: null },
+		);
+	});
+
+	it("returns UNKNOWN and logs for undefined", () => {
+		expect(mapStatus(undefined)).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: undefined },
+		);
+	});
+
+	it("returns UNKNOWN and logs for empty string", () => {
+		expect(mapStatus("")).toBe("UNKNOWN");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"[mapStatus] unknown order status",
+			{ backendStatus: "" },
+		);
+	});
+
+	it("does NOT coerce unknown statuses to OPEN (regression guard for A4 #19)", () => {
+		expect(mapStatus("ZOMBIE")).not.toBe("OPEN");
+		expect(mapStatus("ZOMBIE")).toBe("UNKNOWN");
 	});
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, apiClientPaginated } from "@/lib/api-client";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -105,5 +105,93 @@ describe("apiClient", () => {
 		expect(result).toEqual({ name: "updated" });
 		const [, options] = mockFetch.mock.calls[0];
 		expect(options.method).toBe("PATCH");
+	});
+
+	it("appends `params` as a query string", async () => {
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({ statusCode: 200, data: [] }),
+		});
+
+		await apiClient("/x", { params: { page: 2, limit: 10 } });
+
+		const [url] = mockFetch.mock.calls[0];
+		expect(url).toBe("/api/x?page=2&limit=10");
+	});
+
+	it("skips undefined values in `params` and omits the `?` when empty", async () => {
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({ statusCode: 200, data: [] }),
+		});
+
+		await apiClient("/x", {
+			params: { page: 1, status: undefined, assetId: undefined },
+		});
+
+		const [url] = mockFetch.mock.calls[0];
+		expect(url).toBe("/api/x?page=1");
+		expect(url).not.toContain("status=");
+		expect(url).not.toContain("assetId=");
+
+		mockFetch.mockClear();
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({ statusCode: 200, data: [] }),
+		});
+		await apiClient("/x", { params: { status: undefined } });
+		const [emptyUrl] = mockFetch.mock.calls[0];
+		expect(emptyUrl).toBe("/api/x");
+	});
+});
+
+describe("apiClientPaginated", () => {
+	it("returns { data, meta } from the wire envelope", async () => {
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({
+				statusCode: 200,
+				data: [{ id: "1" }, { id: "2" }],
+				meta: { page: 1, limit: 10, totalData: 2, totalPages: 1 },
+			}),
+		});
+
+		const result = await apiClientPaginated<{ id: string }[]>("/paginated", {
+			token: "tok",
+			params: { page: 1, limit: 10 },
+		});
+
+		expect(result.data).toEqual([{ id: "1" }, { id: "2" }]);
+		expect(result.meta).toEqual({
+			page: 1,
+			limit: 10,
+			totalData: 2,
+			totalPages: 1,
+		});
+
+		const [url, options] = mockFetch.mock.calls[0];
+		expect(url).toBe("/api/paginated?page=1&limit=10");
+		expect(options.headers.Authorization).toBe("Bearer tok");
+	});
+
+	it("returns empty `meta` object when wire response has no meta", async () => {
+		mockFetch.mockResolvedValue({
+			ok: true,
+			json: async () => ({ statusCode: 200, data: [] }),
+		});
+
+		const result = await apiClientPaginated<unknown[]>("/paginated");
+		expect(result.data).toEqual([]);
+		expect(result.meta).toEqual({});
+	});
+
+	it("throws AuthError on 401 (shares error path with apiClient)", async () => {
+		mockFetch.mockResolvedValue({
+			ok: false,
+			status: 401,
+			statusText: "Unauthorized",
+		});
+
+		await expect(apiClientPaginated("/secure")).rejects.toThrow();
 	});
 });
