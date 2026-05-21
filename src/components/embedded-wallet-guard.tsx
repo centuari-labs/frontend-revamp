@@ -8,7 +8,9 @@ import { useWalletDisconnectListener } from "@/hooks/use-wallet-disconnect-liste
 
 export function EmbeddedWalletGuard({
 	children,
-}: { children: React.ReactNode }) {
+}: {
+	children: React.ReactNode;
+}) {
 	const { authenticated, ready, user } = usePrivy();
 	const { wallets } = useWallets();
 	const { setActiveWallet } = useSetActiveWallet();
@@ -19,7 +21,7 @@ export function EmbeddedWalletGuard({
 	useWalletDisconnectListener();
 
 	// The wallet address the user authenticated with (via SIWE for external wallets)
-	const linkedWalletAddress = user?.wallet?.address?.toLowerCase();
+	const _linkedWalletAddress = user?.wallet?.address?.toLowerCase();
 
 	const hasExternalWallet = user?.linkedAccounts?.some(
 		(a) =>
@@ -68,9 +70,7 @@ export function EmbeddedWalletGuard({
 	useEffect(() => {
 		if (!ready || !authenticated || wallets.length === 0) return;
 
-		const embeddedWallet = wallets.find(
-			(w) => w.walletClientType === "privy",
-		);
+		const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
 
 		if (embeddedWallet) {
 			setActiveWallet(embeddedWallet);

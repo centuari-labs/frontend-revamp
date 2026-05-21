@@ -25,14 +25,14 @@ User clicks Deposit
   → Wait for approve tx confirmation
   → Treasury.deposit(tokenAddress, amount)
   → Wait for deposit tx confirmation
-  → Done (indexer-v2 picks up Deposited event and credits balance)
+  → Done (indexer-v3 picks up Deposited event and credits balance)
 ```
 
 ## Why This Approach
 
 - **On-chain accounting**: Treasury contract's `balances` mapping is properly updated, enabling on-chain verification of user deposits
 - **Standard DeFi pattern**: approve + deposit is the industry-standard ERC20 interaction pattern
-- **Indexer-based verification**: `indexer-v2` listens for `Deposited` events, eliminating the need for frontend-to-backend verify calls
+- **Indexer-based verification**: `indexer-v3` listens for `Deposited` events, eliminating the need for frontend-to-backend verify calls
 - **Single-click UX**: User clicks once; the hook handles allowance check, approval, and deposit automatically
 
 ## Key Decisions
@@ -41,7 +41,7 @@ User clicks Deposit
 |----------|--------|-----------|
 | Approve amount | Unlimited (MaxUint256) | One-time approval per token, smoother UX for repeat deposits |
 | UX pattern | Single click | Auto-check allowance → approve if needed → deposit. Shows step-by-step progress |
-| Backend verify | Remove | indexer-v2 handles `Deposited` event indexing |
+| Backend verify | Remove | indexer-v3 handles `Deposited` event indexing |
 | Mock mode | Remove | Devs use testnet; no simulated deposit flow |
 | Status states | `idle → approving → depositing → confirming → success` | Reflects the actual on-chain steps |
 
@@ -69,7 +69,7 @@ User clicks Deposit
 
 ## Resolved Questions
 
-- **Backend verify needed?** No — indexer-v2 handles event indexing
+- **Backend verify needed?** No — indexer-v3 handles event indexing
 - **Approve UX?** Single click with automatic allowance check
 - **Approve amount?** Unlimited (MaxUint256) per token
 - **Mock mode?** Remove it, use testnet only

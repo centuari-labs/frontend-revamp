@@ -14,7 +14,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, XIcon } from "lucide-react";
 import { CentuariGlassLayers } from "@/components/centuari-glass-surface";
-import { Button } from "./ui/button";
 import { CentuariButton } from "./centuari-button";
 import { CentuariGlassButton } from "./centuari-glass-button";
 import { TransactionSuccessDialog } from "./transaction-success-dialog";
@@ -27,7 +26,7 @@ import {
 	calculateFutureAmount,
 } from "@/lib/utils";
 import { getDefaultMaturityTimestamp } from "@/lib/maturity";
-import { calculateFees } from "@/lib/fee-calculations";
+import { calculateOrderFees } from "@/lib/fee-utils";
 import { useDialogViewAnimation } from "@/hooks/use-dialog-view-animation";
 import { useSubmitLend } from "@/hooks/use-submit-lend";
 import { useLendDialogData } from "@/hooks/use-lend-dialog-data";
@@ -36,6 +35,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { invalidateUserQueries } from "@/lib/query-keys";
 import { LendDialogTour } from "./product-tour/lend-dialog-tour";
 import { useDeposit } from "@/hooks/use-deposit";
+import { WalletNotConnectedError } from "@/lib/errors";
 import { useDepositTokens } from "@/hooks/use-deposit-tokens";
 import { useOnChainBalance } from "@/hooks/use-on-chain-balance";
 import { getTokenLogo } from "@/lib/tokens";
@@ -92,8 +92,13 @@ export function CentuariLendDialog({
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	// Deposit state & hooks
-	const { deposit, status: depositStatus, reset: resetDepositHook } = useDeposit();
-	const { data: depositTokens, isLoading: depositTokensLoading } = useDepositTokens();
+	const {
+		deposit,
+		status: depositStatus,
+		reset: resetDepositHook,
+	} = useDeposit();
+	const { data: depositTokens, isLoading: depositTokensLoading } =
+		useDepositTokens();
 	const [depositSelectedTokenId, setDepositSelectedTokenId] = useState("");
 	const [depositAmount, setDepositAmount] = useState("");
 	const [depositDisplayAmount, setDepositDisplayAmount] = useState("");
@@ -125,13 +130,21 @@ export function CentuariLendDialog({
 	}, [depositAmount, depositOnChainBalance]);
 
 	// Network detection
-	const { isWrongNetwork, switchingChain, handleSwitchChain } = useNetworkSwitch();
+	const { isWrongNetwork, switchingChain, handleSwitchChain } =
+		useNetworkSwitch();
 
 	const isDepositSubmitDisabled =
-		isDepositProcessing || !depositAmount || !depositSelectedTokenId || depositAmountExceedsBalance || isWrongNetwork;
+		isDepositProcessing ||
+		!depositAmount ||
+		!depositSelectedTokenId ||
+		depositAmountExceedsBalance ||
+		isWrongNetwork;
 
 	const depositTokenIcon = depositSelectedToken
-		? getTokenLogo(depositSelectedToken.symbol, depositSelectedToken.imageUrl ?? undefined)
+		? getTokenLogo(
+				depositSelectedToken.symbol,
+				depositSelectedToken.imageUrl ?? undefined,
+			)
 		: "/tokens/usdc-icon.webp";
 
 	// Animation
@@ -145,10 +158,16 @@ export function CentuariLendDialog({
 	};
 	const lendAPRNumeric = parseLendAPR(lendAPR);
 	const numericAmount = parseFloat(amountToLend) || 0;
-	const { transactionFee, amountToPay } = calculateFees(numericAmount);
+	const { totalFee } = calculateOrderFees(numericAmount, "market");
+	const transactionFee = totalFee;
+	const amountToPay = numericAmount + totalFee;
 	const formattedVaultTotal = formatCurrency(vaultTotal);
 	const maturityDate = getDefaultMaturityTimestamp();
-	const futureAmount = calculateFutureAmount(numericAmount, lendAPRNumeric, maturityDate);
+	const futureAmount = calculateFutureAmount(
+		numericAmount,
+		lendAPRNumeric,
+		maturityDate,
+	);
 
 	// Handlers
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +182,9 @@ export function CentuariLendDialog({
 		setDisplayAmount(formatNumberWithSeparator(maxAmount));
 	};
 
-	const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleDepositAmountChange = (
+		e: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		const numericValue = parseNumberFromSeparator(e.target.value);
 		setDepositAmount(numericValue);
 		setDepositDisplayAmount(formatNumberWithSeparator(numericValue));
@@ -178,11 +199,18 @@ export function CentuariLendDialog({
 	};
 
 	const handleDepositSubmit = async () => {
-		if (!depositAmount || !depositSelectedTokenId || isDepositProcessing) return;
+		if (!depositAmount || !depositSelectedTokenId || isDepositProcessing)
+			return;
 		try {
-			const result = await deposit(depositSelectedTokenId, depositAmount, depositSelectedToken);
+			const result = await deposit(
+				depositSelectedTokenId,
+				depositAmount,
+				depositSelectedToken,
+			);
 			if (result) {
-				toast.success(`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""}`);
+				toast.success(
+					`Deposited ${depositDisplayAmount || depositAmount} ${depositSelectedToken?.symbol ?? ""}`,
+				);
 				setDepositAmount("");
 				setDepositDisplayAmount("");
 				resetDepositHook();
@@ -190,6 +218,10 @@ export function CentuariLendDialog({
 				invalidateUserQueries(queryClient);
 			}
 		} catch (err) {
+			if (err instanceof WalletNotConnectedError) {
+				toast.error("Please reconnect your external wallet");
+				return;
+			}
 			const message = err instanceof Error ? err.message : "Deposit failed";
 			toast.error(message);
 		}
@@ -235,7 +267,14 @@ export function CentuariLendDialog({
 					autoRollover: true,
 				},
 				authToken && asset_id && market_id
-					? { token: authToken, marketIds: { assetId: asset_id, marketId: market_id, tokenSymbol: token_symbol } }
+					? {
+							token: authToken,
+							marketIds: {
+								assetId: asset_id,
+								marketId: market_id,
+								tokenSymbol: token_symbol,
+							},
+						}
 					: undefined,
 			);
 
@@ -246,7 +285,9 @@ export function CentuariLendDialog({
 			setShowSuccessDialog(true);
 		} catch (error) {
 			const message =
-				error instanceof Error ? error.message : "Transaction failed. Please try again.";
+				error instanceof Error
+					? error.message
+					: "Transaction failed. Please try again.";
 			setSubmitError(message);
 		}
 	};
@@ -264,9 +305,13 @@ export function CentuariLendDialog({
 						Lend {token_symbol}
 					</AlertDialogTitle>
 					<AlertDialogDescription className="sr-only">
-						Lend your {token_symbol} to earn fixed APR. Review the details before confirming.
+						Lend your {token_symbol} to earn fixed APR. Review the details
+						before confirming.
 					</AlertDialogDescription>
-					<AlertDialogCancel className="rounded-full w-4 h-4 p-3 cursor-pointer" asChild>
+					<AlertDialogCancel
+						className="rounded-full w-4 h-4 p-3 cursor-pointer"
+						asChild
+					>
 						<button
 							type="button"
 							aria-label="Close"
@@ -321,7 +366,9 @@ export function CentuariLendDialog({
 									depositSelectedTokenId={depositSelectedTokenId}
 									onTokenChange={setDepositSelectedTokenId}
 									depositTokenIcon={depositTokenIcon}
-									depositSelectedTokenSymbol={depositSelectedToken?.symbol ?? "token"}
+									depositSelectedTokenSymbol={
+										depositSelectedToken?.symbol ?? "token"
+									}
 									depositDisplayAmount={depositDisplayAmount}
 									onAmountChange={handleDepositAmountChange}
 									onMaxClick={handleDepositMaxClick}
@@ -338,7 +385,10 @@ export function CentuariLendDialog({
 							</div>
 						</ScrollArea>
 					</AlertDialogHeader>
-					<AlertDialogFooter id="tour-lend-confirm" className="flex flex-col! gap-2 px-6">
+					<AlertDialogFooter
+						id="tour-lend-confirm"
+						className="flex flex-col! gap-2 px-6"
+					>
 						<div className="flex items-center gap-4">
 							<AlertDialogCancel asChild>
 								<CentuariButton variant="secondary">Cancel</CentuariButton>
@@ -347,7 +397,9 @@ export function CentuariLendDialog({
 								type="button"
 								variant="primary"
 								className="flex-1"
-								onClick={viewMode === "deposit-lend" ? handleDepositSubmit : handleLend}
+								onClick={
+									viewMode === "deposit-lend" ? handleDepositSubmit : handleLend
+								}
 								disabled={
 									viewMode === "deposit-lend"
 										? isDepositSubmitDisabled
@@ -360,23 +412,28 @@ export function CentuariLendDialog({
 								{viewMode === "deposit-lend" ? (
 									depositStatus === "checkingAllowance" ? (
 										<>
-											Checking allowance... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Checking allowance...{" "}
+											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "approving" ? (
 										<>
-											Approve in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Approve in wallet...{" "}
+											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "waitingApproval" ? (
 										<>
-											Waiting for approval... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Waiting for approval...{" "}
+											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "depositing" ? (
 										<>
-											Confirm deposit in wallet... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Confirm deposit in wallet...{" "}
+											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : depositStatus === "confirming" ? (
 										<>
-											Confirming deposit... <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+											Confirming deposit...{" "}
+											<Loader2 className="w-4 h-4 ml-2 animate-spin" />
 										</>
 									) : (
 										"Confirm Deposit"

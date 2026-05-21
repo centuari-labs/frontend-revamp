@@ -10,32 +10,32 @@ import { usePrivy } from "@privy-io/react-auth";
 const EMPTY_ASSETS: MyAssetItem[] = [];
 
 export interface UseMyAssetsOptions {
-  page?: number;
-  limit?: number;
+	page?: number;
+	limit?: number;
 }
 
 export function useMyAssets(options?: UseMyAssetsOptions) {
-  const { page = 1, limit = 10 } = options ?? {};
-  const { authFetch } = useAuthToken();
-  const { user } = usePrivy();
-  const address = user?.wallet?.address;
+	const { page = 1, limit = 10 } = options ?? {};
+	const { authFetch } = useAuthToken();
+	const { user } = usePrivy();
+	const address = user?.wallet?.address;
 
-  const query = useQuery({
-    queryKey: [QUERY_KEYS.MY_ASSETS, address, page, limit],
-    queryFn: () => authFetch((token) => getMyAssets(token, { page, limit })),
-    enabled: !!address,
-    placeholderData: (prev) => prev,
-  });
+	const query = useQuery({
+		queryKey: [QUERY_KEYS.MY_ASSETS, address, page, limit],
+		queryFn: () => authFetch((token) => getMyAssets(token, { page, limit })),
+		enabled: !!address,
+		placeholderData: (prev) => prev,
+	});
 
-  const assets = useMemo(() => query.data?.data ?? EMPTY_ASSETS, [query.data]);
+	const assets = useMemo(() => query.data?.data ?? EMPTY_ASSETS, [query.data]);
 
-  return {
-    assets,
-    page: query.data?.page ?? page,
-    totalData: query.data?.totalData ?? 0,
-    totalPages: query.data?.totalPages ?? 0,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    refetch: query.refetch,
-  };
+	return {
+		assets,
+		page: query.data?.page ?? page,
+		totalData: query.data?.totalData ?? 0,
+		totalPages: query.data?.totalPages ?? 0,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		refetch: query.refetch,
+	};
 }

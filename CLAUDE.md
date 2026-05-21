@@ -14,6 +14,15 @@ pnpm run test:watch         # vitest watch mode
 pnpm run test:e2e           # playwright test
 ```
 
+## Contract addresses & ABIs
+
+Addresses and ABIs are auto-managed by `smart-contract-revamp/bin/sync-to-services.sh`. Run that script after every fresh deploy — it writes:
+
+- `frontend-revamp/.env.local` — `NEXT_PUBLIC_*` addresses (gitignored).
+- `frontend-revamp/abis/*.json` — full ABIs (gitignored).
+
+Do not hand-edit either. Code reads addresses through `src/lib/chain-config.ts` (which throws at import time if a required address is missing) and imports ABIs as `import abi from "@/../abis/<Contract>.json"`. Hand-curated TS ABI subsets were removed in Phase 4 of the ABI sync migration.
+
 ## Architecture
 
 ```

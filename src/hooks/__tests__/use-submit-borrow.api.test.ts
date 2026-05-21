@@ -17,7 +17,8 @@ vi.mock("@/lib/positions-adapter.api", () => ({
 
 const MARKET_IDS = {
 	assetId: "asset-uuid-usdc",
-	marketId: "market-uuid-1",
+	marketId:
+		"0xc000000000000000000000000000000000000000000000000000000000000001",
 	tokenSymbol: "USDC",
 };
 

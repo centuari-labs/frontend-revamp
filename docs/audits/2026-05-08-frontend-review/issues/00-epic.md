@@ -32,24 +32,24 @@ Audit source: [`docs/audits/2026-05-08-frontend-review/security.md`](../security
 
 # Sub-issues (dependency order)
 
-1. [ ] #1 — Add hardcoded token allowlist module
-2. [ ] #2 — Reject invalid ERC20 `decimals` from API
-3. [ ] #3 — Validate `tokenAddress` with `viem.isAddress()`
-4. [ ] #4 — Reject `tokenAddress` not in allowlist before sign  *(depends on #1, #3)*
-5. [ ] #5 — Cross-check on-chain `decimals()` before approve  *(depends on #2, #3)*
-6. [ ] #6 — Add in-app pre-signature confirmation dialog  *(depends on #1–#5)*
+1. [x] #1 — Add hardcoded token allowlist module
+2. [x] #2 — Reject invalid ERC20 `decimals` from API
+3. [x] #3 — Validate `tokenAddress` with `viem.isAddress()`
+4. [x] #4 — Reject `tokenAddress` not in allowlist before sign  *(depends on #1, #3)*
+5. [x] #5 — Cross-check on-chain `decimals()` before approve  *(depends on #2, #3)* — closed 2026-05-15
+6. [x] #6 — Add in-app pre-signature confirmation dialog  *(depends on #1–#5)* — closed 2026-05-15
 
 #1, #2, #3 can ship in parallel. After they merge, #4 and #5 can ship in parallel. #6 last.
 
 # Acceptance criteria for epic close
 
-- [ ] All sub-issues closed.
-- [ ] `useDeposit` no longer trusts API-served `tokenAddress` or `decimals` without:
+- [x] All sub-issues closed.
+- [x] `useDeposit` no longer trusts API-served `tokenAddress` or `decimals` without:
   - syntactic validation (`isAddress`, `decimals` is a sane integer)
   - allowlist match against a hardcoded, audited table
   - on-chain cross-check of `decimals()`
-- [ ] Pre-signature confirmation modal shows: human-readable amount, symbol, token contract, spender, action — and lets the user cancel before the wallet popup.
-- [ ] Test coverage: unit tests for allowlist mismatch, invalid-decimals rejection, on-chain mismatch rejection. E2E happy-path still passes.
+- [x] Pre-signature confirmation modal shows: human-readable amount, symbol, token contract, spender, action — and lets the user cancel before the wallet popup.
+- [x] Test coverage: unit tests for allowlist mismatch, invalid-decimals rejection, on-chain mismatch rejection. E2E happy-path still passes.
 - [ ] CHANGELOG / release note mentions the hardening (no exploit narrative needed publicly).
 
 # Out of scope

@@ -62,9 +62,10 @@ describe("invalidateUserQueries", () => {
 
 		invalidateUserQueries(mockQueryClient as never);
 
-		const calledKeys = mockInvalidateQueries.mock.calls.map(
-			(call: [{ queryKey: string[] }]) => call[0].queryKey[0],
-		);
+		const calledKeys = mockInvalidateQueries.mock.calls.map((call) => {
+			const arg = call[0] as { queryKey: string[] };
+			return arg.queryKey[0];
+		});
 
 		expect(calledKeys).toEqual(Object.values(QUERY_KEYS));
 	});

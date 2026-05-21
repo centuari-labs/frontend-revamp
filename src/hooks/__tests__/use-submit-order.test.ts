@@ -123,10 +123,7 @@ describe("useSubmitOrder", () => {
 
 			await expect(
 				act(async () => {
-					await result.current.submitLimit(
-						{ amount: 100 },
-						{ token: "jwt" },
-					);
+					await result.current.submitLimit({ amount: 100 }, { token: "jwt" });
 				}),
 			).rejects.toThrow("Auth token and market IDs required");
 		});
@@ -264,11 +261,7 @@ describe("useSubmitOrder", () => {
 				});
 			});
 
-			expect(mockMarketFn).toHaveBeenCalledWith(
-				params,
-				marketIds,
-				"jwt-456",
-			);
+			expect(mockMarketFn).toHaveBeenCalledWith(params, marketIds, "jwt-456");
 			expect(mockLimitFn).not.toHaveBeenCalled();
 		});
 
@@ -360,7 +353,7 @@ describe("useSubmitOrder", () => {
 				{ wrapper },
 			);
 
-			const promise = await act(async () => {
+			const _promise = await act(async () => {
 				const p = result.current.submitLimit(
 					{ amount: 100 },
 					{
@@ -372,7 +365,7 @@ describe("useSubmitOrder", () => {
 						},
 					},
 				);
-				resolveFn!({ id: "done" });
+				resolveFn?.({ id: "done" });
 				return p;
 			});
 

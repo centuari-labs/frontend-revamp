@@ -1,14 +1,12 @@
 import type { APIRequestContext } from "@playwright/test";
+import { TEST_WALLET } from "./test-wallet";
 
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 
-const LENDER_WALLET =
-	process.env.LENDER_WALLET || "0x63f799163222e9CfC4afbddE7a632599AE0F1298";
-const BORROWER_WALLET =
-	process.env.BORROWER_WALLET ||
-	"0x63f799163222e9CfC4afbddE7a632599AE0F1298";
+const LENDER_WALLET = process.env.LENDER_WALLET || TEST_WALLET;
+const BORROWER_WALLET = process.env.BORROWER_WALLET || TEST_WALLET;
 
 export const LENDER_AUTH = `Bearer DEV_TOKEN_${LENDER_WALLET}`;
 export const BORROWER_AUTH = `Bearer DEV_TOKEN_${BORROWER_WALLET}`;

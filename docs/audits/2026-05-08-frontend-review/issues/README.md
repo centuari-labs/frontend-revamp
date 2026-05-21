@@ -2,6 +2,8 @@
 
 27 issues total: 1 tracking epic, 6 sub-issues for the Critical deposit-flow trust gap, 20 standalone fixes from deeper pentest passes — including 1 Critical operational, 3 High, 12 Medium, 2 Low bundles, 1 preventive hardening, 1 tracking/info.
 
+> **Status (2026-05-15):** Epic group #1–#6 (deposit-flow trust) is closed. Standalone #15 + #16 (CI floor) closed 2026-05-14. Next up: #7, #18, #22, #25 per [`hub-only.html`](../../../../../dev-docs/architecture-html/launches/hub-only.html) §4 Phase 2.
+
 ## Files
 
 ### Epic + sub-issues — deposit-flow trust (Critical)

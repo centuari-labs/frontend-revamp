@@ -31,12 +31,7 @@ export function DialogTokenHeader({
 				id="tour-dialog-asset-overview"
 				className="flex flex-col items-center justify-center gap-2 mt-6"
 			>
-				<Image
-					src={tokenImage}
-					alt={tokenName}
-					width={76.5}
-					height={76.5}
-				/>
+				<Image src={tokenImage} alt={tokenName} width={76.5} height={76.5} />
 				<CentuariTypography variant="h4">{tokenSymbol}</CentuariTypography>
 				<div className="flex w-full items-center justify-around mt-4 px-6">
 					{stats.map((stat) => (

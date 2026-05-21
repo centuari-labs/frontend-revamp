@@ -12,12 +12,11 @@ import { CollateralListDisplay } from "./collateral-list-display";
 import { CollateralEmptyState } from "./collateral-empty-state";
 import { TransactionSummary } from "./market/transaction-summary";
 import { DialogTokenHeader } from "./dialog-token-header";
+import { formatCurrency } from "@/lib/utils";
 import {
-	formatCurrency,
-	formatNumber,
 	getHealthFactorPercentage,
 	getHealthFactorDisplayStatus,
-} from "@/lib/utils";
+} from "@/lib/health-factor";
 import { formatMaturityTimestamp } from "@/lib/maturity";
 import type { TokenInfo } from "@/lib/portfolio-data";
 
@@ -95,10 +94,8 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 			},
 		];
 
-		const displayHF =
-			healthFactor > 0 ? healthFactor : userHealthFactor;
-		const hasInput =
-			numericAmount > 0 && selectedCollaterals.length > 0;
+		const displayHF = healthFactor > 0 ? healthFactor : userHealthFactor;
+		const hasInput = numericAmount > 0 && selectedCollaterals.length > 0;
 		const effectiveHF = hasInput ? healthFactor : displayHF;
 		const hfDisplay =
 			effectiveHF > 0
@@ -179,7 +176,7 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 									<HealthFactor
 										targetValue={displayPercentage}
 										healthFactor={
-											displayHF > 0 && !isNaN(displayHF)
+											displayHF > 0 && !Number.isNaN(displayHF)
 												? displayHF
 												: undefined
 										}
@@ -187,12 +184,11 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 								</div>
 								<div className="px-2 py-4 z-20 -mt-2 border-t-0 border-white/5 rounded-b-lg">
 									<p className="text-xs text-muted-foreground text-center">
-										{healthFactor > 0 && !isNaN(healthFactor) ? (
+										{healthFactor > 0 && !Number.isNaN(healthFactor) ? (
 											<>
 												If portfolio value drops{" "}
 												<span className="text-white font-medium">
-													below{" "}
-													{formatCurrency(newTotalDebt / weightedLTV)}
+													below {formatCurrency(newTotalDebt / weightedLTV)}
 												</span>{" "}
 												or total debt exceeds{" "}
 												<span className="text-white font-medium">
@@ -202,8 +198,8 @@ export const BorrowMainView = forwardRef<HTMLDivElement, BorrowMainViewProps>(
 											</>
 										) : (
 											<>
-												Select collateral from portfolio and enter borrow
-												amount to see health factor.
+												Select collateral from portfolio and enter borrow amount
+												to see health factor.
 											</>
 										)}
 									</p>

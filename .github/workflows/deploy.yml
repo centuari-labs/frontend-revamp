@@ -8,7 +8,7 @@ name: Build & Deploy frontend-revamp
 
 on:
   push:
-    branches: [staging, testnet]
+    branches: [staging, testnet, main]
   workflow_dispatch:
 
 concurrency:
@@ -36,6 +36,11 @@ jobs:
               echo "namespace=centuari-testing" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.testing.yml -p centuari-testing" >> $GITHUB_OUTPUT
               ;;
+            main)
+              echo "env=prod" >> $GITHUB_OUTPUT
+              echo "namespace=centuari" >> $GITHUB_OUTPUT
+              echo "compose_cmd=docker compose -f compose.prod.yml" >> $GITHUB_OUTPUT
+              ;;
             *)
               echo "Unknown branch ${{ github.ref_name }}" >&2
               exit 1
@@ -43,10 +48,6 @@ jobs:
           esac
 
   test:
-    # Skipped on testnet branch — test suite is being fixed in a separate plan.
-    # See docs/plans/2026-05-01-fix-frontend-testnet-tests.md.
-    # TODO: remove the `if:` once tests are sync'd to current adapter & status enum.
-    if: github.ref_name != 'testnet'
     needs: detect-env
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -66,15 +67,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
       - name: Unit tests
         run: pnpm run test
 
   build-and-deploy:
     needs: [detect-env, test]
-    if: |
-      always() &&
-      needs.detect-env.result == 'success' &&
-      (needs.test.result == 'success' || needs.test.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: ${{ needs.detect-env.outputs.env }}
@@ -94,6 +97,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Guard against USE_MOCK in production
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testnet'
+        run: |
+          if [ "${{ vars.NEXT_PUBLIC_USE_MOCK }}" = "true" ]; then
+            echo "::error::NEXT_PUBLIC_USE_MOCK=true is forbidden on main/testnet"
+            exit 1
+          fi
+
       - name: Build Docker image
         run: |
           docker build \
@@ -102,7 +113,7 @@ jobs:
             --build-arg NEXT_PUBLIC_CHAIN_ENV='${{ vars.NEXT_PUBLIC_CHAIN_ENV }}' \
             --build-arg NEXT_PUBLIC_USE_MOCK='${{ vars.NEXT_PUBLIC_USE_MOCK }}' \
             --build-arg NEXT_PUBLIC_RPC_URL='${{ vars.NEXT_PUBLIC_RPC_URL }}' \
-            --build-arg NEXT_PUBLIC_TREASURY_ADDRESS='${{ vars.NEXT_PUBLIC_TREASURY_ADDRESS }}' \
+            --build-arg NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS='${{ vars.NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS }}' \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.IMAGE_NAME }}:latest \
             .

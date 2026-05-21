@@ -14,6 +14,18 @@ vi.mock("@/lib/positions-adapter.api", () => ({
 }));
 
 import { useSubmitBorrow } from "@/hooks/use-submit-borrow";
+import type {
+	SubmitBorrowLimitParams,
+	SubmitBorrowMarketParams,
+} from "@/types/positions";
+
+const baseBorrowFields = {
+	tokenValue: "usdc",
+	tokenLogo: "/tokens/usdc-icon.webp",
+	tokenLabel: "USDC",
+	maturity: Date.now() + 30 * 24 * 60 * 60 * 1000,
+	collateralTokens: ["btc"],
+};
 
 let queryClient: QueryClient;
 let wrapper: React.FC<{ children: React.ReactNode }>;
@@ -42,13 +54,17 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 		let returned: unknown;
 		await act(async () => {
 			returned = await result.current.submitLimit(
-				{ amount: 500, targetApr: 0.1, collateralTokens: ["btc"] },
+				{
+					...baseBorrowFields,
+					amount: 500,
+					targetApr: 0.1,
+				} satisfies SubmitBorrowLimitParams,
 				{ token: "jwt", marketIds },
 			);
 		});
 
 		expect(mockSubmitBorrowLimitOrder).toHaveBeenCalledWith(
-			{ amount: 500, targetApr: 0.1, collateralTokens: ["btc"] },
+			{ ...baseBorrowFields, amount: 500, targetApr: 0.1 },
 			marketIds,
 			"jwt",
 		);
@@ -73,13 +89,17 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 		let returned: unknown;
 		await act(async () => {
 			returned = await result.current.submitMarket(
-				{ amount: 300, collateralTokens: ["eth"] },
+				{
+					...baseBorrowFields,
+					amount: 300,
+					collateralTokens: ["eth"],
+				} satisfies SubmitBorrowMarketParams,
 				{ token: "jwt", marketIds },
 			);
 		});
 
 		expect(mockSubmitBorrowMarketOrder).toHaveBeenCalledWith(
-			{ amount: 300, collateralTokens: ["eth"] },
+			{ ...baseBorrowFields, amount: 300, collateralTokens: ["eth"] },
 			marketIds,
 			"jwt",
 		);
@@ -93,7 +113,11 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 
 		await act(async () => {
 			await result.current.submitLimit(
-				{ amount: 500 },
+				{
+					...baseBorrowFields,
+					amount: 500,
+					targetApr: 0.1,
+				} satisfies SubmitBorrowLimitParams,
 				{
 					token: "jwt",
 					marketIds: {
@@ -115,7 +139,10 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 
 		await act(async () => {
 			await result.current.submitMarket(
-				{ amount: 300 },
+				{
+					...baseBorrowFields,
+					amount: 300,
+				} satisfies SubmitBorrowMarketParams,
 				{
 					token: "jwt",
 					marketIds: {
@@ -135,7 +162,11 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 
 		await expect(
 			act(async () => {
-				await result.current.submitLimit({ amount: 500 });
+				await result.current.submitLimit({
+					...baseBorrowFields,
+					amount: 500,
+					targetApr: 0.1,
+				} satisfies SubmitBorrowLimitParams);
 			}),
 		).rejects.toThrow("Auth token and market IDs required");
 	});

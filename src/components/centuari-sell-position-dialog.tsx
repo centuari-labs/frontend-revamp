@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useId, useRef } from "react";
+import { useState, useId, useRef } from "react";
 import { toast } from "sonner";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "./ui/button";
@@ -20,9 +20,9 @@ import { CentuariButton } from "./centuari-button";
 import { Label } from "./ui/label";
 import { usePrivy } from "@privy-io/react-auth";
 import {
-  formatNumberWithSeparator,
-  parseNumberFromSeparator,
-  formatCurrency,
+	formatNumberWithSeparator,
+	parseNumberFromSeparator,
+	formatCurrency,
 } from "@/lib/utils";
 import { normalizeMaturity, formatMaturityTimestamp } from "@/lib/maturity";
 import { tokenList } from "@/lib/portfolio-data";
@@ -35,336 +35,358 @@ import { useRouter } from "next/navigation";
 export type WithdrawSuccessMessage = { title: string; description: string };
 
 interface CentuariSellPositionDialogProps {
-  positionId: string;
-  token_image: string;
-  token_name: string;
-  token_symbol: string;
-  maturityDate?: number;
-  startDate?: number; // Position start as Unix timestamp (ms); when set, profit uses elapsed time
-  availableFunds: number; // Available funds in token (shares)
-  apr?: number; // APR as percentage (e.g., 10 for 10%)
-  totalShares?: number; // Total shares from backend
-  baseAmount?: number; // Base amount (original deposit) from backend
-  onSuccess?: () => void; // Callback after successful sell
-  /** When set, parent shows success dialog; use when row may unmount (e.g. full withdraw). */
-  onWithdrawComplete?: (message: WithdrawSuccessMessage) => void;
+	positionId: string;
+	token_image: string;
+	token_name: string;
+	token_symbol: string;
+	maturityDate?: number;
+	startDate?: number; // Position start as Unix timestamp (ms); when set, profit uses elapsed time
+	availableFunds: number; // Available funds in token (shares)
+	apr?: number; // APR as percentage (e.g., 10 for 10%)
+	totalShares?: number; // Total shares from backend
+	baseAmount?: number; // Base amount (original deposit) from backend
+	onSuccess?: () => void; // Callback after successful sell
+	/** When set, parent shows success dialog; use when row may unmount (e.g. full withdraw). */
+	onWithdrawComplete?: (message: WithdrawSuccessMessage) => void;
 }
 
 export function CentuariSellPositionDialog({
-  positionId,
-  token_image,
-  token_name,
-  token_symbol,
-  maturityDate,
-  startDate,
-  availableFunds,
-  apr = 10, // Default 10% APR
-  totalShares,
-  baseAmount,
-  onSuccess,
-  onWithdrawComplete,
+	positionId,
+	token_image,
+	token_name,
+	token_symbol,
+	maturityDate,
+	startDate,
+	availableFunds,
+	apr = 10, // Default 10% APR
+	totalShares,
+	baseAmount,
+	onSuccess,
+	onWithdrawComplete,
 }: CentuariSellPositionDialogProps) {
-  const reactId = useId();
-  const router = useRouter();
-  const { getAccessToken } = usePrivy();
-  const { withdraw, isPending, isSuccess, resetSuccess } = useWithdrawLendPosition();
+	const reactId = useId();
+	const router = useRouter();
+	const { getAccessToken } = usePrivy();
+	const { withdraw, isPending, isSuccess, resetSuccess } =
+		useWithdrawLendPosition();
 
-  const getTokenValue = () => {
-    const token = tokenList.find(
-      (t) =>
-        t.label.toUpperCase() === token_symbol?.toUpperCase() ||
-        t.value.toUpperCase() === token_symbol?.toUpperCase()
-    );
-    return token?.value ?? "usdc";
-  };
+	const _getTokenValue = () => {
+		const token = tokenList.find(
+			(t) =>
+				t.label.toUpperCase() === token_symbol?.toUpperCase() ||
+				t.value.toUpperCase() === token_symbol?.toUpperCase(),
+		);
+		return token?.value ?? "usdc";
+	};
 
-  // State for amount input
-  const [withdrawAmount, setWithdrawAmount] = useState<string>("");
-  const [displayAmount, setDisplayAmount] = useState<string>("");
+	// State for amount input
+	const [withdrawAmount, setWithdrawAmount] = useState<string>("");
+	const [displayAmount, setDisplayAmount] = useState<string>("");
 
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const isDialogOpenRef = useRef<boolean>(false);
-  const isHoveringRef = useRef<boolean>(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+	const isDialogOpenRef = useRef<boolean>(false);
+	const isHoveringRef = useRef<boolean>(false);
+	const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Calculate derived values
-  const numericAmount = parseFloat(withdrawAmount) || 0;
-  const withdrawAmountClamped = numericAmount > 0 ? numericAmount : 0;
+	// Calculate derived values
+	const numericAmount = parseFloat(withdrawAmount) || 0;
+	const withdrawAmountClamped = numericAmount > 0 ? numericAmount : 0;
 
-  const normalizedMaturity = normalizeMaturity(maturityDate);
+	const normalizedMaturity = normalizeMaturity(maturityDate);
 
-  // Principal portion in token: proportional to baseAmount/totalShares
-  const principalPart =
-    totalShares && totalShares > 0
-      ? withdrawAmountClamped * ((baseAmount ?? totalShares) / totalShares)
-      : withdrawAmountClamped;
+	// Principal portion in token: proportional to baseAmount/totalShares
+	const principalPart =
+		totalShares && totalShares > 0
+			? withdrawAmountClamped * ((baseAmount ?? totalShares) / totalShares)
+			: withdrawAmountClamped;
 
-  // Profit portion (≈ USD for stablecoins)
-  const calculatedProfitReturn = withdrawAmountClamped - principalPart;
+	// Profit portion (≈ USD for stablecoins)
+	const calculatedProfitReturn = withdrawAmountClamped - principalPart;
 
-  // Total after withdraw (≈ USD for stablecoins)
-  const totalAfterWithdraw = withdrawAmountClamped;
+	// Total after withdraw (≈ USD for stablecoins)
+	const totalAfterWithdraw = withdrawAmountClamped;
 
-  // Format available funds with currency and token suffix
-  const formattedAvailableFunds = `${formatNumberWithSeparator(Number(availableFunds.toFixed(3)))} ${token_symbol}`;
+	// Format available funds with currency and token suffix
+	const formattedAvailableFunds = `${formatNumberWithSeparator(Number(availableFunds.toFixed(3)))} ${token_symbol}`;
 
-  // Handle amount input change
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
+	// Handle amount input change
+	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const inputValue = e.target.value;
 
-    // Remove $ prefix and any other non-numeric characters except decimal point
-    const cleanValue = inputValue.replace(/^\$/, "").replace(/[^\d.]/g, "");
+		// Remove $ prefix and any other non-numeric characters except decimal point
+		const cleanValue = inputValue.replace(/^\$/, "").replace(/[^\d.]/g, "");
 
-    // Parse to get clean numeric value (removes thousand separators, keeps decimal point)
-    const numericValue = parseNumberFromSeparator(cleanValue);
+		// Parse to get clean numeric value (removes thousand separators, keeps decimal point)
+		const numericValue = parseNumberFromSeparator(cleanValue);
 
-    // Format for display with thousand separators
-    const formattedValue = formatNumberWithSeparator(numericValue);
+		// Format for display with thousand separators
+		const formattedValue = formatNumberWithSeparator(numericValue);
 
-    // Update both states: numeric value for calculations, formatted value for display
-    setWithdrawAmount(numericValue);
-    setDisplayAmount(formattedValue);
-  };
+		// Update both states: numeric value for calculations, formatted value for display
+		setWithdrawAmount(numericValue);
+		setDisplayAmount(formattedValue);
+	};
 
-  // Handle Max button - set amount to available funds
-  const handleMaxClick = () => {
-    const maxAmount = availableFunds.toString();
-    const formattedMax = formatNumberWithSeparator(maxAmount);
-    setWithdrawAmount(maxAmount);
-    setDisplayAmount(formattedMax);
-  };
+	// Handle Max button - set amount to available funds
+	const handleMaxClick = () => {
+		const maxAmount = availableFunds.toString();
+		const formattedMax = formatNumberWithSeparator(maxAmount);
+		setWithdrawAmount(maxAmount);
+		setDisplayAmount(formattedMax);
+	};
 
-  const handleDialogChange = (open: boolean) => {
-    // Prevent closing if processing
-    if (isPending && !open) {
-      return;
-    }
+	const handleDialogChange = (open: boolean) => {
+		// Prevent closing if processing
+		if (isPending && !open) {
+			return;
+		}
 
-    // Prevent closing if button is being hovered (to avoid flickering)
-    if (!open && isHoveringRef.current) {
-      // Use setTimeout to allow hover state to update
-      setTimeout(() => {
-        if (!isHoveringRef.current && !isPending) {
-          isDialogOpenRef.current = false;
-          setIsDialogOpen(false);
-          setWithdrawAmount("");
-          setDisplayAmount("");
-        }
-      }, 100);
-      return;
-    }
+		// Prevent closing if button is being hovered (to avoid flickering)
+		if (!open && isHoveringRef.current) {
+			// Use setTimeout to allow hover state to update
+			setTimeout(() => {
+				if (!isHoveringRef.current && !isPending) {
+					isDialogOpenRef.current = false;
+					setIsDialogOpen(false);
+					setWithdrawAmount("");
+					setDisplayAmount("");
+				}
+			}, 100);
+			return;
+		}
 
-    // Update ref immediately to prevent race conditions
-    isDialogOpenRef.current = open;
-    setIsDialogOpen(open);
+		// Update ref immediately to prevent race conditions
+		isDialogOpenRef.current = open;
+		setIsDialogOpen(open);
 
-    if (!open) {
-      setWithdrawAmount("");
-      setDisplayAmount("");
-    }
-  };
+		if (!open) {
+			setWithdrawAmount("");
+			setDisplayAmount("");
+		}
+	};
 
-  const handleSell = async () => {
-    if (numericAmount <= 0) return;
-    if (numericAmount > availableFunds) return;
+	const handleSell = async () => {
+		if (numericAmount <= 0) return;
+		if (numericAmount > availableFunds) return;
 
-    if (!positionId) {
-      toast.error("Position ID is missing. Cannot withdraw.");
-      return;
-    }
+		if (!positionId) {
+			toast.error("Position ID is missing. Cannot withdraw.");
+			return;
+		}
 
-    try {
-      await getAccessToken();
-      await withdraw(positionId);
+		try {
+			await getAccessToken();
+			await withdraw(positionId);
 
-      if (onWithdrawComplete) {
-        onWithdrawComplete({
-          title: "Withdrawal Complete",
-          description: "Your lend position have been successfully withdrawn",
-        });
-      }
+			if (onWithdrawComplete) {
+				onWithdrawComplete({
+					title: "Withdrawal Complete",
+					description: "Your lend position have been successfully withdrawn",
+				});
+			}
 
-      setWithdrawAmount("");
-      setDisplayAmount("");
-      setIsDialogOpen(false);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Transaction failed";
-      toast.error(message);
-    }
-  };
+			setWithdrawAmount("");
+			setDisplayAmount("");
+			setIsDialogOpen(false);
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "Transaction failed";
+			toast.error(message);
+		}
+	};
 
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        className="text-white/80 hover:text-white transition-colors hover:bg-white/10 rounded-lg p-2"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          setIsDialogOpen(true);
-          isDialogOpenRef.current = true;
-        }}
-        onMouseEnter={() => {
-          isHoveringRef.current = true;
-        }}
-        onMouseLeave={() => {
-          isHoveringRef.current = false;
-        }}
-        type="button"
-      >
-        <IcCreditCardUpload size={16} />
-      </button>
+	return (
+		<>
+			<button
+				ref={buttonRef}
+				className="text-white/80 hover:text-white transition-colors hover:bg-white/10 rounded-lg p-2"
+				onClick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					setIsDialogOpen(true);
+					isDialogOpenRef.current = true;
+				}}
+				onMouseEnter={() => {
+					isHoveringRef.current = true;
+				}}
+				onMouseLeave={() => {
+					isHoveringRef.current = false;
+				}}
+				type="button"
+			>
+				<IcCreditCardUpload size={16} />
+			</button>
 
-      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-        <DialogContent
-          className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600"
-          onPointerDownOutside={(e) => {
-            // Prevent closing if clicking on the button
-            if (buttonRef.current && buttonRef.current.contains(e.target as Node)) {
-              e.preventDefault();
-            }
-          }}
-          onInteractOutside={(e) => {
-            // Prevent closing if interacting with the button
-            if (buttonRef.current && buttonRef.current.contains(e.target as Node)) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <DialogHeader className="contents space-y-0 text-left">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
-              <div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
-              <div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
-            </div>
-            <ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
-              <div className="relative overflow-hidden min-h-[400px]">
-                <DialogTokenHeader
-                  tokenImage={token_image}
-                  tokenName={token_name}
-                  tokenSymbol={token_symbol}
-                  showMarketBanner={false}
-                  stats={[
-                    { label: "Maturity Date", tooltip: "The date when you can withdraw your funds.", value: formatMaturityTimestamp(normalizedMaturity) },
-                    { label: "APR", tooltip: "Annual Percentage Rate for this position.", value: `${apr.toFixed(1).replace(".", ",")}%` },
-                    { label: "Available Amount", tooltip: "The total amount available for withdrawal including your deposit and profit.", value: formattedAvailableFunds },
-                  ]}
-                />
+			<Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+				<DialogContent
+					className="flex max-h-[min(600px,80vh)] flex-col gap-0 p-0 sm:max-w-md data-[state=open]:!zoom-in-0 data-[state=open]:duration-600"
+					onPointerDownOutside={(e) => {
+						// Prevent closing if clicking on the button
+						if (buttonRef.current?.contains(e.target as Node)) {
+							e.preventDefault();
+						}
+					}}
+					onInteractOutside={(e) => {
+						// Prevent closing if interacting with the button
+						if (buttonRef.current?.contains(e.target as Node)) {
+							e.preventDefault();
+						}
+					}}
+				>
+					<DialogHeader className="contents space-y-0 text-left">
+						<div className="absolute inset-0 overflow-hidden pointer-events-none rounded-lg">
+							<div className="absolute w-[568px] h-[450px] -top-72 left-0 bg-primary-blue-base/50 blur-[264px] opacity-100 transition-opacity duration-500" />
+							<div className="absolute w-[150px] h-[216px] -top-60 left-1/3 bg-white blur-3xl opacity-100 transition-opacity duration-500" />
+						</div>
+						<ScrollArea className="flex max-h-full flex-col overflow-hidden pb-2">
+							<div className="relative overflow-hidden min-h-[400px]">
+								<DialogTokenHeader
+									tokenImage={token_image}
+									tokenName={token_name}
+									tokenSymbol={token_symbol}
+									showMarketBanner={false}
+									stats={[
+										{
+											label: "Maturity Date",
+											tooltip: "The date when you can withdraw your funds.",
+											value: formatMaturityTimestamp(normalizedMaturity),
+										},
+										{
+											label: "APR",
+											tooltip: "Annual Percentage Rate for this position.",
+											value: `${apr.toFixed(1).replace(".", ",")}%`,
+										},
+										{
+											label: "Available Amount",
+											tooltip:
+												"The total amount available for withdrawal including your deposit and profit.",
+											value: formattedAvailableFunds,
+										},
+									]}
+								/>
 
-                <div className="mt-4 px-6">
-                  <form action="">
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <Label htmlFor={`amount-${reactId}`}>Withdraw Amount</Label>
-                      <div className="flex text-xs text-muted-foreground items-center gap-1">
-                        Available {formattedAvailableFunds}{" "}
-                        <CentuariTooltip message="The maximum amount you can withdraw.">
-                          <Info size={12} />
-                        </CentuariTooltip>
-                      </div>
-                    </div>
-                    <CentuariInput
-                      id={`amount-${reactId}`}
-                      size="large"
-                      placeholder="Enter amount"
-                      leftIcon={
-                        <Image
-                          src={token_image}
-                          alt={token_symbol}
-                          width={16}
-                          height={16}
-                          className="w-4 h-4"
-                        />
-                      }
-                      rightIcon={
-                        <Button
-                          variant="link"
-                          className="px-0"
-                          type="button"
-                          onClick={handleMaxClick}
-                        >
-                          Max
-                        </Button>
-                      }
-                      value={displayAmount}
-                      onChange={handleAmountChange}
-                    />
+								<div className="mt-4 px-6">
+									<form action="">
+										<div className="mb-1.5 flex items-center justify-between">
+											<Label htmlFor={`amount-${reactId}`}>
+												Withdraw Amount
+											</Label>
+											<div className="flex text-xs text-muted-foreground items-center gap-1">
+												Available {formattedAvailableFunds}{" "}
+												<CentuariTooltip message="The maximum amount you can withdraw.">
+													<Info size={12} />
+												</CentuariTooltip>
+											</div>
+										</div>
+										<CentuariInput
+											id={`amount-${reactId}`}
+											size="large"
+											placeholder="Enter amount"
+											leftIcon={
+												<Image
+													src={token_image}
+													alt={token_symbol}
+													width={16}
+													height={16}
+													className="w-4 h-4"
+												/>
+											}
+											rightIcon={
+												<Button
+													variant="link"
+													className="px-0"
+													type="button"
+													onClick={handleMaxClick}
+												>
+													Max
+												</Button>
+											}
+											value={displayAmount}
+											onChange={handleAmountChange}
+										/>
 
-                    <div className="bg-white/5 py-3 px-4 text-sm rounded-xl border border-white/5 flex flex-col gap-2 mt-5">
-                      <div className="flex items-center justify-between border-b border-dashed pb-2">
-                        <p className="text-muted-foreground">Withdraw amount</p>
-                        <p>{formatNumberWithSeparator(withdrawAmountClamped)} {token_symbol}</p>
-                      </div>
-                      <div className="flex items-center justify-between border-b border-dashed pb-2">
-                        <p className="flex text-muted-foreground items-center gap-2">
-                          Profit Return{" "}
-                          <CentuariTooltip message="The profit earned calculated based on APR and days until maturity.">
-                            <Info size={12} />
-                          </CentuariTooltip>
-                        </p>
-                        <span className="text-primary-blue-base font-semibold">{formatCurrency(calculatedProfitReturn)}</span>
-                      </div>
-                      <div className="flex items-center justify-between pt-2">
-                        <p className="flex text-muted-foreground items-center gap-2">
-                          You will get after withdraw{" "}
-                          <CentuariTooltip message="The total amount you will receive after withdrawal (Withdraw shares + Profit Return).">
-                            <Info size={12} />
-                          </CentuariTooltip>
-                        </p>
-                        <span className="text-primary-blue-base font-semibold">
-                          {formatCurrency(totalAfterWithdraw)}
-                        </span>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogHeader>
-          <DialogFooter className="flex !flex-col gap-2 py-2 px-6">
-            <div className="flex items-center gap-4">
-              <DialogClose asChild>
-                <CentuariButton variant="secondary">Cancel</CentuariButton>
-              </DialogClose>
-              <CentuariButton
-                type="button"
-                variant="primary"
-                className="flex-1"
-                onClick={handleSell}
-                disabled={
-                  isPending ||
-                  numericAmount <= 0 ||
-                  numericAmount > availableFunds
-                }
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Withdraw"
-                )}
-              </CentuariButton>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+										<div className="bg-white/5 py-3 px-4 text-sm rounded-xl border border-white/5 flex flex-col gap-2 mt-5">
+											<div className="flex items-center justify-between border-b border-dashed pb-2">
+												<p className="text-muted-foreground">Withdraw amount</p>
+												<p>
+													{formatNumberWithSeparator(withdrawAmountClamped)}{" "}
+													{token_symbol}
+												</p>
+											</div>
+											<div className="flex items-center justify-between border-b border-dashed pb-2">
+												<p className="flex text-muted-foreground items-center gap-2">
+													Profit Return{" "}
+													<CentuariTooltip message="The profit earned calculated based on APR and days until maturity.">
+														<Info size={12} />
+													</CentuariTooltip>
+												</p>
+												<span className="text-primary-blue-base font-semibold">
+													{formatCurrency(calculatedProfitReturn)}
+												</span>
+											</div>
+											<div className="flex items-center justify-between pt-2">
+												<p className="flex text-muted-foreground items-center gap-2">
+													You will get after withdraw{" "}
+													<CentuariTooltip message="The total amount you will receive after withdrawal (Withdraw shares + Profit Return).">
+														<Info size={12} />
+													</CentuariTooltip>
+												</p>
+												<span className="text-primary-blue-base font-semibold">
+													{formatCurrency(totalAfterWithdraw)}
+												</span>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+						</ScrollArea>
+					</DialogHeader>
+					<DialogFooter className="flex !flex-col gap-2 py-2 px-6">
+						<div className="flex items-center gap-4">
+							<DialogClose asChild>
+								<CentuariButton variant="secondary">Cancel</CentuariButton>
+							</DialogClose>
+							<CentuariButton
+								type="button"
+								variant="primary"
+								className="flex-1"
+								onClick={handleSell}
+								disabled={
+									isPending ||
+									numericAmount <= 0 ||
+									numericAmount > availableFunds
+								}
+							>
+								{isPending ? (
+									<>
+										<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+										Processing...
+									</>
+								) : (
+									"Withdraw"
+								)}
+							</CentuariButton>
+						</div>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
-      {!onWithdrawComplete && (
-        <TransactionSuccessDialog
-          open={isSuccess}
-          onOpenChange={(open) => {
-            if (!open) {
-              resetSuccess();
-              onSuccess?.();
-            }
-          }}
-          title="Withdrawal Complete"
-          description="Your lend position have been successfully withdrawn"
-          primaryActionLabel="Start Earning"
-          onPrimaryAction={() => router.push("/")}
-          secondaryActionLabel="Done"
-        />
-      )}
-    </>
-  );
+			{!onWithdrawComplete && (
+				<TransactionSuccessDialog
+					open={isSuccess}
+					onOpenChange={(open) => {
+						if (!open) {
+							resetSuccess();
+							onSuccess?.();
+						}
+					}}
+					title="Withdrawal Complete"
+					description="Your lend position have been successfully withdrawn"
+					primaryActionLabel="Start Earning"
+					onPrimaryAction={() => router.push("/")}
+					secondaryActionLabel="Done"
+				/>
+			)}
+		</>
+	);
 }

@@ -18,7 +18,8 @@ export const MARKET_RESPONSE = {
 				image_url: null,
 			},
 			market: {
-				market_id: "c0000000-0000-0000-0000-000000000001",
+				market_id:
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
 				maturity: 1748736000,
 			},
 			borrow_rate: 10.1,
@@ -34,7 +35,8 @@ export const MARKET_RESPONSE = {
 				image_url: "https://example.com/eth.png",
 			},
 			market: {
-				market_id: "c0000000-0000-0000-0000-000000000002",
+				market_id:
+					"0xc000000000000000000000000000000000000000000000000000000000000002",
 				maturity: 1751328000,
 			},
 			borrow_rate: 8.5,
@@ -52,7 +54,8 @@ export const ORDER_RESPONSE_DATA = {
 	assetId: "b0000000-0000-0000-0000-000000000001",
 	markets: [
 		{
-			marketId: "c0000000-0000-0000-0000-000000000001",
+			marketId:
+				"0xc000000000000000000000000000000000000000000000000000000000000001",
 			maturity: 1748736000,
 		},
 	],

@@ -37,11 +37,29 @@ export function aprToBasisPoints(aprDecimal: number): number {
 	return Math.round(aprDecimal * 10000);
 }
 
+// Inverse of aprToBasisPoints — used to convert WebSocket event rates (bps) to decimal APR.
+export function basisPointsToApr(rateBps: number): number {
+	return rateBps / 10000;
+}
+
 // ─── Status Mapping ───────────────────────────────────────────────────
 
-function mapStatus(backendStatus: string): PositionStatus {
-	const valid: PositionStatus[] = ["OPEN", "FILLED", "CANCELLED", "PARTIALLY_FILLED"];
-	return (valid.includes(backendStatus as PositionStatus) ? backendStatus : "OPEN") as PositionStatus;
+const KNOWN_STATUSES: PositionStatus[] = [
+	"OPEN",
+	"FILLED",
+	"CANCELLED",
+	"PARTIALLY_FILLED",
+];
+
+export function mapStatus(backendStatus: unknown): PositionStatus {
+	if (
+		typeof backendStatus === "string" &&
+		KNOWN_STATUSES.includes(backendStatus as PositionStatus)
+	) {
+		return backendStatus as PositionStatus;
+	}
+	console.error("[mapStatus] unknown order status", { backendStatus });
+	return "UNKNOWN";
 }
 
 // ─── Response Normalization ───────────────────────────────────────────

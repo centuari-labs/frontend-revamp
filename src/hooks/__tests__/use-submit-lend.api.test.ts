@@ -17,7 +17,8 @@ vi.mock("@/lib/positions-adapter.api", () => ({
 
 const MARKET_IDS = {
 	assetId: "asset-uuid-usdc",
-	marketId: "market-uuid-1",
+	marketId:
+		"0xc000000000000000000000000000000000000000000000000000000000000001",
 	tokenSymbol: "USDC",
 };
 
@@ -128,7 +129,7 @@ describe("useSubmitLend (API mode)", () => {
 
 		// Resolve the pending promise
 		await act(async () => {
-			resolveFn!(API_LEND_POSITION);
+			resolveFn?.(API_LEND_POSITION);
 		});
 		await promise;
 

@@ -1,24 +1,28 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:3000").replace(/\/+$/, "");
+const BACKEND_URL = (
+	process.env.BACKEND_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 
-/**
- * Allowed API path prefixes. Requests to paths not matching any prefix are rejected.
- */
+// Exact paths accepted without a subpath (e.g. POST /deposit, POST /withdraw, GET /market).
+const ALLOWED_EXACT_PATHS = new Set<string>(["market", "deposit", "withdraw"]);
+
+// Prefix paths — every entry must end with "/" to prevent collisions like
+// "market" → "marketing" or "deposit" → "deposit-admin".
 const ALLOWED_PATH_PREFIXES = [
 	"auth/",
-	"market",
+	"market/",
 	"orders/",
 	"portfolio/",
-	"deposit",
-	"withdraw",
+	"deposit/",
+	"withdraw/",
 	"faucet/",
-];
+	"collateral/",
+] as const;
 
 function isPathAllowed(path: string): boolean {
-	return ALLOWED_PATH_PREFIXES.some(
-		(prefix) => path === prefix.replace(/\/$/, "") || path.startsWith(prefix),
-	);
+	if (ALLOWED_EXACT_PATHS.has(path)) return true;
+	return ALLOWED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
 async function handler(
@@ -30,10 +34,7 @@ async function handler(
 
 	// Block path traversal attempts
 	if (joinedPath.includes("..") || joinedPath.includes("//")) {
-		return NextResponse.json(
-			{ error: "Invalid path" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Invalid path" }, { status: 400 });
 	}
 
 	// Validate against allowed path prefixes
@@ -71,10 +72,15 @@ async function handler(
 	return new NextResponse(responseBody, {
 		status: res.status,
 		headers: {
-			"Content-Type":
-				res.headers.get("Content-Type") || "application/json",
+			"Content-Type": res.headers.get("Content-Type") || "application/json",
 		},
 	});
 }
 
-export { handler as GET, handler as POST, handler as PATCH, handler as PUT, handler as DELETE };
+export {
+	handler as GET,
+	handler as POST,
+	handler as PATCH,
+	handler as PUT,
+	handler as DELETE,
+};

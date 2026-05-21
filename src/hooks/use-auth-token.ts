@@ -15,20 +15,17 @@ import { AuthError } from "@/lib/api-client";
 export function useAuthToken() {
 	const { getAccessToken, authenticated, logout } = usePrivy();
 
-	const getToken = useCallback(
-		async (): Promise<string | null> => {
-			const token = await getAccessToken();
+	const getToken = useCallback(async (): Promise<string | null> => {
+		const token = await getAccessToken();
 
-			if (!token && authenticated) {
-				// Refresh token expired — session is unrecoverable, force re-auth
-				await logout();
-				return null;
-			}
+		if (!token && authenticated) {
+			// Refresh token expired — session is unrecoverable, force re-auth
+			await logout();
+			return null;
+		}
 
-			return token;
-		},
-		[getAccessToken, authenticated, logout],
-	);
+		return token;
+	}, [getAccessToken, authenticated, logout]);
 
 	/**
 	 * Executes an async function that requires a token.

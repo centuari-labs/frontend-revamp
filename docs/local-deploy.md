@@ -99,7 +99,7 @@ NEXT_PUBLIC_WS_URL=https://dev-api.centuari.example
 NEXT_PUBLIC_CHAIN_ENV=testnet
 NEXT_PUBLIC_USE_MOCK=false
 NEXT_PUBLIC_RPC_URL=
-NEXT_PUBLIC_TREASURY_ADDRESS=0x122ea513fE68d78CdAD06F982237B1b67a335439
+NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS=0x122ea513fE68d78CdAD06F982237B1b67a335439
 ```
 
 `.env.staging.build`: sama struktur, ganti URL ke `staging-api.*` dan App ID Privy staging.
@@ -111,7 +111,7 @@ NEXT_PUBLIC_WS_URL=https://api.centuari.example
 NEXT_PUBLIC_CHAIN_ENV=mainnet              # production = mainnet
 NEXT_PUBLIC_USE_MOCK=false
 NEXT_PUBLIC_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/<your-key>
-NEXT_PUBLIC_TREASURY_ADDRESS=<prod-treasury-address>
+NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS=<prod-hub-depositor-address>
 ```
 
 > **Penting:** ketiga file otomatis di-gitignore via `.env.*.build` pattern. Jangan commit, value bisa beda per developer.

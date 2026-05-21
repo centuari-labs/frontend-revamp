@@ -2,15 +2,15 @@
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import {
-  ChevronDown,
-  Copy,
-  ExternalLink,
-  Link2,
-  LogOut,
-  ArrowLeft,
-  Loader2,
-  Pencil,
-  Plus,
+	ChevronDown,
+	Copy,
+	ExternalLink,
+	Link2,
+	LogOut,
+	ArrowLeft,
+	Loader2,
+	Pencil,
+	Plus,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { ACTIVE_CHAIN } from "@/lib/chain-config";
@@ -20,7 +20,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { CentuariButton } from "./centuari-button";
-import { CentuariGlassLayers, CentuariGlassSurface } from "./centuari-glass-surface";
+import {
+	CentuariGlassLayers,
+	CentuariGlassSurface,
+} from "./centuari-glass-surface";
 import { CentuariInput } from "./centuari-input";
 import { formatAddress } from "@/lib/utils";
 import { useAccessContext } from "@/contexts/access-context";
@@ -28,286 +31,287 @@ import { useAccessContext } from "@/contexts/access-context";
 const LS_USERNAME_KEY = "centuari_username";
 
 function getStoredUsername(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(LS_USERNAME_KEY) ?? "";
+	if (typeof window === "undefined") return "";
+	return localStorage.getItem(LS_USERNAME_KEY) ?? "";
 }
 
 function getUserInitial(user: ReturnType<typeof usePrivy>["user"]): string {
-  const stored = getStoredUsername();
-  if (stored) return stored[0].toUpperCase();
+	const stored = getStoredUsername();
+	if (stored) return stored[0].toUpperCase();
 
-  const email = user?.email?.address;
-  if (email) return email[0].toUpperCase();
+	const email = user?.email?.address;
+	if (email) return email[0].toUpperCase();
 
-  const google = user?.google?.name;
-  if (google) return google[0].toUpperCase();
+	const google = user?.google?.name;
+	if (google) return google[0].toUpperCase();
 
-  const twitter = user?.twitter?.name;
-  if (twitter) return twitter[0].toUpperCase();
+	const twitter = user?.twitter?.name;
+	if (twitter) return twitter[0].toUpperCase();
 
-  return "U";
+	return "U";
 }
 
-function getDefaultUsername(
-  user: ReturnType<typeof usePrivy>["user"]
-): string {
-  const email = user?.email?.address;
-  if (email) return email.split("@")[0];
+function getDefaultUsername(user: ReturnType<typeof usePrivy>["user"]): string {
+	const email = user?.email?.address;
+	if (email) return email.split("@")[0];
 
-  const google = user?.google?.name;
-  if (google) return google;
+	const google = user?.google?.name;
+	if (google) return google;
 
-  const twitter = user?.twitter?.name;
-  if (twitter) return twitter;
+	const twitter = user?.twitter?.name;
+	if (twitter) return twitter;
 
-  return "User";
+	return "User";
 }
 
 export function CentuariUserMenu() {
-  const id = useId();
-  const { user, logout, getAccessToken } = usePrivy();
-  const { disconnect } = useDisconnect();
-  const { wallets } = useWallets();
-  const queryClient = useQueryClient();
-  const { resetAccess } = useAccessContext();
+	const id = useId();
+	const { user, logout, getAccessToken } = usePrivy();
+	const { disconnect } = useDisconnect();
+	const { wallets } = useWallets();
+	const queryClient = useQueryClient();
+	const { resetAccess } = useAccessContext();
 
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"main" | "edit-username">("main");
-  const [username, setUsername] = useState("");
-  const [editValue, setEditValue] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [saving, setSaving] = useState(false);
+	const [open, setOpen] = useState(false);
+	const [view, setView] = useState<"main" | "edit-username">("main");
+	const [username, setUsername] = useState("");
+	const [editValue, setEditValue] = useState("");
+	const [copied, setCopied] = useState(false);
+	const [saving, setSaving] = useState(false);
 
-  // Use Privy's user wallet address as source of truth — this is the wallet
-  // the user authenticated with (SIWE for external, embedded for social login).
-  // Fallback to first available wallet from useWallets() if user.wallet is not set.
-  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
-  const firstWallet = wallets[0];
-  const walletAddress =
-    user?.wallet?.address ?? embeddedWallet?.address ?? firstWallet?.address ?? "";
+	// Use Privy's user wallet address as source of truth — this is the wallet
+	// the user authenticated with (SIWE for external, embedded for social login).
+	// Fallback to first available wallet from useWallets() if user.wallet is not set.
+	const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
+	const firstWallet = wallets[0];
+	const walletAddress =
+		user?.wallet?.address ??
+		embeddedWallet?.address ??
+		firstWallet?.address ??
+		"";
 
-  const { data: balanceData } = useBalance({
-    address: walletAddress as `0x${string}` | undefined,
-  });
+	const { data: balanceData } = useBalance({
+		address: walletAddress as `0x${string}` | undefined,
+	});
 
-  // Load username from localStorage on mount
-  useEffect(() => {
-    const stored = getStoredUsername();
-    if (stored) {
-      setUsername(stored);
-    } else {
-      const fallback = getDefaultUsername(user);
-      setUsername(fallback);
-    }
-  }, [user]);
+	// Load username from localStorage on mount
+	useEffect(() => {
+		const stored = getStoredUsername();
+		if (stored) {
+			setUsername(stored);
+		} else {
+			const fallback = getDefaultUsername(user);
+			setUsername(fallback);
+		}
+	}, [user]);
 
-  // Reset view when popover closes
-  useEffect(() => {
-    if (!open) {
-      setView("main");
-    }
-  }, [open]);
+	// Reset view when popover closes
+	useEffect(() => {
+		if (!open) {
+			setView("main");
+		}
+	}, [open]);
 
-  const handleCopyAddress = useCallback(() => {
-    if (!walletAddress) return;
-    navigator.clipboard.writeText(walletAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [walletAddress]);
+	const handleCopyAddress = useCallback(() => {
+		if (!walletAddress) return;
+		navigator.clipboard.writeText(walletAddress);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	}, [walletAddress]);
 
-  const handleSaveUsername = useCallback(async () => {
-    const trimmed = editValue.trim();
-    if (!trimmed) return;
-    setSaving(true);
-    try {
-      const token = await getAccessToken();
-      if (token) {
-        await updateAccountName(trimmed, token);
-      }
-      localStorage.setItem(LS_USERNAME_KEY, trimmed);
-      window.dispatchEvent(new Event("centuari_username_changed"));
-      setUsername(trimmed);
-      setView("main");
-    } catch (err) {
-      console.error("Failed to update name:", err);
-    } finally {
-      setSaving(false);
-    }
-  }, [editValue, getAccessToken]);
+	const handleSaveUsername = useCallback(async () => {
+		const trimmed = editValue.trim();
+		if (!trimmed) return;
+		setSaving(true);
+		try {
+			const token = await getAccessToken();
+			if (token) {
+				await updateAccountName(trimmed, token);
+			}
+			localStorage.setItem(LS_USERNAME_KEY, trimmed);
+			window.dispatchEvent(new Event("centuari_username_changed"));
+			setUsername(trimmed);
+			setView("main");
+		} catch (err) {
+			console.error("Failed to update name:", err);
+		} finally {
+			setSaving(false);
+		}
+	}, [editValue, getAccessToken]);
 
-  const handleLogout = useCallback(() => {
-    setOpen(false);
-    resetAccess();
-    logout();
-    disconnect();
-    queryClient.clear();
-    localStorage.removeItem(LS_USERNAME_KEY);
-  }, [resetAccess, logout, disconnect, queryClient]);
+	const handleLogout = useCallback(() => {
+		setOpen(false);
+		resetAccess();
+		logout();
+		disconnect();
+		queryClient.clear();
+		localStorage.removeItem(LS_USERNAME_KEY);
+	}, [resetAccess, logout, disconnect, queryClient]);
 
-  const formattedBalance = balanceData
-    ? `${Number(formatUnits(balanceData.value, balanceData.decimals)).toFixed(4)} ${balanceData.symbol}`
-    : "0 ETH";
+	const formattedBalance = balanceData
+		? `${Number(formatUnits(balanceData.value, balanceData.decimals)).toFixed(4)} ${balanceData.symbol}`
+		: "0 ETH";
 
-  const initial = getUserInitial(user);
+	const initial = getUserInitial(user);
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="group/glass relative isolate overflow-hidden flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
-        >
-          <CentuariGlassLayers intensity="soft" sheen={false} />
-          <div className="relative z-20 w-7 h-7 rounded-md bg-gray-700 flex items-center justify-center text-white text-sm font-semibold">
-            {initial}
-          </div>
-          <ChevronDown className="relative z-20 w-4 h-4 text-white/60" />
-        </button>
-      </PopoverTrigger>
+	return (
+		<Popover open={open} onOpenChange={setOpen}>
+			<PopoverTrigger asChild>
+				<button
+					type="button"
+					className="group/glass relative isolate overflow-hidden flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors cursor-pointer"
+				>
+					<CentuariGlassLayers intensity="soft" sheen={false} />
+					<div className="relative z-20 w-7 h-7 rounded-md bg-gray-700 flex items-center justify-center text-white text-sm font-semibold">
+						{initial}
+					</div>
+					<ChevronDown className="relative z-20 w-4 h-4 text-white/60" />
+				</button>
+			</PopoverTrigger>
 
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="group/glass relative isolate overflow-hidden z-200 w-72 p-0 bg-black/40 backdrop-blur-2xl border-0 rounded-xl shadow-2xl"
-      >
-        <CentuariGlassLayers intensity="soft" sheen={false} />
-        <div className="relative z-20">
-        {view === "main" ? (
-          <div className="flex flex-col">
-            {/* Header: Username + Wallet */}
-            <div className="px-4 pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <p className="text-white text-sm font-medium truncate">
-                  {username}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditValue(username);
-                    setView("edit-username");
-                  }}
-                  className="text-white/40 hover:text-white transition-colors"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {walletAddress && (
-                <p className="text-white/40 text-xs mt-0.5">
-                  Wallet: {formatAddress(walletAddress)}
-                </p>
-              )}
-            </div>
+			<PopoverContent
+				align="end"
+				sideOffset={8}
+				className="group/glass relative isolate overflow-hidden z-200 w-72 p-0 bg-black/40 backdrop-blur-2xl border-0 rounded-xl shadow-2xl"
+			>
+				<CentuariGlassLayers intensity="soft" sheen={false} />
+				<div className="relative z-20">
+					{view === "main" ? (
+						<div className="flex flex-col">
+							{/* Header: Username + Wallet */}
+							<div className="px-4 pt-4 pb-3">
+								<div className="flex items-center gap-2">
+									<p className="text-white text-sm font-medium truncate">
+										{username}
+									</p>
+									<button
+										type="button"
+										onClick={() => {
+											setEditValue(username);
+											setView("edit-username");
+										}}
+										className="text-white/40 hover:text-white transition-colors"
+									>
+										<Pencil className="w-3.5 h-3.5" />
+									</button>
+								</div>
+								{walletAddress && (
+									<p className="text-white/40 text-xs mt-0.5">
+										Wallet: {formatAddress(walletAddress)}
+									</p>
+								)}
+							</div>
 
-            {/* Wallet Card */}
-            {walletAddress && (
-              <CentuariGlassSurface
-                intensity="soft"
-                className="mx-4 mb-3 rounded-lg p-3"
-              >
-                <div className="flex flex-col w-full">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white/60 text-xs">
-                    {formatAddress(walletAddress, 6)}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleCopyAddress}
-                      className="text-white/40 hover:text-white transition-colors"
-                      title="Copy address"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <a
-                      href={`${ACTIVE_CHAIN.blockExplorers.default.url}/address/${walletAddress}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/40 hover:text-white transition-colors"
-                      title="View on explorer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                    <button
-                      type="button"
-                      className="text-white/40 hover:text-white transition-colors"
-                      title="Add wallet"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-white text-sm font-medium">
-                  {formattedBalance}
-                </p>
-                {copied && (
-                  <p className="text-green-400 text-xs mt-1">Copied!</p>
-                )}
-                </div>
-              </CentuariGlassSurface>
-            )}
+							{/* Wallet Card */}
+							{walletAddress && (
+								<CentuariGlassSurface
+									intensity="soft"
+									className="mx-4 mb-3 rounded-lg p-3"
+								>
+									<div className="flex flex-col w-full">
+										<div className="flex items-center justify-between mb-2">
+											<span className="text-white/60 text-xs">
+												{formatAddress(walletAddress, 6)}
+											</span>
+											<div className="flex items-center gap-1.5">
+												<button
+													type="button"
+													onClick={handleCopyAddress}
+													className="text-white/40 hover:text-white transition-colors"
+													title="Copy address"
+												>
+													<Copy className="w-3.5 h-3.5" />
+												</button>
+												<a
+													href={`${ACTIVE_CHAIN.blockExplorers.default.url}/address/${walletAddress}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-white/40 hover:text-white transition-colors"
+													title="View on explorer"
+												>
+													<ExternalLink className="w-3.5 h-3.5" />
+												</a>
+												<button
+													type="button"
+													className="text-white/40 hover:text-white transition-colors"
+													title="Add wallet"
+												>
+													<Plus className="w-3.5 h-3.5" />
+												</button>
+											</div>
+										</div>
+										<p className="text-white text-sm font-medium">
+											{formattedBalance}
+										</p>
+										{copied && (
+											<p className="text-green-400 text-xs mt-1">Copied!</p>
+										)}
+									</div>
+								</CentuariGlassSurface>
+							)}
 
-            {/* Menu Items */}
-            <div className="border-t border-white/10">
-              <button
-                type="button"
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-              >
-                <Link2 className="w-4 h-4" />
-                Linked Account
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Edit Username View */
-          <div className="flex flex-col p-4">
-            <button
-              type="button"
-              onClick={() => setView("main")}
-              className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors mb-4 w-fit"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Back</span>
-            </button>
+							{/* Menu Items */}
+							<div className="border-t border-white/10">
+								<button
+									type="button"
+									className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+								>
+									<Link2 className="w-4 h-4" />
+									Linked Account
+								</button>
+								<button
+									type="button"
+									onClick={handleLogout}
+									className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-white/5 hover:text-red-300 transition-colors"
+								>
+									<LogOut className="w-4 h-4" />
+									Logout
+								</button>
+							</div>
+						</div>
+					) : (
+						/* Edit Username View */
+						<div className="flex flex-col p-4">
+							<button
+								type="button"
+								onClick={() => setView("main")}
+								className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors mb-4 w-fit"
+							>
+								<ArrowLeft className="w-4 h-4" />
+								<span className="text-sm">Back</span>
+							</button>
 
-            <CentuariInput
-              id={`${id}-username`}
-              size="medium"
-              label="Username"
-              placeholder="Enter username"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSaveUsername();
-              }}
-            />
+							<CentuariInput
+								id={`${id}-username`}
+								size="medium"
+								label="Username"
+								placeholder="Enter username"
+								value={editValue}
+								onChange={(e) => setEditValue(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") handleSaveUsername();
+								}}
+							/>
 
-            <CentuariButton
-              variant="primary"
-              className="w-full mt-4"
-              onClick={handleSaveUsername}
-              disabled={!editValue.trim() || saving}
-            >
-              {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving…
-                </span>
-              ) : (
-                "Save Changes"
-              )}
-            </CentuariButton>
-          </div>
-        )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+							<CentuariButton
+								variant="primary"
+								className="w-full mt-4"
+								onClick={handleSaveUsername}
+								disabled={!editValue.trim() || saving}
+							>
+								{saving ? (
+									<span className="flex items-center justify-center gap-2">
+										<Loader2 className="w-4 h-4 animate-spin" />
+										Saving…
+									</span>
+								) : (
+									"Save Changes"
+								)}
+							</CentuariButton>
+						</div>
+					)}
+				</div>
+			</PopoverContent>
+		</Popover>
+	);
 }

@@ -80,8 +80,8 @@ export function WrongNetworkBanner() {
 				<h2 className="text-lg font-semibold text-white">Wrong Network</h2>
 				<p className="text-sm text-white/70">
 					Centuari only supports{" "}
-					<span className="font-medium text-white">{ACTIVE_CHAIN_LABEL}</span>. Please
-					switch your wallet network to continue.
+					<span className="font-medium text-white">{ACTIVE_CHAIN_LABEL}</span>.
+					Please switch your wallet network to continue.
 				</p>
 				<div className="mt-2 flex flex-col gap-2">
 					<button

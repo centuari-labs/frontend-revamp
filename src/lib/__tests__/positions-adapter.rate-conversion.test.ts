@@ -5,7 +5,10 @@
  * e.g. 0.065 → 650 → DB(650) → 6.5 → 0.065
  */
 import { describe, it, expect } from "vitest";
-import { aprToBasisPoints } from "@/lib/positions-adapter.api";
+import {
+	aprToBasisPoints,
+	basisPointsToApr,
+} from "@/lib/positions-adapter.api";
 
 describe("aprToBasisPoints", () => {
 	it("converts 0.065 (6.5%) to 650 BPS", () => {
@@ -73,6 +76,33 @@ describe("FE back-conversion: percentage → decimal APR", () => {
 
 	it("100% → 1.0 decimal APR", () => {
 		expect(percentageToDecimalApr(100)).toBe(1.0);
+	});
+});
+
+// ─── basisPointsToApr (WS event bps → decimal APR) ──────────────────
+
+describe("basisPointsToApr", () => {
+	it("converts 450 bps to 0.045 decimal APR (4.5%)", () => {
+		expect(basisPointsToApr(450)).toBeCloseTo(0.045, 6);
+	});
+
+	it("converts 500 bps to 0.05 decimal APR (5%)", () => {
+		expect(basisPointsToApr(500)).toBe(0.05);
+	});
+
+	it("converts 10000 bps to 1.0 decimal APR (100%)", () => {
+		expect(basisPointsToApr(10000)).toBe(1.0);
+	});
+
+	it("converts 1 bps to 0.0001 decimal APR (0.01%)", () => {
+		expect(basisPointsToApr(1)).toBe(0.0001);
+	});
+
+	it("is the exact inverse of aprToBasisPoints within rounding", () => {
+		const original = 0.0537;
+		const bps = aprToBasisPoints(original); // 537
+		const recovered = basisPointsToApr(bps); // 0.0537
+		expect(Math.abs(recovered - original)).toBeLessThan(1 / 10_000);
 	});
 });
 

@@ -66,9 +66,10 @@ export function useTokenPrices(): PricesMap {
 	return ctx.prices;
 }
 
-export function useTokenPrice(assetId: string | undefined | null): number | undefined {
+export function useTokenPrice(
+	assetId: string | undefined | null,
+): number | undefined {
 	const prices = useTokenPrices();
 	if (!assetId) return undefined;
 	return prices[assetId] ?? undefined;
 }
-

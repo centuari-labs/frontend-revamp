@@ -11,40 +11,42 @@ import { usePrivy } from "@privy-io/react-auth";
 const EMPTY_POSITIONS: MyPositionItem[] = [];
 
 export interface UseMyPositionsOptions {
-  type?: "LEND" | "BORROW";
-  page?: number;
-  limit?: number;
-  assetId?: string;
-  enabled?: boolean;
+	type?: "LEND" | "BORROW";
+	page?: number;
+	limit?: number;
+	assetId?: string;
+	enabled?: boolean;
 }
 
 export function useMyPositions(options?: UseMyPositionsOptions) {
-  const { type, page = 1, limit = 10, assetId, enabled = true } = options ?? {};
-  const { authFetch } = useAuthToken();
-  const { user } = usePrivy();
-  const address = user?.wallet?.address;
+	const { type, page = 1, limit = 10, assetId, enabled = true } = options ?? {};
+	const { authFetch } = useAuthToken();
+	const { user } = usePrivy();
+	const address = user?.wallet?.address;
 
-  const query = useQuery({
-    queryKey: [QUERY_KEYS.MY_POSITIONS, address, type, page, limit, assetId],
-    queryFn: () =>
-      authFetch((token) => getMyPositions(token, { type, page, limit, assetId })),
-    refetchInterval: QUERY_CONFIG.POLLING_INTERVAL,
-    enabled: !!address && enabled,
-    placeholderData: (prev) => prev,
-  });
+	const query = useQuery({
+		queryKey: [QUERY_KEYS.MY_POSITIONS, address, type, page, limit, assetId],
+		queryFn: () =>
+			authFetch((token) =>
+				getMyPositions(token, { type, page, limit, assetId }),
+			),
+		refetchInterval: QUERY_CONFIG.POLLING_INTERVAL,
+		enabled: !!address && enabled,
+		placeholderData: (prev) => prev,
+	});
 
-  const positions = useMemo(
-    () => query.data?.data ?? EMPTY_POSITIONS,
-    [query.data],
-  );
+	const positions = useMemo(
+		() => query.data?.data ?? EMPTY_POSITIONS,
+		[query.data],
+	);
 
-  return {
-    positions,
-    page: query.data?.page ?? page,
-    totalData: query.data?.totalData ?? 0,
-    totalPages: query.data?.totalPages ?? 0,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    refetch: query.refetch,
-  };
+	return {
+		positions,
+		page: query.data?.page ?? page,
+		totalData: query.data?.totalData ?? 0,
+		totalPages: query.data?.totalPages ?? 0,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		refetch: query.refetch,
+	};
 }
