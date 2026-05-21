@@ -35,14 +35,6 @@ vi.mock("@/hooks/use-my-assets", () => ({
   })),
 }));
 
-vi.mock("@/hooks/use-portfolio-from-storage", () => ({
-  usePortfolioFromStorage: vi.fn(() => ({
-    portfolio: {},
-    totalDebt: 0,
-    collateralStatus: {},
-  })),
-}));
-
 vi.mock("@/hooks/use-auth-token", () => ({
   useAuthToken: vi.fn(() => ({ getToken: vi.fn(), authFetch: vi.fn((fn: (t: string) => Promise<unknown>) => fn("mock-token")) })),
 }));
