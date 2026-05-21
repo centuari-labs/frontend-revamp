@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:3000").replace(/\/+$/, "");
 
 /**
  * Allowed API path prefixes. Requests to paths not matching any prefix are rejected.

@@ -17,6 +17,28 @@ const ContentSecurityPolicy = `
 const nextConfig: NextConfig = {
 	images: {
 		formats: ["image/avif", "image/webp"],
+		// Specific hostnames + pathname constraints. Never use a wildcard hostname —
+		// it turns /_next/image into an SSRF gateway.
+		// See docs/audits/2026-05-08-frontend-review/forward-looking-hardening.md
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "assets.coingecko.com",
+				pathname: "/coins/images/**",
+			},
+			{
+				protocol: "https",
+				hostname: "avatars.githubusercontent.com",
+				pathname: "/u/**",
+			},
+			{ protocol: "https", hostname: "auth.privy.io", pathname: "/**" },
+		],
+		// Keep false — SVG enables stored XSS via crafted <script>/<foreignObject>.
+		dangerouslyAllowSVG: false,
+		// Serve as download instead of inline-rendering, in case an upstream
+		// redirect points /_next/image at non-image content.
+		contentDispositionType: "attachment",
+		minimumCacheTTL: 60,
 	},
 	async headers() {
 		return [
@@ -34,10 +56,6 @@ const nextConfig: NextConfig = {
 					{
 						key: "X-Content-Type-Options",
 						value: "nosniff",
-					},
-					{
-						key: "X-XSS-Protection",
-						value: "1; mode=block",
 					},
 					{
 						key: "Strict-Transport-Security",
