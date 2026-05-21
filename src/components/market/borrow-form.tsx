@@ -138,7 +138,17 @@ export function BorrowForm({
 								<div className="mt-2">
 									<Checkbox
 										id="limit-auto-refinance"
-										label="Auto refinance"
+										label={
+											<>
+												Auto refinance
+												<CentuariTooltip message="When enabled, your position will automatically renew with the best terms when it ends.">
+													<Info
+														size={16}
+														className="ml-1 inline-block text-muted-foreground"
+													/>
+												</CentuariTooltip>
+											</>
+										}
 										checked={form.autoRefinance}
 										onCheckedChange={form.setAutoRefinance}
 									/>
@@ -324,7 +334,17 @@ export function BorrowForm({
 								<div className="mt-2">
 									<Checkbox
 										id="market-auto-refinance"
-										label="Auto refinance"
+										label={
+											<>
+												Auto refinance
+												<CentuariTooltip message="When enabled, your position will automatically renew with the best terms when it ends.">
+													<Info
+														size={16}
+														className="ml-1 inline-block text-muted-foreground"
+													/>
+												</CentuariTooltip>
+											</>
+										}
 										checked={form.autoRefinance}
 										onCheckedChange={form.setAutoRefinance}
 									/>

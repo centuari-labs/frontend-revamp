@@ -12,6 +12,7 @@ import {
 	type EventData,
 	type TooltipRenderProps,
 } from "react-joyride";
+import { usePrivy } from "@privy-io/react-auth";
 
 import { TOUR_STEPS } from "./tour-steps";
 import { CentuariTourTooltip } from "./centuari-tour-tooltip";
@@ -27,6 +28,7 @@ const TourContext = createContext<TourContextType | undefined>(undefined);
 const TOUR_STORAGE_KEY = "centuari_tour_seen";
 
 export function TourProvider({ children }: { children: React.ReactNode }) {
+	const { ready, authenticated } = usePrivy();
 	const [mounted, setMounted] = useState(false);
 	const [hasSeenTour, setHasSeenTour] = useState(true);
 	const [showWelcome, setShowWelcome] = useState(false);
@@ -41,10 +43,16 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 		const seen = localStorage.getItem(TOUR_STORAGE_KEY);
 		if (!seen) {
 			setHasSeenTour(false);
-			const timer = setTimeout(() => setShowWelcome(true), 1000);
-			return () => clearTimeout(timer);
 		}
 	}, []);
+
+	// Defer the welcome dialog until the wallet is actually connected, so the
+	// tour highlights wallet-gated UI in its connected state.
+	useEffect(() => {
+		if (!ready || !authenticated || hasSeenTour) return;
+		const timer = setTimeout(() => setShowWelcome(true), 1000);
+		return () => clearTimeout(timer);
+	}, [ready, authenticated, hasSeenTour]);
 
 	const startTour = () => {
 		setShowWelcome(false);
