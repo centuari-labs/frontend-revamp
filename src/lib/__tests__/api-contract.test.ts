@@ -109,7 +109,9 @@ describe("createLendLimitOrder unwraps double envelope", () => {
 			{
 				assetId: "b0000000-0000-0000-0000-000000000001",
 				amount: "1000",
-				marketIds: ["c0000000-0000-0000-0000-000000000001"],
+				marketIds: [
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
+				],
 				rate: 650,
 			},
 			"test-token",
@@ -127,7 +129,8 @@ describe("getMyPositions paginated migration", () => {
 			{
 				id: "p1",
 				assetId: "b0000000-0000-0000-0000-000000000001",
-				marketId: "c0000000-0000-0000-0000-000000000001",
+				marketId:
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
 				symbol: "USDC",
 				name: "USD Coin",
 				shares: 1000,

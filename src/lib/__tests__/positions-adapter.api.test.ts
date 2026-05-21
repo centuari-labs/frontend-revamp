@@ -34,7 +34,8 @@ const mockCreateBorrowMarket = vi.mocked(createBorrowMarketOrder);
 
 const MARKET_IDS = {
 	assetId: "asset-uuid-usdc",
-	marketId: "market-uuid-1",
+	marketId:
+		"0xc000000000000000000000000000000000000000000000000000000000000001",
 	tokenSymbol: "USDC",
 };
 
@@ -42,7 +43,13 @@ const MOCK_RESPONSE: OrderResponseData = {
 	orderId: "order-123",
 	walletAddress: "0xWallet",
 	assetId: "asset-uuid-usdc",
-	markets: [{ marketId: "market-uuid-1", maturity: 1735689600 }],
+	markets: [
+		{
+			marketId:
+				"0xc000000000000000000000000000000000000000000000000000000000000001",
+			maturity: 1735689600,
+		},
+	],
 	timestamp: 1740441600000,
 	side: "LEND",
 	type: "LIMIT",
@@ -253,7 +260,9 @@ describe("submitLendLimitOrder", () => {
 			{
 				assetId: "asset-uuid-usdc",
 				amount: "1000",
-				marketIds: ["market-uuid-1"],
+				marketIds: [
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
+				],
 				rate: 650,
 				autoRollover: true,
 			},
@@ -399,7 +408,9 @@ describe("submitLendMarketOrder", () => {
 			{
 				assetId: "asset-uuid-usdc",
 				amount: "1000",
-				marketIds: ["market-uuid-1"],
+				marketIds: [
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
+				],
 				autoRollover: true,
 			},
 			"jwt-token",
@@ -455,7 +466,9 @@ describe("submitBorrowLimitOrder", () => {
 			{
 				assetId: "asset-uuid-usdc",
 				amount: "500",
-				marketIds: ["market-uuid-1"],
+				marketIds: [
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
+				],
 				rate: 1010,
 				autoRollover: false,
 			},
@@ -517,7 +530,9 @@ describe("submitBorrowMarketOrder", () => {
 			{
 				assetId: "asset-uuid-usdc",
 				amount: "500",
-				marketIds: ["market-uuid-1"],
+				marketIds: [
+					"0xc000000000000000000000000000000000000000000000000000000000000001",
+				],
 				autoRollover: false,
 			},
 			"jwt-borrow",
