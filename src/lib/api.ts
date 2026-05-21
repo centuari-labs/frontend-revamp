@@ -513,18 +513,6 @@ export function getDepositBalance(
 	return apiClient<BalanceResponse>(`/deposit/balance/${assetId}`, { token });
 }
 
-export function submitDeposit(
-	assetId: string,
-	amount: string,
-	token: string,
-): Promise<DepositResponse> {
-	return apiClient<DepositResponse>("/deposit", {
-		method: "POST",
-		body: { assetId, amount },
-		token,
-	});
-}
-
 export function confirmDeposit(
 	txHash: string,
 	token: string,

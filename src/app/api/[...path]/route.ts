@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+const BACKEND_URL = (
+	process.env.BACKEND_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 
 // Exact paths accepted without a subpath (e.g. POST /deposit, POST /withdraw, GET /market).
 const ALLOWED_EXACT_PATHS = new Set<string>(["market", "deposit", "withdraw"]);

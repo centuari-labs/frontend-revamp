@@ -64,4 +64,25 @@ None.
 # References
 
 - Audit: `docs/audits/2026-05-08-frontend-review/security.md` (deep-dive Round 7, I-NEW-1)
-- File where the scheme is documented in this repo: `e2e/helpers/api.ts:13-14`
+- Files where the scheme is documented in this repo:
+  - `e2e/helpers/api.ts:13-14` — `LENDER_AUTH` / `BORROWER_AUTH` helpers
+  - `e2e/lend-limit-order.spec.ts:4` — inline `AUTH_HEADER = \`Bearer DEV_TOKEN_${TEST_WALLET}\`` (found 2026-05-21; audit originally undercounted)
+
+# Verification status — 2026-05-21
+
+Frontend state re-verified. No code change made (frontend has nothing to fix per the audit body).
+
+**Re-verified findings (frontend side):**
+
+- `e2e/helpers/api.ts:13-14` still constructs `Bearer DEV_TOKEN_<wallet>` strings exactly as the audit describes.
+- One additional inline usage discovered: `e2e/lend-limit-order.spec.ts:4`. Updated the References section above. No other `DEV_TOKEN` references exist outside the audit docs themselves (grep across `*.ts`, `*.tsx`, `*.js`, `*.mjs`, `*.env*` clean).
+- Both `LENDER_WALLET` and `BORROWER_WALLET` defaults in `e2e/helpers/api.ts:7-11` resolve to the same address (`0x63f799163222e9CfC4afbddE7a632599AE0F1298`). Unrelated to the gating concern but it means the two roles aren't actually exercising distinct identities unless the env vars are set. Worth fixing separately so cross-account permission tests are meaningful.
+
+**Open with backend (unchanged from the original checklist):**
+
+- [ ] Confirm `DEV_TOKEN_*` handler exists and is gated by `NODE_ENV === "test" || NODE_ENV === "development"` (positive allowlist, not `!== "production"`).
+- [ ] Confirm production deploy cannot reach the handler under any `NODE_ENV` value (including unset).
+- [ ] Confirm production monitoring alerts on any `Authorization: Bearer DEV_TOKEN_` request.
+- [ ] Confirm a backend integration test asserts 401 for the scheme under `NODE_ENV=production`.
+
+**Outcome gate:** When backend signs off on all four boxes, this issue closes with no frontend code change. If any box fails, this escalates to Critical and a backend issue is opened.

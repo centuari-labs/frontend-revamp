@@ -268,6 +268,63 @@ describe("proxy forwarding", () => {
 	});
 });
 
+// ─── BACKEND_URL normalization ──────────────────────────────────────────────
+
+describe("BACKEND_URL trailing slash", () => {
+	it("strips a trailing slash so the upstream path is not doubled", async () => {
+		vi.resetModules();
+		const originalBackendUrl = process.env.BACKEND_URL;
+		process.env.BACKEND_URL = "http://backend.example/";
+
+		const localFetch = vi.fn().mockResolvedValue({
+			text: async () => '{"ok":true}',
+			status: 200,
+			headers: new Headers({ "Content-Type": "application/json" }),
+		});
+		vi.stubGlobal("fetch", localFetch);
+
+		try {
+			const { POST: PostHandler } = await import("@/app/api/[...path]/route");
+			const req = makeRequest("auth/login", { method: "POST" });
+			await PostHandler(req, makeParams("auth/login"));
+
+			const [url] = localFetch.mock.calls[0];
+			expect(url).toBe("http://backend.example/auth/login");
+			expect(url).not.toContain("//auth");
+		} finally {
+			process.env.BACKEND_URL = originalBackendUrl;
+			vi.stubGlobal("fetch", mockFetch);
+			vi.resetModules();
+		}
+	});
+
+	it("also strips multiple trailing slashes", async () => {
+		vi.resetModules();
+		const originalBackendUrl = process.env.BACKEND_URL;
+		process.env.BACKEND_URL = "http://backend.example///";
+
+		const localFetch = vi.fn().mockResolvedValue({
+			text: async () => "{}",
+			status: 200,
+			headers: new Headers({ "Content-Type": "application/json" }),
+		});
+		vi.stubGlobal("fetch", localFetch);
+
+		try {
+			const { GET: GetHandler } = await import("@/app/api/[...path]/route");
+			const req = makeRequest("market");
+			await GetHandler(req, makeParams("market"));
+
+			const [url] = localFetch.mock.calls[0];
+			expect(url).toBe("http://backend.example/market");
+		} finally {
+			process.env.BACKEND_URL = originalBackendUrl;
+			vi.stubGlobal("fetch", mockFetch);
+			vi.resetModules();
+		}
+	});
+});
+
 // ─── HTTP Methods ───────────────────────────────────────────────────────────
 
 describe("HTTP methods", () => {
