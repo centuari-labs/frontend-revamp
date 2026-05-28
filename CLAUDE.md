@@ -21,6 +21,8 @@ Addresses and ABIs are auto-managed by `smart-contract-revamp/bin/sync-to-servic
 - `frontend-revamp/.env.local` — `NEXT_PUBLIC_*` addresses (gitignored).
 - `frontend-revamp/abis/*.json` — full ABIs (gitignored).
 
+Verify with `./bin/sync-to-services.sh --check` — it exits non-zero (and names the file) if `.env.local`, `abis/*.json`, or `config/tokens.json` has drifted from the latest deployment.
+
 Do not hand-edit either. Code reads addresses through `src/lib/chain-config.ts` (which throws at import time if a required address is missing) and imports ABIs as `import abi from "@/../abis/<Contract>.json"`. Hand-curated TS ABI subsets were removed in Phase 4 of the ABI sync migration.
 
 ## Architecture
