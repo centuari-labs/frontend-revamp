@@ -125,7 +125,7 @@ describe("useSubmitLend (thin wrapper)", () => {
 			);
 		});
 
-		expect(spy).toHaveBeenCalledTimes(7);
+		expect(spy).toHaveBeenCalledTimes(8);
 	});
 
 	it("invalidates queries on successful market order", async () => {
@@ -150,6 +150,6 @@ describe("useSubmitLend (thin wrapper)", () => {
 			);
 		});
 
-		expect(spy).toHaveBeenCalledTimes(7);
+		expect(spy).toHaveBeenCalledTimes(8);
 	});
 });

@@ -8,6 +8,7 @@ export const QUERY_KEYS = {
 	OPEN_ORDERS: "open-orders",
 	ORDER_HISTORY: "order-history",
 	USER_DETAILS: "user-details",
+	WITHDRAWABLE_MAX: "withdrawable-max",
 } as const;
 
 /** Invalidate all user-specific queries after a mutation */
@@ -20,6 +21,7 @@ export function invalidateUserQueries(queryClient: QueryClient) {
 		QUERY_KEYS.OPEN_ORDERS,
 		QUERY_KEYS.ORDER_HISTORY,
 		QUERY_KEYS.USER_DETAILS,
+		QUERY_KEYS.WITHDRAWABLE_MAX,
 	];
 	for (const key of keys) {
 		queryClient.invalidateQueries({ queryKey: [key] });

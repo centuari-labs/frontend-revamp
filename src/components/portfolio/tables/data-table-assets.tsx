@@ -39,6 +39,7 @@ import { useCountdown } from "@/hooks/use-countdown";
 import { useFlagCollateral } from "@/hooks/use-flag-collateral";
 import { useFlagCollateralDirect } from "@/hooks/use-flag-collateral-direct";
 import { useUnflagCollateral } from "@/hooks/use-unflag-collateral";
+import { useWithdrawableMax } from "@/hooks/use-withdrawable-max";
 
 export type AssetProps = {
 	id: string;
@@ -113,6 +114,11 @@ function CollateralActions({
 	onOpenDialog: (dialog: RowDialog) => void;
 }) {
 	const { remainingSec } = useCountdown(asset.unlocksAt);
+	// HF-aware unflag pre-check. Only fetched for flagged collateral assets.
+	const { withdrawableMax } = useWithdrawableMax(
+		asset.id,
+		asset.usedAsCollateral,
+	);
 	const dialogAsset: CollateralDialogAsset = {
 		logo: asset.assetImg,
 		label: asset.assetName,
@@ -121,11 +127,16 @@ function CollateralActions({
 
 	if (asset.usedAsCollateral) {
 		const isLocked = asset.unlocksAt > 0 && remainingSec > 0;
-		return (
+		// `canUnflag === false` means removing this collateral would drop HF
+		// below the safe threshold (backend HF math). `undefined` while
+		// loading -> leave enabled; the on-chain RiskModule.canUnflag +
+		// existing WOULD_MAKE_UNHEALTHY toast remain the enforcement backstop.
+		const blockedByHf = withdrawableMax?.canUnflag === false;
+		const button = (
 			<Button
 				size="sm"
 				variant="destructive"
-				disabled={isLocked}
+				disabled={isLocked || blockedByHf}
 				onClick={() =>
 					onOpenDialog({
 						kind: "remove-collateral",
@@ -137,6 +148,21 @@ function CollateralActions({
 				Remove as collateral
 			</Button>
 		);
+		if (blockedByHf) {
+			return (
+				<CentuariTooltip message="Repay debt first — removing this collateral would drop your health factor below the safe threshold.">
+					<span tabIndex={0}>{button}</span>
+				</CentuariTooltip>
+			);
+		}
+		if (isLocked) {
+			return (
+				<CentuariTooltip message="Collateral is locked for 24h after flagging.">
+					<span tabIndex={0}>{button}</span>
+				</CentuariTooltip>
+			);
+		}
+		return button;
 	}
 	if (asset.pendingCollateralFlag) {
 		return (

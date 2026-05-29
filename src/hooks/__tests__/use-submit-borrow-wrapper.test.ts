@@ -129,7 +129,7 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 			);
 		});
 
-		expect(spy).toHaveBeenCalledTimes(7);
+		expect(spy).toHaveBeenCalledTimes(8);
 	});
 
 	it("invalidates queries on successful market order", async () => {
@@ -154,7 +154,7 @@ describe("useSubmitBorrow (thin wrapper)", () => {
 			);
 		});
 
-		expect(spy).toHaveBeenCalledTimes(7);
+		expect(spy).toHaveBeenCalledTimes(8);
 	});
 
 	it("throws when options are missing", async () => {

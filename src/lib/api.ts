@@ -280,6 +280,36 @@ export function getUserDetails(token: string): Promise<UserDetailsResponse> {
 	});
 }
 
+// ─── Withdrawable Max (HF-aware withdraw/unflag limits) ──────────────
+
+/**
+ * HF-aware withdrawal limits for one asset. Powers the withdraw dialog's
+ * "max withdrawable" + projected-HF hints and the "Remove as collateral"
+ * button's enabled state. `currentHealthFactor` is null when the user has no
+ * debt. The `*BaseUnits` strings are authoritative; human fields are display.
+ */
+export interface WithdrawableMaxResponse {
+	assetId: string;
+	isCollateral: boolean;
+	availableBalanceBaseUnits: string;
+	availableBalance: string;
+	currentHealthFactor: number | null;
+	maxWithdrawableBaseUnits: string;
+	maxWithdrawable: string;
+	canUnflag: boolean;
+	bufferBps: number;
+}
+
+export function getWithdrawableMax(
+	assetId: string,
+	token: string,
+): Promise<WithdrawableMaxResponse> {
+	return apiClient<WithdrawableMaxResponse>("/portfolio/withdrawable-max", {
+		token,
+		params: { assetId },
+	});
+}
+
 // ─── Collateral Flag / Unflag ────────────────────────────────────────
 
 export function flagCollateral(

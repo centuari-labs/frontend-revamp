@@ -151,9 +151,10 @@ async function installEthereumMock(page: Page) {
 
 async function mockBaseRoutes(
 	page: Page,
-	opts: { assets: AssetFixture[]; healthFactor?: number },
+	opts: { assets: AssetFixture[]; healthFactor?: number; canUnflag?: boolean },
 ) {
 	const healthFactor = opts.healthFactor ?? 2.5;
+	const canUnflag = opts.canUnflag ?? true;
 
 	await page.route("**/api/portfolio/my-assets**", async (route) => {
 		await route.fulfill({
@@ -214,6 +215,28 @@ async function mockBaseRoutes(
 			contentType: "application/json",
 			body: JSON.stringify(
 				envelope({ address: TEST_WALLET, name: "Stub User" }),
+			),
+		});
+	});
+
+	// HF-aware withdraw/unflag limits. `canUnflag` drives the "Remove as
+	// collateral" button's enabled state.
+	await page.route("**/api/portfolio/withdrawable-max**", async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify(
+				envelope({
+					assetId: "",
+					isCollateral: true,
+					availableBalanceBaseUnits: "1000000000",
+					availableBalance: "1000",
+					currentHealthFactor: canUnflag ? 2.5 : 1.2,
+					maxWithdrawableBaseUnits: canUnflag ? "1000000000" : "200000000",
+					maxWithdrawable: canUnflag ? "1000" : "200",
+					canUnflag,
+					bufferBps: 100,
+				}),
 			),
 		});
 	});
@@ -403,6 +426,32 @@ test.describe("Collateral toggle — UI", () => {
 		await expect(
 			page.getByText("Collateral", { exact: true }).first(),
 		).toBeVisible();
+	});
+
+	test("4b. remove as collateral is disabled when canUnflag is false (HF gate)", async ({
+		page,
+	}) => {
+		const nowSec = Math.floor(Date.now() / 1000);
+		const onChain = makeAsset({
+			symbol: "USDC",
+			isCollateral: true,
+			// Flagged long ago so the 24h lock has elapsed — only the HF gate
+			// (canUnflag=false) can disable the button here.
+			flaggedAt: nowSec - 72 * 3600,
+			unlocksAt: nowSec - 48 * 3600,
+		});
+		await mockBaseRoutes(page, { assets: [onChain], canUnflag: false });
+
+		await gotoPortfolio(page);
+
+		await expect(
+			page.getByText("Collateral", { exact: true }).first(),
+		).toBeVisible();
+		const removeBtn = page
+			.getByRole("button", { name: "Remove as collateral" })
+			.first();
+		await expect(removeBtn).toBeVisible();
+		await expect(removeBtn).toBeDisabled();
 	});
 
 	test("5. borrow with newly-selected collateral fires flag once per asset before order placement", async ({

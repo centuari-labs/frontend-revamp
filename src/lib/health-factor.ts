@@ -112,3 +112,28 @@ export function projectHealthFactorForRepay(args: {
 	const hf = ((collateralUsd - totalDebtUsd) * weightedLtv) / newTotalDebtUsd;
 	return Number.isFinite(hf) && hf >= 0 ? hf : 0;
 }
+
+/**
+ * Project health factor after withdrawing `withdrawUsd` worth of collateral.
+ * Formula: ((collateralUsd - withdrawUsd - totalDebtUsd) × weightedLtv) / totalDebtUsd
+ * Returns Infinity when there is no debt.
+ *
+ * This holds `weightedLtv` constant — a single-asset slider preview — so it can
+ * differ slightly from the authoritative `maxWithdrawable` the API returns.
+ * Use the API value as the hard cap; this is only for the live HF readout as
+ * the user types.
+ */
+export function projectHealthFactorForWithdraw(args: {
+	collateralUsd: number;
+	totalDebtUsd: number;
+	weightedLtv: number;
+	withdrawUsd: number;
+}): number {
+	const { collateralUsd, totalDebtUsd, weightedLtv, withdrawUsd } = args;
+	if (totalDebtUsd <= 0) return Infinity;
+	const remainingCollateral = Math.max(0, collateralUsd - withdrawUsd);
+	if (remainingCollateral <= 0 || weightedLtv <= 0) return 0;
+	const hf =
+		((remainingCollateral - totalDebtUsd) * weightedLtv) / totalDebtUsd;
+	return Number.isFinite(hf) && hf >= 0 ? hf : 0;
+}

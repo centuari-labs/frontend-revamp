@@ -163,7 +163,7 @@ describe("useSubmitOrder", () => {
 				);
 			});
 
-			expect(spy).toHaveBeenCalledTimes(7);
+			expect(spy).toHaveBeenCalledTimes(8);
 			expect(spy).toHaveBeenCalledWith({
 				queryKey: [QUERY_KEYS.MY_ASSETS],
 			});
@@ -335,7 +335,7 @@ describe("useSubmitOrder", () => {
 				);
 			});
 
-			expect(spy).toHaveBeenCalledTimes(7);
+			expect(spy).toHaveBeenCalledTimes(8);
 		});
 	});
 

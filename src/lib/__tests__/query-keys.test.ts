@@ -10,15 +10,16 @@ describe("QUERY_KEYS", () => {
 		expect(QUERY_KEYS.OPEN_ORDERS).toBe("open-orders");
 		expect(QUERY_KEYS.ORDER_HISTORY).toBe("order-history");
 		expect(QUERY_KEYS.USER_DETAILS).toBe("user-details");
+		expect(QUERY_KEYS.WITHDRAWABLE_MAX).toBe("withdrawable-max");
 	});
 
-	it("contains exactly 7 keys", () => {
-		expect(Object.keys(QUERY_KEYS)).toHaveLength(7);
+	it("contains exactly 8 keys", () => {
+		expect(Object.keys(QUERY_KEYS)).toHaveLength(8);
 	});
 });
 
 describe("invalidateUserQueries", () => {
-	it("invalidates all 7 query keys", () => {
+	it("invalidates all 8 query keys", () => {
 		const mockInvalidateQueries = vi.fn();
 		const mockQueryClient = {
 			invalidateQueries: mockInvalidateQueries,
@@ -26,7 +27,7 @@ describe("invalidateUserQueries", () => {
 
 		invalidateUserQueries(mockQueryClient as never);
 
-		expect(mockInvalidateQueries).toHaveBeenCalledTimes(7);
+		expect(mockInvalidateQueries).toHaveBeenCalledTimes(8);
 	});
 
 	it("passes each key wrapped in an array", () => {
@@ -45,6 +46,7 @@ describe("invalidateUserQueries", () => {
 			"open-orders",
 			"order-history",
 			"user-details",
+			"withdrawable-max",
 		];
 
 		for (const key of expectedKeys) {

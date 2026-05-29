@@ -3,6 +3,7 @@ import {
 	classifyHealthFactor,
 	projectHealthFactorForBorrow,
 	projectHealthFactorForRepay,
+	projectHealthFactorForWithdraw,
 	getHealthFactorPercentage,
 } from "@/lib/health-factor";
 
@@ -143,6 +144,53 @@ describe("projectHealthFactorForRepay", () => {
 			totalDebtUsd: 500,
 			weightedLtv: 0.75,
 			repayUsd: 100,
+		});
+		expect(hf).toBe(0);
+	});
+});
+
+// ─── projectHealthFactorForWithdraw ────────────────────────────────────
+
+describe("projectHealthFactorForWithdraw", () => {
+	it("returns Infinity when there is no debt", () => {
+		const hf = projectHealthFactorForWithdraw({
+			collateralUsd: 1000,
+			totalDebtUsd: 0,
+			weightedLtv: 0.75,
+			withdrawUsd: 100,
+		});
+		expect(hf).toBe(Infinity);
+	});
+
+	it("computes HF after a partial collateral withdrawal", () => {
+		// remaining = 1000 - 200 = 800; HF = ((800 - 200) × 0.75) / 200 = 450 / 200 = 2.25
+		const hf = projectHealthFactorForWithdraw({
+			collateralUsd: 1000,
+			totalDebtUsd: 200,
+			weightedLtv: 0.75,
+			withdrawUsd: 200,
+		});
+		expect(hf).toBeCloseTo(2.25, 6);
+	});
+
+	it("drops as withdrawUsd grows", () => {
+		const base = {
+			collateralUsd: 1000,
+			totalDebtUsd: 200,
+			weightedLtv: 0.75,
+		};
+		const small = projectHealthFactorForWithdraw({ ...base, withdrawUsd: 100 });
+		const large = projectHealthFactorForWithdraw({ ...base, withdrawUsd: 400 });
+		expect(large).toBeLessThan(small);
+	});
+
+	it("returns 0 when the withdrawal would exhaust collateral below the debt", () => {
+		// remaining = 1000 - 900 = 100 < debt 200 -> negative numerator -> clamped 0
+		const hf = projectHealthFactorForWithdraw({
+			collateralUsd: 1000,
+			totalDebtUsd: 200,
+			weightedLtv: 0.75,
+			withdrawUsd: 900,
 		});
 		expect(hf).toBe(0);
 	});

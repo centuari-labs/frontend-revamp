@@ -31,6 +31,9 @@ import { cn, truncateBalance } from "@/lib/utils";
 import { getChainIcon } from "@/lib/chains";
 import { useUserDetails } from "@/hooks/use-user-details";
 import { useWithdraw } from "@/hooks/use-withdraw";
+import { useWithdrawableMax } from "@/hooks/use-withdrawable-max";
+import { projectHealthFactorForWithdraw } from "@/lib/health-factor";
+import { HealthFactorBadge } from "@/components/health-factor-badge";
 import type { UserAssetDetail } from "@/lib/api";
 import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
 import { toast } from "sonner";
@@ -61,6 +64,12 @@ export function CentuariWithdrawDialog() {
 		isPending,
 	} = useWithdraw();
 
+	// HF-aware limits for the selected asset (only fetched for collateral).
+	const { withdrawableMax } = useWithdrawableMax(
+		selectedAsset?.assetId,
+		selectedAsset?.isCollateral,
+	);
+
 	const isProcessing = isPending;
 
 	const { isWrongNetwork, switchingChain, handleSwitchChain } =
@@ -72,12 +81,46 @@ export function CentuariWithdrawDialog() {
 	);
 
 	const amountNum = Number(withdrawAmount) || 0;
-	const exceedsBalance =
-		selectedAsset != null && amountNum > selectedAsset.availableBalance;
 	const tokenPrice =
 		selectedAsset && selectedAsset.availableBalance > 0
 			? selectedAsset.availableBalanceUsd / selectedAsset.availableBalance
 			: 0;
+
+	// HF-safe withdrawal cap. For a flagged collateral asset the backend
+	// returns the largest amount that keeps HF >= 1 + buffer; otherwise the
+	// whole balance is freely withdrawable. `maxWithdrawable` is the exact
+	// (authoritative) string from the API — preferred over the local
+	// projection for the cap.
+	const maxWithdrawableStr =
+		selectedAsset?.isCollateral && withdrawableMax
+			? withdrawableMax.maxWithdrawable
+			: null;
+	const cap =
+		maxWithdrawableStr != null
+			? Number(maxWithdrawableStr)
+			: (selectedAsset?.availableBalance ?? 0);
+	const isCapConstrained =
+		selectedAsset != null && cap < selectedAsset.availableBalance;
+
+	const exceedsBalance =
+		selectedAsset != null && amountNum > selectedAsset.availableBalance;
+	// Within balance but above the HF-safe cap (only possible for a
+	// constrained collateral asset). Distinct from exceedsBalance so the user
+	// sees the right reason.
+	const exceedsMaxWithdrawable =
+		selectedAsset != null && !exceedsBalance && amountNum > cap;
+
+	// Live projected HF as the user types (collateral assets only — withdrawing
+	// a non-collateral asset does not change HF). Infinity => no debt.
+	const projectedHf =
+		selectedAsset?.isCollateral && userDetails && amountNum > 0
+			? projectHealthFactorForWithdraw({
+					collateralUsd: userDetails.collateralUsd,
+					totalDebtUsd: userDetails.totalDebtUsd,
+					weightedLtv: userDetails.weightedLtv,
+					withdrawUsd: amountNum * tokenPrice,
+				})
+			: null;
 
 	const handleTokenSelect = (asset: UserAssetDetail) => {
 		setSelectedAsset(asset);
@@ -126,6 +169,12 @@ export function CentuariWithdrawDialog() {
 			toast.error("Amount exceeds available balance");
 			return;
 		}
+		if (exceedsMaxWithdrawable) {
+			toast.error(
+				"Amount would reduce your health factor below the safe threshold",
+			);
+			return;
+		}
 		await withdraw(selectedAsset.assetId, withdrawAmount);
 	};
 
@@ -138,11 +187,17 @@ export function CentuariWithdrawDialog() {
 
 	const handleQuickFill = (pct: number) => {
 		if (!selectedAsset) return;
-		const val = selectedAsset.availableBalance * pct;
-		// Use full precision for max, reasonable precision otherwise
-		setWithdrawAmount(
-			pct === 1 ? val.toString() : val.toFixed(6).replace(/\.?0+$/, ""),
-		);
+		if (pct === 1) {
+			// Max = the HF-safe cap. Prefer the exact API string so the
+			// submitted amount matches what the backend will accept; fall back
+			// to the full balance when the asset is unconstrained.
+			setWithdrawAmount(
+				maxWithdrawableStr ?? selectedAsset.availableBalance.toString(),
+			);
+			return;
+		}
+		const val = cap * pct;
+		setWithdrawAmount(val.toFixed(6).replace(/\.?0+$/, ""));
 	};
 
 	return (
@@ -454,7 +509,61 @@ export function CentuariWithdrawDialog() {
 												))}
 											</div>
 
-											{exceedsBalance && (
+											{selectedAsset?.isCollateral &&
+											(isCapConstrained || projectedHf != null) && (
+												<div className="mt-4 flex flex-col gap-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+													{isCapConstrained && (
+														<div className="flex items-center justify-between">
+															<CentuariTypography
+																variant="b3"
+																className="text-muted-foreground"
+															>
+																Max withdrawable
+															</CentuariTypography>
+															<button
+																type="button"
+																onClick={() => handleQuickFill(1)}
+																disabled={isProcessing}
+																className="disabled:opacity-50"
+															>
+																<CentuariTypography variant="b3">
+																	{truncateBalance(cap)} {selectedAsset.symbol}
+																</CentuariTypography>
+															</button>
+														</div>
+													)}
+													{projectedHf != null &&
+														(Number.isFinite(projectedHf) ? (
+															<div className="flex items-center justify-between">
+																<CentuariTypography
+																	variant="b3"
+																	className="text-muted-foreground"
+																>
+																	Health factor after
+																</CentuariTypography>
+																<HealthFactorBadge healthFactor={projectedHf} />
+															</div>
+														) : (
+															<CentuariTypography
+																variant="b3"
+																className="text-muted-foreground"
+															>
+																No debt — your full balance is withdrawable
+															</CentuariTypography>
+														))}
+												</div>
+											)}
+
+										{exceedsMaxWithdrawable && (
+											<CentuariAlert
+												variant="destructive"
+												text="Exceeds safe withdrawal"
+												description={`Withdrawing more than ${selectedAsset ? truncateBalance(cap) : "0"} ${selectedAsset?.symbol ?? ""} would reduce your health factor below the safe threshold. Repay debt to withdraw more.`}
+												className="mt-4"
+											/>
+										)}
+
+										{exceedsBalance && (
 												<CentuariAlert
 													variant="destructive"
 													text="Insufficient balance"
@@ -489,6 +598,7 @@ export function CentuariWithdrawDialog() {
 									!withdrawAmount ||
 									amountNum <= 0 ||
 									exceedsBalance ||
+									exceedsMaxWithdrawable ||
 									isWrongNetwork
 								}
 							>
