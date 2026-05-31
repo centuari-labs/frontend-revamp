@@ -83,9 +83,9 @@ export default function PortfolioPage() {
 	const netAPR = apiPortfolio?.netAPY ?? 0;
 
 	const availableBalancePercent =
-		apiPortfolio?.allocation.availableBalancePct ?? 0;
-	const suppliedPercent = apiPortfolio?.allocation.suppliedAssetsPct ?? 0;
-	const borrowedPercent = apiPortfolio?.allocation.borrowedAssetsPct ?? 0;
+		apiPortfolio?.allocation?.availableBalancePct ?? 0;
+	const suppliedPercent = apiPortfolio?.allocation?.suppliedAssetsPct ?? 0;
+	const borrowedPercent = apiPortfolio?.allocation?.borrowedAssetsPct ?? 0;
 
 	const suppliedAssetsUsd = lendBorrow?.suppliedAssets ?? 0;
 	const borrowedAssetsUsd = lendBorrow?.borrowedAssets ?? 0;
