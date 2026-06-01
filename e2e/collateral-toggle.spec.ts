@@ -77,14 +77,23 @@ function envelope<T>(data: T, statusCode = 200) {
 	return { statusCode, data };
 }
 
+/**
+ * Paginated-endpoint envelope. `apiClientPaginated` (src/lib/api-client.ts)
+ * reads `json.data` (the array) and `json.meta` (pagination) as SIBLINGS —
+ * it does not unwrap a nested `{ data, page, ... }`. Endpoints that flow
+ * through it: `/portfolio/my-assets`, `/portfolio/my-position`.
+ */
 function pagedEnvelope<T>(items: T[], page = 1, limit = 10) {
-	return envelope({
+	return {
+		statusCode: 200,
 		data: items,
-		page,
-		limit,
-		totalData: items.length,
-		totalPages: 1,
-	});
+		meta: {
+			page,
+			limit,
+			totalData: items.length,
+			totalPages: 1,
+		},
+	};
 }
 
 function errorBody(
@@ -156,11 +165,44 @@ async function mockBaseRoutes(
 	const healthFactor = opts.healthFactor ?? 2.5;
 	const canUnflag = opts.canUnflag ?? true;
 
+	// Playwright matches routes in REVERSE registration order (last-registered
+	// wins). Register the catch-all FIRST so it has the LOWEST precedence —
+	// otherwise it shadows every specific portfolio mock below. Per-test
+	// overrides registered after `mockBaseRoutes()` therefore win over these.
+	await page.route("**/api/portfolio/**", async (route) => {
+		const url = route.request().url();
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify(envelope({ ok: true, url })),
+		});
+	});
+
+	// Access-code gate: `useSyncAccount` (EmbeddedWalletGuard) POSTs
+	// `/auth/login` and gates the whole app on `access_granted`. Without this
+	// the AccessCodeGate overlay covers the page and intercepts every click.
+	await page.route("**/api/auth/login**", async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify(
+				envelope({
+					id: "stub-account",
+					privy_user_id: "stub-privy-user",
+					user_wallet: TEST_WALLET,
+					name: "Stub User",
+					access_granted: true,
+					created_at: "2026-01-01T00:00:00.000Z",
+				}),
+			),
+		});
+	});
+
 	await page.route("**/api/portfolio/my-assets**", async (route) => {
 		await route.fulfill({
 			status: 200,
 			contentType: "application/json",
-			body: JSON.stringify(envelope(pagedEnvelope(opts.assets).data)),
+			body: JSON.stringify(pagedEnvelope(opts.assets)),
 		});
 	});
 
@@ -201,7 +243,8 @@ async function mockBaseRoutes(
 		});
 	});
 
-	await page.route("**/api/portfolio/positions**", async (route) => {
+	// Real endpoint is `/portfolio/my-position` (singular) — see `getMyPositions`.
+	await page.route("**/api/portfolio/my-position**", async (route) => {
 		await route.fulfill({
 			status: 200,
 			contentType: "application/json",
@@ -240,23 +283,16 @@ async function mockBaseRoutes(
 			),
 		});
 	});
-
-	// Catch-all for any other portfolio path to keep the page from erroring.
-	await page.route("**/api/portfolio/**", async (route) => {
-		const url = route.request().url();
-		await route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify(envelope({ ok: true, url })),
-		});
-	});
 }
 
 async function gotoPortfolio(page: Page) {
 	await page.goto(`${FRONTEND_URL}/portfolio`);
-	await page.waitForLoadState("networkidle");
+	// Don't wait for "networkidle": PriceProvider holds a Socket.io connection
+	// open, so the network never idles (auth.setup.ts waits on the heading for
+	// the same reason). Wait on the asset-table heading directly — its presence
+	// means the access gate is cleared and the portfolio queries have resolved.
 	await expect(page.getByRole("heading", { name: "My Assets" })).toBeVisible({
-		timeout: 10_000,
+		timeout: 30_000,
 	});
 }
 
@@ -270,6 +306,9 @@ test.describe("Collateral toggle — UI", () => {
 	}) => {
 		const asset = makeAsset({ symbol: "USDC" });
 		let assetsAfterFlag = false;
+		await mockBaseRoutes(page, { assets: [asset] });
+		// Registered AFTER mockBaseRoutes so this dynamic handler wins (Playwright
+		// matches last-registered first). Flips the row to Pending post-flag.
 		await page.route("**/api/portfolio/my-assets**", async (route) => {
 			const current = assetsAfterFlag
 				? makeAsset({ symbol: "USDC", pendingCollateralFlag: true })
@@ -277,10 +316,9 @@ test.describe("Collateral toggle — UI", () => {
 			await route.fulfill({
 				status: 200,
 				contentType: "application/json",
-				body: JSON.stringify(envelope(pagedEnvelope([current]).data)),
+				body: JSON.stringify(pagedEnvelope([current])),
 			});
 		});
-		await mockBaseRoutes(page, { assets: [asset] });
 
 		await page.route("**/api/collateral/flag", async (route) => {
 			assetsAfterFlag = true;
@@ -348,6 +386,9 @@ test.describe("Collateral toggle — UI", () => {
 			pendingCollateralFlag: true,
 		});
 		let cleared = false;
+		await mockBaseRoutes(page, { assets: [pending] });
+		// Registered AFTER mockBaseRoutes so this dynamic handler wins (Playwright
+		// matches last-registered first). Clears the Pending row post-unflag.
 		await page.route("**/api/portfolio/my-assets**", async (route) => {
 			const current = cleared
 				? makeAsset({ symbol: "USDC", pendingCollateralFlag: false })
@@ -355,10 +396,9 @@ test.describe("Collateral toggle — UI", () => {
 			await route.fulfill({
 				status: 200,
 				contentType: "application/json",
-				body: JSON.stringify(envelope(pagedEnvelope([current]).data)),
+				body: JSON.stringify(pagedEnvelope([current])),
 			});
 		});
-		await mockBaseRoutes(page, { assets: [pending] });
 
 		await page.route("**/api/collateral/unflag", async (route) => {
 			cleared = true;
@@ -470,9 +510,25 @@ test.describe("Collateral toggle — UI", () => {
 		await mockBaseRoutes(page, { assets: [usdc, eth] });
 
 		const callOrder: string[] = [];
+		const flaggedSet = new Set<string>();
+		// Dynamic my-assets (registered after mockBaseRoutes → wins). Reflects each
+		// queued flag as Pending so the next `.first()` advances to the next asset.
+		await page.route("**/api/portfolio/my-assets**", async (route) => {
+			const items = [usdc, eth].map((a) =>
+				flaggedSet.has(a.tokenAddress)
+					? { ...a, pendingCollateralFlag: true }
+					: a,
+			);
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify(pagedEnvelope(items)),
+			});
+		});
 		await page.route("**/api/collateral/flag", async (route) => {
 			const body = route.request().postDataJSON() as { asset: string };
 			callOrder.push(`flag:${body.asset}`);
+			flaggedSet.add(body.asset);
 			await route.fulfill({
 				status: 200,
 				contentType: "application/json",
@@ -511,26 +567,37 @@ test.describe("Collateral toggle — UI", () => {
 		// buttons are present per row.
 		await gotoPortfolio(page);
 
+		// Flag the first asset (USDC). Once it flips to Pending, `.first()` below
+		// advances to the second asset (ETH). `.first()` on the toast: a prior
+		// success toast may still be on screen when the second one appears.
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
 			.first()
 			.click();
 		await page.getByRole("button", { name: "Flag", exact: true }).click();
 		await expect(
-			page.getByText(
-				"Collateral preference saved. Will apply at your next match.",
-			),
+			page
+				.getByText(
+					"Collateral preference saved. Will apply at your next match.",
+				)
+				.first(),
+		).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Remove pending" }),
 		).toBeVisible();
 
+		// Flag the second asset (ETH).
 		await page
 			.getByRole("button", { name: "Flag as collateral" })
 			.first()
 			.click();
 		await page.getByRole("button", { name: "Flag", exact: true }).click();
 		await expect(
-			page.getByText(
-				"Collateral preference saved. Will apply at your next match.",
-			),
+			page
+				.getByText(
+					"Collateral preference saved. Will apply at your next match.",
+				)
+				.first(),
 		).toBeVisible();
 
 		const flagCalls = callOrder.filter((c) => c.startsWith("flag:"));
@@ -566,24 +633,19 @@ test.describe("Collateral toggle — UI", () => {
 
 		await gotoPortfolio(page);
 
+		// Open the flag dialog and confirm 11×. Auto-waiting clicks (not instant
+		// isVisible checks) avoid the dialog open-animation race; waiting for the
+		// dialog to fully close each iteration lets Radix restore <body>
+		// pointer-events before the next open — rapid re-open otherwise wedges
+		// the page unclickable. The single asset stays non-collateral, so the row
+		// action is always "Flag as collateral".
 		for (let i = 0; i < 11; i += 1) {
 			await page
-				.getByRole("button", { name: /^Flag as collateral$|^Remove pending$/ })
+				.getByRole("button", { name: "Flag as collateral" })
 				.first()
 				.click();
-			const flagButton = page.getByRole("button", {
-				name: "Flag",
-				exact: true,
-			});
-			const removeButton = page.getByRole("button", {
-				name: "Remove",
-				exact: true,
-			});
-			if (await flagButton.isVisible().catch(() => false)) {
-				await flagButton.click();
-			} else if (await removeButton.isVisible().catch(() => false)) {
-				await removeButton.click();
-			}
+			await page.getByRole("button", { name: "Flag", exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
 		}
 
 		await expect(

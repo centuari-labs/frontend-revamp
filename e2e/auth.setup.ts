@@ -43,6 +43,16 @@ if (!fs.existsSync(STATE_PATH)) {
 setup.use({ storageState: STATE_PATH });
 
 setup("Privy session is valid", async ({ page }) => {
+	// Suppress the first-visit Welcome tour dialog — it renders as a modal that
+	// makes the page content inert, hiding the "My Assets" heading from the
+	// accessibility tree (same keys the specs set; see collateral-toggle.spec.ts
+	// / tour-context.tsx).
+	await page.addInitScript(() => {
+		localStorage.setItem("centuari_tour_seen", "true");
+		localStorage.setItem("centuari_borrow_dialog_tour_seen", "true");
+		localStorage.setItem("centuari_lend_dialog_tour_seen", "true");
+	});
+
 	await page.goto(`${FRONTEND_URL}/portfolio`);
 
 	const myAssets = page.getByRole("heading", { name: "My Assets" });
