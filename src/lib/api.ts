@@ -634,7 +634,7 @@ export interface OrderHistoryItem {
 	amount: string;
 	filledQuantity: string | null;
 	status: "OPEN" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED";
-	cancelReason?: "USER_CANCELLED" | "IOC" | null;
+	cancelReason?: "USER_CANCELLED" | "IOC" | "MARKET_MATURED" | null;
 	maturity: string;
 	asset: OrderHistoryAsset;
 	fee: string | null;
@@ -780,7 +780,7 @@ export interface OpenOrderItem {
 	amount: string;
 	filledQuantity: string | null;
 	status: "OPEN" | "FILLED" | "PARTIALLY_FILLED" | "CANCELLED";
-	cancelReason?: "USER_CANCELLED" | "IOC" | null;
+	cancelReason?: "USER_CANCELLED" | "IOC" | "MARKET_MATURED" | null;
 	maturity: string;
 	asset: OrderHistoryAsset;
 	createdAt: string;
