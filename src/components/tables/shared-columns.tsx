@@ -25,7 +25,7 @@ export interface OrderTableRow {
 	filledQuantity?: string | number | null;
 	maturity?: string | number | null;
 	status?: string;
-	cancelReason?: "USER_CANCELLED" | "IOC" | null;
+	cancelReason?: "USER_CANCELLED" | "IOC" | "MARKET_MATURED" | null;
 	// API shape (OpenOrderItem, OrderHistoryItem, TransactionHistoryItem)
 	asset?: { symbol: string; imageUrl?: string | null };
 	// Position shape (mapped from API)
@@ -254,6 +254,11 @@ export function createMaturityColumn<T extends OrderTableRow>(): ColumnDef<T> {
 function getStatusLabel(row: OrderTableRow): string {
 	const status = row.status;
 	if (!status) return "-";
+	if (status === "CANCELLED" && row.cancelReason === "MARKET_MATURED") {
+		// Auto-cancelled because the market passed maturity — surfaced as
+		// "Expired" so users can tell it apart from a manual cancellation.
+		return "Expired";
+	}
 	if (status === "CANCELLED" && row.cancelReason === "IOC") {
 		return "Cancelled (IOC)";
 	}
