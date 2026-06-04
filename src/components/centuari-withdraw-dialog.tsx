@@ -510,60 +510,63 @@ export function CentuariWithdrawDialog() {
 											</div>
 
 											{selectedAsset?.isCollateral &&
-											(isCapConstrained || projectedHf != null) && (
-												<div className="mt-4 flex flex-col gap-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2">
-													{isCapConstrained && (
-														<div className="flex items-center justify-between">
-															<CentuariTypography
-																variant="b3"
-																className="text-muted-foreground"
-															>
-																Max withdrawable
-															</CentuariTypography>
-															<button
-																type="button"
-																onClick={() => handleQuickFill(1)}
-																disabled={isProcessing}
-																className="disabled:opacity-50"
-															>
-																<CentuariTypography variant="b3">
-																	{truncateBalance(cap)} {selectedAsset.symbol}
-																</CentuariTypography>
-															</button>
-														</div>
-													)}
-													{projectedHf != null &&
-														(Number.isFinite(projectedHf) ? (
+												(isCapConstrained || projectedHf != null) && (
+													<div className="mt-4 flex flex-col gap-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+														{isCapConstrained && (
 															<div className="flex items-center justify-between">
 																<CentuariTypography
 																	variant="b3"
 																	className="text-muted-foreground"
 																>
-																	Health factor after
+																	Max withdrawable
 																</CentuariTypography>
-																<HealthFactorBadge healthFactor={projectedHf} />
+																<button
+																	type="button"
+																	onClick={() => handleQuickFill(1)}
+																	disabled={isProcessing}
+																	className="disabled:opacity-50"
+																>
+																	<CentuariTypography variant="b3">
+																		{truncateBalance(cap)}{" "}
+																		{selectedAsset.symbol}
+																	</CentuariTypography>
+																</button>
 															</div>
-														) : (
-															<CentuariTypography
-																variant="b3"
-																className="text-muted-foreground"
-															>
-																No debt — your full balance is withdrawable
-															</CentuariTypography>
-														))}
-												</div>
+														)}
+														{projectedHf != null &&
+															(Number.isFinite(projectedHf) ? (
+																<div className="flex items-center justify-between">
+																	<CentuariTypography
+																		variant="b3"
+																		className="text-muted-foreground"
+																	>
+																		Health factor after
+																	</CentuariTypography>
+																	<HealthFactorBadge
+																		healthFactor={projectedHf}
+																	/>
+																</div>
+															) : (
+																<CentuariTypography
+																	variant="b3"
+																	className="text-muted-foreground"
+																>
+																	No debt — your full balance is withdrawable
+																</CentuariTypography>
+															))}
+													</div>
+												)}
+
+											{exceedsMaxWithdrawable && (
+												<CentuariAlert
+													variant="destructive"
+													text="Exceeds safe withdrawal"
+													description={`Withdrawing more than ${selectedAsset ? truncateBalance(cap) : "0"} ${selectedAsset?.symbol ?? ""} would reduce your health factor below the safe threshold. Repay debt to withdraw more.`}
+													className="mt-4"
+												/>
 											)}
 
-										{exceedsMaxWithdrawable && (
-											<CentuariAlert
-												variant="destructive"
-												text="Exceeds safe withdrawal"
-												description={`Withdrawing more than ${selectedAsset ? truncateBalance(cap) : "0"} ${selectedAsset?.symbol ?? ""} would reduce your health factor below the safe threshold. Repay debt to withdraw more.`}
-												className="mt-4"
-											/>
-										)}
-
-										{exceedsBalance && (
+											{exceedsBalance && (
 												<CentuariAlert
 													variant="destructive"
 													text="Insufficient balance"

@@ -151,6 +151,7 @@ function CollateralActions({
 		if (blockedByHf) {
 			return (
 				<CentuariTooltip message="Repay debt first — removing this collateral would drop your health factor below the safe threshold.">
+					{/* biome-ignore lint/a11y/noNoninteractiveTabindex: span is intentionally focusable so the tooltip stays keyboard-reachable when the inner button is disabled */}
 					<span tabIndex={0}>{button}</span>
 				</CentuariTooltip>
 			);
@@ -158,6 +159,7 @@ function CollateralActions({
 		if (isLocked) {
 			return (
 				<CentuariTooltip message="Collateral is locked for 24h after flagging.">
+					{/* biome-ignore lint/a11y/noNoninteractiveTabindex: span is intentionally focusable so the tooltip stays keyboard-reachable when the inner button is disabled */}
 					<span tabIndex={0}>{button}</span>
 				</CentuariTooltip>
 			);
