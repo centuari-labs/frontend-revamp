@@ -47,8 +47,8 @@ export function CentuariInputExample() {
 		},
 	});
 
-	function onSubmit(values: z.infer<typeof formSchema>) {
-		console.log(values);
+	function onSubmit(_values: z.infer<typeof formSchema>) {
+		// Example form — submission handled by the consuming component.
 	}
 
 	return (

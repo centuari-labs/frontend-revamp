@@ -49,7 +49,7 @@ describe("apiClient", () => {
 			json: async () => ({ statusCode: 200, data: null }),
 		});
 
-		await apiClient("/auth/validate", { token: "my-jwt-token" });
+		await apiClient("/portfolio", { token: "my-jwt-token" });
 
 		const [, options] = mockFetch.mock.calls[0];
 		expect(options.headers.Authorization).toBe("Bearer my-jwt-token");
