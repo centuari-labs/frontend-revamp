@@ -56,7 +56,7 @@ export function CentuariSellPositionDialog({
 	token_name,
 	token_symbol,
 	maturityDate,
-	startDate,
+	startDate: _startDate,
 	availableFunds,
 	apr = 10, // Default 10% APR
 	totalShares,

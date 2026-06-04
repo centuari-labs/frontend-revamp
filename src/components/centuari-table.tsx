@@ -257,7 +257,7 @@ export const columns = (
 	{
 		accessorKey: "apr",
 		header: "Target APR %",
-		cell: ({ row }) => `${(row.original.apr! * 100).toFixed(2)}%`,
+		cell: ({ row }) => `${((row.original.apr ?? 0) * 100).toFixed(2)}%`,
 	},
 	{
 		accessorKey: "maturity",
