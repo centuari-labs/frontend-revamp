@@ -11,6 +11,14 @@ if (
 	);
 }
 
+// Fail closed in production: a prod build must declare its target chain
+// explicitly so it can never silently inherit the testnet default (D5).
+if (process.env.NODE_ENV === "production" && chainEnv === undefined) {
+	throw new Error(
+		`[chain-config] NEXT_PUBLIC_CHAIN_ENV must be set explicitly ("mainnet" or "testnet") in a production build — refusing to fall back to the testnet default.`,
+	);
+}
+
 const IS_MAINNET = chainEnv === "mainnet";
 
 export const ACTIVE_CHAIN = IS_MAINNET ? arbitrum : arbitrumSepolia;
@@ -36,4 +44,21 @@ export const HUB_DEPOSITOR_ADDRESS = requireAddress(
 export const COLLATERAL_MANAGER_ADDRESS = requireAddress(
 	"NEXT_PUBLIC_COLLATERAL_MANAGER_ADDRESS",
 	process.env.NEXT_PUBLIC_COLLATERAL_MANAGER_ADDRESS,
+);
+
+function requireValue(name: string, value: string | undefined): string {
+	if (!value) {
+		throw new Error(
+			`[chain-config] Missing ${name}. Set it in your environment (.env.local) before building — mainnet and testnet use separate Privy apps.`,
+		);
+	}
+	return value;
+}
+
+// Privy app id is env-specific (testnet and mainnet are distinct Privy apps);
+// guard it here so a build with no app id fails at import rather than opaquely
+// at runtime (D5).
+export const PRIVY_APP_ID = requireValue(
+	"NEXT_PUBLIC_PRIVY_APP_ID",
+	process.env.NEXT_PUBLIC_PRIVY_APP_ID,
 );
