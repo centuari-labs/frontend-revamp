@@ -72,7 +72,6 @@ describe("path whitelist", () => {
 		["deposit/confirm", "POST"],
 		["deposit/balance/some-asset", "GET"],
 		["withdraw", "POST"],
-		["faucet/request-tokens", "POST"],
 	])("allows %s (%s)", async (path, method) => {
 		const handlers: Record<string, typeof GET> = {
 			GET,
@@ -87,6 +86,46 @@ describe("path whitelist", () => {
 
 		expect(res.status).toBe(200);
 		expect(mockFetch).toHaveBeenCalledOnce();
+	});
+
+	it("allows faucet paths outside mainnet", async () => {
+		const previousChainEnv = process.env.NEXT_PUBLIC_CHAIN_ENV;
+		process.env.NEXT_PUBLIC_CHAIN_ENV = "testnet";
+
+		try {
+			const req = makeRequest("faucet/request-tokens", { method: "POST" });
+			const res = await POST(req, makeParams("faucet/request-tokens"));
+
+			expect(res.status).toBe(200);
+			expect(mockFetch).toHaveBeenCalledOnce();
+		} finally {
+			if (previousChainEnv === undefined) {
+				delete process.env.NEXT_PUBLIC_CHAIN_ENV;
+			} else {
+				process.env.NEXT_PUBLIC_CHAIN_ENV = previousChainEnv;
+			}
+		}
+	});
+
+	it("blocks faucet paths on mainnet", async () => {
+		const previousChainEnv = process.env.NEXT_PUBLIC_CHAIN_ENV;
+		process.env.NEXT_PUBLIC_CHAIN_ENV = "mainnet";
+
+		try {
+			const req = makeRequest("faucet/request-tokens", { method: "POST" });
+			const res = await POST(req, makeParams("faucet/request-tokens"));
+
+			expect(res.status).toBe(403);
+			const body = await res.json();
+			expect(body.error).toBe("Endpoint not allowed");
+			expect(mockFetch).not.toHaveBeenCalled();
+		} finally {
+			if (previousChainEnv === undefined) {
+				delete process.env.NEXT_PUBLIC_CHAIN_ENV;
+			} else {
+				process.env.NEXT_PUBLIC_CHAIN_ENV = previousChainEnv;
+			}
+		}
 	});
 
 	it.each([

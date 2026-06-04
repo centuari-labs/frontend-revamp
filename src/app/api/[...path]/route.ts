@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { isFaucetEnabled } from "@/lib/faucet-config";
 
 const BACKEND_URL = (
 	process.env.BACKEND_URL || "http://localhost:3000"
@@ -21,6 +22,7 @@ const ALLOWED_PATH_PREFIXES = [
 ] as const;
 
 function isPathAllowed(path: string): boolean {
+	if (path.startsWith("faucet/")) return isFaucetEnabled();
 	if (ALLOWED_EXACT_PATHS.has(path)) return true;
 	return ALLOWED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
 }

@@ -10,7 +10,7 @@ export function CentuariAlert({
 }: {
 	variant: "destructive" | "default";
 	text: string;
-	description: string;
+	description?: string;
 	icon?: React.ReactNode;
 	className?: string;
 	action?: React.ReactNode;
@@ -24,7 +24,11 @@ export function CentuariAlert({
 				{icon}
 				<div>
 					<AlertTitle className="font-semibold">{text}</AlertTitle>
-					<AlertDescription className="text-xs">{description}</AlertDescription>
+					{description ? (
+						<AlertDescription className="text-xs">
+							{description}
+						</AlertDescription>
+					) : null}
 				</div>
 			</div>
 			{action && <div>{action}</div>}
