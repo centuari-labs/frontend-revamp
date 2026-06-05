@@ -249,7 +249,7 @@ export default function Sandbox() {
 			<div className="mt-10 grid grid-cols-2 items-center gap-4 w-full">
 				<MultiSelect
 					options={tokenList}
-					onValueChange={(values) => console.log(values)}
+					onValueChange={() => {}}
 					placeholder="Select Coins"
 					variant="default"
 					maxCount={2}

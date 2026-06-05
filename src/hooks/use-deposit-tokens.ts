@@ -24,11 +24,5 @@ export function useDepositTokens() {
 
 function filterAllowlistedTokens(tokens: DepositToken[]): DepositToken[] {
 	const chainId = ACTIVE_CHAIN.id;
-	return tokens.filter((t) => {
-		if (isAllowlistedAddress(chainId, t.tokenAddress)) return true;
-		console.warn(
-			`[useDepositTokens] dropping non-allowlisted token: ${t.symbol} (${t.tokenAddress})`,
-		);
-		return false;
-	});
+	return tokens.filter((t) => isAllowlistedAddress(chainId, t.tokenAddress));
 }

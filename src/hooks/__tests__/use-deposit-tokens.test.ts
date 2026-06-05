@@ -76,7 +76,6 @@ describe("useDepositTokens — allowlist filtering", () => {
 
 	it("drops entries whose tokenAddress is not in the allowlist", async () => {
 		mockGetDepositTokens.mockResolvedValue([USDC, NON_ALLOWLISTED, USDT]);
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const { result } = renderHookWithProviders(() => useDepositTokens());
 
 		await vi.waitFor(() => {
@@ -84,15 +83,10 @@ describe("useDepositTokens — allowlist filtering", () => {
 		});
 
 		expect(result.current.data).toEqual([USDC, USDT]);
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("non-allowlisted token: BOGUS"),
-		);
-		warnSpy.mockRestore();
 	});
 
 	it("returns an empty array when every entry is dropped", async () => {
 		mockGetDepositTokens.mockResolvedValue([NON_ALLOWLISTED]);
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const { result } = renderHookWithProviders(() => useDepositTokens());
 
 		await vi.waitFor(() => {
@@ -100,8 +94,6 @@ describe("useDepositTokens — allowlist filtering", () => {
 		});
 
 		expect(result.current.data).toEqual([]);
-		expect(warnSpy).toHaveBeenCalled();
-		warnSpy.mockRestore();
 	});
 
 	it("returns an empty array when the API returns no tokens", async () => {

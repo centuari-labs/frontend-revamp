@@ -20,7 +20,13 @@
         "useUniqueElementIds": "warn"
       },
       "suspicious": {
-        "noArrayIndexKey": "warn"
+        "noArrayIndexKey": "warn",
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": ["error"]
+          }
+        }
       },
       "a11y": {
         "noSvgWithoutTitle": "warn"
@@ -89,6 +95,9 @@
           },
           "security": {
             "noDangerouslySetInnerHtml": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
           },
           "a11y": {
             "useSemanticElements": "off",

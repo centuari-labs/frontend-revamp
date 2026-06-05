@@ -64,8 +64,6 @@ export function SelectSingleToken() {
 		};
 	}, []);
 
-	console.log("padding", padding);
-
 	return (
 		<div className="w-full space-y-2 mt-3.5">
 			<div className="flex items-center justify-between">

@@ -29,21 +29,6 @@ export function EmbeddedWalletGuard({
 			(a as { walletClientType?: string }).walletClientType !== "privy",
 	);
 
-	// Debug: log wallet state
-	useEffect(() => {
-		if (!ready) return;
-		console.log("[WalletGuard]", {
-			authenticated,
-			hasExternalWallet,
-			walletsCount: wallets.length,
-			wallets: wallets.map((w) => ({
-				type: w.walletClientType,
-				address: w.address,
-			})),
-			privyUserWallet: user?.wallet?.address,
-		});
-	}, [ready, authenticated, wallets, user, hasExternalWallet]);
-
 	// Create embedded wallet for social login users who don't have one yet.
 	// Privy's `createOnLogin: "users-without-wallets"` handles most cases,
 	// but this is a safety net for edge cases where it doesn't fire.
