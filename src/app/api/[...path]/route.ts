@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { isFaucetEnabled } from "@/lib/faucet-config";
+import { sanitizeContentType } from "@/lib/proxy-headers";
 
 const BACKEND_URL = (
 	process.env.BACKEND_URL || "http://localhost:3000"
@@ -54,15 +55,18 @@ async function handler(
 	if (authorization) {
 		headers.Authorization = authorization;
 	}
-	const contentType = req.headers.get("content-type");
-	if (contentType) {
-		headers["Content-Type"] = contentType;
-	}
-
 	const body =
 		req.method !== "GET" && req.method !== "HEAD"
 			? await req.text()
 			: undefined;
+
+	// Only set Content-Type when there is a body to describe, and never forward
+	// a client-supplied type verbatim — normalize it through the allowlist.
+	if (body !== undefined) {
+		headers["Content-Type"] = sanitizeContentType(
+			req.headers.get("content-type"),
+		);
+	}
 
 	const res = await fetch(targetUrl, {
 		method: req.method,

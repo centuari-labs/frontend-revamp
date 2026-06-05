@@ -8,6 +8,7 @@ vi.stubGlobal("fetch", mockFetch);
 const { GET, POST, PUT, PATCH, DELETE } = await import(
 	"@/app/api/[...path]/route"
 );
+const { sanitizeContentType } = await import("@/lib/proxy-headers");
 
 function makeRequest(
 	path: string,
@@ -230,7 +231,8 @@ describe("SSRF prevention", () => {
 	});
 
 	it("only forwards Authorization and Content-Type headers", async () => {
-		const req = makeRequest("market", {
+		const req = makeRequest("orders/lend/limit", {
+			method: "POST",
 			headers: {
 				authorization: "Bearer token123",
 				"content-type": "application/json",
@@ -238,8 +240,9 @@ describe("SSRF prevention", () => {
 				cookie: "session=hijacked",
 				host: "evil.com",
 			},
+			body: JSON.stringify({ amount: "1" }),
 		});
-		await GET(req, makeParams("market"));
+		await POST(req, makeParams("orders/lend/limit"));
 
 		const [, fetchOptions] = mockFetch.mock.calls[0];
 		expect(fetchOptions.headers).toEqual({
@@ -250,6 +253,57 @@ describe("SSRF prevention", () => {
 		expect(fetchOptions.headers).not.toHaveProperty("cookie");
 		expect(fetchOptions.headers).not.toHaveProperty("x-custom-header");
 		expect(fetchOptions.headers).not.toHaveProperty("host");
+	});
+
+	it("does not set Content-Type on a bodyless GET", async () => {
+		const req = makeRequest("market", {
+			headers: { "content-type": "application/json" },
+		});
+		await GET(req, makeParams("market"));
+
+		const [, fetchOptions] = mockFetch.mock.calls[0];
+		expect(fetchOptions.headers).not.toHaveProperty("Content-Type");
+	});
+});
+
+// ─── Content-Type sanitization (L5) ─────────────────────────────────────────
+
+describe("content-type sanitization", () => {
+	it("passes application/json through unchanged", () => {
+		expect(sanitizeContentType("application/json")).toBe("application/json");
+	});
+
+	it("strips charset params and lowercases", () => {
+		expect(sanitizeContentType("Application/JSON; charset=utf-8")).toBe(
+			"application/json",
+		);
+	});
+
+	it("normalizes a hostile/unknown content-type to application/json", () => {
+		expect(sanitizeContentType("text/html")).toBe("application/json");
+		expect(sanitizeContentType("multipart/form-data; boundary=xyz")).toBe(
+			"application/json",
+		);
+		expect(sanitizeContentType("application/x-www-form-urlencoded")).toBe(
+			"application/json",
+		);
+		expect(sanitizeContentType("../../evil")).toBe("application/json");
+	});
+
+	it("defaults to application/json when no content-type is supplied", () => {
+		expect(sanitizeContentType(null)).toBe("application/json");
+	});
+
+	it("forwards a normalized Content-Type for a hostile POST body", async () => {
+		const req = makeRequest("orders/lend/limit", {
+			method: "POST",
+			headers: { "content-type": "text/html; charset=utf-8" },
+			body: JSON.stringify({ amount: "1" }),
+		});
+		await POST(req, makeParams("orders/lend/limit"));
+
+		const [, fetchOptions] = mockFetch.mock.calls[0];
+		expect(fetchOptions.headers["Content-Type"]).toBe("application/json");
 	});
 });
 
