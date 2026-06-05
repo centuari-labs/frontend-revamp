@@ -1,11 +1,15 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useAccessContext } from "@/contexts/access-context";
 import { useDetectedWallets } from "./use-detected-wallets";
 export function useWalletDisconnectListener() {
 	const { authenticated, ready, user, logout } = usePrivy();
 	const detectedWallets = useDetectedWallets();
+	const queryClient = useQueryClient();
+	const { resetAccess } = useAccessContext();
 
 	useEffect(() => {
 		if (!ready || !authenticated || detectedWallets.length === 0) return;
@@ -18,10 +22,18 @@ export function useWalletDisconnectListener() {
 		);
 		if (!hasExternalWallet) return;
 
+		// Log the user out AND wipe the TanStack Query cache so the previous
+		// wallet's cached data never paints under the new wallet's address.
+		const logoutAndClear = () => {
+			resetAccess();
+			logout();
+			queryClient.clear();
+		};
+
 		const handleAccountsChanged = async (accounts: unknown) => {
 			const addrs = accounts as string[];
 			if (addrs.length === 0) {
-				logout();
+				logoutAndClear();
 				return;
 			}
 
@@ -31,7 +43,7 @@ export function useWalletDisconnectListener() {
 			const currentAddress = user?.wallet?.address?.toLowerCase();
 
 			if (newAddress && currentAddress && newAddress !== currentAddress) {
-				logout();
+				logoutAndClear();
 			}
 		};
 
@@ -47,5 +59,13 @@ export function useWalletDisconnectListener() {
 				);
 			}
 		};
-	}, [ready, authenticated, user, detectedWallets, logout]);
+	}, [
+		ready,
+		authenticated,
+		user,
+		detectedWallets,
+		logout,
+		queryClient,
+		resetAccess,
+	]);
 }
