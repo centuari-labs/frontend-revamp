@@ -17,6 +17,7 @@ import {
 import { getTokenLogo } from "@/lib/tokens";
 import { truncateBalance } from "@/lib/utils";
 import { ACTIVE_CHAIN_LABEL } from "@/lib/chain-config";
+import { IS_FAUCET_ENABLED } from "@/lib/faucet-config";
 
 interface DepositToken {
 	id: string;
@@ -250,17 +251,23 @@ export const LendDepositView = forwardRef<HTMLDivElement, LendDepositViewProps>(
 						<CentuariAlert
 							variant="destructive"
 							text="Insufficient wallet balance"
-							description="Get testnet tokens from the faucet"
+							description={
+								IS_FAUCET_ENABLED
+									? "Get testnet tokens from the faucet"
+									: undefined
+							}
 							className="mt-1.5"
 							action={
-								<Button
-									variant="destructive"
-									size="sm"
-									type="button"
-									onClick={onFaucetClick}
-								>
-									Deposit
-								</Button>
+								IS_FAUCET_ENABLED ? (
+									<Button
+										variant="destructive"
+										size="sm"
+										type="button"
+										onClick={onFaucetClick}
+									>
+										Deposit
+									</Button>
+								) : undefined
 							}
 						/>
 					)}

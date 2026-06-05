@@ -24,6 +24,7 @@ import { CentuariUserMenu } from "./centuari-user-menu";
 import { isPathActive, isMacPlatform } from "@/lib/utils";
 import { glassStyle } from "@/components/ui/glass-card";
 import { CentuariGlassLayers } from "./centuari-glass-surface";
+import { IS_FAUCET_ENABLED } from "@/lib/faucet-config";
 
 interface NavItem {
 	name: string;
@@ -39,7 +40,7 @@ const NAV_PATH_ALIASES: Record<string, string[]> = {
 const NAV_ITEMS: readonly NavItem[] = [
 	{ name: "Earn & Borrow", href: "/" },
 	{ name: "Portfolio", href: "/portfolio" },
-	{ name: "Faucet", href: "/faucet" },
+	...(IS_FAUCET_ENABLED ? [{ name: "Faucet", href: "/faucet" }] : []),
 	// { name: "Points", href: "/points" },
 ] as const;
 
