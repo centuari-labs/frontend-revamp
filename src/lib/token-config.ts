@@ -1,18 +1,61 @@
 import { getAddress, isAddress } from "viem";
 import { z } from "zod";
-import tokensJson from "@/../config/tokens.json";
+import mainnetTokensJson from "@/../config/tokens.mainnet.json";
+import testnetTokensJson from "@/../config/tokens.testnet.json";
 
 const AddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
-const ChainSchema = z.record(z.string(), AddressSchema);
+const TokenConfigSchema = z.object({
+	address: AddressSchema,
+	decimals: z.number().int().min(0).max(36),
+});
+const TokenEntrySchema = z.union([AddressSchema, TokenConfigSchema]);
+const ChainSchema = z.record(z.string(), TokenEntrySchema);
 const RootSchema = z.record(z.string().regex(/^\d+$/), ChainSchema);
 
-const { _meta: _META, ...chains } = tokensJson as Record<string, unknown>;
-const parsed = RootSchema.parse(chains);
+function parseTokenFile(tokensJson: Record<string, unknown>) {
+	const { _meta: _META, ...chains } = tokensJson;
+	return RootSchema.parse(chains);
+}
+
+const parsed = {
+	...parseTokenFile(mainnetTokensJson as Record<string, unknown>),
+	...parseTokenFile(testnetTokensJson as Record<string, unknown>),
+};
+
+export type AllowlistedTokenConfig = {
+	address: `0x${string}`;
+	decimals?: number;
+};
+
+function normalizeEntry(entry: z.infer<typeof TokenEntrySchema>) {
+	if (typeof entry === "string") {
+		return { address: getAddress(entry) } satisfies AllowlistedTokenConfig;
+	}
+	return {
+		address: getAddress(entry.address),
+		decimals: entry.decimals,
+	} satisfies AllowlistedTokenConfig;
+}
+
+const TOKENS_BY_CHAIN: ReadonlyMap<
+	number,
+	ReadonlyMap<string, AllowlistedTokenConfig>
+> = new Map(
+	Object.entries(parsed).map(([chainId, symbols]) => {
+		const tokens = new Map(
+			Object.entries(symbols).map(([symbol, entry]) => [
+				symbol.toUpperCase(),
+				normalizeEntry(entry),
+			]),
+		);
+		return [Number(chainId), tokens];
+	}),
+);
 
 const ADDRESSES_BY_CHAIN: ReadonlyMap<number, ReadonlySet<string>> = new Map(
-	Object.entries(parsed).map(([chainId, symbols]) => [
-		Number(chainId),
-		new Set(Object.values(symbols).map((addr) => getAddress(addr))),
+	[...TOKENS_BY_CHAIN.entries()].map(([chainId, symbols]) => [
+		chainId,
+		new Set([...symbols.values()].map((entry) => entry.address)),
 	]),
 );
 
@@ -32,6 +75,13 @@ export function getAllowlistedAddresses(
 	const set = ADDRESSES_BY_CHAIN.get(chainId);
 	if (!set) return [];
 	return [...set] as `0x${string}`[];
+}
+
+export function getAllowlistedTokenConfig(
+	chainId: number,
+	symbol: string,
+): AllowlistedTokenConfig | undefined {
+	return TOKENS_BY_CHAIN.get(chainId)?.get(symbol.toUpperCase());
 }
 
 export function assertAllowlistedAddress(
