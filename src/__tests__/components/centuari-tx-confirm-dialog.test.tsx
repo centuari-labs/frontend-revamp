@@ -10,7 +10,7 @@ const baseDetails: TxConfirmationDetails = {
 	action: "Approve",
 	amount: "100",
 	symbol: "USDC",
-	tokenAddress: "0x218A9082C712FA709c044a6cea6Ef333df04cc3d",
+	tokenAddress: "0x6B8d9A4C6EBC58672c00b7b9CF5f450654f5e1F0",
 	spender: "0xb0103A9a9CFb4e2EbE565594e487b29283ac02eB",
 	spenderLabel: "Centuari Treasury (HubDepositor)",
 	chainName: "Arbitrum Sepolia",
@@ -56,7 +56,7 @@ describe("CentuariTxConfirmDialog", () => {
 				onCancel={vi.fn()}
 			/>,
 		);
-		expect(screen.getByText(/0x218A..cc3d/)).toBeInTheDocument();
+		expect(screen.getByText(/0x6B8d..e1F0/)).toBeInTheDocument();
 	});
 
 	it("renders truncated spender address with label", () => {

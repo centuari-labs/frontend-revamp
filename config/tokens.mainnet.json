@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "chain": "Arbitrum One",
+    "chainId": 42161,
+    "sources": {
+      "USDC": "Circle USDC contract addresses, Arbitrum mainnet",
+      "USDT": "Arbiscan/CoinGecko Arbitrum One token metadata",
+      "BTC": "Arbitrum bridge/CoinGecko Arbitrum One WBTC token metadata",
+      "ETH": "Arbitrum bridge/CoinGecko Arbitrum One WETH token metadata",
+      "XSGD": "Arbiscan/CoinGecko Arbitrum One token metadata",
+      "XAUT": "Arbiscan/CoinGecko Arbitrum One XAUt0 token metadata",
+      "NVDAX": "CoinGecko Arbitrum One token metadata",
+      "AAPLX": "CoinGecko Arbitrum One token metadata"
+    }
+  },
+  "42161": {
+    "USDC": {
+      "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "decimals": 6
+    },
+    "USDT": {
+      "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      "decimals": 6
+    },
+    "BTC": {
+      "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+      "decimals": 8
+    },
+    "ETH": {
+      "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+      "decimals": 18
+    },
+    "XSGD": {
+      "address": "0xE333e7754a2DC1E020a162Ecab019254b9DaB653",
+      "decimals": 6
+    },
+    "XAUT": {
+      "address": "0x40461291347e1eCbb09499F3371D3f17f10d7159",
+      "decimals": 6
+    },
+    "NVDAX": {
+      "address": "0xc845b2894dBddd03858fd2D643B4eF725fE0849d",
+      "decimals": 18
+    },
+    "AAPLX": {
+      "address": "0x9d275685dC284C8eB1C79f6ABA7a63Dc75ec890a",
+      "decimals": 18
+    }
+  }
+}

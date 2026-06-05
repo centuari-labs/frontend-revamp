@@ -50,7 +50,7 @@ vi.mock("@/lib/api", () => ({
 import { useDeposit } from "@/hooks/use-deposit";
 import type { DepositToken } from "@/lib/api";
 
-const USDC_LOWER = "0x218a9082c712fa709c044a6cea6ef333df04cc3d";
+const USDC_LOWER = "0x6b8d9a4c6ebc58672c00b7b9cf5f450654f5e1f0";
 
 function makeToken(overrides: Partial<DepositToken> = {}): DepositToken {
 	return {
@@ -175,7 +175,7 @@ describe("useDeposit tokenAddress validation (issue #3)", () => {
 				"asset-1",
 				"100",
 				makeToken({
-					tokenAddress: "0x218A9082C712FA709c044a6cea6Ef333df04cc3d",
+					tokenAddress: "0x6B8d9A4C6EBC58672c00b7b9CF5f450654f5e1F0",
 				}),
 			),
 		).rejects.not.toThrow(/Invalid Ethereum address/);
@@ -210,7 +210,7 @@ describe("useDeposit tokenAddress validation (issue #3)", () => {
 });
 
 describe("useDeposit on-chain decimals cross-check (issue #5)", () => {
-	const USDC_CHECKSUMMED = "0x218A9082C712FA709c044a6cea6Ef333df04cc3d";
+	const USDC_CHECKSUMMED = "0x6B8d9A4C6EBC58672c00b7b9CF5f450654f5e1F0";
 
 	function setWallet(request?: ReturnType<typeof vi.fn>) {
 		const provider = {
@@ -355,7 +355,7 @@ describe("useDeposit confirmTransaction gate (issue #6)", () => {
 			expect.objectContaining({
 				action: "Approve",
 				symbol: "USDC",
-				tokenAddress: "0x218A9082C712FA709c044a6cea6Ef333df04cc3d",
+				tokenAddress: "0x6B8d9A4C6EBC58672c00b7b9CF5f450654f5e1F0",
 				spender: "0xb0103A9a9CFb4e2EbE565594e487b29283ac02eB",
 				chainName: "Arbitrum Sepolia",
 				chainId: 421614,
