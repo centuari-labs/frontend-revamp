@@ -2,46 +2,107 @@
 
 import { MarketHeader } from "@/components/market/market-header";
 import { OrderBookCard } from "@/components/market/order-book";
-import { RateHistoryCard } from "@/components/market/rate-history-card";
+import { APRHistoryCard } from "@/components/market/apr-history-card";
 import { LendBorrowCard } from "@/components/market/lend-borrow-card";
 import { PositionSection } from "@/components/market/position-section";
 import { MobileLendBorrowButtons } from "@/components/market/mobile-lend-borrow-buttons";
-
-const tokenList = [
-  { logo: "/tokens/centuari-btc.png", value: "btc", label: "Bitcoin" },
-  { logo: "/tokens/centuari-aave.png", value: "aave", label: "Aave" },
-  { logo: "/tokens/eth-icon.svg", value: "eth", label: "Ethereum" },
-  { logo: "/tokens/centuari-arbitrum.png", value: "arb", label: "Arbitrum" },
-  { logo: "/tokens/centuari-usdc.png", value: "usdc", label: "USDC" },
-  { logo: "/tokens/centuari-usdt.png", value: "usdt", label: "USDT" },
-  { logo: "/tokens/centuari-dai.png", value: "dai", label: "DAI" },
-  {
-    logo: "/tokens/centuari-centuari.png",
-    value: "centuari",
-    label: "Centuari",
-  },
-];
+import { PageContainer } from "@/components/page-container";
+import { getTokenLogo } from "@/lib/tokens";
+import { useMarketDetail } from "@/hooks/use-market-detail";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { MarketPageSkeleton } from "@/components/market/market-skeleton";
+import { SectionErrorOverlay } from "@/components/ui/section-error";
 
 export default function Page() {
-  return (
-    <div className="relative w-full mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0">
-      <div className="w-full max-w-full sm:max-w-6xl xl:max-w-[88rem] 2xl:max-w-[140rem] mx-auto px-2 sm:px-4 2xl:min-h-[calc(100vh-6rem)]">
-        <MarketHeader />
+	const searchParams = useSearchParams();
+	const assetId = searchParams.get("token") ?? undefined;
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
-          <RateHistoryCard />
+	const {
+		symbol,
+		decimals,
+		imageUrl,
+		totalDeposit,
+		activeLoans,
+		upcomingMaturities,
+		isLoading,
+		isError,
+		refetch,
+	} = useMarketDetail(assetId);
 
-          <div className="col-span-1">
-            <OrderBookCard height="500px" />
-          </div>
+	const selectedToken = useMemo(() => {
+		const tokenValue = symbol?.toLowerCase() ?? "";
+		return {
+			logo: getTokenLogo(tokenValue, imageUrl ?? undefined),
+			value: tokenValue,
+			label: symbol ?? "",
+		};
+	}, [symbol, imageUrl]);
 
-          <LendBorrowCard tokenList={tokenList} />
-        </div>
+	const tokenList = useMemo(() => [selectedToken], [selectedToken]);
 
-        <PositionSection />
-      </div>
+	const maturityOptions = useMemo(
+		() => upcomingMaturities.map((m) => m.maturity),
+		[upcomingMaturities],
+	);
 
-      <MobileLendBorrowButtons tokenList={tokenList} />
-    </div>
-  );
+	if (isLoading) {
+		return (
+			<PageContainer
+				className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0"
+				maxWidth="wide"
+			>
+				<MarketPageSkeleton />
+			</PageContainer>
+		);
+	}
+
+	return (
+		<SectionErrorOverlay isError={isError} onRetry={refetch}>
+			<PageContainer
+				className="mt-8 sm:mt-10 md:mt-12 lg:mt-14 pb-20 md:pb-0"
+				maxWidth="wide"
+			>
+				<MarketHeader
+					selectedToken={selectedToken}
+					totalDeposit={totalDeposit}
+					activeLoans={activeLoans}
+				/>
+
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4 gap">
+					<APRHistoryCard assetId={assetId} />
+
+					<div className="col-span-1 md:h-full">
+						{assetId ? (
+							<OrderBookCard
+								height="600px"
+								assetId={assetId}
+								decimals={decimals ?? undefined}
+							/>
+						) : (
+							<div className="min-h-[600px] md:h-full rounded-xl border border-border/40 bg-card/40 flex items-center justify-center text-sm text-muted-foreground">
+								Market data unavailable.
+							</div>
+						)}
+					</div>
+
+					<LendBorrowCard
+						tokenList={tokenList}
+						selectedToken={selectedToken}
+						maturityOptions={maturityOptions}
+						assetId={assetId}
+					/>
+				</div>
+
+				<PositionSection assetId={assetId} />
+
+				<MobileLendBorrowButtons
+					tokenList={tokenList}
+					selectedToken={selectedToken}
+					maturityOptions={maturityOptions}
+					assetId={assetId}
+				/>
+			</PageContainer>
+		</SectionErrorOverlay>
+	);
 }

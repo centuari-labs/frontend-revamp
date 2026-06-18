@@ -1,196 +1,163 @@
 "use client";
 
-import React from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import type React from "react";
+import { useMemo } from "react";
+import { Area, AreaChart, Tooltip, ResponsiveContainer } from "recharts";
+import { format } from "date-fns";
+import { LineChart } from "lucide-react";
+import type { LendBorrowChartPoint } from "@/lib/api";
+import { CentuariGlassSurface } from "@/components/centuari-glass-surface";
 
 interface ChartDataPoint {
-  date: string;
-  supply: number;
-  borrow: number;
+	date: string;
+	supply: number;
+	borrow: number;
 }
 
-const chartData: ChartDataPoint[] = [
-  { date: "1 Oct", supply: 35000, borrow: 8000 },
-  { date: "3 Oct", supply: 36200, borrow: 8500 },
-  { date: "5 Oct", supply: 38500, borrow: 9200 },
-  { date: "7 Oct", supply: 37800, borrow: 9800 },
-  { date: "9 Oct", supply: 39500, borrow: 10200 },
-  { date: "11 Oct", supply: 41200, borrow: 10800 },
-  { date: "13 Oct", supply: 40500, borrow: 11500 },
-  { date: "15 Oct", supply: 42800, borrow: 12200 },
-  { date: "17 Oct", supply: 44500, borrow: 12800 },
-  { date: "19 Oct", supply: 43800, borrow: 13500 },
-  { date: "21 Oct", supply: 46200, borrow: 14200 },
-  { date: "23 Oct", supply: 48500, borrow: 15000 },
-  { date: "25 Oct", supply: 47200, borrow: 15800 },
-  { date: "27 Oct", supply: 49800, borrow: 16500 },
-  { date: "29 Oct", supply: 52200, borrow: 17200 },
-  { date: "31 Oct", supply: 51500, borrow: 18000 },
-  { date: "2 Nov", supply: 54200, borrow: 18800 },
-  { date: "4 Nov", supply: 56800, borrow: 19500 },
-  { date: "6 Nov", supply: 55500, borrow: 20300 },
-  { date: "8 Nov", supply: 58200, borrow: 21200 },
-  { date: "10 Nov", supply: 60500, borrow: 22000 },
-  { date: "12 Nov", supply: 59200, borrow: 22800 },
-  { date: "14 Nov", supply: 62000, borrow: 23800 },
-  { date: "16 Nov", supply: 64500, borrow: 24500 },
-  { date: "18 Nov", supply: 63200, borrow: 25500 },
-  { date: "20 Nov", supply: 66200, borrow: 26500 },
-  { date: "22 Nov", supply: 68800, borrow: 27500 },
-  { date: "24 Nov", supply: 67500, borrow: 28500 },
-  { date: "26 Nov", supply: 70500, borrow: 29800 },
-  { date: "28 Nov", supply: 73200, borrow: 31200 },
-  { date: "30 Nov", supply: 71800, borrow: 32500 },
-  { date: "2 Dec", supply: 74800, borrow: 33800 },
-  { date: "4 Dec", supply: 77500, borrow: 35200 },
-  { date: "6 Dec", supply: 76000, borrow: 36500 },
-  { date: "8 Dec", supply: 79200, borrow: 37800 },
-  { date: "10 Dec", supply: 82000, borrow: 39200 },
-  { date: "11 Dec", supply: 85000, borrow: 42000 },
-];
+interface LendBorrowChartProps {
+	data?: LendBorrowChartPoint[];
+}
 
 interface TooltipPayload {
-  value: number;
-  dataKey: string;
-  payload: ChartDataPoint;
+	value: number;
+	dataKey: string;
+	payload: ChartDataPoint;
 }
 
 interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayload[];
+	active?: boolean;
+	payload?: TooltipPayload[];
 }
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const date = payload[0].payload.date;
-    const supplyValue = payload.find((p) => p.dataKey === "supply")?.value || 0;
-    const borrowValue = payload.find((p) => p.dataKey === "borrow")?.value || 0;
+	if (active && payload && payload.length) {
+		const date = payload[0].payload.date;
+		const supplyValue = payload.find((p) => p.dataKey === "supply")?.value || 0;
+		const borrowValue = payload.find((p) => p.dataKey === "borrow")?.value || 0;
 
-    return (
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 shadow-xl border border-slate-600">
-        <p className="text-slate-300 text-sm mb-3">{date} 2025</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-white border-2 border-blue-500"></div>
-              <span className="text-slate-400 text-sm">Supply</span>
-            </div>
-            <span className="text-slate-200 font-medium">
-              $
-              {supplyValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-8">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-white border-2 border-pink-500"></div>
-              <span className="text-slate-400 text-sm">Borrow</span>
-            </div>
-            <span className="text-slate-200 font-medium">
-              $
-              {borrowValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
+		return (
+			<div className="bg-white/10 backdrop-blur-[24px] rounded-xl px-4 py-3 shadow-xl border border-white/20">
+				<p className="text-white text-sm font-medium">{date}</p>
+				<div className="border-t border-dashed border-white/20 my-2" />
+				<div className="space-y-1.5">
+					<div className="flex items-center justify-between gap-10">
+						<div className="flex items-center gap-2">
+							<div className="w-2 h-2 rounded-full bg-[#517FFF]"></div>
+							<span className="text-white/70 text-sm">Supply</span>
+						</div>
+						<span className="text-white font-medium text-sm">
+							$
+							{supplyValue.toLocaleString("en-US", {
+								minimumFractionDigits: 3,
+								maximumFractionDigits: 3,
+							})}
+						</span>
+					</div>
+					<div className="flex items-center justify-between gap-10">
+						<div className="flex items-center gap-2">
+							<div className="w-2 h-2 rounded-full bg-[#EF336F]"></div>
+							<span className="text-white/70 text-sm">Borrow</span>
+						</div>
+						<span className="text-white font-medium text-sm">
+							$
+							{borrowValue.toLocaleString("en-US", {
+								minimumFractionDigits: 3,
+								maximumFractionDigits: 3,
+							})}
+						</span>
+					</div>
+				</div>
+			</div>
+		);
+	}
+	return null;
 };
 
-export default function LendBorrowChart() {
-  return (
-    <div className="w-full">
-      <ResponsiveContainer width="100%" height={180}>
-        <AreaChart
-          data={chartData}
-          margin={{ top: 0, right: 0, bottom: 0, left: 20 }}
-        >
-          <defs>
-            <linearGradient id="supplyGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="hsl(217, 91%, 60%)"
-                stopOpacity={0.8}
-              />
-              <stop
-                offset="95%"
-                stopColor="hsl(217, 91%, 60%)"
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-            <linearGradient id="borrowGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="hsl(330, 82%, 55%)"
-                stopOpacity={0.8}
-              />
-              <stop
-                offset="95%"
-                stopColor="hsl(330, 82%, 55%)"
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-          </defs>
+export default function LendBorrowChart({ data = [] }: LendBorrowChartProps) {
+	const chartData: ChartDataPoint[] = useMemo(
+		() =>
+			data.map((item) => ({
+				date: format(new Date(item.date), "d MMM"),
+				supply: Number(item.lendAmount) || 0,
+				borrow: Number(item.borrowAmount) || 0,
+			})),
+		[data],
+	);
 
-          {/* <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#1e293b"
-                vertical={false}
-              /> */}
+	if (chartData.length === 0) {
+		return (
+			<div className="w-full h-[180px] flex flex-col items-center justify-center gap-3">
+				<CentuariGlassSurface intensity="soft" className="rounded-xl p-3">
+					<LineChart size={22} className="text-white/40" />
+				</CentuariGlassSurface>
+				<span className="text-sm text-white/40">
+					You don&apos;t have any lend or borrow activity yet
+				</span>
+			</div>
+		);
+	}
 
-          {/* <XAxis
-                dataKey="date"
-                stroke="#475569"
-                tick={{ fill: "#64748b", fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-              /> */}
+	return (
+		<div className="w-full">
+			<ResponsiveContainer width="100%" height={180}>
+				<AreaChart
+					data={chartData}
+					margin={{ top: 0, right: 0, bottom: 0, left: 20 }}
+				>
+					<defs>
+						<linearGradient id="supplyGradient" x1="0" y1="0" x2="0" y2="1">
+							<stop
+								offset="0%"
+								stopColor="rgba(51, 97, 239)"
+								stopOpacity={0.5}
+							/>
+							<stop
+								offset="90.3%"
+								stopColor="rgba(51, 97, 239)"
+								stopOpacity={0}
+							/>
+						</linearGradient>
+						<linearGradient id="borrowGradient" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stopColor="#EF336F" stopOpacity={0.5} />
+							<stop offset="90.3%" stopColor="#EF336F" stopOpacity={0} />
+						</linearGradient>
+					</defs>
 
-          {/* <YAxis
-                stroke="#475569"
-                tick={{ fill: "#64748b", fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value: number) =>
-                  `$${(value / 1000).toFixed(0)}k`
-                }
-              /> */}
+					<Tooltip content={<CustomTooltip />} />
 
-          <Tooltip content={<CustomTooltip />} />
+					<Area
+						type="monotone"
+						dataKey="borrow"
+						stroke="#EF336F"
+						strokeWidth={2}
+						fill="url(#borrowGradient)"
+						fillOpacity={1}
+						dot={false}
+						activeDot={{
+							r: 5,
+							fill: "white",
+							stroke: "#EF336F",
+							strokeWidth: 3,
+						}}
+					/>
 
-          <Area
-            type="monotone"
-            dataKey="borrow"
-            stroke="hsl(330, 82%, 55%)"
-            strokeWidth={2}
-            fill="url(#borrowGradient)"
-            fillOpacity={1}
-          />
-
-          <Area
-            type="monotone"
-            dataKey="supply"
-            stroke="hsl(217, 91%, 60%)"
-            strokeWidth={2}
-            fill="url(#supplyGradient)"
-            fillOpacity={1}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
+					<Area
+						type="monotone"
+						dataKey="supply"
+						stroke="#517FFF"
+						strokeWidth={1}
+						fill="url(#supplyGradient)"
+						fillOpacity={1}
+						dot={false}
+						activeDot={{
+							r: 5,
+							fill: "white",
+							stroke: "#517FFF",
+							strokeWidth: 3,
+						}}
+					/>
+				</AreaChart>
+			</ResponsiveContainer>
+		</div>
+	);
 }

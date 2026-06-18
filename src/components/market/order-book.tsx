@@ -3,277 +3,329 @@
 import React from "react";
 import { gsap } from "gsap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { ArrowUp } from "lucide-react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ArrowLeftRight, ArrowUp, BookOpen } from "lucide-react";
+import {
+	CentuariGlassLayers,
+	CentuariGlassSurface,
+} from "@/components/centuari-glass-surface";
+import { useOrderbook, type OrderRow } from "@/hooks/use-orderbook";
+import { useRecentTrades, type TradeRow } from "@/hooks/use-recent-trades";
 
-type OrderRow = {
-  price: number;
-  apr: number;
-  amount: number;
-  side: "buy" | "sell";
-};
-
-const formatPrice = (price: number): string => `$${price.toFixed(3)}`;
 const formatAPR = (apr: number): string => `${(apr * 100).toFixed(2)}%`;
 const formatAmount = (amount: number): string =>
-  amount.toLocaleString(undefined, { maximumFractionDigits: 0 });
-
-// ===================== DATA =====================
-const sellOrders: OrderRow[] = [
-  { price: 1.005, apr: 0.0482, amount: 12000, side: "sell" },
-  { price: 1.004, apr: 0.048, amount: 8500, side: "sell" },
-  { price: 1.003, apr: 0.0477, amount: 15200, side: "sell" },
-  { price: 1.002, apr: 0.0475, amount: 10400, side: "sell" },
-  { price: 1.001, apr: 0.0473, amount: 6250, side: "sell" },
-  { price: 1.0, apr: 0.047, amount: 18900, side: "sell" },
-  { price: 0.999, apr: 0.0469, amount: 7200, side: "sell" },
-];
-
-const buyOrders: OrderRow[] = [
-  { price: 0.999, apr: 0.0468, amount: 14300, side: "buy" },
-  { price: 0.998, apr: 0.0465, amount: 10800, side: "buy" },
-  { price: 0.997, apr: 0.0462, amount: 19500, side: "buy" },
-  { price: 0.996, apr: 0.0459, amount: 12700, side: "buy" },
-  { price: 0.995, apr: 0.0455, amount: 17900, side: "buy" },
-  { price: 0.994, apr: 0.0453, amount: 9000, side: "buy" },
-  { price: 0.993, apr: 0.0451, amount: 7200, side: "buy" },
-];
-
-function withCumulative(rows: OrderRow[]) {
-  let acc = 0;
-  return rows.map((r) => {
-    const prev = acc;
-    acc += r.amount;
-    return { row: r, cum: acc, prevCum: prev };
-  });
-}
-function sideMaxCumulative(rows: { cum: number }[]) {
-  return Math.max(...rows.map((r) => r.cum), 1);
-}
+	amount.toLocaleString(undefined, { maximumFractionDigits: 3 });
 
 const OrderRowView: React.FC<{
-  order: OrderRow;
-  maxAmount: number;
-  cum: number;
-  prevCum: number;
-  sideMaxCum: number;
-}> = ({ order, maxAmount, cum, prevCum, sideMaxCum }) => {
-  const isSell = order.side === "sell";
-  const cumPct = (cum / sideMaxCum) * 100;
+	order: OrderRow;
+	maxAmount: number;
+}> = ({ order, maxAmount }) => {
+	const isBorrow = order.side === "borrow";
+	const widthPct = maxAmount > 0 ? (order.amount / maxAmount) * 100 : 0;
 
-  const cumRef = React.useRef<HTMLDivElement>(null);
+	const barRef = React.useRef<HTMLDivElement>(null);
 
-  React.useLayoutEffect(() => {
-    if (!cumRef.current) return;
-    gsap.to(cumRef.current, {
-      width: `${cumPct}%`,
-      duration: 0.6,
-      ease: "power3.out",
-    });
-  }, [cumPct]);
+	React.useLayoutEffect(() => {
+		if (!barRef.current) return;
+		gsap.to(barRef.current, {
+			width: `${widthPct}%`,
+			duration: 0.6,
+			ease: "power3.out",
+		});
+	}, [widthPct]);
 
-  return (
-    <div className="relative grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
-      {/* Depth background full row (align ke kanan/kiri tergantung side) */}
-      <div
-        ref={cumRef}
-        className={`absolute inset-y-0 right-0 ${
-          isSell ? "bg-[rgba(255,59,68,0.15)]" : "bg-[rgba(61,229,122,0.15)]"
-        }`}
-        style={{ width: "0%" }}
-      />
+	return (
+		<div className="relative grid grid-cols-12 h-7 items-center text-sm hover:bg-white/5 transition-colors overflow-hidden">
+			{/* Per-row liquidity bar — anchored left */}
+			<div
+				ref={barRef}
+				className={`absolute inset-y-0 left-0 ${
+					isBorrow ? "bg-[rgba(255,59,68,0.18)]" : "bg-[rgba(61,229,122,0.18)]"
+				}`}
+				style={{ width: "0%" }}
+			/>
 
-      {/* Price */}
-      <div
-        className={`col-span-4 font-semibold tracking-tight z-10 ${
-          isSell ? "text-[#ff5b5b]" : "text-[#3de57a]"
-        }`}
-      >
-        {formatPrice(order.price)}
-      </div>
+			{/* APR */}
+			<div
+				className={`col-span-6 pl-2 font-semibold tracking-tight z-10 ${
+					isBorrow ? "text-[#ff5b5b]" : "text-[#3de57a]"
+				}`}
+			>
+				{formatAPR(order.apr)}
+			</div>
 
-      {/* APR */}
-      <div className="col-span-4 text-center text-white/90 z-10">
-        {formatAPR(order.apr)}
-      </div>
-
-      {/* Amount */}
-      <div
-        className={`col-span-4 text-right font-semibold tracking-tight pr-2 z-10 ${
-          isSell ? "text-[#ffd6d6]" : "text-white/80"
-        }`}
-      >
-        {formatAmount(order.amount)}
-      </div>
-    </div>
-  );
+			{/* Amount */}
+			<div className="col-span-6 text-right font-semibold tracking-tight pr-2 z-10 text-white/80">
+				{formatAmount(order.amount)}
+			</div>
+		</div>
+	);
 };
 
-const OrderTable: React.FC<{ orders: OrderRow[]; maxAmount: number }> = ({
-  orders,
-  maxAmount,
+const OrderTable: React.FC<{ orders: OrderRow[]; side: "borrow" | "lend" }> = ({
+	orders,
+	side,
 }) => {
-  const cumRows = withCumulative(orders);
-  const sideMax = sideMaxCumulative(cumRows);
-  return (
-    <ScrollArea className="space-y-0.5 h-[160px]">
-      {cumRows.map(({ row, cum, prevCum }, i) => (
-        <OrderRowView
-          key={i}
-          order={row}
-          maxAmount={maxAmount}
-          cum={cum}
-          prevCum={prevCum}
-          sideMaxCum={sideMax}
-        />
-      ))}
-    </ScrollArea>
-  );
+	const sideMaxAmount = Math.max(...orders.map((o) => o.amount), 1);
+	const scrollRef = React.useRef<HTMLDivElement>(null);
+
+	React.useEffect(() => {
+		if (side === "borrow" && scrollRef.current) {
+			scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+		}
+	}, [side]);
+
+	if (orders.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center gap-2 h-[195px]">
+				<CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+					<BookOpen size={18} className="text-white/40" />
+				</CentuariGlassSurface>
+				<span className="text-xs text-white/40">No orders yet</span>
+			</div>
+		);
+	}
+
+	return (
+		<div
+			ref={scrollRef}
+			className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 p-3 sm:p-4 md:p-4"
+		>
+			{side === "borrow" ? (
+				<div className="flex flex-col justify-end min-h-full">
+					{orders.map((row, i) => (
+						<OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+					))}
+				</div>
+			) : (
+				orders.map((row, i) => (
+					<OrderRowView key={i} order={row} maxAmount={sideMaxAmount} />
+				))
+			)}
+		</div>
+	);
 };
 
-const RecentTradeTable: React.FC = () => {
-  // Dummy data for recent trades
-  const recentTrades = [
-    { time: "11:42:35", type: "Buy", amount: 5000, apr: 0.047 },
-    { time: "11:42:36", type: "Sell", amount: 3000, apr: 0.048 },
-    { time: "11:42:37", type: "Buy", amount: 7000, apr: 0.0465 },
-    { time: "11:42:38", type: "Sell", amount: 4000, apr: 0.049 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-    { time: "11:42:39", type: "Buy", amount: 6000, apr: 0.0458 },
-  ];
-
-  return (
-    <ScrollArea className="space-y-0.5 h-[350px]">
-      {recentTrades.map((trade, i) => (
-        <div
-          key={i}
-          className="grid grid-cols-12 h-6 gap-6 items-center text-sm hover:bg-white/5 transition-colors"
-        >
-          <div className="col-span-3 text-start text-white/90">
-            {trade.time}
-          </div>
-          <div
-            className={`col-span-3 text-center font-semibold z-10 ${
-              trade.type === "Buy" ? "text-[#3de57a]" : "text-[#ff5b5b]"
-            }`}
-          >
-            {trade.type}
-          </div>
-          <div className="col-span-3 text-white/90 z-10">
-            {formatAmount(trade.amount)}
-          </div>
-          <div className="col-span-3 text-white/90 z-10">
-            {formatAPR(trade.apr)}
-          </div>
-        </div>
-      ))}
-    </ScrollArea>
-  );
+const RecentTradeTable: React.FC<{ trades: TradeRow[] }> = ({ trades }) => {
+	return (
+		<div className="space-y-0.5">
+			{trades.map((trade, i) => (
+				<div
+					key={i}
+					className="grid grid-cols-12 h-6 items-center text-sm hover:bg-white/5 transition-colors"
+				>
+					<div className="col-span-3 text-start text-white/90 shrink-0">
+						{trade.time}
+					</div>
+					<div
+						className={`col-span-3 text-left font-semibold z-10 shrink-0 ${
+							trade.type === "Lend" ? "text-[#3de57a]" : "text-[#ff5b5b]"
+						}`}
+					>
+						{trade.type}
+					</div>
+					<div className="col-span-3 text-right text-white/90 z-10 shrink-0">
+						{formatAmount(trade.amount)}
+					</div>
+					<div className="col-span-3 text-white/90 text-right z-10 shrink-0">
+						{formatAPR(trade.apr)}
+					</div>
+				</div>
+			))}
+		</div>
+	);
 };
 
-const OrderBookContent: React.FC = () => {
-  const allOrders = [...sellOrders, ...buyOrders];
-  const maxAmount = Math.max(...allOrders.map((o) => o.amount));
+const OrderBookContent: React.FC<{
+	borrowOrders: OrderRow[];
+	lendOrders: OrderRow[];
+}> = ({ borrowOrders, lendOrders }) => {
+	// WebSocket already sends orders in correct display order — no sorting needed.
+	const displayBorrow = borrowOrders.slice(0, 10);
+	const displayLend = lendOrders.slice(0, 10);
 
-  const midPrice = 1.0;
-  const spread = 0.001;
+	// Best borrow = first item (closest to spread, data arrives sorted this way)
+	const bestBorrowApr = displayBorrow[0]?.apr;
+	// Best lend = first item (closest to spread)
+	const bestLendApr = displayLend[0]?.apr;
 
-  return (
-    <>
-      <div className="mt-2.5 grid grid-cols-12 mb-3 text-sm">
-        <div className="col-span-4 text-white/80 text-start font-semibold">
-          Price
-        </div>
-        <div className="col-span-4 text-white/80 font-semibold text-center">
-          APR
-        </div>
-        <div className="col-span-4 text-white/80 font-semibold text-right">
-          Amount
-        </div>
-      </div>
+	const midApr =
+		bestBorrowApr != null && bestLendApr != null
+			? (bestBorrowApr + bestLendApr) / 2
+			: (bestBorrowApr ?? bestLendApr ?? 0);
+	const spreadApr =
+		bestBorrowApr != null && bestLendApr != null
+			? Math.abs(bestBorrowApr - bestLendApr)
+			: 0;
 
-      {/* SELL */}
-      <OrderTable orders={sellOrders} maxAmount={maxAmount} />
+	return (
+		<div className="flex flex-col h-full overflow-hidden">
+			<div className="border-b py-1 shrink-0">
+				<span className="text-sm p-3 sm:p-4 md:p-4">Borrow</span>
+			</div>
+			<div className="mt-2.5 grid grid-cols-12 text-sm shrink-0 px-3 sm:px-4 md:px-4">
+				<div className="col-span-6 text-white/80 text-start font-semibold pl-2">
+					APR
+				</div>
+				<div className="col-span-6 text-white/80 font-semibold text-right pr-2">
+					Amount
+				</div>
+			</div>
 
-      {/* MID */}
-      <div className="my-2 bg-white/5 rounded-md h-9 flex items-center justify-between px-4">
-        <div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
-          <ArrowUp color="#3de57a" size={16} />
-          <span>${midPrice.toFixed(1)}</span>
-        </div>
-        <div className="text-white/70">Spread : ${spread.toFixed(3)}</div>
-      </div>
+			{/* BORROW — rows pinned to bottom */}
+			<div className="flex-1 min-h-0 overflow-hidden">
+				<OrderTable orders={[...displayBorrow].reverse()} side="borrow" />
+			</div>
 
-      {/* BUY */}
-      <OrderTable orders={buyOrders} maxAmount={maxAmount} />
-    </>
-  );
+			{/* MID APR */}
+			<div className="bg-white/5 h-9 flex items-center justify-between px-4 shrink-0">
+				<div className="inline-flex items-center gap-2 text-[#3de57a] font-medium">
+					<ArrowUp color="#3de57a" size={16} />
+					<span>{formatAPR(midApr)}</span>
+				</div>
+				<div className="text-white/70 text-xs sm:text-sm">
+					Spread : {(spreadApr * 100).toFixed(2)}%
+				</div>
+			</div>
+
+			{/* LEND — rows start from top */}
+			<div className="flex-1 min-h-0 overflow-hidden">
+				<OrderTable orders={displayLend} side="lend" />
+			</div>
+
+			<div className="border-t py-1 shrink-0">
+				<span className="text-sm p-3 sm:p-4 md:p-4">Lend</span>
+			</div>
+		</div>
+	);
 };
 
-const RecentTradesContent: React.FC = () => {
-  return (
-    <>
-      <div className="mt-2.5 grid grid-cols-12 gap-6 mb-3 text-sm">
-        <div className="col-span-3 text-white/80 font-semibold">
-          Time
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          Type
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          Amount
-        </div>
-        <div className="col-span-3 text-white/80 font-semibold">
-          APR
-        </div>
-      </div>
+const RecentTradesContent: React.FC<{
+	trades: TradeRow[];
+	cardRef: React.RefObject<HTMLDivElement | null>;
+}> = ({ trades, cardRef }) => {
+	const headerRef = React.useRef<HTMLDivElement>(null);
+	const [listHeight, setListHeight] = React.useState<number>(0);
 
-      <RecentTradeTable />
-    </>
-  );
+	React.useEffect(() => {
+		const card = cardRef.current;
+		const header = headerRef.current;
+		if (!card) return;
+
+		// Find TabsList element height
+		const tabsList = card.querySelector('[data-slot="tabs-list"]');
+
+		const recalc = () => {
+			const cardH = card.clientHeight;
+			const cardPadding =
+				parseFloat(getComputedStyle(card).paddingTop) +
+				parseFloat(getComputedStyle(card).paddingBottom);
+			const tabsH = tabsList?.getBoundingClientRect().height ?? 0;
+			const headerH = header?.offsetHeight ?? 0;
+			// gap-2 from Tabs = 8px, mt-2.5 from header = 10px, mb-3 = 12px
+			const gaps = 8 + 8;
+			setListHeight(Math.max(cardH - cardPadding - tabsH - headerH - gaps, 0));
+		};
+
+		const observer = new ResizeObserver(recalc);
+		observer.observe(card);
+		recalc();
+		return () => observer.disconnect();
+	}, [cardRef]);
+
+	return (
+		<>
+			<div
+				ref={headerRef}
+				className="mt-2.5 grid grid-cols-12 mb-3 text-sm text-center px-3 sm:px-4 md:px-4"
+			>
+				<div className="col-span-3 text-white/80 font-semibold text-left">
+					Time
+				</div>
+				<div className="col-span-3 text-white/80 text-left font-semibold">
+					Type
+				</div>
+				<div className="col-span-3 text-white/80 font-semibold">Amount</div>
+				<div className="col-span-3 text-white/80 text-right font-semibold">
+					APR
+				</div>
+			</div>
+
+			{trades.length === 0 ? (
+				<div
+					className="flex flex-col items-center justify-center gap-2 px-3 sm:px-4 md:px-4"
+					style={{ height: listHeight || undefined }}
+				>
+					<CentuariGlassSurface intensity="soft" className="rounded-lg p-2">
+						<ArrowLeftRight size={18} className="text-white/40" />
+					</CentuariGlassSurface>
+					<span className="text-xs text-white/40">No recent trades</span>
+				</div>
+			) : (
+				<div
+					className="overflow-y-auto overflow-x-hidden [scrollbar-color:transparent_transparent] hover:[scrollbar-color:rgba(255,255,255,0.25)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-colors [&::-webkit-scrollbar-thumb]:duration-200 hover:[&::-webkit-scrollbar-thumb]:bg-white/25 [&::-webkit-scrollbar-thumb:hover]:bg-white/45 px-3 sm:px-4 md:px-4"
+					style={{ height: listHeight || undefined }}
+				>
+					<RecentTradeTable trades={trades} />
+				</div>
+			)}
+		</>
+	);
 };
 
-export const OrderBookCard: React.FC<{ height?: string }> = ({
-  height = "auto",
-}) => (
-  <div
-    className="bg-white/5 rounded-md p-3 sm:p-4 md:p-[18px]"
-    style={{ height }}
-  >
-    <Tabs defaultValue="orderbook" className="w-full">
-      <TabsList className="bg-white/5 w-full">
-        <TabsTrigger
-          value="orderbook"
-          className="data-[state=active]:!border-none"
-        >
-          Order Book
-        </TabsTrigger>
-        <TabsTrigger
-          value="trades"
-          className="data-[state=active]:!border-none"
-        >
-          Recent Trades
-        </TabsTrigger>
-      </TabsList>
+export const OrderBookCard: React.FC<{
+	height?: string;
+	assetId?: string;
+	decimals?: number;
+}> = ({ height = "auto", assetId, decimals }) => {
+	const { borrowOrders, lendOrders } = useOrderbook({ assetId, decimals });
+	const { trades } = useRecentTrades({ assetId, decimals });
+	const cardRef = React.useRef<HTMLDivElement>(null);
 
-      <TabsContent value="orderbook">
-        <OrderBookContent />
-      </TabsContent>
+	return (
+		<div
+			ref={cardRef}
+			className="group/glass relative bg-transparent border-0 rounded-xl overflow-hidden isolate"
+			style={{ height }}
+		>
+			<CentuariGlassLayers intensity="soft" />
+			<Tabs
+				defaultValue="orderbook"
+				className="relative z-20 w-full h-full flex flex-col"
+			>
+				<div className="shrink-0 px-3 sm:px-4 md:px-4 pt-3 sm:pt-4 md:pt-4">
+					<TabsList className="bg-white/5 w-full">
+						<TabsTrigger
+							value="orderbook"
+							className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
+						>
+							<span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+								<CentuariGlassLayers intensity="soft" />
+							</span>
+							<span className="relative z-20">Order Book</span>
+						</TabsTrigger>
+						<TabsTrigger
+							value="trades"
+							className="group/glass relative overflow-hidden isolate data-[state=active]:text-white data-[state=active]:border-none! bg-transparent! shadow-none!"
+						>
+							<span className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity [[data-state=active]>&]:opacity-100">
+								<CentuariGlassLayers intensity="soft" />
+							</span>
+							<span className="relative z-20">Recent Trades</span>
+						</TabsTrigger>
+					</TabsList>
+				</div>
 
-      <TabsContent value="trades">
-        <RecentTradesContent />
-      </TabsContent>
-    </Tabs>
-  </div>
-);
+				<TabsContent value="orderbook" className="flex-1 min-h-0">
+					<OrderBookContent
+						borrowOrders={borrowOrders}
+						lendOrders={lendOrders}
+					/>
+				</TabsContent>
+
+				<TabsContent value="trades" className="flex-1 min-h-0">
+					<RecentTradesContent trades={trades} cardRef={cardRef} />
+				</TabsContent>
+			</Tabs>
+		</div>
+	);
+};

@@ -8,7 +8,7 @@ name: Build & Deploy frontend-revamp
 
 on:
   push:
-    branches: [staging, testing]
+    branches: [staging, testnet, main]
   workflow_dispatch:
 
 concurrency:
@@ -31,10 +31,15 @@ jobs:
               echo "namespace=centuari-staging" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.staging.yml -p centuari-staging" >> $GITHUB_OUTPUT
               ;;
-            testing)
+            testnet)
               echo "env=testing" >> $GITHUB_OUTPUT
               echo "namespace=centuari-testing" >> $GITHUB_OUTPUT
               echo "compose_cmd=docker compose -f compose.testing.yml -p centuari-testing" >> $GITHUB_OUTPUT
+              ;;
+            main)
+              echo "env=prod" >> $GITHUB_OUTPUT
+              echo "namespace=centuari" >> $GITHUB_OUTPUT
+              echo "compose_cmd=docker compose -f compose.prod.yml" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "Unknown branch ${{ github.ref_name }}" >&2
@@ -62,6 +67,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
       - name: Unit tests
         run: pnpm run test
 
@@ -86,6 +97,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Guard against USE_MOCK in production
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testnet'
+        run: |
+          if [ "${{ vars.NEXT_PUBLIC_USE_MOCK }}" = "true" ]; then
+            echo "::error::NEXT_PUBLIC_USE_MOCK=true is forbidden on main/testnet"
+            exit 1
+          fi
+
       - name: Build Docker image
         run: |
           docker build \
@@ -94,7 +113,8 @@ jobs:
             --build-arg NEXT_PUBLIC_CHAIN_ENV='${{ vars.NEXT_PUBLIC_CHAIN_ENV }}' \
             --build-arg NEXT_PUBLIC_USE_MOCK='${{ vars.NEXT_PUBLIC_USE_MOCK }}' \
             --build-arg NEXT_PUBLIC_RPC_URL='${{ vars.NEXT_PUBLIC_RPC_URL }}' \
-            --build-arg NEXT_PUBLIC_TREASURY_ADDRESS='${{ vars.NEXT_PUBLIC_TREASURY_ADDRESS }}' \
+            --build-arg NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS='${{ vars.NEXT_PUBLIC_HUB_DEPOSITOR_ADDRESS }}' \
+            --build-arg NEXT_PUBLIC_COLLATERAL_MANAGER_ADDRESS='${{ vars.NEXT_PUBLIC_COLLATERAL_MANAGER_ADDRESS }}' \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.IMAGE_NAME }}:latest \
             .
@@ -125,10 +145,13 @@ jobs:
         run: pkill -f "ssh.*-L 5000:127.0.0.1:5000" || true
 
       - name: Deploy to VPS
+        # Force-remove the container by name first, in case it was created with a
+        # different compose project label (legacy bootstrap).
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT || 22 }} \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "cd ~/centuari && \
+             docker rm -f centuari-${{ needs.detect-env.outputs.env }}-frontend 2>/dev/null || true && \
              ${{ env.COMPOSE_CMD }} pull ${{ env.SERVICE_NAME }} && \
              ${{ env.COMPOSE_CMD }} up -d --no-deps ${{ env.SERVICE_NAME }} && \
              docker image prune -f"

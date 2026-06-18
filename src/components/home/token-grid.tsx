@@ -1,31 +1,33 @@
 "use client";
 
 import { CentuariTokenCard } from "@/components/centuari-token-card";
-
-const TOKENS = [
-  { image: "/tokens/centuari-usdt.png", name: "Tether", symbol: "USDT" },
-  { image: "/tokens/usdc-icon.svg", name: "USD Coin", symbol: "USDC" },
-  { image: "/tokens/sol-icon.svg", name: "Solana", symbol: "SOL" },
-  { image: "/tokens/btc-icon.svg", name: "Bitcoin", symbol: "BTC" },
-  { image: "/tokens/eth-icon.svg", name: "Ethereum", symbol: "ETH" },
-  { image: "/tokens/chainlink-icon.svg", name: "Chainlink", symbol: "LINK" },
-];
+import { useMarketData } from "@/hooks/use-market-data";
+import { TokenGridSkeleton } from "./token-grid-skeleton";
 
 export function TokenGrid() {
-  return (
-    <div
-      id="tour-token-grid"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-8"
-    >
-      {TOKENS.map((token, index) => (
-        <CentuariTokenCard
-          id={index + 1}
-          key={token.symbol}
-          token_image={token.image}
-          token_name={token.name}
-          token_symbol={token.symbol}
-        />
-      ))}
-    </div>
-  );
+	const { markets, isLoading } = useMarketData();
+
+	if (isLoading) return <TokenGridSkeleton count={6} />;
+
+	return (
+		<div
+			id="tour-token-grid"
+			className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"
+		>
+			{markets.map((market, index) => (
+				<CentuariTokenCard
+					id={index + 1}
+					key={market.asset.id}
+					asset_id={market.asset.id}
+					market_id={market.market.market_id ?? undefined}
+					token_image={market.asset.image_url ?? "/tokens/default-icon.svg"}
+					token_name={market.asset.name}
+					token_symbol={market.asset.symbol}
+					borrow_rate={market.borrow_rate}
+					lend_rate={market.lend_rate}
+					collateral_factor={market.collateral_factor}
+				/>
+			))}
+		</div>
+	);
 }
